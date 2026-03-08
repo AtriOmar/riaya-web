@@ -1,6 +1,11 @@
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
-import { json, apiError, validationError, requireSession } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+} from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -20,7 +25,10 @@ export async function PUT(req: NextRequest) {
 
     if (!parsed.success) return validationError(parsed.error.issues);
 
-    await db.update(userTable).set({ image: parsed.data.pictureUrl }).where(eq(userTable.id, session.user.id));
+    await db
+      .update(userTable)
+      .set({ image: parsed.data.pictureUrl })
+      .where(eq(userTable.id, session.user.id));
 
     return json({ message: "success" });
   } catch (e) {

@@ -1,6 +1,12 @@
 import { db } from "@/db";
 import { patient } from "@/db/schema";
-import { json, apiError, validationError, requireSession, requireDoctorProfile } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+  requireDoctorProfile,
+} from "@/lib/api-utils";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -23,7 +29,11 @@ export async function GET(req: NextRequest) {
     if (!parsed.success) return validationError(parsed.error.issues);
 
     // Admin requests all patients
-    if (parsed.data.all && session.user.accessId && session.user.accessId >= 3) {
+    if (
+      parsed.data.all &&
+      session.user.accessId &&
+      session.user.accessId >= 3
+    ) {
       const patients = await db.select().from(patient);
       return json(patients);
     }
@@ -46,7 +56,10 @@ export async function GET(req: NextRequest) {
         .where(
           and(
             eq(patient.doctorId, profile.id),
-            or(ilike(patient.firstName, `%${search}%`), ilike(patient.lastName, `%${search}%`)),
+            or(
+              ilike(patient.firstName, `%${search}%`),
+              ilike(patient.lastName, `%${search}%`),
+            ),
           ),
         );
     } else {

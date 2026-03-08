@@ -1,6 +1,12 @@
 import { db } from "@/db";
 import { doctorApplication } from "@/db/schema";
-import { json, apiError, validationError, requireSession, requireAdmin } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+  requireAdmin,
+} from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -52,7 +58,9 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return validationError(parsed.error.issues);
 
     // Delete existing application if any
-    await db.delete(doctorApplication).where(eq(doctorApplication.userId, session.user.id));
+    await db
+      .delete(doctorApplication)
+      .where(eq(doctorApplication.userId, session.user.id));
 
     const [application] = await db
       .insert(doctorApplication)
@@ -74,7 +82,10 @@ export async function POST(req: NextRequest) {
 
     // Update user status to pending
     const { user: userTable } = await import("@/db/auth-schema");
-    await db.update(userTable).set({ active: 1 }).where(eq(userTable.id, session.user.id));
+    await db
+      .update(userTable)
+      .set({ active: 1 })
+      .where(eq(userTable.id, session.user.id));
 
     return json(application, 201);
   } catch (e) {

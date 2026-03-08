@@ -1,14 +1,23 @@
 import { db } from "@/db";
 import { doctorProfile } from "@/db/schema";
 import { user as userTable } from "@/db/auth-schema";
-import { json, apiError, validationError, requireSession, requireAdmin } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+  requireAdmin,
+} from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 // ─── GET /api/users/[id] ────────────────────────────────────────────────────
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await requireSession();
     const { id } = await params;
@@ -52,7 +61,10 @@ const adminUpdateSchema = z.object({
   accessId: z.number().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -70,7 +82,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Update doctor profile status if provided
     if (status !== undefined) {
-      await db.update(doctorProfile).set({ status, updatedAt: new Date() }).where(eq(doctorProfile.userId, id));
+      await db
+        .update(doctorProfile)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(doctorProfile.userId, id));
     }
 
     const [updatedUser] = await db

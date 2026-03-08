@@ -19,7 +19,10 @@ export async function createSpeciality(name: string): Promise<Speciality> {
 // ─── PUT /api/specialities ────────────────────────────────────────────────────
 // Admin-only
 
-export async function updateSpeciality(id: number, name: string): Promise<Speciality> {
+export async function updateSpeciality(
+  id: number,
+  name: string,
+): Promise<Speciality> {
   const { data } = await api.put<Speciality>("/api/specialities", { id, name });
   return data;
 }
@@ -27,7 +30,10 @@ export async function updateSpeciality(id: number, name: string): Promise<Specia
 // ─── DELETE /api/specialities ─────────────────────────────────────────────────
 // Admin-only. Doctors with this speciality are reassigned to newSpecialityId.
 
-export async function deleteSpeciality(id: number, newSpecialityId: number): Promise<{ message: string }> {
+export async function deleteSpeciality(
+  id: number,
+  newSpecialityId: number,
+): Promise<{ message: string }> {
   const { data } = await api.delete<{ message: string }>("/api/specialities", {
     params: { id, newSpecialityId },
   });

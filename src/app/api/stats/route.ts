@@ -10,7 +10,9 @@ export async function GET() {
   try {
     await requireAdmin();
 
-    const [totalResult] = await db.select({ count: sql<number>`count(*)::int` }).from(userTable);
+    const [totalResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(userTable);
     const [adminsResult] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(userTable)

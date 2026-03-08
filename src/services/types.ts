@@ -45,26 +45,39 @@ export type UserAdminUpdateResult = {
 
 export type AppointmentWithPatient = Appointment & { patient: Patient | null };
 
-export type PatientSummary = Pick<Patient, "id" | "firstName" | "lastName" | "cin" | "dateOfBirth">;
+export type PatientSummary = Pick<
+  Patient,
+  "id" | "firstName" | "lastName" | "cin" | "dateOfBirth"
+>;
 
-export type PatientWithMedicalFiles = Patient & { medicalFiles: PatientMedicalFile[] };
+export type PatientWithMedicalFiles = Patient & {
+  medicalFiles: PatientMedicalFile[];
+};
 
 type ApplicationUser = { id: string; username: string | null; email: string };
 type ApplicationSpeciality = { id: number; name: string | null };
 
-export type DoctorApplicationSummary = DoctorApplication & { user: ApplicationUser };
+export type DoctorApplicationSummary = DoctorApplication & {
+  user: ApplicationUser;
+};
 export type DoctorApplicationDetail = DoctorApplication & {
   user: ApplicationUser;
   speciality: ApplicationSpeciality | null;
 };
 
-export type DoctorProfileWithSpeciality = DoctorProfile & { speciality: Speciality | null };
-export type UserWithDoctorProfile = UserRow & { doctorProfile: DoctorProfileWithSpeciality | null };
+export type DoctorProfileWithSpeciality = DoctorProfile & {
+  speciality: Speciality | null;
+};
+export type UserWithDoctorProfile = UserRow & {
+  doctorProfile: DoctorProfileWithSpeciality | null;
+};
 
 // ─── Availability ─────────────────────────────────────────────────────────────
 
 export type AvailabilitySlot = { start: number; end: number };
-export type Availability = Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6, AvailabilitySlot[]>>;
+export type Availability = Partial<
+  Record<0 | 1 | 2 | 3 | 4 | 5 | 6, AvailabilitySlot[]>
+>;
 
 // ─── Best-fit doctor ──────────────────────────────────────────────────────────
 

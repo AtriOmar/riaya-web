@@ -10,7 +10,11 @@ export interface GetBestFitDoctorsParams {
   time?: string; // ISO datetime — desired appointment time
 }
 
-export async function getBestFitDoctors(params: GetBestFitDoctorsParams): Promise<BestFitDoctor[]> {
-  const { data } = await api.get<BestFitDoctor[]>("/api/doctors/best-fit", { params });
+export async function getBestFitDoctors(
+  params: GetBestFitDoctorsParams,
+): Promise<BestFitDoctor[]> {
+  const { data } = await api.get<BestFitDoctor[]>("/api/doctors/best-fit", {
+    params,
+  });
   return data;
 }

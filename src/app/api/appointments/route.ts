@@ -1,6 +1,12 @@
 import { db } from "@/db";
 import { appointment, patient } from "@/db/schema";
-import { json, apiError, validationError, requireSession, requireDoctorProfile } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+  requireDoctorProfile,
+} from "@/lib/api-utils";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -21,7 +27,11 @@ export async function GET(req: NextRequest) {
     if (!parsed.success) return validationError(parsed.error.issues);
 
     // If admin requests all appointments
-    if (parsed.data.all && session.user.accessId && session.user.accessId >= 3) {
+    if (
+      parsed.data.all &&
+      session.user.accessId &&
+      session.user.accessId >= 3
+    ) {
       const appointments = await db.query.appointment.findMany({
         with: { patient: true },
       });
@@ -103,7 +113,8 @@ export async function PUT(req: NextRequest) {
     const { id, ...fields } = parsed.data;
     const updateData: Record<string, unknown> = {};
     if (fields.name !== undefined) updateData.name = fields.name;
-    if (fields.description !== undefined) updateData.description = fields.description;
+    if (fields.description !== undefined)
+      updateData.description = fields.description;
     if (fields.start !== undefined) updateData.start = new Date(fields.start);
     if (fields.end !== undefined) updateData.end = new Date(fields.end);
     if (fields.status !== undefined) updateData.status = fields.status;
@@ -140,7 +151,12 @@ export async function DELETE(req: NextRequest) {
 
     const [deleted] = await db
       .delete(appointment)
-      .where(and(eq(appointment.id, parsed.data.id), eq(appointment.doctorId, profile.id)))
+      .where(
+        and(
+          eq(appointment.id, parsed.data.id),
+          eq(appointment.doctorId, profile.id),
+        ),
+      )
       .returning();
 
     if (!deleted) return apiError("APPOINTMENT_NOT_FOUND");

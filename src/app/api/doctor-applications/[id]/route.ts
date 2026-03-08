@@ -8,7 +8,10 @@ import type { NextRequest } from "next/server";
 
 // ─── GET /api/doctor-applications/[id] ───────────────────────────────────────
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await requireAdmin();
 
@@ -41,7 +44,10 @@ const updateSchema = z.object({
   rejectionReasons: z.array(z.string()).optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await requireAdmin();
 
@@ -59,11 +65,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: eq(doctorApplication.id, applicationId),
     });
 
-    if (!application || !application.userId) return apiError("APPLICATION_NOT_FOUND");
+    if (!application || !application.userId)
+      return apiError("APPLICATION_NOT_FOUND");
 
     if (status === "verified") {
       // Create / update the doctor profile from the application data
-      const existing = await db.select().from(doctorProfile).where(eq(doctorProfile.userId, application.userId));
+      const existing = await db
+        .select()
+        .from(doctorProfile)
+        .where(eq(doctorProfile.userId, application.userId));
 
       if (existing.length > 0) {
         await db

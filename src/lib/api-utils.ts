@@ -22,12 +22,16 @@ export async function requireSession() {
 
 export async function requireAdmin() {
   const session = await requireSession();
-  if (!session.user.accessId || session.user.accessId < 3) throwApiError("FORBIDDEN");
+  if (!session.user.accessId || session.user.accessId < 3)
+    throwApiError("FORBIDDEN");
   return session;
 }
 
 export async function getDoctorProfile(userId: string) {
-  const [profile] = await db.select().from(doctorProfile).where(eq(doctorProfile.userId, userId));
+  const [profile] = await db
+    .select()
+    .from(doctorProfile)
+    .where(eq(doctorProfile.userId, userId));
   return profile ?? null;
 }
 

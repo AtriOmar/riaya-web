@@ -1,9 +1,17 @@
 import api from "./api";
-import type { Patient, PatientMedicalFile, PatientSummary, PatientWithMedicalFiles } from "./types";
+import type {
+  Patient,
+  PatientMedicalFile,
+  PatientSummary,
+  PatientWithMedicalFiles,
+} from "./types";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 
-export async function getPatients(params?: { search?: string; all?: boolean }): Promise<PatientSummary[]> {
+export async function getPatients(params?: {
+  search?: string;
+  all?: boolean;
+}): Promise<PatientSummary[]> {
   const { data } = await api.get<PatientSummary[]>("/api/patients", {
     params: { search: params?.search, all: params?.all ? true : undefined },
   });
@@ -22,15 +30,21 @@ export interface CreatePatientInput {
   phoneNumber: string;
 }
 
-export async function createPatient(data: CreatePatientInput): Promise<Patient> {
+export async function createPatient(
+  data: CreatePatientInput,
+): Promise<Patient> {
   const { data: res } = await api.post<Patient>("/api/patients", data);
   return res;
 }
 
 // ─── GET /api/patients/[id] ──────────────────────────────────────────────────
 
-export async function getPatientById(id: number): Promise<PatientWithMedicalFiles> {
-  const { data } = await api.get<PatientWithMedicalFiles>(`/api/patients/${id}`);
+export async function getPatientById(
+  id: number,
+): Promise<PatientWithMedicalFiles> {
+  const { data } = await api.get<PatientWithMedicalFiles>(
+    `/api/patients/${id}`,
+  );
   return data;
 }
 
@@ -44,8 +58,14 @@ export interface CreateMedicalFileInput {
   documents?: string[]; // R2 URLs
 }
 
-export async function createMedicalFile(patientId: number, data: CreateMedicalFileInput): Promise<PatientMedicalFile> {
-  const { data: res } = await api.post<PatientMedicalFile>(`/api/patients/${patientId}/medical-files`, data);
+export async function createMedicalFile(
+  patientId: number,
+  data: CreateMedicalFileInput,
+): Promise<PatientMedicalFile> {
+  const { data: res } = await api.post<PatientMedicalFile>(
+    `/api/patients/${patientId}/medical-files`,
+    data,
+  );
   return res;
 }
 
@@ -57,7 +77,13 @@ export interface UpdateMedicalFileInput {
   description?: string;
 }
 
-export async function updateMedicalFile(patientId: number, data: UpdateMedicalFileInput): Promise<PatientMedicalFile> {
-  const { data: res } = await api.put<PatientMedicalFile>(`/api/patients/${patientId}/medical-files`, data);
+export async function updateMedicalFile(
+  patientId: number,
+  data: UpdateMedicalFileInput,
+): Promise<PatientMedicalFile> {
+  const { data: res } = await api.put<PatientMedicalFile>(
+    `/api/patients/${patientId}/medical-files`,
+    data,
+  );
   return res;
 }

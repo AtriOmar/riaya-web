@@ -29,7 +29,10 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.issues);
 
-    const [created] = await db.insert(speciality).values({ name: parsed.data.name }).returning();
+    const [created] = await db
+      .insert(speciality)
+      .values({ name: parsed.data.name })
+      .returning();
     return json(created, 201);
   } catch (e) {
     if (e instanceof Response) return e;
@@ -84,9 +87,15 @@ export async function DELETE(req: NextRequest) {
     const { id, newSpecialityId } = parsed.data;
 
     // Reassign doctors from deleted speciality to new one
-    await db.update(doctorProfile).set({ specialityId: newSpecialityId }).where(eq(doctorProfile.specialityId, id));
+    await db
+      .update(doctorProfile)
+      .set({ specialityId: newSpecialityId })
+      .where(eq(doctorProfile.specialityId, id));
 
-    const [deleted] = await db.delete(speciality).where(eq(speciality.id, id)).returning();
+    const [deleted] = await db
+      .delete(speciality)
+      .where(eq(speciality.id, id))
+      .returning();
 
     if (!deleted) return apiError("SPECIALITY_NOT_FOUND");
 

@@ -3,10 +3,15 @@ import type { Appointment, AppointmentWithPatient } from "./types";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
 
-export async function getAppointments(params?: { all?: boolean }): Promise<AppointmentWithPatient[]> {
-  const { data } = await api.get<AppointmentWithPatient[]>("/api/appointments", {
-    params: { all: params?.all ? true : undefined },
-  });
+export async function getAppointments(params?: {
+  all?: boolean;
+}): Promise<AppointmentWithPatient[]> {
+  const { data } = await api.get<AppointmentWithPatient[]>(
+    "/api/appointments",
+    {
+      params: { all: params?.all ? true : undefined },
+    },
+  );
   return data;
 }
 
@@ -20,7 +25,9 @@ export interface CreateAppointmentInput {
   description?: string;
 }
 
-export async function createAppointment(data: CreateAppointmentInput): Promise<Appointment> {
+export async function createAppointment(
+  data: CreateAppointmentInput,
+): Promise<Appointment> {
   const { data: res } = await api.post<Appointment>("/api/appointments", data);
   return res;
 }
@@ -36,15 +43,21 @@ export interface UpdateAppointmentInput {
   status?: "pending" | "confirmed" | "cancelled";
 }
 
-export async function updateAppointment(data: UpdateAppointmentInput): Promise<Appointment> {
+export async function updateAppointment(
+  data: UpdateAppointmentInput,
+): Promise<Appointment> {
   const { data: res } = await api.put<Appointment>("/api/appointments", data);
   return res;
 }
 
 // ─── DELETE /api/appointments ─────────────────────────────────────────────────
 
-export async function deleteAppointment(id: number): Promise<{ message: string }> {
-  const { data } = await api.delete<{ message: string }>("/api/appointments", { params: { id } });
+export async function deleteAppointment(
+  id: number,
+): Promise<{ message: string }> {
+  const { data } = await api.delete<{ message: string }>("/api/appointments", {
+    params: { id },
+  });
   return data;
 }
 
@@ -59,7 +72,12 @@ export interface CreateExternalAppointmentInput {
   illness: string;
 }
 
-export async function createExternalAppointment(data: CreateExternalAppointmentInput): Promise<Appointment> {
-  const { data: res } = await api.post<Appointment>("/api/appointments/external", data);
+export async function createExternalAppointment(
+  data: CreateExternalAppointmentInput,
+): Promise<Appointment> {
+  const { data: res } = await api.post<Appointment>(
+    "/api/appointments/external",
+    data,
+  );
   return res;
 }

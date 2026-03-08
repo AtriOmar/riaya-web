@@ -1,7 +1,12 @@
 import { db } from "@/db";
 import { doctorProfile } from "@/db/schema";
 import { user as userTable } from "@/db/auth-schema";
-import { json, apiError, validationError, requireSession } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+} from "@/lib/api-utils";
 import { eq, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";

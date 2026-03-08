@@ -1,12 +1,20 @@
 import { db } from "@/db";
 import { patient } from "@/db/schema";
-import { json, apiError, requireSession, requireDoctorProfile } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  requireSession,
+  requireDoctorProfile,
+} from "@/lib/api-utils";
 import { eq, and } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 // ─── GET /api/patients/[id] ──────────────────────────────────────────────────
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await requireSession();
     const profile = await requireDoctorProfile(session.user.id);

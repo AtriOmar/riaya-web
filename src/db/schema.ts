@@ -274,19 +274,16 @@ export const appointmentRelations = relations(appointment, ({ one }) => ({
   }),
 }));
 
-export const consultationRelations = relations(
-  consultation,
-  ({ one }) => ({
-    doctor: one(doctorProfile, {
-      fields: [consultation.doctorId],
-      references: [doctorProfile.id],
-    }),
-    patient: one(patient, {
-      fields: [consultation.patientId],
-      references: [patient.id],
-    }),
+export const consultationRelations = relations(consultation, ({ one }) => ({
+  doctor: one(doctorProfile, {
+    fields: [consultation.doctorId],
+    references: [doctorProfile.id],
   }),
-);
+  patient: one(patient, {
+    fields: [consultation.patientId],
+    references: [patient.id],
+  }),
+}));
 
 export const doctorApplicationRelations = relations(
   doctorApplication,

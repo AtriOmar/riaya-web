@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
     const data = parsed.data;
 
     // Find the doctor
-    const [doctor] = await db.select().from(doctorProfile).where(eq(doctorProfile.id, data.doctorId));
+    const [doctor] = await db
+      .select()
+      .from(doctorProfile)
+      .where(eq(doctorProfile.id, data.doctorId));
 
     if (!doctor) return apiError("DOCTOR_NOT_FOUND");
 
@@ -42,14 +45,17 @@ export async function POST(req: NextRequest) {
     // Check availability
     let dayOfWeek = startDate.getDay();
     dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const availability = (doctor.availability as Availability)?.[dayOfWeek] ?? [];
+    const availability =
+      (doctor.availability as Availability)?.[dayOfWeek] ?? [];
 
     if (!availability.length) return apiError("DOCTOR_UNAVAILABLE_DAY");
 
     const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
     const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
 
-    const isWithinAvailability = availability.some((slot) => startMinutes >= slot.start && endMinutes <= slot.end);
+    const isWithinAvailability = availability.some(
+      (slot) => startMinutes >= slot.start && endMinutes <= slot.end,
+    );
 
     if (!isWithinAvailability) return apiError("DOCTOR_UNAVAILABLE_TIME");
 
@@ -61,9 +67,15 @@ export async function POST(req: NextRequest) {
         and(
           eq(appointment.doctorId, data.doctorId),
           or(
-            and(lt(appointment.start, startDate), gt(appointment.end, startDate)),
+            and(
+              lt(appointment.start, startDate),
+              gt(appointment.end, startDate),
+            ),
             and(lt(appointment.start, endDate), gt(appointment.end, endDate)),
-            and(gte(appointment.start, startDate), lte(appointment.end, endDate)),
+            and(
+              gte(appointment.start, startDate),
+              lte(appointment.end, endDate),
+            ),
           ),
         ),
       );

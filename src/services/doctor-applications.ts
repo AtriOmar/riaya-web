@@ -1,11 +1,19 @@
 import api from "./api";
-import type { DoctorApplication, DoctorApplicationDetail, DoctorApplicationSummary } from "./types";
+import type {
+  DoctorApplication,
+  DoctorApplicationDetail,
+  DoctorApplicationSummary,
+} from "./types";
 
 // ─── GET /api/doctor-applications ─────────────────────────────────────────────
 // Admin-only
 
-export async function getDoctorApplications(): Promise<DoctorApplicationSummary[]> {
-  const { data } = await api.get<DoctorApplicationSummary[]>("/api/doctor-applications");
+export async function getDoctorApplications(): Promise<
+  DoctorApplicationSummary[]
+> {
+  const { data } = await api.get<DoctorApplicationSummary[]>(
+    "/api/doctor-applications",
+  );
   return data;
 }
 
@@ -24,23 +32,34 @@ export interface CreateDoctorApplicationInput {
   tin: string;
 }
 
-export async function createDoctorApplication(data: CreateDoctorApplicationInput): Promise<DoctorApplication> {
-  const { data: res } = await api.post<DoctorApplication>("/api/doctor-applications", data);
+export async function createDoctorApplication(
+  data: CreateDoctorApplicationInput,
+): Promise<DoctorApplication> {
+  const { data: res } = await api.post<DoctorApplication>(
+    "/api/doctor-applications",
+    data,
+  );
   return res;
 }
 
 // ─── GET /api/doctor-applications/me ─────────────────────────────────────────
 
 export async function getMyDoctorApplication(): Promise<DoctorApplicationDetail> {
-  const { data } = await api.get<DoctorApplicationDetail>("/api/doctor-applications/me");
+  const { data } = await api.get<DoctorApplicationDetail>(
+    "/api/doctor-applications/me",
+  );
   return data;
 }
 
 // ─── GET /api/doctor-applications/[id] ───────────────────────────────────────
 // Admin-only
 
-export async function getDoctorApplicationById(id: number): Promise<DoctorApplicationDetail> {
-  const { data } = await api.get<DoctorApplicationDetail>(`/api/doctor-applications/${id}`);
+export async function getDoctorApplicationById(
+  id: number,
+): Promise<DoctorApplicationDetail> {
+  const { data } = await api.get<DoctorApplicationDetail>(
+    `/api/doctor-applications/${id}`,
+  );
   return data;
 }
 
@@ -56,6 +75,9 @@ export async function updateDoctorApplicationStatus(
   id: number,
   data: UpdateDoctorApplicationInput,
 ): Promise<{ message: string }> {
-  const { data: res } = await api.put<{ message: string }>(`/api/doctor-applications/${id}`, data);
+  const { data: res } = await api.put<{ message: string }>(
+    `/api/doctor-applications/${id}`,
+    data,
+  );
   return res;
 }

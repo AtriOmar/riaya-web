@@ -1,6 +1,12 @@
 import { db } from "@/db";
 import { patientMedicalFile, patient } from "@/db/schema";
-import { json, apiError, validationError, requireSession, requireDoctorProfile } from "@/lib/api-utils";
+import {
+  json,
+  apiError,
+  validationError,
+  requireSession,
+  requireDoctorProfile,
+} from "@/lib/api-utils";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -16,7 +22,10 @@ const createSchema = z.object({
   documents: z.array(z.url()).optional(),
 });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await requireSession();
     const profile = await requireDoctorProfile(session.user.id);
@@ -64,7 +73,10 @@ const updateSchema = z.object({
   description: z.string().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await requireSession();
     const profile = await requireDoctorProfile(session.user.id);
@@ -88,12 +100,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { medicalFileId, ...fields } = parsed.data;
     const updateData: Record<string, unknown> = {};
     if (fields.title !== undefined) updateData.title = fields.title;
-    if (fields.description !== undefined) updateData.description = fields.description;
+    if (fields.description !== undefined)
+      updateData.description = fields.description;
 
     const [updated] = await db
       .update(patientMedicalFile)
       .set(updateData)
-      .where(and(eq(patientMedicalFile.id, medicalFileId), eq(patientMedicalFile.patientId, patientId)))
+      .where(
+        and(
+          eq(patientMedicalFile.id, medicalFileId),
+          eq(patientMedicalFile.patientId, patientId),
+        ),
+      )
       .returning();
 
     if (!updated) return apiError("MEDICAL_FILE_NOT_FOUND");
@@ -111,7 +129,10 @@ const deleteSchema = z.object({
   medicalFileId: z.coerce.number().int().positive(),
 });
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await requireSession();
     const profile = await requireDoctorProfile(session.user.id);
@@ -134,7 +155,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const [deleted] = await db
       .delete(patientMedicalFile)
-      .where(and(eq(patientMedicalFile.id, parsed.data.medicalFileId), eq(patientMedicalFile.patientId, patientId)))
+      .where(
+        and(
+          eq(patientMedicalFile.id, parsed.data.medicalFileId),
+          eq(patientMedicalFile.patientId, patientId),
+        ),
+      )
       .returning();
 
     if (!deleted) return apiError("MEDICAL_FILE_NOT_FOUND");
