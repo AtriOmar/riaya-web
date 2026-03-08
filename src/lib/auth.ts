@@ -4,15 +4,18 @@ import { db } from "@/db";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg", // or "pg" or "mysql"
+    provider: "pg",
   }),
   emailAndPassword: {
     enabled: true,
   },
-  //   socialProviders: {
-  //     github: {
-  //       clientId: process.env.GITHUB_CLIENT_ID as string,
-  //       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-  //     },
-  //   },
+  user: {
+    additionalFields: {
+      displayName: { type: "string", required: false },
+      username: { type: "string", required: false },
+      accessId: { type: "number", required: false },
+      active: { type: "number", required: false },
+      type: { type: "number", required: false },
+    },
+  },
 });

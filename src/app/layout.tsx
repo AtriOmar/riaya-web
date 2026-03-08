@@ -18,7 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "رعاية",
   description: "Riaya, the AI powered doctor appointments platform",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  ),
   openGraph: {
     title: "رعاية",
     description: "Riaya, the AI powered doctor appointments platform",
@@ -34,7 +36,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", roboto.variable)}>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
