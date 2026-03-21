@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
@@ -52,7 +53,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-hero">
       <div className="flex flex-1 justify-center items-center p-8">
         <div className="w-full max-w-md animate-fade-in-up">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
@@ -104,6 +105,9 @@ export default function LoginForm() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password">Password</Label>
+                <Link href="#" className="text-primary text-sm hover:underline">
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="top-1/2 left-3 absolute w-5 h-5 text-muted-foreground -translate-y-1/2" />
@@ -133,10 +137,20 @@ export default function LoginForm() {
               )}
             </div>
 
+            <div className="flex items-center gap-2">
+              <Checkbox id="remember" />
+              <Label
+                htmlFor="remember"
+                className="font-normal text-sm cursor-pointer"
+              >
+                Remember me for 30 days
+              </Label>
+            </div>
+
             <Button
               type="submit"
               size="lg"
-              className="w-full"
+              className="w-full bg-gradient-primary text-primary-foreground"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Signing in..." : "Sign in to Dashboard"}
@@ -144,26 +158,35 @@ export default function LoginForm() {
             </Button>
           </form>
 
-          <p className="mt-8 text-muted-foreground text-sm text-center">
-            Don&apos;t have an account?{" "}
+          <p className="mt-8 text-muted-foreground text-center">
+            New to Riaya?{" "}
             <Link
               href="/register"
-              className="font-medium text-primary hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
-              Create one
+              Register your practice
             </Link>
           </p>
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 justify-center items-center bg-primary/5">
-        <div className="max-w-md p-12 text-center">
-          <h2 className="mb-4 font-bold text-foreground text-2xl">
-            Manage Your Practice
+      <div className="hidden lg:flex flex-1 justify-center items-center p-12 bg-gradient-primary">
+        <div className="max-w-md text-primary-foreground text-center">
+          <div className="flex justify-center items-center w-24 h-24 mx-auto mb-8 rounded-3xl bg-primary-foreground/20">
+            <Image
+              src="/logo.png"
+              alt="Riaya"
+              width={64}
+              height={64}
+              className="w-16 h-16"
+            />
+          </div>
+          <h2 className="mb-4 font-bold text-3xl">
+            Your Practice, Powered by AI
           </h2>
-          <p className="text-muted-foreground">
-            Access your appointments, patients, and availability all in one
-            place.
+          <p className="text-primary-foreground/80 text-lg">
+            Manage your schedule, accept AI-matched appointments, and grow your
+            practice, all from one dashboard.
           </p>
         </div>
       </div>
