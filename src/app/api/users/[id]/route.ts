@@ -1,16 +1,16 @@
-import { db } from "@/db";
-import { doctorProfile } from "@/db/schema";
-import { user as userTable } from "@/db/auth-schema";
-import {
-  json,
-  apiError,
-  validationError,
-  requireSession,
-  requireAdmin,
-} from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { db } from "@/db";
+import { user as userTable } from "@/db/auth-schema";
+import { doctorProfile } from "@/db/schema";
+import {
+  apiError,
+  json,
+  requireAdmin,
+  requireSession,
+  validationError,
+} from "@/lib/api-utils";
 
 // ─── GET /api/users/[id] ────────────────────────────────────────────────────
 

@@ -1,10 +1,10 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type {
   appointment,
+  doctorApplication,
+  doctorProfile,
   patient,
   patientMedicalFile,
-  doctorProfile,
-  doctorApplication,
   speciality,
 } from "@/db/schema";
 

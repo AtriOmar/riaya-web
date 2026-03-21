@@ -1,8 +1,8 @@
-import { db } from "@/db";
-import { doctorProfile } from "@/db/schema";
-import { user as userTable } from "@/db/auth-schema";
-import { json, apiError, requireAdmin } from "@/lib/api-utils";
 import { sql } from "drizzle-orm";
+import { db } from "@/db";
+import { user as userTable } from "@/db/auth-schema";
+import { doctorProfile } from "@/db/schema";
+import { apiError, json, requireAdmin } from "@/lib/api-utils";
 
 // ─── GET /api/stats ──────────────────────────────────────────────────────────
 

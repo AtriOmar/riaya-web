@@ -1,15 +1,15 @@
+import { eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { doctorApplication } from "@/db/schema";
 import {
-  json,
   apiError,
-  validationError,
-  requireSession,
+  json,
   requireAdmin,
+  requireSession,
+  validationError,
 } from "@/lib/api-utils";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
 
 // ─── GET /api/doctor-applications ─────────────────────────────────────────────
 // Admin-only: returns all pending applications

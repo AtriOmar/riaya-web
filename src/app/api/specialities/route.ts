@@ -1,9 +1,9 @@
-import { db } from "@/db";
-import { speciality, doctorProfile } from "@/db/schema";
-import { json, apiError, validationError, requireAdmin } from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { db } from "@/db";
+import { doctorProfile, speciality } from "@/db/schema";
+import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/specialities ───────────────────────────────────────────────────
 

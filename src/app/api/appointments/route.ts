@@ -1,15 +1,15 @@
-import { db } from "@/db";
-import { appointment, patient } from "@/db/schema";
-import {
-  json,
-  apiError,
-  validationError,
-  requireSession,
-  requireDoctorProfile,
-} from "@/lib/api-utils";
-import { eq, and } from "drizzle-orm";
-import { z } from "zod";
+import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { db } from "@/db";
+import { appointment } from "@/db/schema";
+import {
+  apiError,
+  json,
+  requireDoctorProfile,
+  requireSession,
+  validationError,
+} from "@/lib/api-utils";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
 // Returns appointments for the authenticated doctor

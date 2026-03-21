@@ -1,14 +1,14 @@
+import { eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
 import {
-  json,
   apiError,
-  validationError,
+  json,
   requireSession,
+  validationError,
 } from "@/lib/api-utils";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
 
 // ─── PUT /api/users/picture ──────────────────────────────────────────────────
 // Updates the user's profile picture URL (already uploaded to R2 via signed URL)

@@ -1,15 +1,15 @@
+import { and, eq, ilike, or } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { patient } from "@/db/schema";
 import {
-  json,
   apiError,
-  validationError,
-  requireSession,
+  json,
   requireDoctorProfile,
+  requireSession,
+  validationError,
 } from "@/lib/api-utils";
-import { eq, and, or, ilike } from "drizzle-orm";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 // Returns patients for the authenticated doctor (with optional search)
@@ -42,38 +42,26 @@ export async function GET(req: NextRequest) {
     const profile = await requireDoctorProfile(session.user.id);
     const search = parsed.data.search;
 
-    let patients;
-    if (search) {
-      patients = await db
-        .select({
-          id: patient.id,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          cin: patient.cin,
-          dateOfBirth: patient.dateOfBirth,
-        })
-        .from(patient)
-        .where(
-          and(
-            eq(patient.doctorId, profile.id),
-            or(
-              ilike(patient.firstName, `%${search}%`),
-              ilike(patient.lastName, `%${search}%`),
-            ),
-          ),
-        );
-    } else {
-      patients = await db
-        .select({
-          id: patient.id,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          cin: patient.cin,
-          dateOfBirth: patient.dateOfBirth,
-        })
-        .from(patient)
-        .where(eq(patient.doctorId, profile.id));
-    }
+    const patients = await db
+      .select({
+        id: patient.id,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        cin: patient.cin,
+        dateOfBirth: patient.dateOfBirth,
+      })
+      .from(patient)
+      .where(
+        search
+          ? and(
+              eq(patient.doctorId, profile.id),
+              or(
+                ilike(patient.firstName, `%${search}%`),
+                ilike(patient.lastName, `%${search}%`),
+              ),
+            )
+          : eq(patient.doctorId, profile.id),
+      );
 
     return json(patients);
   } catch (e) {

@@ -1,7 +1,7 @@
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { doctorApplication } from "@/db/schema";
-import { json, apiError, requireSession } from "@/lib/api-utils";
-import { eq } from "drizzle-orm";
+import { apiError, json, requireSession } from "@/lib/api-utils";
 
 // ─── GET /api/doctor-applications/me ─────────────────────────────────────────
 // Returns the authenticated user's own doctor application

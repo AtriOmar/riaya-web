@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Roboto } from "next/font/google";
+import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/contexts/providers";
 import { cn } from "@/lib/utils";
 
-const roboto = Roboto({ subsets: ["latin"], variable: "--font-sans" });
+const rubik = Rubik({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "رعاية",
   description: "Riaya, the AI powered doctor appointments platform",
   metadataBase: new URL(
@@ -35,11 +37,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", roboto.variable)}>
+    <html lang="en" className={cn("font-sans", rubik.variable)}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+          <Toaster position="bottom-right" richColors />
+        </Providers>
       </body>
     </html>
   );

@@ -1,13 +1,13 @@
-import { auth } from "@/lib/auth";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { doctorProfile } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { apiError, throwApiError } from "@/lib/errors";
 
+export type { ErrorCode } from "@/lib/errors";
 // Re-export so routes only need to import from this one file
 export { apiError, throwApiError } from "@/lib/errors";
-export type { ErrorCode } from "@/lib/errors";
 
 export async function getSession() {
   const session = await auth.api.getSession({ headers: await headers() });

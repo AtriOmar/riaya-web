@@ -1,15 +1,15 @@
-import { db } from "@/db";
-import { doctorProfile } from "@/db/schema";
-import { user as userTable } from "@/db/auth-schema";
-import {
-  json,
-  apiError,
-  validationError,
-  requireSession,
-} from "@/lib/api-utils";
-import { eq, or, ilike } from "drizzle-orm";
-import { z } from "zod";
+import { eq, ilike, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { db } from "@/db";
+import { user as userTable } from "@/db/auth-schema";
+import { doctorProfile } from "@/db/schema";
+import {
+  apiError,
+  json,
+  requireSession,
+  validationError,
+} from "@/lib/api-utils";
 
 // ─── GET /api/users ──────────────────────────────────────────────────────────
 // Admin: search all users
@@ -32,45 +32,29 @@ export async function GET(req: NextRequest) {
 
     const search = parsed.data.search;
 
-    let users;
-    if (search) {
-      users = await db
-        .select({
-          id: userTable.id,
-          name: userTable.name,
-          email: userTable.email,
-          image: userTable.image,
-          displayName: userTable.displayName,
-          username: userTable.username,
-          accessId: userTable.accessId,
-          active: userTable.active,
-          type: userTable.type,
-          createdAt: userTable.createdAt,
-        })
-        .from(userTable)
-        .where(
-          or(
-            ilike(userTable.email, `%${search}%`),
-            ilike(userTable.name, `%${search}%`),
-            ilike(userTable.username, `%${search}%`),
-          ),
-        );
-    } else {
-      users = await db
-        .select({
-          id: userTable.id,
-          name: userTable.name,
-          email: userTable.email,
-          image: userTable.image,
-          displayName: userTable.displayName,
-          username: userTable.username,
-          accessId: userTable.accessId,
-          active: userTable.active,
-          type: userTable.type,
-          createdAt: userTable.createdAt,
-        })
-        .from(userTable);
-    }
+    const users = await db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        image: userTable.image,
+        displayName: userTable.displayName,
+        username: userTable.username,
+        accessId: userTable.accessId,
+        active: userTable.active,
+        type: userTable.type,
+        createdAt: userTable.createdAt,
+      })
+      .from(userTable)
+      .where(
+        search
+          ? or(
+              ilike(userTable.email, `%${search}%`),
+              ilike(userTable.name, `%${search}%`),
+              ilike(userTable.username, `%${search}%`),
+            )
+          : undefined,
+      );
 
     return json(users);
   } catch (e) {

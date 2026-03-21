@@ -34,6 +34,17 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-50: var(--color-green-50);
+  --color-primary-100: var(--color-green-100);
+  --color-primary-200: var(--color-green-200);
+  --color-primary-300: var(--color-green-300);
+  --color-primary-400: var(--color-green-400);
+  --color-primary-500: var(--color-green-500);
+  --color-primary-600: var(--color-green-600);
+  --color-primary-700: var(--color-green-700);
+  --color-primary-800: var(--color-green-800);
+  --color-primary-900: var(--color-green-900);
+  --color-primary-950: var(--color-green-950);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -126,4 +137,140 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ─── Custom Utilities ─────────────────────────────────────────────────────── */
+
+.glass {
+  @apply bg-background/80 backdrop-blur-md;
+}
+
+.shadow-soft {
+  box-shadow: 0 4px 24px oklch(0 0 0 / 8%);
+}
+
+.text-gradient {
+  @apply bg-clip-text bg-gradient-to-r from-primary to-chart-2 text-transparent;
+}
+
+/* ─── Ring Loader ──────────────────────────────────────────────────────────── */
+
+.ring-loader {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: oklch(var(--primary));
+  animation: ring-spin 0.8s linear infinite;
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Cube Loader ──────────────────────────────────────────────────────────── */
+
+.cube {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 40px;
+  height: 40px;
+}
+
+.cube_item {
+  border-radius: 3px;
+  background: hsl(var(--primary));
+}
+
+.cube_x {
+  animation: cube-scale 0.8s ease-in-out infinite;
+}
+
+.cube_y {
+  animation: cube-scale 0.8s ease-in-out 0.4s infinite;
+}
+
+@keyframes cube-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.5);
+  }
+}
+
+/* ─── Calendar (react-big-calendar) ────────────────────────────────────────── */
+
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-toolbar button {
+  @apply px-3 py-1.5 border border-border rounded-md bg-background hover:bg-muted font-medium text-foreground text-sm transition;
+}
+
+.rbc-toolbar button.rbc-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.rbc-header {
+  @apply border-border bg-muted/50 py-2 text-sm font-semibold;
+}
+
+.rbc-today {
+  @apply bg-primary/5;
+}
+
+.rbc-event {
+  @apply px-1.5 py-0.5 border-none rounded-md bg-primary text-primary-foreground text-xs;
+}
+
+.rbc-event.rbc-selected {
+  @apply bg-primary/80;
+}
+
+.rbc-off-range-bg {
+  @apply bg-muted/30;
+}
+
+.rbc-day-bg + .rbc-day-bg,
+.rbc-month-row + .rbc-month-row {
+  @apply border-border;
+}
+
+.rbc-time-content {
+  @apply border-border;
+}
+
+.rbc-timeslot-group {
+  @apply border-border;
+}
+
+.rbc-time-header-content {
+  @apply border-border;
+}
+
+.rbc-time-slot {
+  @apply text-muted-foreground text-xs;
+}
+
+/* ─── Animations ───────────────────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out;
 }

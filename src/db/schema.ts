@@ -9,7 +9,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { user, session, account } from "./auth-schema";
+import { account, session, user } from "./auth-schema";
 
 // Re-export better-auth tables so drizzle-kit picks them up from this single entry point
 export * from "./auth-schema";

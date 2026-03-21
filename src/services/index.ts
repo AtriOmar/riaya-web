@@ -1,10 +1,9 @@
-export * from "./types";
-
 export * from "./appointments";
 export * from "./doctor-applications";
 export * from "./doctors";
 export * from "./patients";
 export * from "./specialities";
 export * from "./stats";
+export * from "./types";
 export * from "./upload";
 export * from "./users";

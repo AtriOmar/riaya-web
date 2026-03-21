@@ -1,10 +1,10 @@
-import { db } from "@/db";
-import { doctorApplication, doctorProfile } from "@/db/schema";
-import { user as userTable } from "@/db/auth-schema";
-import { json, apiError, validationError, requireAdmin } from "@/lib/api-utils";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
+import { db } from "@/db";
+import { user as userTable } from "@/db/auth-schema";
+import { doctorApplication, doctorProfile } from "@/db/schema";
+import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/doctor-applications/[id] ───────────────────────────────────────
 

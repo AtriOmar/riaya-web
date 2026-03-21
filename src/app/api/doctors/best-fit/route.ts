@@ -1,9 +1,9 @@
+import { and, eq, gte, lt } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
-import { json, apiError, validationError } from "@/lib/api-utils";
-import { eq, and, gte, lt } from "drizzle-orm";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
+import { apiError, json, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/doctors/best-fit ────────────────────────────────────────────────
 // Public endpoint — finds best-fit doctors based on speciality, location, and time
@@ -49,8 +49,9 @@ function findNextAvailableSlot(
 
   const isSlotAvailable = (slotStart: Date, slotEnd: Date) =>
     !appointments.some((appt) => {
-      const aStart = new Date(appt.start!);
-      const aEnd = new Date(appt.end!);
+      if (!appt.start || !appt.end) return false;
+      const aStart = new Date(appt.start);
+      const aEnd = new Date(appt.end);
       return (
         (slotStart > aStart && slotStart < aEnd) ||
         (slotEnd > aStart && slotEnd < aEnd) ||
@@ -219,11 +220,11 @@ export async function GET(req: NextRequest) {
     processedDoctors.sort((a, b) => {
       const now = new Date();
       const timeDiffA =
-        (new Date(a!.nextSlot.start).getTime() - now.getTime()) / (1000 * 60);
+        (new Date(a?.nextSlot.start!).getTime() - now.getTime()) / (1000 * 60);
       const timeDiffB =
-        (new Date(b!.nextSlot.start).getTime() - now.getTime()) / (1000 * 60);
+        (new Date(b?.nextSlot.start!).getTime() - now.getTime()) / (1000 * 60);
       return (
-        a!.distance + timeDiffA / weight - (b!.distance + timeDiffB / weight)
+        a?.distance! + timeDiffA / weight - (b?.distance! + timeDiffB / weight)
       );
     });
 

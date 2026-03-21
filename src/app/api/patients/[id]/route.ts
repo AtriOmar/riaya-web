@@ -1,13 +1,13 @@
+import { and, eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { patient } from "@/db/schema";
 import {
-  json,
   apiError,
-  requireSession,
+  json,
   requireDoctorProfile,
+  requireSession,
 } from "@/lib/api-utils";
-import { eq, and } from "drizzle-orm";
-import type { NextRequest } from "next/server";
 
 // ─── GET /api/patients/[id] ──────────────────────────────────────────────────
 

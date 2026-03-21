@@ -1,9 +1,9 @@
+import { and, eq, gt, gte, lt, lte, or } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
-import { json, apiError, validationError } from "@/lib/api-utils";
-import { eq, and, lt, gt, gte, lte, or } from "drizzle-orm";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
+import { apiError, json, validationError } from "@/lib/api-utils";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
 // Public endpoint — allows non-authenticated users to book an appointment
