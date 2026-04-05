@@ -5,32 +5,32 @@ import { getSignedUploadUrl, type UploadFolder } from "@/services/upload";
  * Returns the public CDN URL of the uploaded file.
  */
 export async function uploadToR2(
-  file: File,
-  folder: UploadFolder,
+	file: File,
+	folder: UploadFolder,
 ): Promise<string> {
-  const { signedUrl, cdnUrl } = await getSignedUploadUrl(
-    file.name,
-    file.type,
-    folder,
-  );
+	const { signedUrl, cdnUrl } = await getSignedUploadUrl(
+		file.name,
+		file.type,
+		folder,
+	);
 
-  await fetch(signedUrl, {
-    method: "PUT",
-    body: file,
-    headers: { "Content-Type": file.type },
-  });
+	await fetch(signedUrl, {
+		method: "PUT",
+		body: file,
+		headers: { "Content-Type": file.type },
+	});
 
-  return cdnUrl;
+	return cdnUrl;
 }
 
 /**
  * Upload a Blob (e.g. cropped image) to R2.
  */
 export async function uploadBlobToR2(
-  blob: Blob,
-  filename: string,
-  folder: UploadFolder,
+	blob: Blob,
+	filename: string,
+	folder: UploadFolder,
 ): Promise<string> {
-  const file = new File([blob], filename, { type: blob.type });
-  return uploadToR2(file, folder);
+	const file = new File([blob], filename, { type: blob.type });
+	return uploadToR2(file, folder);
 }

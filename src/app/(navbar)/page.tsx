@@ -8,16 +8,16 @@ import PricingSection from "@/components/home/pricing-section";
 import TestimonialsSection from "@/components/home/testimonials-section";
 
 export default function HomePage() {
-  return (
-    <div>
-      <HeroSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <TestimonialsSection />
-      <PricingSection />
-      <FAQSection />
-      <CTASection />
-      <Footer />
-    </div>
-  );
+	return (
+		<div>
+			<HeroSection />
+			<FeaturesSection />
+			<HowItWorksSection />
+			<TestimonialsSection />
+			<PricingSection />
+			<FAQSection />
+			<CTASection />
+			<Footer />
+		</div>
+	);
 }

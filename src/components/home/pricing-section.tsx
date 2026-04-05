@@ -1,132 +1,193 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const plans = [
-  {
-    name: "Starter",
-    price: "Free",
-    period: "",
-    description: "Get started with AI patient matching",
-    features: [
-      "AI phone intake",
-      "Up to 20 appointments/month",
-      "Basic calendar",
-      "Patient profiles",
-      "Email support",
-    ],
-    cta: "Get Started Free",
-    popular: false,
-  },
-  {
-    name: "Professional",
-    price: "49",
-    period: "/month",
-    description: "For growing practices",
-    features: [
-      "Everything in Starter",
-      "Unlimited appointments",
-      "Advanced scheduling",
-      "Consultation notes",
-      "Priority support",
-      "Analytics dashboard",
-    ],
-    cta: "Start Free Trial",
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "For clinics and hospital networks",
-    features: [
-      "Everything in Professional",
-      "Multi-doctor support",
-      "Custom integrations",
-      "Dedicated account manager",
-      "SLA guarantee",
-      "Custom AI training",
-    ],
-    cta: "Contact Sales",
-    popular: false,
-  },
+	{
+		name: "Basic",
+		description: "For individual practitioners",
+		price: "12",
+		period: "/month",
+		features: [
+			"AI appointment matching",
+			"Up to 50 appointments/month",
+			"Calendar & schedule management",
+			"Patient records",
+			"Email support",
+		],
+		popular: false,
+		cta: "Get Started",
+	},
+	{
+		name: "Pro",
+		description: "For growing practices",
+		price: "25",
+		period: "/month",
+		features: [
+			"Unlimited AI appointments",
+			"Priority patient matching",
+			"Consultation notes & prescriptions",
+			"Document storage (10GB)",
+			"Patient transport coordination",
+			"Priority support",
+			"Analytics dashboard",
+		],
+		popular: true,
+		cta: "Start Pro Trial",
+	},
+	{
+		name: "Clinic",
+		description: "For medical centers & clinics",
+		price: "40",
+		period: "/month",
+		features: [
+			"Everything in Pro",
+			"Multi-doctor management",
+			"Shared patient records",
+			"Unlimited document storage",
+			"Advanced analytics",
+			"Dedicated account manager",
+			"Custom integrations",
+		],
+		popular: false,
+		cta: "Contact Sales",
+	},
 ];
 
+function PricingCard({
+	plan,
+	index,
+}: {
+	plan: (typeof plans)[number];
+	index: number;
+}) {
+	return (
+		<div data-aos="fade-up" data-aos-delay={index * 100}>
+			<div
+				className={`
+        relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2 size-full
+        ${
+					plan.popular
+						? "bg-linear-to-br from-primary to-primary-700 text-primary-foreground shadow-glow"
+						: "bg-card border border-border shadow-soft"
+				}
+        `}
+			>
+				{plan.popular && (
+					<div className="-top-4 left-1/2 absolute px-4 py-1 rounded-full bg-accent font-semibold text-secondary-foreground text-sm -translate-x-1/2">
+						Most Popular
+					</div>
+				)}
+
+				{/* Header */}
+				<div className="mb-8 text-center">
+					<h3
+						className={`text-xl font-semibold mb-2 ${
+							plan.popular ? "" : "text-card-foreground"
+						}`}
+					>
+						{plan.name}
+					</h3>
+					<p
+						className={`text-sm mb-4 ${
+							plan.popular
+								? "text-primary-foreground/80"
+								: "text-muted-foreground"
+						}`}
+					>
+						{plan.description}
+					</p>
+					<div className="flex justify-center items-baseline gap-1">
+						<span
+							className={`text-lg ${
+								plan.popular ? "" : "text-muted-foreground"
+							}`}
+						>
+							TND
+						</span>
+						<span className="font-bold text-4xl">{plan.price}</span>
+						<span
+							className={
+								plan.popular
+									? "text-primary-foreground/80"
+									: "text-muted-foreground"
+							}
+						>
+							{plan.period}
+						</span>
+					</div>
+				</div>
+
+				{/* Features */}
+				<ul className="space-y-4 mb-8">
+					{plan.features.map((feature) => (
+						<li key={feature} className="flex items-start gap-3">
+							<div
+								className={`
+                w-5 h-5 rounded-full flex items-center justify-center shrink-0
+                ${plan.popular ? "bg-primary-foreground/20" : "bg-accent"}
+                `}
+							>
+								<Check
+									className={`w-3 h-3 ${
+										plan.popular ? "text-primary-foreground" : "text-primary"
+									}`}
+								/>
+							</div>
+							<span
+								className={`text-sm ${
+									plan.popular
+										? "text-primary-foreground/90"
+										: "text-muted-foreground"
+								}`}
+							>
+								{feature}
+							</span>
+						</li>
+					))}
+				</ul>
+
+				{/* CTA */}
+				<Button
+					variant={plan.popular ? "hero-outline" : "hero"}
+					className="w-full"
+					size="lg"
+					asChild
+				>
+					<Link href="/register">{plan.cta}</Link>
+				</Button>
+			</div>
+		</div>
+	);
+}
+
 export default function PricingSection() {
-  return (
-    <section id="pricing" className="py-24 bg-background">
-      <div className="mx-auto px-4 container">
-        <div data-aos="fade-up" className="max-w-3xl mx-auto mb-16 text-center">
-          <span className="inline-block mb-4 px-4 py-1.5 rounded-full bg-accent font-medium text-secondary-foreground text-sm">
-            Pricing
-          </span>
-          <h2 className="mb-4 font-bold text-3xl md:text-4xl">
-            Simple, <span className="text-gradient">Transparent</span> Pricing
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Start free and scale as your practice grows.
-          </p>
-        </div>
+	return (
+		<section id="pricing" className="py-24 bg-gradient-soft">
+			<div className="mx-auto px-4 container">
+				{/* Header */}
+				<div data-aos="fade-up" className="max-w-3xl mx-auto mb-16 text-center">
+					<span className="inline-block mb-4 px-4 py-1.5 rounded-full bg-accent font-medium text-secondary-foreground text-sm">
+						Pricing
+					</span>
+					<h2 className="mb-4 font-bold text-3xl md:text-4xl">
+						Plans for <span className="text-gradient">Every Practice</span>
+					</h2>
+					<p className="text-muted-foreground text-lg">
+						Choose the plan that fits your practice. All plans include our core
+						AI appointment matching.
+					</p>
+				</div>
 
-        <div className="gap-8 grid md:grid-cols-3 max-w-5xl mx-auto">
-          {plans.map((plan, i) => (
-            <div
-              key={plan.name}
-              data-aos="fade-up"
-              data-aos-delay={i * 150}
-              className={`relative p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${
-                plan.popular
-                  ? "border-primary bg-card shadow-lg scale-105"
-                  : "border-border/50 bg-card shadow-soft"
-              }`}
-            >
-              {plan.popular && (
-                <div className="-top-4 left-1/2 absolute px-4 py-1 rounded-full bg-primary font-medium text-primary-foreground text-sm -translate-x-1/2">
-                  Most Popular
-                </div>
-              )}
-
-              <h3 className="font-semibold text-xl">{plan.name}</h3>
-              <p className="mt-2 text-muted-foreground text-sm">
-                {plan.description}
-              </p>
-
-              <div className="mt-6 mb-6">
-                <span className="font-bold text-4xl">
-                  {plan.price === "Free" || plan.price === "Custom"
-                    ? plan.price
-                    : `$${plan.price}`}
-                </span>
-                {plan.period && (
-                  <span className="text-muted-foreground">{plan.period}</span>
-                )}
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                variant={plan.popular ? "default" : "outline"}
-                className="w-full"
-                asChild
-              >
-                <Link href="/register">
-                  {plan.cta}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+				{/* Cards */}
+				<div className="gap-8 grid md:grid-cols-3 max-w-5xl mx-auto">
+					{plans.map((plan, index) => (
+						<PricingCard key={plan.name} plan={plan} index={index} />
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }

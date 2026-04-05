@@ -9,53 +9,53 @@ import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 
 export default function Profile() {
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+	const { data: session } = authClient.useSession();
+	const user = session?.user;
 
-  const { data: application, mutate: mutateApp } = useSWR(
-    user ? "my-application" : null,
-    () => getMyDoctorApplication().catch(() => null),
-  );
+	const { data: application, mutate: mutateApp } = useSWR(
+		user ? "my-application" : null,
+		() => getMyDoctorApplication().catch(() => null),
+	);
 
-  const { data: specialities } = useSWR("specialities", () =>
-    getSpecialities(),
-  );
+	const { data: specialities } = useSWR("specialities", () =>
+		getSpecialities(),
+	);
 
-  const status = application?.status ?? "none";
-  const showReadOnly = status === "verified" || status === "pending";
-  const showForm = status === "none" || status === "rejected";
-  const showBanned = status === "banned";
+	const status = application?.status ?? "none";
+	const showReadOnly = status === "verified" || status === "pending";
+	const showForm = status === "none" || status === "rejected";
+	const showBanned = status === "banned";
 
-  return (
-    <div>
-      <ApplicationStatus
-        status={status}
-        rejectionReasons={application?.rejectionReasons}
-      />
-      <ProfilePicture />
+	return (
+		<div>
+			<ApplicationStatus
+				status={status}
+				rejectionReasons={application?.rejectionReasons}
+			/>
+			<ProfilePicture />
 
-      {showReadOnly && application && (
-        <UserInfoReadOnly application={application} />
-      )}
+			{showReadOnly && application && (
+				<UserInfoReadOnly application={application} />
+			)}
 
-      {showBanned && (
-        <div className="mt-5">
-          <h3 className="font-semibold text-xl">Your Information</h3>
-          <div className="mt-4">
-            <p className="font-medium text-muted-foreground text-sm">Email</p>
-            <p className="px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm">
-              {user?.email}
-            </p>
-          </div>
-        </div>
-      )}
+			{showBanned && (
+				<div className="mt-5">
+					<h3 className="font-semibold text-xl">Your Information</h3>
+					<div className="mt-4">
+						<p className="font-medium text-muted-foreground text-sm">Email</p>
+						<p className="px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm">
+							{user?.email}
+						</p>
+					</div>
+				</div>
+			)}
 
-      {showForm && (
-        <DoctorApplicationForm
-          specialities={specialities ?? []}
-          onApplicationSubmitted={() => mutateApp()}
-        />
-      )}
-    </div>
-  );
+			{showForm && (
+				<DoctorApplicationForm
+					specialities={specialities ?? []}
+					onApplicationSubmitted={() => mutateApp()}
+				/>
+			)}
+		</div>
+	);
 }

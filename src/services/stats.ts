@@ -5,6 +5,6 @@ import type { StatsResponse } from "./types";
 // Admin-only
 
 export async function getStats(): Promise<StatsResponse> {
-  const { data } = await api.get<StatsResponse>("/api/stats");
-  return data;
+	const { data } = await api.get<StatsResponse>("/api/stats");
+	return data;
 }
