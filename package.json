@@ -12,7 +12,9 @@
 		"fix:format": "biome format --write",
 		"fix:all": "biome check --write && biome format --write",
 		"typecheck": "tsc --noEmit",
-		"prepare": "husky"
+		"prepare": "husky",
+		"db:push": "drizzle-kit push",
+		"db:seed": "tsx src/db/seed.ts"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1004.0",

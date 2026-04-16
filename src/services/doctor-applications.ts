@@ -25,7 +25,7 @@ export interface CreateDoctorApplicationInput {
 	cinRecto: string; // R2 URL
 	cinVerso: string; // R2 URL
 	cabinetName: string;
-	cabinetCity?: string;
+	cabinetCityId?: number;
 	cabinetLongitude?: number;
 	cabinetLatitude?: number;
 	specialityId: number;

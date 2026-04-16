@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { doctorProfile, speciality } from "@/db/schema";
 import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
+import { toSlug } from "@/lib/stringUtils";
 
 // ─── GET /api/specialities ───────────────────────────────────────────────────
 
@@ -19,7 +20,10 @@ export async function GET() {
 // ─── POST /api/specialities ──────────────────────────────────────────────────
 
 const createSchema = z.object({
-	name: z.string().min(1),
+	enName: z.string().min(1),
+	frName: z.string().min(1),
+	arName: z.string().min(1),
+	slug: z.string().min(1).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -31,7 +35,14 @@ export async function POST(req: NextRequest) {
 
 		const [created] = await db
 			.insert(speciality)
-			.values({ name: parsed.data.name })
+			.values({
+				enName: parsed.data.enName,
+				frName: parsed.data.frName,
+				arName: parsed.data.arName,
+				slug: parsed.data.slug
+					? toSlug(parsed.data.slug)
+					: toSlug(parsed.data.enName),
+			})
 			.returning();
 		return json(created, 201);
 	} catch (e) {
@@ -44,7 +55,10 @@ export async function POST(req: NextRequest) {
 
 const updateSchema = z.object({
 	id: z.coerce.number().int().positive(),
-	name: z.string().min(1),
+	enName: z.string().min(1),
+	frName: z.string().min(1),
+	arName: z.string().min(1),
+	slug: z.string().min(1).optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -56,7 +70,14 @@ export async function PUT(req: NextRequest) {
 
 		const [updated] = await db
 			.update(speciality)
-			.set({ name: parsed.data.name })
+			.set({
+				enName: parsed.data.enName,
+				frName: parsed.data.frName,
+				arName: parsed.data.arName,
+				slug: parsed.data.slug
+					? toSlug(parsed.data.slug)
+					: toSlug(parsed.data.enName),
+			})
 			.where(eq(speciality.id, parsed.data.id))
 			.returning();
 

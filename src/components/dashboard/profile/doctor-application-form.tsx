@@ -24,7 +24,9 @@ const schema = z.object({
 		.min(2, "Last name must be at least 2 characters")
 		.regex(/^[A-Za-z ]+$/, "Letters only"),
 	cabinetName: z.string().min(2, "Cabinet name is required"),
-	cabinetCity: z.string().min(2, "Cabinet city is required"),
+	cabinetCityId: z
+		.string()
+		.regex(/^\d+$/, "Cabinet city ID must be a valid number"),
 	specialityId: z.string().min(1, "Speciality is required"),
 	tin: z
 		.string()
@@ -70,7 +72,7 @@ export default function DoctorApplicationForm({
 			firstName: "",
 			lastName: "",
 			cabinetName: "",
-			cabinetCity: "",
+			cabinetCityId: "",
 			specialityId: "",
 			tin: "",
 		},
@@ -111,7 +113,7 @@ export default function DoctorApplicationForm({
 				firstName: values.firstName,
 				lastName: values.lastName,
 				cabinetName: values.cabinetName,
-				cabinetCity: values.cabinetCity,
+				cabinetCityId: Number(values.cabinetCityId),
 				specialityId: Number(values.specialityId),
 				tin: values.tin,
 				cinRecto: cinRectoUrl,
@@ -200,17 +202,17 @@ export default function DoctorApplicationForm({
 				</div>
 
 				<div>
-					<Label htmlFor="cabinetCity">
-						Cabinet City <span className="text-destructive">*</span>
+					<Label htmlFor="cabinetCityId">
+						Cabinet City ID <span className="text-destructive">*</span>
 					</Label>
 					<Input
-						id="cabinetCity"
-						placeholder="Tunis"
-						{...register("cabinetCity")}
+						id="cabinetCityId"
+						placeholder="1"
+						{...register("cabinetCityId")}
 					/>
-					{errors.cabinetCity && (
+					{errors.cabinetCityId && (
 						<p className="mt-1 text-destructive text-sm">
-							{errors.cabinetCity.message}
+							{errors.cabinetCityId.message}
 						</p>
 					)}
 				</div>

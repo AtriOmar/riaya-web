@@ -1,4 +1,4 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
 		if (!parsed.success) return validationError(parsed.error.issues);
 
 		const {
-			speciality: specialityName,
+			speciality: specialitySearchTerm,
 			long,
 			lat,
 			time: desiredTimeParam,
@@ -151,11 +151,18 @@ export async function GET(req: NextRequest) {
 
 		const nextWeek = new Date(desiredTime.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-		// Find speciality (case-insensitive via ilike)
+		// Find speciality by slug or translated names
 		const specialities = await db
 			.select()
 			.from(speciality)
-			.where(eq(speciality.name, specialityName));
+			.where(
+				or(
+					eq(speciality.slug, specialitySearchTerm),
+					eq(speciality.enName, specialitySearchTerm),
+					eq(speciality.frName, specialitySearchTerm),
+					eq(speciality.arName, specialitySearchTerm),
+				),
+			);
 
 		// Fallback: try case-insensitive match
 		const specialityData = specialities[0];

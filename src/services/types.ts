@@ -55,7 +55,21 @@ export type PatientWithMedicalFiles = Patient & {
 };
 
 type ApplicationUser = { id: string; username: string | null; email: string };
-type ApplicationSpeciality = { id: number; name: string | null };
+type ApplicationSpeciality = {
+	id: number;
+	enName: string | null;
+	frName: string | null;
+	arName: string | null;
+	slug: string | null;
+};
+type ApplicationCity = {
+	id: number;
+	postalCode: number | null;
+	enName: string | null;
+	frName: string | null;
+	arName: string | null;
+	slug: string | null;
+};
 
 export type DoctorApplicationSummary = DoctorApplication & {
 	user: ApplicationUser;
@@ -63,6 +77,7 @@ export type DoctorApplicationSummary = DoctorApplication & {
 export type DoctorApplicationDetail = DoctorApplication & {
 	user: ApplicationUser;
 	speciality: ApplicationSpeciality | null;
+	cabinetCity: ApplicationCity | null;
 };
 
 export type DoctorProfileWithSpeciality = DoctorProfile & {

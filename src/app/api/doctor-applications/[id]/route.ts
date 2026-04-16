@@ -23,7 +23,25 @@ export async function GET(
 			where: eq(doctorApplication.id, applicationId),
 			with: {
 				user: { columns: { id: true, username: true, email: true } },
-				speciality: { columns: { id: true, name: true } },
+				speciality: {
+					columns: {
+						id: true,
+						enName: true,
+						frName: true,
+						arName: true,
+						slug: true,
+					},
+				},
+				cabinetCity: {
+					columns: {
+						id: true,
+						postalCode: true,
+						enName: true,
+						frName: true,
+						arName: true,
+						slug: true,
+					},
+				},
 			},
 		});
 
@@ -83,7 +101,7 @@ export async function PUT(
 						cinRecto: application.cinRecto,
 						cinVerso: application.cinVerso,
 						cabinetName: application.cabinetName,
-						cabinetCity: application.cabinetCity,
+						cabinetCityId: application.cabinetCityId,
 						cabinetLongitude: application.cabinetLongitude,
 						cabinetLatitude: application.cabinetLatitude,
 						tin: application.tin,
@@ -100,7 +118,7 @@ export async function PUT(
 					cinRecto: application.cinRecto,
 					cinVerso: application.cinVerso,
 					cabinetName: application.cabinetName,
-					cabinetCity: application.cabinetCity,
+					cabinetCityId: application.cabinetCityId,
 					cabinetLongitude: application.cabinetLongitude,
 					cabinetLatitude: application.cabinetLatitude,
 					tin: application.tin,

@@ -33,22 +33,39 @@ export default function SpecialitiesManager() {
 		"admin-specialities",
 		getSpecialities,
 	);
-	const [newName, setNewName] = useState("");
+	const [newEnName, setNewEnName] = useState("");
+	const [newFrName, setNewFrName] = useState("");
+	const [newArName, setNewArName] = useState("");
+	const [newSlug, setNewSlug] = useState("");
 	const [adding, setAdding] = useState(false);
 
 	const [editItem, setEditItem] = useState<Speciality | null>(null);
-	const [editName, setEditName] = useState("");
+	const [editEnName, setEditEnName] = useState("");
+	const [editFrName, setEditFrName] = useState("");
+	const [editArName, setEditArName] = useState("");
+	const [editSlug, setEditSlug] = useState("");
 
 	const [deleteItem, setDeleteItem] = useState<Speciality | null>(null);
 	const [reassignTo, setReassignTo] = useState("");
 
+	const getSpecialityLabel = (s: Speciality) =>
+		s.enName ?? s.frName ?? s.arName ?? "—";
+
 	async function handleAdd() {
-		if (!newName.trim()) return;
+		if (!newEnName.trim() || !newFrName.trim() || !newArName.trim()) return;
 		setAdding(true);
 		try {
-			await createSpeciality(newName.trim());
+			await createSpeciality({
+				enName: newEnName.trim(),
+				frName: newFrName.trim(),
+				arName: newArName.trim(),
+				slug: newSlug.trim() || undefined,
+			});
 			toast.success("Speciality added");
-			setNewName("");
+			setNewEnName("");
+			setNewFrName("");
+			setNewArName("");
+			setNewSlug("");
 			mutate();
 		} catch {
 			toast.error("Failed to add speciality");
@@ -58,9 +75,20 @@ export default function SpecialitiesManager() {
 	}
 
 	async function handleEdit() {
-		if (!editItem || !editName.trim()) return;
+		if (
+			!editItem ||
+			!editEnName.trim() ||
+			!editFrName.trim() ||
+			!editArName.trim()
+		)
+			return;
 		try {
-			await updateSpeciality(editItem.id, editName.trim());
+			await updateSpeciality(editItem.id, {
+				enName: editEnName.trim(),
+				frName: editFrName.trim(),
+				arName: editArName.trim(),
+				slug: editSlug.trim() || undefined,
+			});
 			toast.success("Speciality updated");
 			setEditItem(null);
 			mutate();
@@ -91,10 +119,25 @@ export default function SpecialitiesManager() {
 						<DialogTitle>Edit Speciality</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-3">
-						<Label>Name</Label>
+						<Label>English Name</Label>
 						<Input
-							value={editName}
-							onChange={(e) => setEditName(e.target.value)}
+							value={editEnName}
+							onChange={(e) => setEditEnName(e.target.value)}
+						/>
+						<Label>French Name</Label>
+						<Input
+							value={editFrName}
+							onChange={(e) => setEditFrName(e.target.value)}
+						/>
+						<Label>Arabic Name</Label>
+						<Input
+							value={editArName}
+							onChange={(e) => setEditArName(e.target.value)}
+						/>
+						<Label>Slug (optional)</Label>
+						<Input
+							value={editSlug}
+							onChange={(e) => setEditSlug(e.target.value)}
 						/>
 						<Button onClick={handleEdit} className="w-full">
 							Save
@@ -110,7 +153,10 @@ export default function SpecialitiesManager() {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete Speciality: {deleteItem?.name}</DialogTitle>
+						<DialogTitle>
+							Delete Speciality:{" "}
+							{deleteItem ? getSpecialityLabel(deleteItem) : "—"}
+						</DialogTitle>
 					</DialogHeader>
 					<p className="text-muted-foreground text-sm">
 						Doctors with this speciality will be reassigned. Choose a new
@@ -125,7 +171,7 @@ export default function SpecialitiesManager() {
 								.filter((s) => s.id !== deleteItem?.id)
 								.map((s) => (
 									<SelectItem key={s.id} value={String(s.id)}>
-										{s.name}
+										{getSpecialityLabel(s)}
 									</SelectItem>
 								))}
 						</SelectContent>
@@ -145,14 +191,22 @@ export default function SpecialitiesManager() {
 				<table className="min-w-full">
 					<thead>
 						<tr className="bg-muted text-sm">
-							<th className="px-4 py-2 font-semibold text-left">Name</th>
+							<th className="px-4 py-2 font-semibold text-left">
+								English Name
+							</th>
+							<th className="px-4 py-2 font-semibold text-left">French Name</th>
+							<th className="px-4 py-2 font-semibold text-left">Arabic Name</th>
+							<th className="px-4 py-2 font-semibold text-left">Slug</th>
 							<th className="px-4 py-2 font-semibold text-right">Actions</th>
 						</tr>
 					</thead>
 					<tbody className="divide-y">
 						{(specialities ?? []).map((s) => (
 							<tr key={s.id} className="hover:bg-muted/50 transition">
-								<td className="px-4 py-2 text-sm">{s.name}</td>
+								<td className="px-4 py-2 text-sm">{s.enName ?? "—"}</td>
+								<td className="px-4 py-2 text-sm">{s.frName ?? "—"}</td>
+								<td className="px-4 py-2 text-sm">{s.arName ?? "—"}</td>
+								<td className="px-4 py-2 text-sm">{s.slug ?? "—"}</td>
 								<td className="px-4 py-2">
 									<div className="flex justify-end gap-2">
 										<Button
@@ -160,7 +214,10 @@ export default function SpecialitiesManager() {
 											size="sm"
 											onClick={() => {
 												setEditItem(s);
-												setEditName(s.name ?? "");
+												setEditEnName(s.enName ?? "");
+												setEditFrName(s.frName ?? "");
+												setEditArName(s.arName ?? "");
+												setEditSlug(s.slug ?? "");
 											}}
 										>
 											<Pencil className="w-3 h-3" />
@@ -181,7 +238,7 @@ export default function SpecialitiesManager() {
 						{(!specialities || specialities.length === 0) && (
 							<tr>
 								<td
-									colSpan={2}
+									colSpan={5}
 									className="py-8 text-muted-foreground text-center"
 								>
 									No specialities found.
@@ -193,16 +250,42 @@ export default function SpecialitiesManager() {
 			</div>
 
 			{/* Add form */}
-			<div className="flex items-end gap-3">
+			<div className="gap-3 grid md:grid-cols-2">
 				<div className="grow">
-					<Label>New Speciality</Label>
+					<Label>English Name</Label>
 					<Input
 						placeholder="e.g. Cardiology"
-						value={newName}
-						onChange={(e) => setNewName(e.target.value)}
+						value={newEnName}
+						onChange={(e) => setNewEnName(e.target.value)}
+					/>
+				</div>
+				<div className="grow">
+					<Label>French Name</Label>
+					<Input
+						placeholder="e.g. Cardiologie"
+						value={newFrName}
+						onChange={(e) => setNewFrName(e.target.value)}
+					/>
+				</div>
+				<div className="grow">
+					<Label>Arabic Name</Label>
+					<Input
+						placeholder="e.g. Amrad Al Qalb"
+						value={newArName}
+						onChange={(e) => setNewArName(e.target.value)}
+					/>
+				</div>
+				<div className="grow">
+					<Label>Slug (optional)</Label>
+					<Input
+						placeholder="e.g. cardiology"
+						value={newSlug}
+						onChange={(e) => setNewSlug(e.target.value)}
 						onKeyDown={(e) => e.key === "Enter" && handleAdd()}
 					/>
 				</div>
+			</div>
+			<div className="flex justify-end">
 				<Button onClick={handleAdd} disabled={adding}>
 					<Plus className="w-4 h-4" />
 					Add

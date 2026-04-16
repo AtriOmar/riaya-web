@@ -49,6 +49,13 @@ export default function ApplicationDetail({
 	if (!app)
 		return <p className="text-muted-foreground">Application not found.</p>;
 
+	const cabinetCityName =
+		app.cabinetCity?.enName ??
+		app.cabinetCity?.frName ??
+		app.cabinetCity?.arName;
+	const specialityName =
+		app.speciality?.enName ?? app.speciality?.frName ?? app.speciality?.arName;
+
 	async function handleApprove() {
 		setSaving(true);
 		try {
@@ -160,11 +167,11 @@ export default function ApplicationDetail({
 				</div>
 				<div>
 					<p className="text-muted-foreground text-sm">Cabinet City</p>
-					<p className="font-medium">{app.cabinetCity ?? "—"}</p>
+					<p className="font-medium">{cabinetCityName ?? "—"}</p>
 				</div>
 				<div>
 					<p className="text-muted-foreground text-sm">Speciality</p>
-					<p className="font-medium">{app.speciality?.name ?? "—"}</p>
+					<p className="font-medium">{specialityName ?? "—"}</p>
 				</div>
 				<div>
 					<p className="text-muted-foreground text-sm">Status</p>

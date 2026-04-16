@@ -10,11 +10,32 @@ export async function GET() {
 	try {
 		const session = await requireSession();
 
+		console.log("-------------------- session --------------------");
+		console.log(session);
+
 		const application = await db.query.doctorApplication.findFirst({
 			where: eq(doctorApplication.userId, session.user.id),
 			with: {
 				user: { columns: { id: true, username: true, email: true } },
-				speciality: { columns: { id: true, name: true } },
+				speciality: {
+					columns: {
+						id: true,
+						enName: true,
+						frName: true,
+						arName: true,
+						slug: true,
+					},
+				},
+				cabinetCity: {
+					columns: {
+						id: true,
+						postalCode: true,
+						enName: true,
+						frName: true,
+						arName: true,
+						slug: true,
+					},
+				},
 			},
 		});
 

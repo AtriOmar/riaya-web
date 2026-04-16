@@ -20,9 +20,32 @@ export const speciality = pgTable(
 	"speciality",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		name: varchar("name", { length: 255 }),
+		enName: varchar("en_name", { length: 255 }),
+		frName: varchar("fr_name", { length: 255 }),
+		arName: varchar("ar_name", { length: 255 }),
+		slug: varchar("slug", { length: 255 }).unique(),
 	},
-	(table) => [index("speciality_name_idx").on(table.name)],
+	(table) => [index("speciality_slug_idx").on(table.slug)],
+);
+
+// ─── Cities ───────────────────────────────────────────────────────────────────
+
+export const cities = pgTable(
+	"cities",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		postalCode: integer("postal_code"),
+		latitude: doublePrecision("latitude"),
+		longitude: doublePrecision("longitude"),
+		enName: varchar("en_name", { length: 255 }),
+		frName: varchar("fr_name", { length: 255 }),
+		arName: varchar("ar_name", { length: 255 }),
+		slug: varchar("slug", { length: 255 }).unique(),
+	},
+	(table) => [
+		index("cities_postal_code_idx").on(table.postalCode),
+		index("cities_slug_idx").on(table.slug),
+	],
 );
 
 // ─── Doctor Profile ───────────────────────────────────────────────────────────
@@ -42,7 +65,7 @@ export const doctorProfile = pgTable(
 		tin: varchar("tin", { length: 100 }), // Tax Identification Number
 		status: varchar("status", { length: 50 }).default("none"), // none | pending | verified | rejected | banned
 		cabinetName: varchar("cabinet_name", { length: 255 }),
-		cabinetCity: varchar("cabinet_city", { length: 255 }),
+		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
 		specialityId: integer("speciality_id").references(() => speciality.id),
@@ -56,6 +79,7 @@ export const doctorProfile = pgTable(
 	(table) => [
 		index("doctor_profile_user_id_idx").on(table.userId),
 		index("doctor_profile_status_idx").on(table.status),
+		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
 	],
 );
@@ -160,7 +184,7 @@ export const doctorApplication = pgTable(
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
-		cabinetCity: varchar("cabinet_city", { length: 255 }),
+		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
 		status: varchar("status", { length: 50 }).default("pending"),
@@ -173,6 +197,7 @@ export const doctorApplication = pgTable(
 	(table) => [
 		index("doctor_application_user_id_idx").on(table.userId),
 		index("doctor_application_status_idx").on(table.status),
+		index("doctor_application_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_application_speciality_id_idx").on(table.specialityId),
 	],
 );
@@ -225,6 +250,11 @@ export const specialityRelations = relations(speciality, ({ many }) => ({
 	doctorApplications: many(doctorApplication),
 }));
 
+export const citiesRelations = relations(cities, ({ many }) => ({
+	doctorProfiles: many(doctorProfile),
+	doctorApplications: many(doctorApplication),
+}));
+
 export const doctorProfileRelations = relations(
 	doctorProfile,
 	({ one, many }) => ({
@@ -235,6 +265,10 @@ export const doctorProfileRelations = relations(
 		speciality: one(speciality, {
 			fields: [doctorProfile.specialityId],
 			references: [speciality.id],
+		}),
+		cabinetCity: one(cities, {
+			fields: [doctorProfile.cabinetCityId],
+			references: [cities.id],
 		}),
 		patients: many(patient),
 		appointments: many(appointment),
@@ -295,6 +329,10 @@ export const doctorApplicationRelations = relations(
 		speciality: one(speciality, {
 			fields: [doctorApplication.specialityId],
 			references: [speciality.id],
+		}),
+		cabinetCity: one(cities, {
+			fields: [doctorApplication.cabinetCityId],
+			references: [cities.id],
 		}),
 	}),
 );

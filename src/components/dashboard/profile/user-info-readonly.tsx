@@ -8,13 +8,22 @@ type Props = {
 };
 
 export default function UserInfoReadOnly({ application }: Props) {
+	const cabinetCityName =
+		application.cabinetCity?.enName ??
+		application.cabinetCity?.frName ??
+		application.cabinetCity?.arName;
+	const specialityName =
+		application.speciality?.enName ??
+		application.speciality?.frName ??
+		application.speciality?.arName;
+
 	const rows = [
 		{ label: "First Name", value: application.firstName },
 		{ label: "Last Name", value: application.lastName },
 		{ label: "TIN", value: application.tin },
 		{ label: "Cabinet Name", value: application.cabinetName },
-		{ label: "Cabinet City", value: application.cabinetCity },
-		{ label: "Speciality", value: application.speciality?.name ?? "—" },
+		{ label: "Cabinet City", value: cabinetCityName },
+		{ label: "Speciality", value: specialityName ?? "—" },
 	];
 
 	return (

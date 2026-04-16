@@ -35,6 +35,11 @@ export default function UserDetail({ userId }: { userId: string }) {
 
 	if (!user) return <p className="text-muted-foreground">User not found.</p>;
 
+	const doctorSpecialityName =
+		user.doctorProfile?.speciality?.enName ??
+		user.doctorProfile?.speciality?.frName ??
+		user.doctorProfile?.speciality?.arName;
+
 	async function handleUpdateRole() {
 		if (!accessId) return;
 		setSaving(true);
@@ -105,9 +110,7 @@ export default function UserDetail({ userId }: { userId: string }) {
 						</div>
 						<div>
 							<p className="text-muted-foreground text-sm">Speciality</p>
-							<p className="font-medium">
-								{user.doctorProfile.speciality?.name ?? "—"}
-							</p>
+							<p className="font-medium">{doctorSpecialityName ?? "—"}</p>
 						</div>
 					</div>
 				</div>

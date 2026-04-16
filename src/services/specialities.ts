@@ -1,6 +1,13 @@
 import api from "./api";
 import type { Speciality } from "./types";
 
+export interface SpecialityPayload {
+	enName: string;
+	frName: string;
+	arName: string;
+	slug?: string;
+}
+
 // ─── GET /api/specialities ────────────────────────────────────────────────────
 
 export async function getSpecialities(): Promise<Speciality[]> {
@@ -11,8 +18,10 @@ export async function getSpecialities(): Promise<Speciality[]> {
 // ─── POST /api/specialities ───────────────────────────────────────────────────
 // Admin-only
 
-export async function createSpeciality(name: string): Promise<Speciality> {
-	const { data } = await api.post<Speciality>("/api/specialities", { name });
+export async function createSpeciality(
+	payload: SpecialityPayload,
+): Promise<Speciality> {
+	const { data } = await api.post<Speciality>("/api/specialities", payload);
 	return data;
 }
 
@@ -21,9 +30,12 @@ export async function createSpeciality(name: string): Promise<Speciality> {
 
 export async function updateSpeciality(
 	id: number,
-	name: string,
+	payload: SpecialityPayload,
 ): Promise<Speciality> {
-	const { data } = await api.put<Speciality>("/api/specialities", { id, name });
+	const { data } = await api.put<Speciality>("/api/specialities", {
+		id,
+		...payload,
+	});
 	return data;
 }
 

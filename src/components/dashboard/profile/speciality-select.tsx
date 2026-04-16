@@ -20,6 +20,9 @@ export default function SpecialitySelect({
 	value,
 	onChange,
 }: Props) {
+	const getSpecialityLabel = (s: Speciality) =>
+		s.enName ?? s.frName ?? s.arName ?? "—";
+
 	return (
 		<Select value={value} onValueChange={onChange}>
 			<SelectTrigger className="mt-1">
@@ -28,7 +31,7 @@ export default function SpecialitySelect({
 			<SelectContent>
 				{specialities.map((s) => (
 					<SelectItem key={s.id} value={String(s.id)}>
-						{s.name}
+						{getSpecialityLabel(s)}
 					</SelectItem>
 				))}
 			</SelectContent>
