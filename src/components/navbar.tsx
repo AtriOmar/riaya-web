@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
+import { useAuth } from "@/contexts/auth-provider";
 import { authClient } from "@/lib/auth-client";
 
 const navLinks = [
@@ -20,8 +21,7 @@ export default function Navbar() {
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
-	const { data: session } = authClient.useSession();
-	const user = session?.user;
+	const { user } = useAuth();
 
 	useEffect(() => {
 		setMounted(true);

@@ -1,15 +1,14 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type AppUser, authClient } from "@/lib/auth-client";
+import { useAuth } from "@/contexts/auth-provider";
 
 export default function SidebarUserInfo({
 	isAdmin = false,
 }: {
 	isAdmin?: boolean;
 }) {
-	const { data: session } = authClient.useSession();
-	const user = session?.user as AppUser | undefined;
+	const { user } = useAuth();
 
 	return (
 		<>

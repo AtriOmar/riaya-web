@@ -3,12 +3,11 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type AppUser, authClient } from "@/lib/auth-client";
+import { useAuth } from "@/contexts/auth-provider";
 import UpdatePictureModal from "./update-picture-modal";
 
 export default function ProfilePicture() {
-	const { data: session } = authClient.useSession();
-	const user = session?.user as AppUser | undefined;
+	const { user } = useAuth();
 	const [showModal, setShowModal] = useState(false);
 
 	return (

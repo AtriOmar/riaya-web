@@ -5,6 +5,9 @@ export const authClient = createAuthClient({
 	//   baseURL: "http://localhost:3000",
 });
 
+/** Session shape from better-auth (matches server `getSession` when non-null). */
+export type AuthSession = typeof authClient.$Infer.Session;
+
 // Extended user type that includes additional fields from the server config
 export type AppUser = {
 	id: string;

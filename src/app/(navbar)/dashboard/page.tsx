@@ -2,12 +2,11 @@
 
 import useSWR from "swr";
 import ApplicationStatus from "@/components/dashboard/application-status";
-import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/contexts/auth-provider";
 import { getMyDoctorApplication } from "@/services";
 
 export default function DashboardHome() {
-	const { data: session } = authClient.useSession();
-	const user = session?.user;
+	const { user } = useAuth();
 
 	const { data: application } = useSWR(
 		user ? "/api/doctor-applications/me" : null,

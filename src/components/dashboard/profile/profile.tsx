@@ -2,15 +2,14 @@
 
 import useSWR from "swr";
 import ApplicationStatus from "@/components/dashboard/application-status";
-import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/contexts/auth-provider";
 import { getMyDoctorApplication, getSpecialities } from "@/services";
 import DoctorApplicationForm from "./doctor-application-form";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 
 export default function Profile() {
-	const { data: session } = authClient.useSession();
-	const user = session?.user;
+	const { user } = useAuth();
 
 	const { data: application, mutate: mutateApp } = useSWR(
 		user ? "my-application" : null,

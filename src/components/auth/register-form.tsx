@@ -73,13 +73,20 @@ export default function RegisterForm() {
 	}
 
 	return (
-		<div className="flex min-h-screen">
-			<div className="hidden lg:flex flex-1 justify-center items-center bg-primary/5">
-				<div className="max-w-md p-12 text-center">
-					<h2 className="mb-4 font-bold text-foreground text-2xl">
-						Join Riaya Today
-					</h2>
-					<p className="text-muted-foreground">
+		<div className="flex min-h-screen bg-gradient-hero">
+			<div className="hidden lg:flex flex-1 justify-center items-center p-12 bg-gradient-primary">
+				<div className="max-w-md text-primary-foreground text-center">
+					<div className="flex justify-center items-center w-24 h-24 mx-auto mb-8 rounded-3xl bg-primary-foreground/20">
+						<Image
+							src="/logo.png"
+							alt="Riaya"
+							width={64}
+							height={64}
+							className="w-16 h-16"
+						/>
+					</div>
+					<h2 className="mb-4 font-bold text-3xl">Join Riaya Today</h2>
+					<p className="text-primary-foreground/80 text-lg">
 						Create your account and start managing your medical practice
 						digitally.
 					</p>
