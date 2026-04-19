@@ -54,6 +54,8 @@ export default function NewPatientForm() {
 	const gender = watch("gender");
 
 	async function onSubmit(values: FormValues) {
+		values.dateOfBirth = new Date(values.dateOfBirth).toISOString();
+
 		try {
 			const patient = await createPatient(values);
 			toast.success("Patient created successfully");

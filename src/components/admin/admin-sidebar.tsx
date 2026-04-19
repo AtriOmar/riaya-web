@@ -68,7 +68,7 @@ export default function AdminSidebar() {
 	return (
 		<>
 			{/* Desktop Sidebar */}
-			<div className="hidden md:block top-[70px] bottom-[15px] left-[15px] fixed w-[230px] overflow-hidden rounded-xl bg-background shadow-[1px_1px_40px_rgb(0,0,0,.15)]">
+			<div className="hidden md:block top-[70px] bottom-[15px] left-[15px] fixed w-[230px] overflow-hidden border rounded-xl bg-background">
 				<AdminSidebarContent />
 			</div>
 

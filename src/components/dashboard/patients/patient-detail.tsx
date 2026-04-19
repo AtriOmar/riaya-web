@@ -39,14 +39,14 @@ export default function PatientDetail({ patientId }: { patientId: number }) {
 	if (!patient)
 		return <p className="text-muted-foreground">Patient not found.</p>;
 
-	async function handleAddFile(e: React.FormEvent<HTMLFormElement>) {
+	async function handleAddFile(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const fd = new FormData(e.currentTarget);
 		setSending(true);
 		try {
 			await createMedicalFile(patientId, {
 				type: fd.get("type") as string,
-				date: fd.get("date") as string,
+				date: new Date(fd.get("date") as string).toISOString(),
 				title: fd.get("title") as string,
 				description: fd.get("description") as string,
 			});

@@ -4,6 +4,7 @@ import { Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
+import { useAuth } from "@/components/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import { uploadBlobToR2 } from "@/lib/upload";
 import { updateProfilePicture } from "@/services";
@@ -54,6 +55,7 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 	const [saving, setSaving] = useState(false);
+	const { refetch } = useAuth();
 
 	const onCropComplete = useCallback((_: Area, pixels: Area) => {
 		setCroppedAreaPixels(pixels);
@@ -72,6 +74,7 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 			await updateProfilePicture(cdnUrl);
 			toast.success("Profile picture updated");
 			onDone();
+			refetch();
 		} catch {
 			toast.error("Failed to update profile picture");
 		} finally {
