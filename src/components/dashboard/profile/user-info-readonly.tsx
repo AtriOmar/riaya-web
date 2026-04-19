@@ -1,27 +1,31 @@
 "use client";
 
 import Image from "next/image";
-import type { DoctorApplicationDetail } from "@/services/types";
+import type {
+	DoctorApplicationDetail,
+	DoctorProfileWithRelations,
+} from "@/services/types";
 
 type Props = {
-	application: DoctorApplicationDetail;
+	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
+	info: DoctorProfileWithRelations | DoctorApplicationDetail;
 };
 
-export default function UserInfoReadOnly({ application }: Props) {
+export default function UserInfoReadOnly({ info }: Props) {
 	const cabinetCityName =
-		application.cabinetCity?.enName ??
-		application.cabinetCity?.frName ??
-		application.cabinetCity?.arName;
+		info.cabinetCity?.enName ??
+		info.cabinetCity?.frName ??
+		info.cabinetCity?.arName;
 	const specialityName =
-		application.speciality?.enName ??
-		application.speciality?.frName ??
-		application.speciality?.arName;
+		info.speciality?.enName ??
+		info.speciality?.frName ??
+		info.speciality?.arName;
 
 	const rows = [
-		{ label: "First Name", value: application.firstName },
-		{ label: "Last Name", value: application.lastName },
-		{ label: "TIN", value: application.tin },
-		{ label: "Cabinet Name", value: application.cabinetName },
+		{ label: "First Name", value: info.firstName },
+		{ label: "Last Name", value: info.lastName },
+		{ label: "TIN", value: info.tin },
+		{ label: "Cabinet Name", value: info.cabinetName },
 		{ label: "Cabinet City", value: cabinetCityName },
 		{ label: "Speciality", value: specialityName ?? "—" },
 	];
@@ -43,14 +47,14 @@ export default function UserInfoReadOnly({ application }: Props) {
 			</div>
 
 			<div className="gap-4 grid lg:grid-cols-2 mt-4">
-				{application.cinRecto && (
+				{info.cinRecto && (
 					<div>
 						<p className="mb-2 font-medium text-muted-foreground text-sm">
 							CIN Recto
 						</p>
 						<Image
 							unoptimized
-							src={application.cinRecto}
+							src={info.cinRecto}
 							alt="CIN Recto"
 							width={300}
 							height={200}
@@ -58,14 +62,14 @@ export default function UserInfoReadOnly({ application }: Props) {
 						/>
 					</div>
 				)}
-				{application.cinVerso && (
+				{info.cinVerso && (
 					<div>
 						<p className="mb-2 font-medium text-muted-foreground text-sm">
 							CIN Verso
 						</p>
 						<Image
 							unoptimized
-							src={application.cinVerso}
+							src={info.cinVerso}
 							alt="CIN Verso"
 							width={300}
 							height={200}

@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
 import { getMyDoctorApplication, getSpecialities } from "@/services";
+import { getMe } from "@/services/users";
 import DoctorApplicationForm from "./doctor-application-form";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
@@ -11,8 +12,13 @@ import UserInfoReadOnly from "./user-info-readonly";
 export default function Profile() {
 	const { user } = useAuth();
 
+	const { data: me, mutate: mutateMe } = useSWR(
+		user ? "/api/users/me" : null,
+		() => getMe(),
+	);
+
 	const { data: application, mutate: mutateApp } = useSWR(
-		user ? "my-application" : null,
+		user ? "/api/doctor-applications/me" : null,
 		() => getMyDoctorApplication().catch(() => null),
 	);
 
@@ -20,10 +26,20 @@ export default function Profile() {
 		getSpecialities(),
 	);
 
-	const status = application?.status ?? "none";
+	const profile = me?.doctorProfile ?? null;
+	/** Prefer doctor profile status; fall back to application when there is no profile row yet. */
+	const status = profile?.status ?? application?.status ?? "none";
+
 	const showReadOnly = status === "verified" || status === "pending";
 	const showForm = status === "none" || status === "rejected";
 	const showBanned = status === "banned";
+
+	const readOnlyInfo = profile ?? application;
+
+	const refreshAfterApplication = () => {
+		void mutateMe();
+		void mutateApp();
+	};
 
 	return (
 		<div>
@@ -33,9 +49,7 @@ export default function Profile() {
 			/>
 			<ProfilePicture />
 
-			{showReadOnly && application && (
-				<UserInfoReadOnly application={application} />
-			)}
+			{showReadOnly && readOnlyInfo && <UserInfoReadOnly info={readOnlyInfo} />}
 
 			{showBanned && (
 				<div className="mt-5">
@@ -52,7 +66,7 @@ export default function Profile() {
 			{showForm && (
 				<DoctorApplicationForm
 					specialities={specialities ?? []}
-					onApplicationSubmitted={() => mutateApp()}
+					onApplicationSubmitted={refreshAfterApplication}
 				/>
 			)}
 		</div>

@@ -83,8 +83,15 @@ export type DoctorApplicationDetail = DoctorApplication & {
 export type DoctorProfileWithSpeciality = DoctorProfile & {
 	speciality: Speciality | null;
 };
+
+/** Profile as returned by GET /api/users/me and GET /api/users/[id] (with relations). */
+export type DoctorProfileWithRelations = DoctorProfile & {
+	speciality: Speciality | null;
+	cabinetCity: ApplicationCity | null;
+};
+
 export type UserWithDoctorProfile = UserRow & {
-	doctorProfile: DoctorProfileWithSpeciality | null;
+	doctorProfile: DoctorProfileWithRelations | null;
 };
 
 // ─── Availability ─────────────────────────────────────────────────────────────

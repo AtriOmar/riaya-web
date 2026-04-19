@@ -9,7 +9,6 @@ import { useAuth } from "@/components/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
 import { uploadToR2 } from "@/lib/upload";
 import { createDoctorApplication } from "@/services";
 import type { Speciality } from "@/services/types";

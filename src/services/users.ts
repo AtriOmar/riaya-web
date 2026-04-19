@@ -27,6 +27,13 @@ export async function updateAvailability(
 	return data;
 }
 
+// ─── GET /api/users/me ───────────────────────────────────────────────────────
+
+export async function getMe(): Promise<UserWithDoctorProfile> {
+	const { data } = await api.get<UserWithDoctorProfile>("/api/users/me");
+	return data;
+}
+
 // ─── GET /api/users/[id] ─────────────────────────────────────────────────────
 
 export async function getUserById(id: string): Promise<UserWithDoctorProfile> {

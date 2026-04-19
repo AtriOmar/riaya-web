@@ -6,13 +6,13 @@ import { seedSpecialities } from "./seeds/specialities.seed";
 async function main() {
 	console.log("Starting database seed...");
 
-	// const cityRefs = await seedCities();
-	// console.log(`Seeded cities. Available city refs: ${cityRefs.length}`);
+	const cityRefs = await seedCities();
+	console.log(`Seeded cities. Available city refs: ${cityRefs.length}`);
 
-	// const specialityRefs = await seedSpecialities();
-	// console.log(
-	// 	`Seeded specialities. Available speciality refs: ${specialityRefs.length}`,
-	// );
+	const specialityRefs = await seedSpecialities();
+	console.log(
+		`Seeded specialities. Available speciality refs: ${specialityRefs.length}`,
+	);
 
 	const doctorResult = await seedDoctors();
 	console.log(

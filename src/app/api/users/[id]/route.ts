@@ -43,7 +43,7 @@ export async function GET(
 		// Also fetch doctor profile with speciality if it exists
 		const doctorProfileData = await db.query.doctorProfile.findFirst({
 			where: eq(doctorProfile.userId, id),
-			with: { speciality: true },
+			with: { speciality: true, cabinetCity: true },
 		});
 
 		return json({ ...foundUser, doctorProfile: doctorProfileData ?? null });
