@@ -1,8 +1,8 @@
 "use client";
 
 import useSWR from "swr";
+import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
-import { useAuth } from "@/contexts/auth-provider";
 import { getMyDoctorApplication } from "@/services";
 
 export default function DashboardHome() {

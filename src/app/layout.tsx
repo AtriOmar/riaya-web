@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import { Providers } from "@/components/contexts/providers";
 import { Toaster } from "@/components/ui/sonner";
-import { Providers } from "@/contexts/providers";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 

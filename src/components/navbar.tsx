@@ -4,9 +4,9 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
-import { useAuth } from "@/contexts/auth-provider";
 import { authClient } from "@/lib/auth-client";
 
 const navLinks = [

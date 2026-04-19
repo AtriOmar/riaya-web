@@ -8,10 +8,10 @@ import {
 	Stethoscope,
 	User,
 } from "lucide-react";
+import { useAppContext } from "@/components/contexts/app-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useAppContext } from "@/contexts/app-provider";
 
 const items1: SidebarItemData[] = [
 	{

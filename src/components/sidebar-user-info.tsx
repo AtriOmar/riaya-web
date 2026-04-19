@@ -1,7 +1,7 @@
 "use client";
 
+import { useAuth } from "@/components/contexts/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/auth-provider";
 
 export default function SidebarUserInfo({
 	isAdmin = false,

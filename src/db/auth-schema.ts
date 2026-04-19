@@ -17,8 +17,8 @@ export const user = pgTable("user", {
 	// App-level fields
 	displayName: varchar("display_name", { length: 255 }),
 	username: varchar("username", { length: 255 }).unique(),
-	accessId: integer("access_id"), // 1: Doctor, 3: Admin
-	active: integer("active"), // 0: suspended, 1: inactive, 2: active
+	accessId: integer("access_id").default(1), // 1: Doctor, 3: Admin
+	active: integer("active").default(2), // 0: suspended, 1: inactive, 2: active
 	type: integer("type"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at")

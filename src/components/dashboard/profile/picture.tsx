@@ -2,8 +2,8 @@
 
 import { Pencil } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/components/contexts/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/auth-provider";
 import UpdatePictureModal from "./update-picture-modal";
 
 export default function ProfilePicture() {
