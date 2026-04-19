@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import PrivateRoute from "@/components/layouts/private-route";
 import Sidebar from "@/components/sidebar";
 import { auth } from "@/lib/auth";
 
@@ -14,9 +15,15 @@ export default async function DashboardLayout({
 	if (session.user.accessId && session.user.accessId >= 3) redirect("/admin");
 
 	return (
-		<>
+		<PrivateRoute
+			mode="authenticated"
+			redirectTo="/login"
+			accessIdMaxExclusive={3}
+			onAccessDenied="redirect"
+			accessDeniedRedirect="/admin"
+		>
 			<Sidebar />
 			<div className="mt-[70px] md:ml-[260px]">{children}</div>
-		</>
+		</PrivateRoute>
 	);
 }
