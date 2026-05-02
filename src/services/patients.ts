@@ -75,6 +75,8 @@ export interface UpdateMedicalFileInput {
 	medicalFileId: number;
 	title?: string;
 	description?: string;
+	type?: string;
+	date?: string;
 }
 
 export async function updateMedicalFile(
@@ -86,4 +88,13 @@ export async function updateMedicalFile(
 		data,
 	);
 	return res;
+}
+
+export async function deleteMedicalFile(
+	patientId: number,
+	medicalFileId: number,
+): Promise<void> {
+	await api.delete(`/api/patients/${patientId}/medical-files`, {
+		params: { medicalFileId },
+	});
 }

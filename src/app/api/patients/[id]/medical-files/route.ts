@@ -67,11 +67,22 @@ export async function POST(
 
 // ─── PUT /api/patients/[id]/medical-files ────────────────────────────────────
 
-const updateSchema = z.object({
-	medicalFileId: z.coerce.number().int().positive(),
-	title: z.string().optional(),
-	description: z.string().optional(),
-});
+const updateSchema = z
+	.object({
+		medicalFileId: z.coerce.number().int().positive(),
+		title: z.string().optional(),
+		description: z.string().optional(),
+		type: z.string().min(1).optional(),
+		date: z.iso.datetime().optional(),
+	})
+	.refine(
+		(d) =>
+			d.title !== undefined ||
+			d.description !== undefined ||
+			d.type !== undefined ||
+			d.date !== undefined,
+		{ message: "At least one field to update is required" },
+	);
 
 export async function PUT(
 	req: NextRequest,
@@ -102,6 +113,8 @@ export async function PUT(
 		if (fields.title !== undefined) updateData.title = fields.title;
 		if (fields.description !== undefined)
 			updateData.description = fields.description;
+		if (fields.type !== undefined) updateData.type = fields.type;
+		if (fields.date !== undefined) updateData.date = new Date(fields.date);
 
 		const [updated] = await db
 			.update(patientMedicalFile)

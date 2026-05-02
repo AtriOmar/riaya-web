@@ -29,7 +29,11 @@ export default function Patient({ patientId }: { patientId: number }) {
 		<div className="space-y-6">
 			<PatientDetails patient={patient} />
 			<div className="gap-6 grid lg:grid-cols-3">
-				<PatientMedicalFilesList medicalFiles={patient.medicalFiles} />
+				<PatientMedicalFilesList
+					patientId={patientId}
+					medicalFiles={patient.medicalFiles}
+					onChanged={() => mutate()}
+				/>
 				<AddMedicalFile patientId={patientId} onFileAdded={() => mutate()} />
 			</div>
 		</div>
