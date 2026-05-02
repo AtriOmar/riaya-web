@@ -15,8 +15,8 @@ const externalSchema = z.object({
 	doctorId: z.coerce.number().int().positive(),
 	name: z.string().min(1),
 	phoneNumber: z.string().min(8).regex(/^\d+$/, "Invalid phone number"),
-	start: z.string().datetime(),
-	end: z.string().datetime(),
+	start: z.iso.datetime(),
+	end: z.iso.datetime(),
 	illness: z.string(),
 });
 

@@ -16,9 +16,9 @@ import {
 
 const createSchema = z.object({
 	type: z.string().min(1),
-	date: z.string().datetime(),
+	date: z.iso.datetime(),
 	title: z.string().min(1),
-	description: z.string().min(1),
+	description: z.string(),
 	documents: z.array(z.url()).optional(),
 });
 

@@ -1,31 +1,59 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import useSWR from "swr";
+import { getCalls } from "@/services/calls";
+import type {
+	CallEvent,
+	CallEventType,
+	CallWithEvents,
+	FunctionCallStatus,
+} from "@/services/types";
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000];
 
-type CallData = {
+// ─── Unified timeline entry ──────────────────────────────────────────────────
+export type TimelineEntry =
+	| {
+			id: string;
+			kind: "transcript";
+			role: "patient" | "ai";
+			text: string;
+			timestamp: number;
+	  }
+	| {
+			id: string;
+			kind: "function_call";
+			name: string;
+			args: unknown;
+			result?: unknown;
+			status: FunctionCallStatus;
+			timestamp: number;
+	  }
+	| {
+			id: string;
+			kind: "system";
+			text: string;
+			timestamp: number;
+	  }
+	| {
+			id: string;
+			kind: "error";
+			text: string;
+			timestamp: number;
+	  };
+
+export type CallData = {
+	id?: number;
 	callSid: string;
+	from: string | null;
+	callerName: string | null;
 	startTime: string;
-	status: "active" | "ended";
 	endTime?: string;
-	transcript: TranscriptEntry[];
-	patientName: string | null;
-	functionCalls: FunctionCallEntry[];
-};
-
-type TranscriptEntry = {
-	role: "patient" | "ai" | "system";
-	text: string;
-	timestamp: number;
-};
-
-type FunctionCallEntry = {
-	name: string;
-	args: unknown;
-	status: "calling" | "success" | "error";
-	result?: unknown;
-	timestamp: number;
+	duration?: number | null;
+	status: "active" | "ended";
+	recordingUrl?: string | null;
+	timeline: TimelineEntry[];
 };
 
 type WsMessage =
@@ -49,11 +77,116 @@ type WsMessage =
 			callSid: string;
 			name: string;
 			args: unknown;
-			status: "calling" | "success" | "error";
+			status: FunctionCallStatus;
 			result?: unknown;
 	  }
 	| { type: "appointment_booked"; callSid: string }
 	| { type: "error"; callSid: string; message: string };
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function dbEventToTimeline(event: CallEvent): TimelineEntry | null {
+	const timestamp = event.timestamp
+		? new Date(event.timestamp).getTime()
+		: Date.now();
+	const id = `db-${event.id}`;
+	const type = event.type as CallEventType;
+
+	switch (type) {
+		case "patient_transcript":
+			return {
+				id,
+				kind: "transcript",
+				role: "patient",
+				text: event.content ?? "",
+				timestamp,
+			};
+		case "ai_transcript":
+			return {
+				id,
+				kind: "transcript",
+				role: "ai",
+				text: event.content ?? "",
+				timestamp,
+			};
+		case "function_call":
+			return {
+				id,
+				kind: "function_call",
+				name: event.functionName ?? "unknown",
+				args: event.functionArgs,
+				result: event.functionResult,
+				status: (event.functionStatus as FunctionCallStatus) ?? "success",
+				timestamp,
+			};
+		case "appointment_booked":
+		case "system":
+			return {
+				id,
+				kind: "system",
+				text: event.content ?? "",
+				timestamp,
+			};
+		case "error":
+			return {
+				id,
+				kind: "error",
+				text: event.content ?? "",
+				timestamp,
+			};
+		default:
+			return null;
+	}
+}
+
+function dbCallToData(row: CallWithEvents): CallData {
+	const timeline = row.events
+		.map(dbEventToTimeline)
+		.filter((e): e is TimelineEntry => e !== null)
+		.sort((a, b) => a.timestamp - b.timestamp);
+
+	return {
+		id: row.id,
+		callSid: row.callSid,
+		from: row.from ?? null,
+		callerName: row.callerName ?? null,
+		startTime: row.startedAt
+			? new Date(row.startedAt).toISOString()
+			: new Date().toISOString(),
+		endTime: row.endedAt ? new Date(row.endedAt).toISOString() : undefined,
+		duration: row.duration ?? null,
+		status: row.status === "in-progress" ? "active" : "ended",
+		recordingUrl: row.recordingUrl ?? null,
+		timeline,
+	};
+}
+
+/**
+ * Deduplicate timeline entries against a newly arriving WS entry. For function
+ * calls we replace any earlier `calling` entry for the same function name so
+ * the timeline shows one line that transitions calling → success/error.
+ */
+function appendTimeline(
+	existing: TimelineEntry[],
+	next: TimelineEntry,
+): TimelineEntry[] {
+	if (next.kind === "function_call" && next.status !== "calling") {
+		const idx = existing.findIndex(
+			(e) =>
+				e.kind === "function_call" &&
+				e.name === next.name &&
+				e.status === "calling",
+		);
+		if (idx >= 0) {
+			const copy = existing.slice();
+			copy[idx] = next;
+			return copy;
+		}
+	}
+	return [...existing, next];
+}
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
 
 export default function useRealtimeSocket() {
 	const [calls, setCalls] = useState<Map<string, CallData>>(new Map());
@@ -67,6 +200,46 @@ export default function useRealtimeSocket() {
 		((callSid: string, role: string, payload: string) => void) | null
 	>(null);
 
+	// Initial fetch from the DB so the dashboard is authoritative on load,
+	// then WS events merge on top for live updates.
+	const {
+		data: dbCalls,
+		isLoading: isLoadingCalls,
+		mutate: mutateCalls,
+	} = useSWR<CallWithEvents[]>("/api/calls", getCalls, {
+		revalidateOnFocus: false,
+	});
+
+	useEffect(() => {
+		if (!dbCalls) return;
+		setCalls((prev) => {
+			const next = new Map(prev);
+			for (const row of dbCalls) {
+				const fromDb = dbCallToData(row);
+				const existing = next.get(row.callSid);
+				if (!existing) {
+					next.set(row.callSid, fromDb);
+					continue;
+				}
+				// Merge: keep live timeline entries we already have that aren't in DB yet.
+				const dbIds = new Set(fromDb.timeline.map((t) => t.id));
+				const extraLive = existing.timeline.filter((t) => !dbIds.has(t.id));
+				next.set(row.callSid, {
+					...fromDb,
+					// Live status wins if we already marked it active
+					status:
+						existing.status === "active" && fromDb.status === "ended"
+							? "ended"
+							: fromDb.status,
+					timeline: [...fromDb.timeline, ...extraLive].sort(
+						(a, b) => a.timestamp - b.timestamp,
+					),
+				});
+			}
+			return next;
+		});
+	}, [dbCalls]);
+
 	const toggleListening = useCallback((callSid: string) => {
 		setListeningCalls((prev) => {
 			const next = new Set(prev);
@@ -76,164 +249,172 @@ export default function useRealtimeSocket() {
 		});
 	}, []);
 
-	const handleMessage = useCallback((msg: WsMessage) => {
-		switch (msg.type) {
-			case "call_start":
-				setCalls((prev) => {
-					const next = new Map(prev);
-					next.set(msg.callSid, {
-						callSid: msg.callSid,
-						startTime: msg.timestamp,
-						status: "active",
-						transcript: [],
-						patientName: null,
-						functionCalls: [],
+	const handleMessage = useCallback(
+		(msg: WsMessage) => {
+			switch (msg.type) {
+				case "call_start":
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const existing = next.get(msg.callSid);
+						if (existing) {
+							next.set(msg.callSid, {
+								...existing,
+								status: "active",
+								startTime: msg.timestamp,
+							});
+						} else {
+							next.set(msg.callSid, {
+								callSid: msg.callSid,
+								from: null,
+								callerName: null,
+								startTime: msg.timestamp,
+								status: "active",
+								timeline: [],
+							});
+						}
+						return next;
 					});
-					return next;
-				});
-				break;
+					// Kick a revalidation so we eventually pick up the DB id + phone.
+					setTimeout(() => mutateCalls(), 1500);
+					break;
 
-			case "call_end":
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (call)
+				case "call_end":
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (call) {
+							next.set(msg.callSid, {
+								...call,
+								status: "ended",
+								endTime: msg.timestamp,
+							});
+						}
+						return next;
+					});
+					setListeningCalls((prev) => {
+						const next = new Set(prev);
+						next.delete(msg.callSid);
+						return next;
+					});
+					// Refetch so we pick up the recording URL once it lands.
+					setTimeout(() => mutateCalls(), 5000);
+					setTimeout(() => mutateCalls(), 30000);
+					break;
+
+				case "patient_transcript":
+					if (!msg.isFinal) break;
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (!call) return prev;
+						const entry: TimelineEntry = {
+							id: `live-${Date.now()}-${Math.random()}`,
+							kind: "transcript",
+							role: "patient",
+							text: msg.text,
+							timestamp: Date.now(),
+						};
 						next.set(msg.callSid, {
 							...call,
-							status: "ended",
-							endTime: msg.timestamp,
+							timeline: appendTimeline(call.timeline, entry),
 						});
-					return next;
-				});
-				setListeningCalls((prev) => {
-					const next = new Set(prev);
-					next.delete(msg.callSid);
-					return next;
-				});
-				break;
+						return next;
+					});
+					break;
 
-			case "patient_transcript":
-				if (!msg.isFinal) break;
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (call)
+				case "ai_transcript":
+					if (!msg.isFinal) break;
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (!call) return prev;
+						const entry: TimelineEntry = {
+							id: `live-${Date.now()}-${Math.random()}`,
+							kind: "transcript",
+							role: "ai",
+							text: msg.text,
+							timestamp: Date.now(),
+						};
 						next.set(msg.callSid, {
 							...call,
-							transcript: [
-								...call.transcript,
-								{ role: "patient", text: msg.text, timestamp: Date.now() },
-							],
+							timeline: appendTimeline(call.timeline, entry),
 						});
-					return next;
-				});
-				break;
+						return next;
+					});
+					break;
 
-			case "ai_transcript":
-				if (!msg.isFinal) break;
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (call)
+				case "patient_audio":
+				case "ai_audio": {
+					const role = msg.type === "patient_audio" ? "patient" : "ai";
+					audioCallbackRef.current?.(msg.callSid, role, msg.payload);
+					break;
+				}
+
+				case "function_call":
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (!call) return prev;
+						const entry: TimelineEntry = {
+							id: `live-fn-${msg.name}-${Date.now()}`,
+							kind: "function_call",
+							name: msg.name,
+							args: msg.args,
+							result: msg.result,
+							status: msg.status,
+							timestamp: Date.now(),
+						};
 						next.set(msg.callSid, {
 							...call,
-							transcript: [
-								...call.transcript,
-								{ role: "ai", text: msg.text, timestamp: Date.now() },
-							],
+							timeline: appendTimeline(call.timeline, entry),
 						});
-					return next;
-				});
-				break;
+						return next;
+					});
+					break;
 
-			case "patient_audio":
-			case "ai_audio": {
-				const role = msg.type === "patient_audio" ? "patient" : "ai";
-				audioCallbackRef.current?.(msg.callSid, role, msg.payload);
-				break;
+				case "appointment_booked":
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (!call) return prev;
+						const entry: TimelineEntry = {
+							id: `live-${Date.now()}`,
+							kind: "system",
+							text: "Appointment booked",
+							timestamp: Date.now(),
+						};
+						next.set(msg.callSid, {
+							...call,
+							timeline: appendTimeline(call.timeline, entry),
+						});
+						return next;
+					});
+					break;
+
+				case "error":
+					setCalls((prev) => {
+						const next = new Map(prev);
+						const call = next.get(msg.callSid);
+						if (!call) return prev;
+						const entry: TimelineEntry = {
+							id: `live-${Date.now()}`,
+							kind: "error",
+							text: msg.message,
+							timestamp: Date.now(),
+						};
+						next.set(msg.callSid, {
+							...call,
+							timeline: appendTimeline(call.timeline, entry),
+						});
+						return next;
+					});
+					break;
 			}
+		},
+		[mutateCalls],
+	);
 
-			case "function_call":
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (!call) return prev;
-
-					const functionCalls = [...call.functionCalls];
-					const entry: FunctionCallEntry = {
-						name: msg.name,
-						args: msg.args,
-						status: msg.status,
-						result: msg.result,
-						timestamp: Date.now(),
-					};
-
-					const idx = functionCalls.findIndex(
-						(fc) => fc.name === msg.name && fc.status === "calling",
-					);
-					if (idx >= 0 && msg.status !== "calling") functionCalls[idx] = entry;
-					else functionCalls.push(entry);
-
-					const text =
-						msg.status === "calling"
-							? `🔧 Calling ${msg.name}...`
-							: msg.status === "success"
-								? `✅ ${msg.name} completed`
-								: `❌ ${msg.name} failed`;
-
-					next.set(msg.callSid, {
-						...call,
-						functionCalls,
-						transcript: [
-							...call.transcript,
-							{ role: "system", text, timestamp: Date.now() },
-						],
-					});
-					return next;
-				});
-				break;
-
-			case "appointment_booked":
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (call)
-						next.set(msg.callSid, {
-							...call,
-							transcript: [
-								...call.transcript,
-								{
-									role: "system",
-									text: "📅 Appointment booked successfully!",
-									timestamp: Date.now(),
-								},
-							],
-						});
-					return next;
-				});
-				break;
-
-			case "error":
-				setCalls((prev) => {
-					const next = new Map(prev);
-					const call = next.get(msg.callSid);
-					if (call)
-						next.set(msg.callSid, {
-							...call,
-							transcript: [
-								...call.transcript,
-								{
-									role: "system",
-									text: `⚠️ Error: ${msg.message}`,
-									timestamp: Date.now(),
-								},
-							],
-						});
-					return next;
-				});
-				break;
-		}
-	}, []);
+	const connectRef = useRef<() => void>(() => {});
 
 	const scheduleReconnect = useCallback(() => {
 		if (reconnectTimer.current) return;
@@ -244,7 +425,7 @@ export default function useRealtimeSocket() {
 		reconnectAttempt.current++;
 		reconnectTimer.current = setTimeout(() => {
 			reconnectTimer.current = null;
-			connect();
+			connectRef.current();
 		}, delay);
 	}, []);
 
@@ -284,6 +465,10 @@ export default function useRealtimeSocket() {
 	}, [handleMessage, scheduleReconnect]);
 
 	useEffect(() => {
+		connectRef.current = connect;
+	}, [connect]);
+
+	useEffect(() => {
 		connect();
 		return () => {
 			if (reconnectTimer.current) {
@@ -301,8 +486,10 @@ export default function useRealtimeSocket() {
 	return {
 		calls,
 		isConnected,
+		isLoadingCalls,
 		listeningCalls,
 		toggleListening,
 		audioCallbackRef,
+		refreshCalls: mutateCalls,
 	};
 }

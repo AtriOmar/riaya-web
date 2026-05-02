@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, Phone, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CallData } from "@/hooks/use-realtime-socket";
 import CallTranscript from "./call-transcript";
 
 // µ-law to 16-bit PCM lookup table (ITU-T G.711)
@@ -31,44 +32,46 @@ function decodeUlaw(base64Data: string): Float32Array {
 	return pcm;
 }
 
-function useDuration(startTime?: string, endTime?: string) {
+function formatDuration(seconds: number): string {
+	const minutes = Math.floor(seconds / 60);
+	const secs = seconds % 60;
+	return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
+function useDuration(
+	startTime?: string,
+	endTime?: string,
+	fixed?: number | null,
+) {
 	const [elapsed, setElapsed] = useState(0);
 
 	useEffect(() => {
+		if (fixed != null) {
+			setElapsed(fixed);
+			return;
+		}
 		if (!startTime) return;
 		if (endTime) {
 			setElapsed(
-				Math.floor(
-					(new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000,
+				Math.max(
+					0,
+					Math.floor(
+						(new Date(endTime).getTime() - new Date(startTime).getTime()) /
+							1000,
+					),
 				),
 			);
 			return;
 		}
 		const start = new Date(startTime).getTime();
 		const interval = setInterval(() => {
-			setElapsed(Math.floor((Date.now() - start) / 1000));
+			setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)));
 		}, 1000);
 		return () => clearInterval(interval);
-	}, [startTime, endTime]);
+	}, [startTime, endTime, fixed]);
 
-	const minutes = Math.floor(elapsed / 60);
-	const seconds = elapsed % 60;
-	return `${minutes}:${String(seconds).padStart(2, "0")}`;
+	return formatDuration(elapsed);
 }
-
-type CallData = {
-	callSid: string;
-	startTime: string;
-	status: "active" | "ended";
-	endTime?: string;
-	transcript: {
-		role: "patient" | "ai" | "system";
-		text: string;
-		timestamp: number;
-	}[];
-	patientName: string | null;
-	functionCalls: unknown[];
-};
 
 type Props = {
 	call: CallData;
@@ -86,7 +89,7 @@ export default function CallCard({
 	audioCallbackRef,
 }: Props) {
 	const [expanded, setExpanded] = useState(false);
-	const duration = useDuration(call.startTime, call.endTime);
+	const duration = useDuration(call.startTime, call.endTime, call.duration);
 	const isActive = call.status === "active";
 
 	useEffect(() => {
@@ -150,17 +153,26 @@ export default function CallCard({
 		};
 	}, [isListening, handleAudio, audioCallbackRef]);
 
-	const lastTranscript = call.transcript[call.transcript.length - 1];
-	const preview = lastTranscript
-		? `${lastTranscript.role === "ai" ? "AI" : lastTranscript.role === "patient" ? "Patient" : "System"}: ${lastTranscript.text}`
-		: "Waiting for conversation...";
+	const lastEntry = call.timeline[call.timeline.length - 1];
+	const preview = (() => {
+		if (!lastEntry) return "Waiting for conversation...";
+		if (lastEntry.kind === "transcript")
+			return `${lastEntry.role === "ai" ? "AI" : "Patient"}: ${lastEntry.text}`;
+		if (lastEntry.kind === "function_call")
+			return `Tool ${lastEntry.name} (${lastEntry.status})`;
+		if (lastEntry.kind === "system") return lastEntry.text;
+		if (lastEntry.kind === "error") return `Error: ${lastEntry.text}`;
+		return "";
+	})();
+
+	const callerLabel = call.callerName || call.from || "Unknown caller";
 
 	return (
 		<div
 			className={`border rounded-xl overflow-hidden shadow-sm transition-all ${
 				isActive
 					? "border-primary/20 bg-card"
-					: "border-border bg-muted/50 opacity-75"
+					: "border-border bg-muted/50 opacity-95"
 			}`}
 		>
 			{/* Header */}
@@ -184,7 +196,7 @@ export default function CallCard({
 						)}
 					</div>
 					<div className="min-w-0">
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 flex-wrap">
 							<span
 								className={`text-xs font-medium px-2 py-0.5 rounded-full ${
 									isActive
@@ -194,6 +206,7 @@ export default function CallCard({
 							>
 								{isActive ? "Active" : "Ended"}
 							</span>
+							<span className="font-medium text-sm">{callerLabel}</span>
 							<span className="font-mono text-muted-foreground text-sm">
 								{duration}
 							</span>
@@ -237,10 +250,19 @@ export default function CallCard({
 				</div>
 			</div>
 
-			{/* Expanded transcript */}
+			{/* Expanded body */}
 			{expanded && (
 				<div className="border-t">
-					<CallTranscript transcript={call.transcript} isActive={isActive} />
+					{!isActive && call.recordingUrl && (
+						<div className="px-5 py-3 bg-muted/30 border-b">
+							<div className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-2">
+								Recording
+							</div>
+							{/** biome-ignore lint/a11y/useMediaCaption: no captions for call audio */}
+							<audio controls src={call.recordingUrl} className="w-full h-10" />
+						</div>
+					)}
+					<CallTranscript timeline={call.timeline} isActive={isActive} />
 				</div>
 			)}
 		</div>

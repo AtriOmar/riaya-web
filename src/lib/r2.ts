@@ -22,3 +22,23 @@ export async function generateSignedUploadUrl(
 	const url = await getSignedUrl(r2, command, { expiresIn: 600 });
 	return url;
 }
+
+/**
+ * Upload a buffer directly to R2 from the server. Returns the public CDN URL.
+ */
+export async function uploadBufferToR2(
+	key: string,
+	body: Buffer | Uint8Array,
+	contentType: string,
+): Promise<string> {
+	await r2.send(
+		new PutObjectCommand({
+			Bucket: process.env.R2_BUCKET_NAME ?? "",
+			Key: key,
+			Body: body,
+			ContentType: contentType,
+		}),
+	);
+	const cdn = (process.env.CDN_URL ?? "").replace(/\/$/, "");
+	return `${cdn}/${key}`;
+}

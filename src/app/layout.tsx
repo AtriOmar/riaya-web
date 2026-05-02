@@ -38,9 +38,15 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const initialSession = await auth.api.getSession({
-		headers: await headers(),
-	});
+	let initialSession: Awaited<ReturnType<typeof auth.api.getSession>> | null =
+		null;
+	try {
+		initialSession = await auth.api.getSession({
+			headers: await headers(),
+		});
+	} catch (error) {
+		console.error("[RootLayout] getSession failed", error);
+	}
 
 	return (
 		<html lang="en" className={cn("font-sans", rubik.variable)}>

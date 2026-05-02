@@ -8,13 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { createPatient } from "@/services";
 
 const schema = z.object({
@@ -115,18 +109,23 @@ export default function NewPatientForm() {
 				<Label>
 					Gender <span className="text-destructive">*</span>
 				</Label>
-				<Select
-					value={gender}
-					onValueChange={(v) => setValue("gender", v, { shouldValidate: true })}
-				>
-					<SelectTrigger>
-						<SelectValue placeholder="Select gender" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="male">Male</SelectItem>
-						<SelectItem value="female">Female</SelectItem>
-					</SelectContent>
-				</Select>
+				<div className="flex gap-2 mt-1">
+					{(["male", "female"] as const).map((g) => (
+						<button
+							key={g}
+							type="button"
+							className={cn(
+								"flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors",
+								gender === g
+									? "bg-primary text-primary-foreground border-primary"
+									: "bg-background text-foreground border-input hover:bg-accent",
+							)}
+							onClick={() => setValue("gender", g, { shouldValidate: true })}
+						>
+							{g.charAt(0).toUpperCase() + g.slice(1)}
+						</button>
+					))}
+				</div>
 				{errors.gender && (
 					<p className="mt-1 text-destructive text-sm">
 						{errors.gender.message}

@@ -55,8 +55,8 @@ export async function GET(req: NextRequest) {
 
 const createSchema = z.object({
 	patientId: z.coerce.number().int().positive(),
-	start: z.string().datetime(),
-	end: z.string().datetime(),
+	start: z.iso.datetime(),
+	end: z.iso.datetime(),
 	name: z.string().min(1),
 	description: z.string().optional(),
 });

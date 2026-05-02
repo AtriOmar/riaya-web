@@ -27,6 +27,19 @@ export async function requireAdmin() {
 	return session;
 }
 
+/**
+ * Validates a shared secret header used for server-to-server calls (e.g. from
+ * the realtime socket service). The secret is expected in the `x-internal-secret`
+ * header and must match process.env.INTERNAL_API_SECRET.
+ */
+export async function requireInternal(req: Request) {
+	const expected = process.env.INTERNAL_API_SECRET;
+	const provided = req.headers.get("x-internal-secret");
+	if (!expected || !provided || provided !== expected) {
+		throwApiError("UNAUTHORIZED");
+	}
+}
+
 export async function getDoctorProfile(userId: string) {
 	const [profile] = await db
 		.select()

@@ -1,6 +1,8 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type {
 	appointment,
+	call,
+	callEvent,
 	doctorApplication,
 	doctorProfile,
 	patient,
@@ -16,6 +18,8 @@ export type PatientMedicalFile = InferSelectModel<typeof patientMedicalFile>;
 export type DoctorProfile = InferSelectModel<typeof doctorProfile>;
 export type DoctorApplication = InferSelectModel<typeof doctorApplication>;
 export type Speciality = InferSelectModel<typeof speciality>;
+export type Call = InferSelectModel<typeof call>;
+export type CallEvent = InferSelectModel<typeof callEvent>;
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 // Matches the projection returned by the user routes
@@ -114,6 +118,31 @@ export type SignedUploadUrlResponse = {
 	signedUrl: string;
 	key: string;
 	cdnUrl: string;
+};
+
+// ─── Calls ────────────────────────────────────────────────────────────────────
+
+export type CallEventType =
+	| "patient_transcript"
+	| "ai_transcript"
+	| "function_call"
+	| "system"
+	| "error"
+	| "appointment_booked";
+
+export type FunctionCallStatus = "calling" | "success" | "error";
+
+export type CallWithEvents = Call & {
+	events: CallEvent[];
+};
+
+export type CreateCallEventInput = {
+	type: CallEventType;
+	content?: string;
+	functionName?: string;
+	functionArgs?: unknown;
+	functionResult?: unknown;
+	functionStatus?: FunctionCallStatus;
 };
 
 // ─── Stats ────────────────────────────────────────────────────────────────────

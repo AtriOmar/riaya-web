@@ -202,6 +202,64 @@ export const doctorApplication = pgTable(
 	],
 );
 
+// ─── Call ─────────────────────────────────────────────────────────────────────
+// One row per Twilio phone call handled by the AI assistant.
+
+export const call = pgTable(
+	"call",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callSid: varchar("call_sid", { length: 100 }).notNull().unique(),
+		from: varchar("from", { length: 50 }),
+		to: varchar("to", { length: 50 }),
+		direction: varchar("direction", { length: 50 }),
+		status: varchar("status", { length: 50 }).default("in-progress"), // in-progress | completed | failed
+		callerName: varchar("caller_name", { length: 255 }),
+		startedAt: timestamp("started_at").defaultNow(),
+		endedAt: timestamp("ended_at"),
+		duration: integer("duration"), // seconds
+		appointmentId: integer("appointment_id").references(() => appointment.id, {
+			onDelete: "set null",
+		}),
+		recordingSid: varchar("recording_sid", { length: 100 }),
+		recordingKey: varchar("recording_key", { length: 512 }),
+		recordingUrl: varchar("recording_url", { length: 1024 }),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("call_call_sid_idx").on(table.callSid),
+		index("call_status_idx").on(table.status),
+		index("call_started_at_idx").on(table.startedAt),
+		index("call_appointment_id_idx").on(table.appointmentId),
+	],
+);
+
+// ─── Call Event ───────────────────────────────────────────────────────────────
+// Every loggable moment inside a call (transcripts, function calls, system notes, errors).
+
+export const callEvent = pgTable(
+	"call_event",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callId: integer("call_id")
+			.notNull()
+			.references(() => call.id, { onDelete: "cascade" }),
+		type: varchar("type", { length: 50 }).notNull(), // patient_transcript | ai_transcript | function_call | system | error | appointment_booked
+		content: text("content"),
+		functionName: varchar("function_name", { length: 100 }),
+		functionArgs: jsonb("function_args"),
+		functionResult: jsonb("function_result"),
+		functionStatus: varchar("function_status", { length: 50 }), // calling | success | error
+		timestamp: timestamp("timestamp").defaultNow(),
+	},
+	(table) => [
+		index("call_event_call_id_idx").on(table.callId),
+		index("call_event_type_idx").on(table.type),
+		index("call_event_timestamp_idx").on(table.timestamp),
+	],
+);
+
 // ─── Doctor Unavailability ────────────────────────────────────────────────────
 
 export const doctorUnavailability = pgTable(
@@ -297,7 +355,7 @@ export const patientMedicalFileRelations = relations(
 	}),
 );
 
-export const appointmentRelations = relations(appointment, ({ one }) => ({
+export const appointmentRelations = relations(appointment, ({ one, many }) => ({
 	doctor: one(doctorProfile, {
 		fields: [appointment.doctorId],
 		references: [doctorProfile.id],
@@ -305,6 +363,22 @@ export const appointmentRelations = relations(appointment, ({ one }) => ({
 	patient: one(patient, {
 		fields: [appointment.patientId],
 		references: [patient.id],
+	}),
+	calls: many(call),
+}));
+
+export const callRelations = relations(call, ({ one, many }) => ({
+	appointment: one(appointment, {
+		fields: [call.appointmentId],
+		references: [appointment.id],
+	}),
+	events: many(callEvent),
+}));
+
+export const callEventRelations = relations(callEvent, ({ one }) => ({
+	call: one(call, {
+		fields: [callEvent.callId],
+		references: [call.id],
 	}),
 }));
 
