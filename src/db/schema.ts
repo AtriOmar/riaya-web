@@ -62,8 +62,10 @@ export const doctorProfile = pgTable(
 			.references(() => user.id, { onDelete: "cascade" }),
 		firstName: varchar("first_name", { length: 255 }),
 		lastName: varchar("last_name", { length: 255 }),
+		cin: varchar("cin", { length: 100 }),
 		tin: varchar("tin", { length: 100 }), // Tax Identification Number
 		status: varchar("status", { length: 50 }).default("none"), // none | pending | verified | rejected | banned
+		address: text("address"),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
 		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
@@ -81,6 +83,7 @@ export const doctorProfile = pgTable(
 		index("doctor_profile_status_idx").on(table.status),
 		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
+		index("doctor_profile_cin_idx").on(table.cin),
 	],
 );
 

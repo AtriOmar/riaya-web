@@ -216,7 +216,12 @@ export async function GET(req: NextRequest) {
 					if (!nextSlot) return null;
 
 					const { availability: _avail, ...rest } = doctor;
-					return { ...rest, distance, nextSlot };
+					return {
+						...rest,
+						address: rest.address ?? null,
+						distance,
+						nextSlot,
+					};
 				}),
 			)
 		).filter(Boolean);
