@@ -1,10 +1,10 @@
 import AppointmentsCalendar from "@/components/dashboard/appointments/calendar";
+import DashboardLayout from "@/components/layouts/dashboard-layout";
 
 export default function AppointmentsPage() {
 	return (
-		<div className="pr-2 md:pr-10 pb-20 pl-2">
-			<h3 className="font-bold text-2xl">Appointments</h3>
+		<DashboardLayout title="Appointments">
 			<AppointmentsCalendar />
-		</div>
+		</DashboardLayout>
 	);
 }

@@ -120,7 +120,18 @@ function findNextAvailableSlot(
 
 	if (!slotFromLeft) return slotFromRight;
 	if (!slotFromRight) return slotFromLeft;
-	return slotFromLeft.start <= slotFromRight.start
+
+	const contains = (slot: { start: Date; end: Date }) =>
+		desiredTime >= slot.start && desiredTime < slot.end;
+	const leftContains = contains(slotFromLeft);
+	const rightContains = contains(slotFromRight);
+	if (leftContains !== rightContains) {
+		return leftContains ? slotFromLeft : slotFromRight;
+	}
+
+	const dist = (slot: { start: Date; end: Date }) =>
+		Math.abs(slot.start.getTime() - desiredTime.getTime());
+	return dist(slotFromLeft) <= dist(slotFromRight)
 		? slotFromLeft
 		: slotFromRight;
 }

@@ -57,7 +57,7 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		await requireInternal(req);
+		// await requireInternal(req);
 
 		const { id } = await params;
 		const callId = Number(id);

@@ -51,7 +51,7 @@ export default function AppointmentsCalendar() {
 					end: new Date(a.end ?? ""),
 					name: a.name ?? "",
 					description: a.description ?? "",
-					status: a.status ?? "confirmed",
+					status: (a.status ?? "confirmed") as CalendarEvent["status"],
 					patient: a.patient,
 				})),
 		[appointments],

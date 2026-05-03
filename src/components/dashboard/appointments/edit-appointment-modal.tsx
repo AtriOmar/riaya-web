@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Trash2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -32,7 +32,7 @@ export type CalendarEvent = {
 	end: Date;
 	name: string;
 	description?: string;
-	status: string;
+	status: "pending" | "confirmed" | "cancelled";
 	patient?: { firstName: string | null; lastName: string | null } | null;
 };
 
@@ -49,6 +49,9 @@ export default function EditAppointmentModal({
 	event,
 	onSuccess,
 }: Props) {
+	const [pendingAction, setPendingAction] = useState<
+		"accept" | "refuse" | null
+	>(null);
 	const {
 		register,
 		handleSubmit,
@@ -58,9 +61,12 @@ export default function EditAppointmentModal({
 		resolver: zodResolver(schema),
 	});
 
+	const isPending = event?.status === "pending";
+
 	useEffect(() => {
 		if (event) {
 			reset({ name: event.name, description: event.description ?? "" });
+			setPendingAction(null);
 		}
 	}, [event, reset]);
 
@@ -92,21 +98,63 @@ export default function EditAppointmentModal({
 		}
 	}
 
+	async function handleAccept(values: FormValues) {
+		if (!event) return;
+		setPendingAction("accept");
+		try {
+			await updateAppointment({
+				id: event.id,
+				name: values.name,
+				description: values.description,
+				status: "confirmed",
+			});
+			toast.success("Appointment accepted");
+			onClose();
+			onSuccess();
+		} catch {
+			toast.error("Failed to accept appointment");
+		} finally {
+			setPendingAction(null);
+		}
+	}
+
+	async function handleRefuse() {
+		if (!event) return;
+		setPendingAction("refuse");
+		try {
+			await updateAppointment({
+				id: event.id,
+				status: "cancelled",
+			});
+			toast.success("Appointment refused");
+			onClose();
+			onSuccess();
+		} catch {
+			toast.error("Failed to refuse appointment");
+		} finally {
+			setPendingAction(null);
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-w-[500px]">
+			<DialogContent className="max-w-[500px]" showCloseButton={false}>
 				<DialogHeader>
 					<div className="flex items-center gap-2">
-						<DialogTitle>Edit Appointment</DialogTitle>
-						<Button
-							variant="destructive"
-							size="sm"
-							className="ml-auto"
-							onClick={handleDelete}
-						>
-							<Trash2 className="w-4 h-4" />
-							Delete
-						</Button>
+						<DialogTitle>
+							{isPending ? "Pending appointment" : "Edit Appointment"}
+						</DialogTitle>
+						{!isPending && (
+							<Button
+								variant="destructive"
+								size="sm"
+								className="ml-auto"
+								onClick={handleDelete}
+							>
+								<Trash2 className="w-4 h-4" />
+								Delete
+							</Button>
+						)}
 					</div>
 				</DialogHeader>
 
@@ -152,7 +200,12 @@ export default function EditAppointmentModal({
 					</div>
 				)}
 
-				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+				<form
+					onSubmit={
+						isPending ? (e) => e.preventDefault() : handleSubmit(onSubmit)
+					}
+					className="space-y-4"
+				>
 					<div>
 						<Label htmlFor="name">
 							Name <span className="text-destructive">*</span>
@@ -168,13 +221,43 @@ export default function EditAppointmentModal({
 						<Label htmlFor="description">Description</Label>
 						<Textarea id="description" {...register("description")} />
 					</div>
-					<div className="flex justify-end gap-2">
-						<Button type="button" variant="outline" onClick={onClose}>
-							Cancel
-						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving..." : "Save"}
-						</Button>
+					<div className="flex flex-wrap justify-end gap-2">
+						{isPending ? (
+							<>
+								<Button
+									type="button"
+									variant="quiet"
+									onClick={onClose}
+									disabled={!!pendingAction}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="button"
+									variant="destructive"
+									onClick={handleRefuse}
+									disabled={!!pendingAction}
+								>
+									{pendingAction === "refuse" ? "Refusing..." : "Refuse"}
+								</Button>
+								<Button
+									type="button"
+									onClick={handleSubmit(handleAccept)}
+									disabled={!!pendingAction}
+								>
+									{pendingAction === "accept" ? "Accepting..." : "Accept"}
+								</Button>
+							</>
+						) : (
+							<>
+								<Button type="button" variant="quiet" onClick={onClose}>
+									Cancel
+								</Button>
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting ? "Saving..." : "Save"}
+								</Button>
+							</>
+						)}
 					</div>
 				</form>
 			</DialogContent>
