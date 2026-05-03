@@ -1,6 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Upload } from "lucide-react";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -11,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadToR2 } from "@/lib/upload";
 import { createDoctorApplication } from "@/services";
-import type { Speciality } from "@/services/types";
+import type { City, Speciality } from "@/services/types";
+import CitySelect from "./city-select";
 import SpecialitySelect from "./speciality-select";
 
 const schema = z.object({
@@ -24,9 +27,7 @@ const schema = z.object({
 		.min(2, "Last name must be at least 2 characters")
 		.regex(/^[A-Za-z ]+$/, "Letters only"),
 	cabinetName: z.string().min(2, "Cabinet name is required"),
-	cabinetCityId: z
-		.string()
-		.regex(/^\d+$/, "Cabinet city ID must be a valid number"),
+	cabinetCityId: z.string().min(1, "City is required"),
 	specialityId: z.string().min(1, "Speciality is required"),
 	tin: z
 		.string()
@@ -37,11 +38,32 @@ type FormValues = z.infer<typeof schema>;
 
 type Props = {
 	specialities: Speciality[];
+	cities: City[];
 	onApplicationSubmitted: () => void;
 };
 
+function CinPlaceholder({ src }: { src: string }) {
+	return (
+		<>
+			<Image
+				src={src}
+				alt=""
+				fill
+				className="object-cover opacity-35"
+				sizes="300px"
+			/>
+			<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+				<span className="flex size-12 items-center justify-center rounded-md bg-background/90 text-primary shadow-md ring-1 ring-border backdrop-blur-[2px]">
+					<Upload className="size-5" aria-hidden />
+				</span>
+			</div>
+		</>
+	);
+}
+
 export default function DoctorApplicationForm({
 	specialities,
+	cities,
 	onApplicationSubmitted,
 }: Props) {
 	const { user } = useAuth();
@@ -78,6 +100,7 @@ export default function DoctorApplicationForm({
 	});
 
 	const specialityId = watch("specialityId");
+	const cabinetCityId = watch("cabinetCityId");
 
 	function handleCinFile(side: "recto" | "verso", file: File) {
 		const url = URL.createObjectURL(file);
@@ -201,13 +224,15 @@ export default function DoctorApplicationForm({
 				</div>
 
 				<div>
-					<Label htmlFor="cabinetCityId">
-						Cabinet City ID <span className="text-destructive">*</span>
+					<Label>
+						Cabinet city <span className="text-destructive">*</span>
 					</Label>
-					<Input
-						id="cabinetCityId"
-						placeholder="1"
-						{...register("cabinetCityId")}
+					<CitySelect
+						cities={cities}
+						value={cabinetCityId}
+						onChange={(v) =>
+							setValue("cabinetCityId", v, { shouldValidate: true })
+						}
 					/>
 					{errors.cabinetCityId && (
 						<p className="mt-1 text-destructive text-sm">
@@ -252,19 +277,18 @@ export default function DoctorApplicationForm({
 						<button
 							type="button"
 							onClick={() => cinRectoRef.current?.click()}
-							className="block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
+							aria-label="Upload CIN recto. Example card shown faded."
+							className="relative block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
 						>
 							{cinRecto ? (
 								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
 								<img
 									src={URL.createObjectURL(cinRecto)}
 									alt="CIN Recto"
-									className="w-full h-full object-cover"
+									className="w-full aspect-[14/9] object-cover"
 								/>
 							) : (
-								<div className="flex justify-center items-center h-full text-muted-foreground text-sm">
-									Click to upload
-								</div>
+								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
 							)}
 						</button>
 						{cinRectoError && (
@@ -288,19 +312,18 @@ export default function DoctorApplicationForm({
 						<button
 							type="button"
 							onClick={() => cinVersoRef.current?.click()}
-							className="block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
+							aria-label="Upload CIN verso. Example card shown faded."
+							className="relative block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
 						>
 							{cinVerso ? (
 								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
 								<img
 									src={URL.createObjectURL(cinVerso)}
 									alt="CIN Verso"
-									className="w-full h-full object-cover"
+									className="w-full aspect-[14/9] object-cover"
 								/>
 							) : (
-								<div className="flex justify-center items-center h-full text-muted-foreground text-sm">
-									Click to upload
-								</div>
+								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
 							)}
 						</button>
 						{cinVersoError && (

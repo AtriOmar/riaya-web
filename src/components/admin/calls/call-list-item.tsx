@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { Phone } from "lucide-react";
 import type { CallData } from "@/hooks/use-realtime-socket";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ export default function CallListItem({ call, selected, onSelect }: Props) {
 	const isActive = call.status === "active";
 	const preview = getTimelinePreview(call.timeline);
 	const callerLabel = call.callerName || call.from || "Unknown caller";
+	const callDateLabel = format(new Date(call.startTime), "d MMM yyyy · HH:mm");
 
 	return (
 		<button
@@ -59,6 +61,9 @@ export default function CallListItem({ call, selected, onSelect }: Props) {
 							{duration}
 						</span>
 					</div>
+					<p className="mt-0.5 text-muted-foreground text-[11px] tabular-nums">
+						{callDateLabel}
+					</p>
 					<p className="mt-1 line-clamp-2 text-muted-foreground text-xs leading-snug">
 						{preview}
 					</p>

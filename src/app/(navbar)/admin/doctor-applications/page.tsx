@@ -1,10 +1,10 @@
 import ApplicationsTable from "@/components/admin/applications-table";
+import AdminLayout from "@/components/layouts/admin-layout";
 
 export default function AdminDoctorApplicationsPage() {
 	return (
-		<div className="pr-2 md:pr-10 pb-20 pl-2">
-			<h3 className="mb-4 font-bold text-2xl">Doctor Applications</h3>
+		<AdminLayout title="Doctor Applications">
 			<ApplicationsTable />
-		</div>
+		</AdminLayout>
 	);
 }

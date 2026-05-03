@@ -202,7 +202,7 @@ export default function ApplicationDetail({
 							alt="CIN Recto"
 							width={400}
 							height={300}
-							className="w-full max-w-[400px] border rounded-lg"
+							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
 						/>
 					</div>
 				)}
@@ -217,7 +217,7 @@ export default function ApplicationDetail({
 							alt="CIN Verso"
 							width={400}
 							height={300}
-							className="w-full max-w-[400px] border rounded-lg"
+							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
 						/>
 					</div>
 				)}

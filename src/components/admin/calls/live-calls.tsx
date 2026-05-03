@@ -1,20 +1,8 @@
 "use client";
 
-import {
-	ArrowRightToLine,
-	ChevronLeft,
-	ChevronRight,
-	Loader2,
-	Phone,
-} from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-	Sheet,
-	SheetClose,
-	SheetContent,
-	SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import useRealtimeSocket from "@/hooks/use-realtime-socket";
 import CallCard from "./call-card";
 import CallListItem from "./call-list-item";
@@ -36,11 +24,10 @@ export default function LiveCalls() {
 	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	const { activeCount, filtered } = useMemo(() => {
-		const list = Array.from(calls.values()).sort((a, b) => {
-			if (a.status === "active" && b.status !== "active") return -1;
-			if (a.status !== "active" && b.status === "active") return 1;
-			return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-		});
+		const list = Array.from(calls.values()).sort(
+			(a, b) =>
+				new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+		);
 		const active = list.filter((c) => c.status === "active");
 		const ended = list.filter((c) => c.status === "ended");
 		const filteredList =

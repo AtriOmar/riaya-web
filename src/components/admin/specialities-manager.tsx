@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import DataTable, { type Column } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -110,6 +111,44 @@ export default function SpecialitiesManager() {
 		}
 	}
 
+	const columns: Column<Speciality>[] = [
+		{ key: "enName", header: "English Name", cell: (row) => row.enName ?? "—" },
+		{ key: "frName", header: "French Name", cell: (row) => row.frName ?? "—" },
+		{ key: "arName", header: "Arabic Name", cell: (row) => row.arName ?? "—" },
+		{ key: "slug", header: "Slug", cell: (row) => row.slug ?? "—" },
+		{
+			key: "actions",
+			header: "Actions",
+			className: "text-right",
+			cell: (row) => (
+				<div className="flex justify-end gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => {
+							setEditItem(row);
+							setEditEnName(row.enName ?? "");
+							setEditFrName(row.frName ?? "");
+							setEditArName(row.arName ?? "");
+							setEditSlug(row.slug ?? "");
+						}}
+					>
+						<Pencil className="w-3 h-3" />
+						Edit
+					</Button>
+					<Button
+						variant="destructive"
+						size="sm"
+						onClick={() => setDeleteItem(row)}
+					>
+						<Trash2 className="w-3 h-3" />
+						Delete
+					</Button>
+				</div>
+			),
+		},
+	];
+
 	return (
 		<div className="space-y-4">
 			{/* Edit Dialog */}
@@ -186,68 +225,12 @@ export default function SpecialitiesManager() {
 				</DialogContent>
 			</Dialog>
 
-			{/* Table */}
-			<div className="overflow-hidden border rounded-xl">
-				<table className="min-w-full">
-					<thead>
-						<tr className="bg-muted text-sm">
-							<th className="px-4 py-2 font-semibold text-left">
-								English Name
-							</th>
-							<th className="px-4 py-2 font-semibold text-left">French Name</th>
-							<th className="px-4 py-2 font-semibold text-left">Arabic Name</th>
-							<th className="px-4 py-2 font-semibold text-left">Slug</th>
-							<th className="px-4 py-2 font-semibold text-right">Actions</th>
-						</tr>
-					</thead>
-					<tbody className="divide-y">
-						{(specialities ?? []).map((s) => (
-							<tr key={s.id} className="hover:bg-muted/50 transition">
-								<td className="px-4 py-2 text-sm">{s.enName ?? "—"}</td>
-								<td className="px-4 py-2 text-sm">{s.frName ?? "—"}</td>
-								<td className="px-4 py-2 text-sm">{s.arName ?? "—"}</td>
-								<td className="px-4 py-2 text-sm">{s.slug ?? "—"}</td>
-								<td className="px-4 py-2">
-									<div className="flex justify-end gap-2">
-										<Button
-											variant="outline"
-											size="sm"
-											onClick={() => {
-												setEditItem(s);
-												setEditEnName(s.enName ?? "");
-												setEditFrName(s.frName ?? "");
-												setEditArName(s.arName ?? "");
-												setEditSlug(s.slug ?? "");
-											}}
-										>
-											<Pencil className="w-3 h-3" />
-											Edit
-										</Button>
-										<Button
-											variant="destructive"
-											size="sm"
-											onClick={() => setDeleteItem(s)}
-										>
-											<Trash2 className="w-3 h-3" />
-											Delete
-										</Button>
-									</div>
-								</td>
-							</tr>
-						))}
-						{(!specialities || specialities.length === 0) && (
-							<tr>
-								<td
-									colSpan={5}
-									className="py-8 text-muted-foreground text-center"
-								>
-									No specialities found.
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+			<DataTable
+				columns={columns}
+				data={specialities ?? []}
+				keyExtractor={(row) => row.id}
+				emptyMessage="No specialities found."
+			/>
 
 			{/* Add form */}
 			<div className="gap-3 grid md:grid-cols-2">

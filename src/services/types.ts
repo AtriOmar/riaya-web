@@ -3,6 +3,7 @@ import type {
 	appointment,
 	call,
 	callEvent,
+	cities,
 	doctorApplication,
 	doctorProfile,
 	patient,
@@ -18,6 +19,7 @@ export type PatientMedicalFile = InferSelectModel<typeof patientMedicalFile>;
 export type DoctorProfile = InferSelectModel<typeof doctorProfile>;
 export type DoctorApplication = InferSelectModel<typeof doctorApplication>;
 export type Speciality = InferSelectModel<typeof speciality>;
+export type City = InferSelectModel<typeof cities>;
 export type Call = InferSelectModel<typeof call>;
 export type CallEvent = InferSelectModel<typeof callEvent>;
 

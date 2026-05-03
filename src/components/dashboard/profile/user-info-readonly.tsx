@@ -58,7 +58,7 @@ export default function UserInfoReadOnly({ info }: Props) {
 							alt="CIN Recto"
 							width={300}
 							height={200}
-							className="w-full max-w-[300px] border rounded-lg"
+							className="w-full max-w-[300px] border rounded-lg aspect-[14/9]"
 						/>
 					</div>
 				)}
@@ -73,7 +73,7 @@ export default function UserInfoReadOnly({ info }: Props) {
 							alt="CIN Verso"
 							width={300}
 							height={200}
-							className="w-full max-w-[300px] border rounded-lg"
+							className="w-full max-w-[300px] border rounded-lg aspect-[14/9]"
 						/>
 					</div>
 				)}

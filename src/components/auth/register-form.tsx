@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,8 +16,6 @@ import { authClient } from "@/lib/auth-client";
 
 const registerSchema = z
 	.object({
-		name: z.string().min(1, "Name is required"),
-		username: z.string().min(3, "Username must be at least 3 characters"),
 		email: z
 			.string()
 			.min(1, "Email is required")
@@ -51,12 +49,11 @@ export default function RegisterForm() {
 	async function onSubmit(values: RegisterValues) {
 		setApiError(null);
 		const { error } = await authClient.signUp.email({
-			name: values.name,
+			// better-auth requires `name`; profile can set a real name later
+			name: "",
 			email: values.email,
 			password: values.password,
-			// better-auth additionalFields are accepted at runtime
-			username: values.username,
-		} as Parameters<typeof authClient.signUp.email>[0]);
+		});
 
 		if (error) {
 			if (error.message?.toLowerCase().includes("already")) {
@@ -116,42 +113,6 @@ export default function RegisterForm() {
 					)}
 
 					<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-						<div className="space-y-2">
-							<Label htmlFor="name">Full name</Label>
-							<div className="relative">
-								<User className="top-1/2 left-3 absolute w-5 h-5 text-muted-foreground -translate-y-1/2" />
-								<Input
-									id="name"
-									placeholder="Dr. John Doe"
-									className="h-12 pl-10"
-									{...register("name")}
-								/>
-							</div>
-							{errors.name && (
-								<p className="text-destructive text-sm">
-									{errors.name.message}
-								</p>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="username">Username</Label>
-							<div className="relative">
-								<User className="top-1/2 left-3 absolute w-5 h-5 text-muted-foreground -translate-y-1/2" />
-								<Input
-									id="username"
-									placeholder="drjohn"
-									className="h-12 pl-10"
-									{...register("username")}
-								/>
-							</div>
-							{errors.username && (
-								<p className="text-destructive text-sm">
-									{errors.username.message}
-								</p>
-							)}
-						</div>
-
 						<div className="space-y-2">
 							<Label htmlFor="email">Email address</Label>
 							<div className="relative">

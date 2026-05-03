@@ -8,45 +8,47 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from "@/components/ui/combobox";
-import type { Speciality } from "@/services/types";
+import type { City } from "@/services/types";
 
 type Props = {
-	specialities: Speciality[];
+	cities: City[];
 	value?: string;
 	onChange: (value: string) => void;
 };
 
-type SpecialityOption = {
+type CityOption = {
 	value: string;
 	label: string;
 	keywords: string[];
 };
 
-function getSpecialityLabel(s: Speciality) {
-	return s.enName ?? s.frName ?? s.arName ?? "—";
+function getCityLabel(c: City) {
+	return c.enName ?? c.frName ?? c.arName ?? "—";
 }
 
-function specialityKeywords(s: Speciality): string[] {
-	const parts = [s.enName, s.frName, s.arName, s.slug];
+function cityKeywords(c: City): string[] {
+	const parts = [
+		c.enName,
+		c.frName,
+		c.arName,
+		c.postalCode != null ? String(c.postalCode) : undefined,
+		c.slug,
+	];
 	return parts.filter((p): p is string => Boolean(p));
 }
 
-function filterOption(item: SpecialityOption, query: string): boolean {
+function filterOption(item: CityOption, query: string): boolean {
 	const q = query.trim().toLowerCase();
 	if (!q) return true;
 	const haystack = [item.label, ...item.keywords].join(" ").toLowerCase();
 	return haystack.includes(q);
 }
 
-export default function SpecialitySelect({
-	specialities,
-	value,
-	onChange,
-}: Props) {
-	const items: SpecialityOption[] = specialities.map((s) => ({
-		value: String(s.id),
-		label: getSpecialityLabel(s),
-		keywords: specialityKeywords(s),
+export default function CitySelect({ cities, value, onChange }: Props) {
+	const items: CityOption[] = cities.map((c) => ({
+		value: String(c.id),
+		label: getCityLabel(c),
+		keywords: cityKeywords(c),
 	}));
 	const selected = items.find((o) => o.value === value) ?? null;
 
@@ -55,22 +57,22 @@ export default function SpecialitySelect({
 			items={items}
 			value={selected}
 			onValueChange={(v) => onChange(v?.value ?? "")}
-			filter={(item, query) => filterOption(item as SpecialityOption, query)}
+			filter={(item, query) => filterOption(item as CityOption, query)}
 			isItemEqualToValue={(a, b) => a.value === b.value}
 		>
 			<ComboboxInput
-				placeholder="Select or search a speciality..."
+				placeholder="Select or search a city..."
 				className="mt-1 w-full min-w-80 sm:w-fit"
 			/>
 			<ComboboxContent>
 				<ComboboxList>
-					{(item: SpecialityOption) => (
+					{(item: CityOption) => (
 						<ComboboxItem key={item.value} value={item}>
 							{item.label}
 						</ComboboxItem>
 					)}
 				</ComboboxList>
-				<ComboboxEmpty>No speciality matches your search.</ComboboxEmpty>
+				<ComboboxEmpty>No city matches your search.</ComboboxEmpty>
 			</ComboboxContent>
 		</Combobox>
 	);

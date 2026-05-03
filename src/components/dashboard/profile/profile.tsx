@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
-import { getMyDoctorApplication, getSpecialities } from "@/services";
+import { getCities, getMyDoctorApplication, getSpecialities } from "@/services";
 import { getMe } from "@/services/users";
 import DoctorApplicationForm from "./doctor-application-form";
 import ProfilePicture from "./picture";
@@ -25,6 +25,8 @@ export default function Profile() {
 	const { data: specialities } = useSWR("specialities", () =>
 		getSpecialities(),
 	);
+
+	const { data: cities } = useSWR("cities", () => getCities());
 
 	const profile = me?.doctorProfile ?? null;
 	/** Prefer doctor profile status; fall back to application when there is no profile row yet. */
@@ -66,6 +68,7 @@ export default function Profile() {
 			{showForm && (
 				<DoctorApplicationForm
 					specialities={specialities ?? []}
+					cities={cities ?? []}
 					onApplicationSubmitted={refreshAfterApplication}
 				/>
 			)}
