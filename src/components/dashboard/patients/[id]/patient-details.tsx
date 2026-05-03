@@ -2,7 +2,7 @@ import type { Patient } from "@/services/types";
 
 export function PatientDetails({ patient }: { patient: Patient }) {
 	return (
-		<div className="gap-4 grid sm:grid-cols-3 max-w-xl p-6 border rounded-xl bg-card">
+		<div className="gap-4 grid sm:grid-cols-3 max-w-xl p-4 border rounded-xl bg-card">
 			<div>
 				<p className="text-muted-foreground text-sm">CIN</p>
 				<p className="font-medium">{patient.cin}</p>

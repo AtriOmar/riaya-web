@@ -157,7 +157,7 @@ export default function NewPatientForm() {
 				<Input
 					id="phoneNumber"
 					className="mt-0.5"
-					placeholder="+212 6 12 34 56 78"
+					placeholder="+216 22 222 222"
 					{...register("phoneNumber")}
 				/>
 			</div>

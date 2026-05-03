@@ -1,7 +1,20 @@
 "use client";
 
-import { Loader2, Phone } from "lucide-react";
+import {
+	ArrowRightToLine,
+	ChevronLeft,
+	ChevronRight,
+	Loader2,
+	Phone,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetTitle,
+} from "@/components/ui/sheet";
 import useRealtimeSocket from "@/hooks/use-realtime-socket";
 import CallCard from "./call-card";
 import CallListItem from "./call-list-item";
@@ -20,6 +33,7 @@ export default function LiveCalls() {
 
 	const [filter, setFilter] = useState<Filter>("all");
 	const [selectedCallSid, setSelectedCallSid] = useState<string | null>(null);
+	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	const { activeCount, filtered } = useMemo(() => {
 		const list = Array.from(calls.values()).sort((a, b) => {
@@ -50,6 +64,10 @@ export default function LiveCalls() {
 			sid && filtered.some((c) => c.callSid === sid) ? sid : null,
 		);
 	}, [filtered]);
+
+	useEffect(() => {
+		if (!selectedCallSid) setDetailsOpen(false);
+	}, [selectedCallSid]);
 
 	return (
 		<div className="">
@@ -106,39 +124,63 @@ export default function LiveCalls() {
 					</p>
 				</div>
 			) : (
-				<div className="grid min-h-[min(72vh,640px)] gap-4 lg:grid-cols-[minmax(240px,32%)_1fr] lg:items-stretch">
-					<aside className="flex min-h-0 flex-col gap-2 lg:max-h-[min(85vh,920px)] lg:overflow-y-auto lg:pr-1">
-						{filtered.map((call) => (
-							<CallListItem
-								key={call.callSid}
-								call={call}
-								selected={selectedCallSid === call.callSid}
-								onSelect={() => setSelectedCallSid(call.callSid)}
-							/>
-						))}
-					</aside>
-					<section className="flex h-full min-h-[320px] min-w-0 flex-col lg:min-h-0">
-						{selectedCall ? (
-							<CallCard
-								call={selectedCall}
-								isListening={listeningCalls.has(selectedCall.callSid)}
-								onToggleListening={() => toggleListening(selectedCall.callSid)}
-								audioCallbackRef={audioCallbackRef}
-							/>
-						) : (
-							<div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 px-6 py-16 text-center text-muted-foreground">
-								<Phone className="mb-3 size-12 stroke-1 opacity-40" />
-								<p className="font-medium text-foreground text-sm">
-									Select a call
-								</p>
-								<p className="mt-1 max-w-sm text-sm">
-									Choose a call from the list to view the transcript, recording,
-									and live audio.
-								</p>
-							</div>
-						)}
-					</section>
-				</div>
+				<>
+					<div className="w-full max-w-full lg:max-w-[500px]">
+						<aside className="flex min-h-[min(72vh,640px)] flex-col gap-2 overflow-y-auto lg:min-h-[calc(100dvh-9rem)]">
+							{filtered.map((call) => (
+								<CallListItem
+									key={call.callSid}
+									call={call}
+									selected={selectedCallSid === call.callSid}
+									onSelect={() => {
+										setSelectedCallSid(call.callSid);
+										setDetailsOpen(true);
+									}}
+								/>
+							))}
+						</aside>
+					</div>
+
+					<Sheet
+						modal={false}
+						open={detailsOpen && Boolean(selectedCall)}
+						onOpenChange={setDetailsOpen}
+					>
+						<SheetContent
+							side="right"
+							showCloseButton
+							className="overflow-visible gap-0 border-l border-border p-0 !w-[min(100vw,600px)] !max-w-[min(100vw,600px)]"
+							onPointerDownOutside={(e) => e.preventDefault()}
+							onFocusOutside={(e) => e.preventDefault()}
+						>
+							<SheetTitle className="sr-only">Call details</SheetTitle>
+							{/* <SheetClose asChild>
+								<Button
+									type="button"
+									variant="secondary"
+									size="icon"
+									className="absolute top-1/2 left-0 z-20 h-30 w-7 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border bg-background p-0 shadow- hover:bg-muted"
+									aria-label="Collapse panel"
+								>
+									<ArrowRightToLine className="size-5" />
+								</Button>
+							</SheetClose> */}
+							{selectedCall ? (
+								<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-12">
+									<CallCard
+										variant="drawer"
+										call={selectedCall}
+										isListening={listeningCalls.has(selectedCall.callSid)}
+										onToggleListening={() =>
+											toggleListening(selectedCall.callSid)
+										}
+										audioCallbackRef={audioCallbackRef}
+									/>
+								</div>
+							) : null}
+						</SheetContent>
+					</Sheet>
+				</>
 			)}
 		</div>
 	);

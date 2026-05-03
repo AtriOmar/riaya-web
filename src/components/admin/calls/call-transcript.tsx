@@ -162,15 +162,25 @@ export default function CallTranscript({
 	timeline,
 	isActive,
 	scrollAreaClassName,
+	variant = "default",
 }: {
 	timeline: TimelineEntry[];
 	isActive: boolean;
 	/** Merged with default scroll container classes (spacing, overflow). */
 	scrollAreaClassName?: string;
+	/** `drawer`: edge-to-edge transcript area for slide-over panels. */
+	variant?: "default" | "drawer";
 }) {
+	const isDrawer = variant === "drawer";
+
 	if (timeline.length === 0) {
 		return (
-			<div className="px-5 py-8 text-muted-foreground text-sm text-center">
+			<div
+				className={cn(
+					"py-8 text-muted-foreground text-sm text-center",
+					isDrawer ? "px-4" : "px-5",
+				)}
+			>
 				{isActive
 					? "Waiting for conversation to begin..."
 					: "No transcript available"}
@@ -181,8 +191,9 @@ export default function CallTranscript({
 	return (
 		<div
 			className={cn(
-				"space-y-2 overflow-y-auto px-5 py-3",
-				scrollAreaClassName ?? "max-h-[500px]",
+				"space-y-2 overflow-y-auto py-3",
+				isDrawer ? "min-h-0 flex-1 px-3" : "px-5",
+				scrollAreaClassName ?? (!isDrawer ? "max-h-[500px]" : undefined),
 			)}
 		>
 			{timeline.map((entry) => {

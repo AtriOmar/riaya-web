@@ -41,6 +41,8 @@ type Props = {
 	audioCallbackRef: React.MutableRefObject<
 		((callSid: string, role: string, payload: string) => void) | null
 	>;
+	/** `drawer`: no card chrome; transcript fills the panel (e.g. admin sheet). */
+	variant?: "default" | "drawer";
 };
 
 export default function CallCard({
@@ -48,7 +50,9 @@ export default function CallCard({
 	isListening,
 	onToggleListening,
 	audioCallbackRef,
+	variant = "default",
 }: Props) {
+	const isDrawer = variant === "drawer";
 	const duration = useCallDuration(call.startTime, call.endTime, call.duration);
 	const isActive = call.status === "active";
 	const preview = getTimelinePreview(call.timeline);
@@ -114,11 +118,21 @@ export default function CallCard({
 	return (
 		<div
 			className={cn(
-				"flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm",
-				isActive ? "border-primary/20 bg-card" : "border-border bg-muted/30",
+				"flex h-full min-h-0 min-w-0 flex-col overflow-hidden",
+				!isDrawer && "rounded-xl border shadow-sm",
+				!isDrawer &&
+					(isActive
+						? "border-primary/20 bg-card"
+						: "border-border bg-muted/30"),
+				isDrawer && "bg-background",
 			)}
 		>
-			<div className="shrink-0 border-b px-5 py-4">
+			<div
+				className={cn(
+					"shrink-0 border-b",
+					isDrawer ? "px-4 py-3" : "px-5 py-4",
+				)}
+			>
 				<div className="flex flex-wrap items-start justify-between gap-3">
 					<div className="flex min-w-0 flex-1 items-start gap-3">
 						<div className="relative mt-0.5 shrink-0">
@@ -179,7 +193,12 @@ export default function CallCard({
 
 			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 				{!isActive && call.recordingUrl && (
-					<div className="shrink-0 border-b bg-muted/30 px-5 py-3">
+					<div
+						className={cn(
+							"shrink-0 border-b bg-muted/30",
+							isDrawer ? "px-4 py-2.5" : "px-5 py-3",
+						)}
+					>
 						<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
 							Recording
 						</div>
@@ -190,6 +209,7 @@ export default function CallCard({
 				<CallTranscript
 					timeline={call.timeline}
 					isActive={isActive}
+					variant={isDrawer ? "drawer" : "default"}
 					scrollAreaClassName="min-h-0 flex-1"
 				/>
 			</div>

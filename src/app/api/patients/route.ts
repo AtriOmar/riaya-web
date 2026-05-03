@@ -78,7 +78,7 @@ const createSchema = z.object({
 	lastName: z.string().min(1),
 	dateOfBirth: z.string().datetime(),
 	gender: z.string().min(1),
-	address: z.string().min(1),
+	address: z.string(),
 	phoneNumber: z.string().min(1),
 });
 
