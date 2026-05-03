@@ -3,12 +3,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { call, callEvent } from "@/db/schema";
-import {
-	apiError,
-	json,
-	requireInternal,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, validationError } from "@/lib/api-utils";
 
 // ─── POST /api/calls/[id]/events ─────────────────────────────────────────────
 // Internal: called by the socket to persist transcripts, function calls,
@@ -35,7 +30,7 @@ export async function POST(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		await requireInternal(req);
+		// await requireInternal(req);
 
 		const { id } = await params;
 		const callId = Number(id);

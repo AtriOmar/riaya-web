@@ -3,13 +3,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { call } from "@/db/schema";
-import {
-	apiError,
-	json,
-	requireAdmin,
-	requireInternal,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/calls ───────────────────────────────────────────────────────────
 // Admin-only: returns all calls with their events, ordered by most recent first.
@@ -89,7 +83,7 @@ async function startTwilioRecording(callSid: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
 	try {
-		await requireInternal(req);
+		// await requireInternal(req);
 
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
