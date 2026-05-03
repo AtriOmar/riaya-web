@@ -345,61 +345,57 @@ html {
 	}
 }
 
-/* ─── Calendar (react-big-calendar) ────────────────────────────────────────── */
-
-.rbc-calendar {
-	font-family: inherit;
-}
-
-.rbc-toolbar button {
-	@apply px-3 py-1.5 border border-border rounded-md bg-background hover:bg-muted font-medium text-foreground text-sm transition;
-}
-
-.rbc-toolbar button.rbc-active {
-	@apply bg-primary text-primary-foreground;
-}
-
-.rbc-header {
-	@apply border-border bg-muted/50 py-2 text-sm font-semibold;
-}
-
-.rbc-today {
-	@apply bg-primary/5;
-}
-
+/* ---------------------------------- Start Calendar Styles ---------------------------------- */
+/* ---------------------------------- Start Calendar Styles ---------------------------------- */
 .rbc-event {
-	@apply px-1.5 py-0.5 border-none rounded-md bg-primary text-primary-foreground text-xs;
+	font-size: 12px;
+	white-space: normal;
+	cursor: pointer;
 }
 
-.rbc-event.rbc-selected {
-	@apply bg-primary/80;
+.rbc-event-content {
+	white-space: normal !important;
 }
 
-.rbc-off-range-bg {
-	@apply bg-muted/30;
+.rbc-time-view {
+	border-radius: 5px;
+	box-shadow:
+		0 4px 6px -1px rgb(0 0 0 / 0.1),
+		0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-.rbc-day-bg + .rbc-day-bg,
-.rbc-month-row + .rbc-month-row {
-	@apply border-border;
+.rbc-allday-cell {
+	display: none;
 }
 
-.rbc-time-content {
-	@apply border-border;
+.rbc-time-view .rbc-header {
+	border-bottom: none;
 }
 
 .rbc-timeslot-group {
-	@apply border-border;
+	min-height: 60px !important;
 }
 
-.rbc-time-header-content {
-	@apply border-border;
+.rbc-label {
+	font-weight: thin;
+	font-size: 12px;
 }
 
-.rbc-time-slot {
-	@apply text-muted-foreground text-xs;
+.rbc-header * {
+	font-size: 12px;
+	font-weight: 600;
 }
 
+.rbc-calendar {
+	min-height: 580px;
+}
+
+.rbc-time-gutter .rbc-time-slot {
+	background: transparent !important;
+}
+
+/* ---------------------------------- End Calendar Styles ---------------------------------- */
+/* ---------------------------------- End Calendar Styles ---------------------------------- */
 /* ─── Animations ───────────────────────────────────────────────────────────── */
 
 @keyframes fade-in-up {

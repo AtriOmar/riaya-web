@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
+import DoctorAppointmentSocketListener from "@/components/dashboard/appointments/doctor-appointment-socket-listener";
 import { getMyDoctorApplication } from "@/services";
 import { getMe } from "@/services/users";
 
@@ -76,5 +77,10 @@ export default function VerifiedDoctorGate({
 		);
 	}
 
-	return <>{children}</>;
+	return (
+		<>
+			<DoctorAppointmentSocketListener doctorId={profile.id} />
+			{children}
+		</>
+	);
 }

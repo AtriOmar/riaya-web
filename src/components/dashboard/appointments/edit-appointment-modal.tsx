@@ -34,6 +34,7 @@ export type CalendarEvent = {
 	description?: string;
 	status: "pending" | "confirmed" | "cancelled";
 	patient?: { firstName: string | null; lastName: string | null } | null;
+	newPatientName?: string | null;
 };
 
 type Props = {
