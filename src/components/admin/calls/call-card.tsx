@@ -1,8 +1,10 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Phone, Volume2, VolumeX } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Phone, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
 import type { CallData } from "@/hooks/use-realtime-socket";
+import { cn } from "@/lib/utils";
+import { getTimelinePreview, useCallDuration } from "./call-helpers";
 import CallTranscript from "./call-transcript";
 
 // µ-law to 16-bit PCM lookup table (ITU-T G.711)
@@ -32,47 +34,6 @@ function decodeUlaw(base64Data: string): Float32Array {
 	return pcm;
 }
 
-function formatDuration(seconds: number): string {
-	const minutes = Math.floor(seconds / 60);
-	const secs = seconds % 60;
-	return `${minutes}:${String(secs).padStart(2, "0")}`;
-}
-
-function useDuration(
-	startTime?: string,
-	endTime?: string,
-	fixed?: number | null,
-) {
-	const [elapsed, setElapsed] = useState(0);
-
-	useEffect(() => {
-		if (fixed != null) {
-			setElapsed(fixed);
-			return;
-		}
-		if (!startTime) return;
-		if (endTime) {
-			setElapsed(
-				Math.max(
-					0,
-					Math.floor(
-						(new Date(endTime).getTime() - new Date(startTime).getTime()) /
-							1000,
-					),
-				),
-			);
-			return;
-		}
-		const start = new Date(startTime).getTime();
-		const interval = setInterval(() => {
-			setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)));
-		}, 1000);
-		return () => clearInterval(interval);
-	}, [startTime, endTime, fixed]);
-
-	return formatDuration(elapsed);
-}
-
 type Props = {
 	call: CallData;
 	isListening: boolean;
@@ -88,13 +49,10 @@ export default function CallCard({
 	onToggleListening,
 	audioCallbackRef,
 }: Props) {
-	const [expanded, setExpanded] = useState(false);
-	const duration = useDuration(call.startTime, call.endTime, call.duration);
+	const duration = useCallDuration(call.startTime, call.endTime, call.duration);
 	const isActive = call.status === "active";
-
-	useEffect(() => {
-		if (isActive) setExpanded(true);
-	}, [isActive]);
+	const preview = getTimelinePreview(call.timeline);
+	const callerLabel = call.callerName || call.from || "Unknown caller";
 
 	const audioContextRef = useRef<AudioContext | null>(null);
 	const nextPlayTimeRef = useRef(0);
@@ -153,86 +111,60 @@ export default function CallCard({
 		};
 	}, [isListening, handleAudio, audioCallbackRef]);
 
-	const lastEntry = call.timeline[call.timeline.length - 1];
-	const preview = (() => {
-		if (!lastEntry) return "Waiting for conversation...";
-		if (lastEntry.kind === "transcript")
-			return `${lastEntry.role === "ai" ? "AI" : "Patient"}: ${lastEntry.text}`;
-		if (lastEntry.kind === "function_call")
-			return `Tool ${lastEntry.name} (${lastEntry.status})`;
-		if (lastEntry.kind === "system") return lastEntry.text;
-		if (lastEntry.kind === "error") return `Error: ${lastEntry.text}`;
-		return "";
-	})();
-
-	const callerLabel = call.callerName || call.from || "Unknown caller";
-
 	return (
 		<div
-			className={`border rounded-xl overflow-hidden shadow-sm transition-all ${
-				isActive
-					? "border-primary/20 bg-card"
-					: "border-border bg-muted/50 opacity-95"
-			}`}
+			className={cn(
+				"flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm",
+				isActive ? "border-primary/20 bg-card" : "border-border bg-muted/30",
+			)}
 		>
-			{/* Header */}
-			{/* biome-ignore lint/a11y/useSemanticElements: header contains nested interactive buttons which cannot be nested in a <button> */}
-			<div
-				className="flex justify-between items-center px-5 py-4 cursor-pointer select-none"
-				onClick={() => setExpanded(!expanded)}
-				onKeyDown={(e) => {
-					if (e.key === "Enter" || e.key === " ") setExpanded(!expanded);
-				}}
-				role="button"
-				tabIndex={0}
-			>
-				<div className="flex items-center gap-3 min-w-0">
-					<div className="relative">
-						<Phone
-							className={`size-5 ${isActive ? "text-primary" : "text-muted-foreground"}`}
-						/>
-						{isActive && (
-							<span className="-top-0.5 -right-0.5 absolute size-2.5 rounded-full bg-green-500 animate-pulse" />
-						)}
-					</div>
-					<div className="min-w-0">
-						<div className="flex items-center gap-2 flex-wrap">
-							<span
-								className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-									isActive
-										? "bg-primary/10 text-primary"
-										: "bg-muted text-muted-foreground"
-								}`}
-							>
-								{isActive ? "Active" : "Ended"}
-							</span>
-							<span className="font-medium text-sm">{callerLabel}</span>
-							<span className="font-mono text-muted-foreground text-sm">
-								{duration}
-							</span>
-							<span className="hidden sm:inline text-muted-foreground text-xs">
-								{call.callSid?.slice(0, 16)}...
-							</span>
+			<div className="shrink-0 border-b px-5 py-4">
+				<div className="flex flex-wrap items-start justify-between gap-3">
+					<div className="flex min-w-0 flex-1 items-start gap-3">
+						<div className="relative mt-0.5 shrink-0">
+							<Phone
+								className={cn(
+									"size-6",
+									isActive ? "text-primary" : "text-muted-foreground",
+								)}
+							/>
+							{isActive && (
+								<span className="-top-0.5 -right-0.5 absolute size-2.5 rounded-full bg-green-500 animate-pulse" />
+							)}
 						</div>
-						<p className="max-w-[400px] mt-1 text-muted-foreground text-sm truncate">
-							{preview}
-						</p>
+						<div className="min-w-0">
+							<div className="flex flex-wrap items-center gap-2">
+								<span
+									className={cn(
+										"rounded-full px-2 py-0.5 font-medium text-xs",
+										isActive
+											? "bg-primary/10 text-primary"
+											: "bg-muted text-muted-foreground",
+									)}
+								>
+									{isActive ? "Active" : "Ended"}
+								</span>
+								<span className="font-semibold text-base">{callerLabel}</span>
+								<span className="font-mono text-muted-foreground text-sm tabular-nums">
+									{duration}
+								</span>
+							</div>
+							<p className="mt-1 text-muted-foreground text-sm">{preview}</p>
+							<p className="mt-1 font-mono text-muted-foreground text-xs break-all">
+								{call.callSid}
+							</p>
+						</div>
 					</div>
-				</div>
-
-				<div className="flex items-center gap-2 ml-4 shrink-0">
 					{isActive && (
 						<button
 							type="button"
-							onClick={(e) => {
-								e.stopPropagation();
-								onToggleListening();
-							}}
-							className={`p-2 rounded-lg transition-colors ${
+							onClick={onToggleListening}
+							className={cn(
+								"shrink-0 rounded-lg p-2.5 transition-colors",
 								isListening
 									? "bg-primary/10 text-primary hover:bg-primary/20"
-									: "bg-muted text-muted-foreground hover:bg-muted/80"
-							}`}
+									: "bg-muted text-muted-foreground hover:bg-muted/80",
+							)}
 							title={isListening ? "Stop listening" : "Listen to call"}
 						>
 							{isListening ? (
@@ -242,29 +174,25 @@ export default function CallCard({
 							)}
 						</button>
 					)}
-					{expanded ? (
-						<ChevronUp className="size-5 text-muted-foreground" />
-					) : (
-						<ChevronDown className="size-5 text-muted-foreground" />
-					)}
 				</div>
 			</div>
 
-			{/* Expanded body */}
-			{expanded && (
-				<div className="border-t">
-					{!isActive && call.recordingUrl && (
-						<div className="px-5 py-3 bg-muted/30 border-b">
-							<div className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-2">
-								Recording
-							</div>
-							{/** biome-ignore lint/a11y/useMediaCaption: no captions for call audio */}
-							<audio controls src={call.recordingUrl} className="w-full h-10" />
+			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+				{!isActive && call.recordingUrl && (
+					<div className="shrink-0 border-b bg-muted/30 px-5 py-3">
+						<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+							Recording
 						</div>
-					)}
-					<CallTranscript timeline={call.timeline} isActive={isActive} />
-				</div>
-			)}
+						{/** biome-ignore lint/a11y/useMediaCaption: no captions for call audio */}
+						<audio controls src={call.recordingUrl} className="h-10 w-full" />
+					</div>
+				)}
+				<CallTranscript
+					timeline={call.timeline}
+					isActive={isActive}
+					scrollAreaClassName="min-h-0 flex-1"
+				/>
+			</div>
 		</div>
 	);
 }

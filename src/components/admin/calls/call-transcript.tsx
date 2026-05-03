@@ -8,8 +8,9 @@ import {
 	Loader2,
 	Wrench,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { TimelineEntry } from "@/hooks/use-realtime-socket";
+import { cn } from "@/lib/utils";
 
 function formatTime(timestamp: number): string {
 	return new Date(timestamp).toLocaleTimeString([], {
@@ -160,16 +161,13 @@ function ErrorLine({ text, timestamp }: { text: string; timestamp: number }) {
 export default function CallTranscript({
 	timeline,
 	isActive,
+	scrollAreaClassName,
 }: {
 	timeline: TimelineEntry[];
 	isActive: boolean;
+	/** Merged with default scroll container classes (spacing, overflow). */
+	scrollAreaClassName?: string;
 }) {
-	const bottomRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [timeline.length]);
-
 	if (timeline.length === 0) {
 		return (
 			<div className="px-5 py-8 text-muted-foreground text-sm text-center">
@@ -181,7 +179,12 @@ export default function CallTranscript({
 	}
 
 	return (
-		<div className="space-y-2 max-h-[500px] overflow-y-auto px-5 py-3">
+		<div
+			className={cn(
+				"space-y-2 overflow-y-auto px-5 py-3",
+				scrollAreaClassName ?? "max-h-[500px]",
+			)}
+		>
 			{timeline.map((entry) => {
 				switch (entry.kind) {
 					case "transcript":
@@ -224,7 +227,6 @@ export default function CallTranscript({
 						return null;
 				}
 			})}
-			<div ref={bottomRef} />
 		</div>
 	);
 }

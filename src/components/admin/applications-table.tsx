@@ -50,17 +50,12 @@ export default function ApplicationsTable() {
 	);
 
 	return (
-		<div className="mt-6">
-			<h4 className="mb-3 font-semibold text-lg">Doctor Applications</h4>
-			<DataTable
-				columns={columns}
-				data={applications ?? []}
-				keyExtractor={(row) => row.id}
-				onRowClick={(row) =>
-					router.push(`/admin/doctor-applications/${row.id}`)
-				}
-				emptyMessage="No applications found."
-			/>
-		</div>
+		<DataTable
+			columns={columns}
+			data={applications ?? []}
+			keyExtractor={(row) => row.id}
+			onRowClick={(row) => router.push(`/admin/doctor-applications/${row.id}`)}
+			emptyMessage="No applications found."
+		/>
 	);
 }
