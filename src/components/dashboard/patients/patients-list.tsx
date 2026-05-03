@@ -42,9 +42,8 @@ export default function PatientsList() {
 
 	return (
 		<div>
-			<div className="flex justify-between items-center mb-4">
-				<h3 className="font-bold text-2xl">Patients</h3>
-				<Button asChild>
+			<div className="flex justify-end">
+				<Button asChild className="mb-2 md:-mt-12">
 					<Link href="/dashboard/patients/new">
 						<Plus className="w-4 h-4" />
 						New Patient

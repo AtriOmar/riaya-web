@@ -65,7 +65,12 @@ export default function NewPatientForm() {
 				<Label htmlFor="cin">
 					CIN <span className="text-destructive">*</span>
 				</Label>
-				<Input id="cin" {...register("cin")} />
+				<Input
+					id="cin"
+					className="mt-0.5"
+					placeholder="e.g. AB123456"
+					{...register("cin")}
+				/>
 				{errors.cin && (
 					<p className="mt-1 text-destructive text-sm">{errors.cin.message}</p>
 				)}
@@ -75,7 +80,12 @@ export default function NewPatientForm() {
 					<Label htmlFor="firstName">
 						First Name <span className="text-destructive">*</span>
 					</Label>
-					<Input id="firstName" {...register("firstName")} />
+					<Input
+						id="firstName"
+						className="mt-0.5"
+						placeholder="First name"
+						{...register("firstName")}
+					/>
 					{errors.firstName && (
 						<p className="mt-1 text-destructive text-sm">
 							{errors.firstName.message}
@@ -86,7 +96,12 @@ export default function NewPatientForm() {
 					<Label htmlFor="lastName">
 						Last Name <span className="text-destructive">*</span>
 					</Label>
-					<Input id="lastName" {...register("lastName")} />
+					<Input
+						id="lastName"
+						className="mt-0.5"
+						placeholder="Last name"
+						{...register("lastName")}
+					/>
 					{errors.lastName && (
 						<p className="mt-1 text-destructive text-sm">
 							{errors.lastName.message}
@@ -98,7 +113,12 @@ export default function NewPatientForm() {
 				<Label htmlFor="dateOfBirth">
 					Date of Birth <span className="text-destructive">*</span>
 				</Label>
-				<Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
+				<Input
+					id="dateOfBirth"
+					className="mt-0.5"
+					type="date"
+					{...register("dateOfBirth")}
+				/>
 				{errors.dateOfBirth && (
 					<p className="mt-1 text-destructive text-sm">
 						{errors.dateOfBirth.message}
@@ -109,7 +129,7 @@ export default function NewPatientForm() {
 				<Label>
 					Gender <span className="text-destructive">*</span>
 				</Label>
-				<div className="flex gap-2 mt-1">
+				<div className="mt-0.5 flex gap-2">
 					{(["male", "female"] as const).map((g) => (
 						<button
 							key={g}
@@ -134,11 +154,21 @@ export default function NewPatientForm() {
 			</div>
 			<div>
 				<Label htmlFor="phoneNumber">Phone Number</Label>
-				<Input id="phoneNumber" {...register("phoneNumber")} />
+				<Input
+					id="phoneNumber"
+					className="mt-0.5"
+					placeholder="+212 6 12 34 56 78"
+					{...register("phoneNumber")}
+				/>
 			</div>
 			<div>
 				<Label htmlFor="address">Address</Label>
-				<Input id="address" {...register("address")} />
+				<Input
+					id="address"
+					className="mt-0.5"
+					placeholder="Street, city, postal code"
+					{...register("address")}
+				/>
 			</div>
 			<Button type="submit" className="w-full" disabled={isSubmitting}>
 				{isSubmitting ? "Creating..." : "Create Patient"}
