@@ -46,9 +46,13 @@ export default function AddAppointmentModal({
 	range,
 	onSuccess,
 }: Props) {
-	const { data: patients } = useSWR("patients-all", () =>
-		getPatients({ all: true }),
+	const { data: patients, isLoading: patientsLoading } = useSWR(
+		"patients-all",
+		() => getPatients({ all: true }),
 	);
+
+	const patientList = patients ?? [];
+	const hasPatients = patientList.length > 0;
 
 	const {
 		register,
@@ -138,11 +142,21 @@ export default function AddAppointmentModal({
 								<SelectValue placeholder="Select patient" />
 							</SelectTrigger>
 							<SelectContent>
-								{(patients ?? []).map((p) => (
-									<SelectItem key={p.id} value={String(p.id)}>
-										{p.firstName} {p.lastName} ({p.cin})
-									</SelectItem>
-								))}
+								{patientsLoading ? (
+									<div className="rounded-md py-1 pr-2 pl-1.5 text-muted-foreground text-sm">
+										Loading…
+									</div>
+								) : !hasPatients ? (
+									<div className="rounded-md py-1 pr-2 pl-1.5 text-muted-foreground text-sm">
+										No patients available
+									</div>
+								) : (
+									patientList.map((p) => (
+										<SelectItem key={p.id} value={String(p.id)}>
+											{p.firstName} {p.lastName} ({p.cin})
+										</SelectItem>
+									))
+								)}
 							</SelectContent>
 						</Select>
 						{errors.patientId && (
@@ -174,7 +188,7 @@ export default function AddAppointmentModal({
 					</div>
 
 					<div className="flex justify-end gap-2">
-						<Button type="button" variant="outline" onClick={onClose}>
+						<Button type="button" variant="quiet" onClick={onClose}>
 							Cancel
 						</Button>
 						<Button type="submit" disabled={isSubmitting}>

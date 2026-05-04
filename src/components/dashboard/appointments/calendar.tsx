@@ -147,7 +147,7 @@ export default function AppointmentsCalendar() {
 	const events: CalendarEvent[] = useMemo(
 		() =>
 			(appointments ?? [])
-				.filter((a) => a.start && a.end)
+				.filter((a) => a.start && a.end && a.status !== "cancelled")
 				.map((a) => {
 					const patientLabel = [a.patient?.firstName, a.patient?.lastName]
 						.filter(Boolean)
@@ -303,6 +303,7 @@ export default function AppointmentsCalendar() {
 						// RBC typings use `ComponentType<{}>`; runtime passes `value` + `children`.
 						timeSlotWrapper: TimeSlotWrapper as ComponentType,
 					}}
+					draggableAccessor={(ev) => (ev as CalendarEvent).status !== "pending"}
 					localizer={localizer}
 					events={events}
 					date={currentDate}

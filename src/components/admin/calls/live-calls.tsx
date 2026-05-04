@@ -153,7 +153,7 @@ export default function LiveCalls() {
 								</Button>
 							</SheetClose> */}
 							{selectedCall ? (
-								<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-12">
+								<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-4">
 									<CallCard
 										variant="drawer"
 										call={selectedCall}

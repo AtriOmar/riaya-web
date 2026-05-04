@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, or } from "drizzle-orm";
+import { and, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -213,6 +213,10 @@ export async function GET(req: NextRequest) {
 								eq(appointment.doctorId, doctor.id),
 								gte(appointment.start, currentTime),
 								lt(appointment.start, nextWeek),
+								or(
+									isNull(appointment.status),
+									ne(appointment.status, "cancelled"),
+								),
 							),
 						);
 

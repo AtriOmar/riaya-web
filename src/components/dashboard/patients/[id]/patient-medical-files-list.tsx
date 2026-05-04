@@ -327,9 +327,12 @@ export function PatientMedicalFilesList({
 					))}
 				</div>
 			) : (
-				<p className="py-8 text-center text-muted-foreground">
-					No medical files yet.
-				</p>
+				<div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 py-10 text-center">
+					<div className="flex size-12 items-center justify-center rounded-full bg-muted">
+						<FileText className="size-6 text-muted-foreground" aria-hidden />
+					</div>
+					<p className="text-muted-foreground text-sm">No medical files yet.</p>
+				</div>
 			)}
 		</div>
 	);
