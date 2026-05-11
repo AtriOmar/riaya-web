@@ -4,12 +4,10 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
+import { type Availability, findNextAvailableSlot } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit ────────────────────────────────────────────────
 // Public endpoint — finds best-fit doctors based on speciality, location, and time
-
-type AvailabilitySlot = { start: number; end: number };
-type Availability = Record<number, AvailabilitySlot[]>;
 
 const schema = z.object({
 	speciality: z.string().min(1),
@@ -33,107 +31,6 @@ function calculateDistance(
 		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
 	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 	return R * c;
-}
-
-function findNextAvailableSlot(
-	availability: Availability,
-	appointments: { start: Date | null; end: Date | null }[],
-	currentTime: Date,
-	desiredTime: Date,
-) {
-	let dayOfWeek = desiredTime.getDay();
-	dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-	const desiredMinutes = desiredTime.getHours() * 60 + desiredTime.getMinutes();
-
-	const roundToNearest30 = (minutes: number) => Math.ceil(minutes / 30) * 30;
-
-	const isSlotAvailable = (slotStart: Date, slotEnd: Date) =>
-		!appointments.some((appt) => {
-			if (!appt.start || !appt.end) return false;
-			const aStart = new Date(appt.start);
-			const aEnd = new Date(appt.end);
-			return (
-				(slotStart > aStart && slotStart < aEnd) ||
-				(slotEnd > aStart && slotEnd < aEnd) ||
-				(slotStart <= aStart && slotEnd >= aEnd)
-			);
-		});
-
-	let slotFromRight: { start: Date; end: Date } | null = null;
-	let slotFromLeft: { start: Date; end: Date } | null = null;
-
-	// Search forward
-	for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-		const dayIndex = (dayOfWeek + dayOffset) % 7;
-		const slots = availability[dayIndex] || [];
-
-		for (const slot of slots) {
-			let start = Math.max(
-				slot.start,
-				dayOffset === 0 ? roundToNearest30(desiredMinutes) : slot.start,
-			);
-
-			while (start + 30 <= slot.end) {
-				const slotStart = new Date(
-					desiredTime.getTime() + dayOffset * 24 * 60 * 60 * 1000,
-				);
-				slotStart.setHours(Math.floor(start / 60), start % 60, 0, 0);
-				const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
-
-				if (slotStart >= currentTime && isSlotAvailable(slotStart, slotEnd)) {
-					slotFromRight = { start: slotStart, end: slotEnd };
-					dayOffset = 7;
-					break;
-				}
-				start += 30;
-			}
-		}
-	}
-
-	// Search backward
-	for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-		const dayIndex = (dayOfWeek - dayOffset + 7) % 7;
-		const slots = (availability[dayIndex] || []).slice().reverse();
-
-		for (const slot of slots) {
-			let start = Math.min(
-				slot.end - 30,
-				dayOffset === 0 ? roundToNearest30(desiredMinutes) - 30 : slot.end,
-			);
-
-			while (start >= slot.start) {
-				const slotStart = new Date(
-					desiredTime.getTime() - dayOffset * 24 * 60 * 60 * 1000,
-				);
-				slotStart.setHours(Math.floor(start / 60), start % 60, 0, 0);
-				const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
-
-				if (slotStart >= currentTime && isSlotAvailable(slotStart, slotEnd)) {
-					slotFromLeft = { start: slotStart, end: slotEnd };
-					dayOffset = 7;
-					break;
-				}
-				start -= 30;
-			}
-		}
-	}
-
-	if (!slotFromLeft) return slotFromRight;
-	if (!slotFromRight) return slotFromLeft;
-
-	const contains = (slot: { start: Date; end: Date }) =>
-		desiredTime >= slot.start && desiredTime < slot.end;
-	const leftContains = contains(slotFromLeft);
-	const rightContains = contains(slotFromRight);
-	if (leftContains !== rightContains) {
-		return leftContains ? slotFromLeft : slotFromRight;
-	}
-
-	const dist = (slot: { start: Date; end: Date }) =>
-		Math.abs(slot.start.getTime() - desiredTime.getTime());
-	return dist(slotFromLeft) <= dist(slotFromRight)
-		? slotFromLeft
-		: slotFromRight;
 }
 
 export async function GET(req: NextRequest) {

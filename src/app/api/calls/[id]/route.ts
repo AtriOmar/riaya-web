@@ -3,13 +3,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { call } from "@/db/schema";
-import {
-	apiError,
-	json,
-	requireAdmin,
-	requireInternal,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/calls/[id] ─────────────────────────────────────────────────────
 // Admin-only. Returns the call with all events.
