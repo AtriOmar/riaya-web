@@ -1,3 +1,4 @@
+import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
@@ -10,6 +11,32 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+
+// Internal socket service URL — used to fire-and-forget WhatsApp messages
+const SOCKET_INTERNAL_URL =
+	process.env.SOCKET_INTERNAL_URL ?? "http://localhost:8080";
+
+function buildConfirmationMessage(params: {
+	patientName: string;
+	doctorFirstName: string | null | undefined;
+	doctorLastName: string | null | undefined;
+	start: Date | null | undefined;
+}): string {
+	const doctorName =
+		[params.doctorFirstName, params.doctorLastName].filter(Boolean).join(" ") ||
+		"الطبيب";
+	const date = params.start
+		? params.start.toLocaleString("ar-MA", {
+				weekday: "long",
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			})
+		: "";
+	return `مرحباً ${params.patientName}، تم تأكيد موعدك مع الدكتور ${doctorName}${date ? ` بتاريخ ${date}` : ""}. شكراً لك.`;
+}
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
 // Returns appointments for the authenticated doctor
@@ -126,6 +153,39 @@ export async function PUT(req: NextRequest) {
 			.returning();
 
 		if (!updated) return apiError("APPOINTMENT_NOT_FOUND");
+
+		// Fire-and-forget: send WhatsApp confirmation when status becomes "confirmed"
+		if (fields.status === "confirmed") {
+			(async () => {
+				try {
+					const full = await db.query.appointment.findFirst({
+						where: eq(appointment.id, id),
+						with: { patient: true, doctor: true },
+					});
+
+					const phone =
+						full?.patient?.phoneNumber ?? full?.newPatientPhoneNumber;
+					const patientName = full?.patient
+						? `${full.patient.firstName ?? ""} ${full.patient.lastName ?? ""}`.trim()
+						: (full?.newPatientName ?? "");
+
+					if (phone && patientName) {
+						const message = buildConfirmationMessage({
+							patientName,
+							doctorFirstName: full?.doctor?.firstName,
+							doctorLastName: full?.doctor?.lastName,
+							start: full?.start,
+						});
+						await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
+							phone,
+							message,
+						});
+					}
+				} catch {
+					// Non-critical — do not let WhatsApp errors affect the API response
+				}
+			})();
+		}
 
 		return json(updated);
 	} catch (e) {
