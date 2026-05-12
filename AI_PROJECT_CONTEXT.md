@@ -163,6 +163,12 @@ Use these as examples before changing related code.
 - `socket/src/types.ts` (message contracts and API data types)
 - `socket/src/constants.ts` and `socket/src/constants/*` (shared static domain data)
 
+## Voice booking / phone numbers (`socket`)
+
+- When Twilio passes caller ID into the session, the assistant **must ask** whether to use **that** number or **another**.
+- An alternate number must be **Tunisian local**: **exactly 8 digits**, no `+216`; if unclear or wrong length, the assistant asks the patient to **repeat** until valid.
+- Prompt text lives in `socket/src/systemMessages.ts`; caller-ID injection is appended in `socket/src/twilioSession.ts` (`buildSessionInstructions`).
+
 ## Practical AI Instructions
 
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).

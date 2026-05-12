@@ -48,6 +48,21 @@ export async function getPatientById(
 	return data;
 }
 
+// ─── PATCH /api/patients/[id] ─────────────────────────────────────────────────
+
+export type UpdatePatientInput = CreatePatientInput;
+
+export async function updatePatient(
+	id: number,
+	data: UpdatePatientInput,
+): Promise<PatientWithMedicalFiles> {
+	const { data: res } = await api.patch<PatientWithMedicalFiles>(
+		`/api/patients/${id}`,
+		data,
+	);
+	return res;
+}
+
 // ─── POST /api/patients/[id]/medical-files ───────────────────────────────────
 
 export interface CreateMedicalFileInput {
