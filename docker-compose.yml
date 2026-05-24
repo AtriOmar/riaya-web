@@ -10,8 +10,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - riaya_postgres_data:/var/lib/postgresql
 
 volumes:
-  postgres_data:
-    name: postgres_data
+  riaya_postgres_data:
+    name: riaya_postgres_data
