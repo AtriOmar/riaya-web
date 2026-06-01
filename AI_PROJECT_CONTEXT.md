@@ -5,17 +5,18 @@ This document is a compact project guide for AI assistants working on this repo.
 ## What This Project Is
 
 - Riaya is an AI-powered healthcare appointment platform.
-- The repo currently has **two TypeScript apps**:
-  - `web-ts`: Next.js web app (frontend + API routes + DB layer).
-  - `socket`: realtime bridge for Twilio phone calls, dashboard websocket streaming, and AI-assisted booking flow.
-- High-level flow:
-  - Phone call enters `socket` via Twilio media stream.
-  - `socket` uses tool/function calling and requests Next API endpoints in `web-ts`.
-  - Admin dashboard in `web-ts` listens to realtime call events over websocket.
+- The repo has **two TypeScript apps**:
+  - `web/`: Next.js web app (frontend + API routes + DB layer). Package name in `package.json` is `web-ts`.
+  - `socket/`: realtime bridge for Twilio phone calls, dashboard websocket streaming, and AI-assisted booking flow.
+- High-level phone-booking flow:
+  - Twilio hits `socket` `/incoming-call` → TwiML connects media stream; `ensureCallRow` and `ensurePersonRow` upsert DB rows in Next (cached by `callSid` / phone).
+  - `TwilioSession` bridges Twilio audio ↔ OpenAI Realtime ↔ dashboard websocket.
+  - AI tools call Next public/internal APIs (slots, external booking, person updates).
+  - Admin dashboard in `web` listens to realtime call events over websocket.
 
 ## Core Tech Stack
 
-### Frontend / Web App (`web-ts`)
+### Frontend / Web App (`web/`)
 
 - Next.js (App Router), React, TypeScript
 - Tailwind CSS v4 + `tw-animate-css` + shadcn styles
@@ -27,52 +28,55 @@ This document is a compact project guide for AI assistants working on this repo.
 - Drizzle ORM + PostgreSQL
 - Biome for lint/format
 
-### Realtime Backend (`socket`)
+### Realtime Backend (`socket/`)
 
 - Node.js + Express + TypeScript
-- `ws` WebSocket servers (Twilio stream + dashboard)
+- `ws` WebSocket servers (Twilio stream + dashboard + WhatsApp admin)
 - Twilio media stream handling
 - Azure/OpenAI realtime integration
-- Axios for calling Next API endpoints
+- Axios (`nextjsApi`) for calling Next API endpoints
 - Pino logging
 
 ## Repo Structure
 
-- `web-ts/src/app`: Next app routes and API routes (`/api/...`)
-- `web-ts/src/components`: UI and feature components
-- `web-ts/src/services`: frontend API service layer
-- `web-ts/src/services/types.ts`: app-level TS types used by services/components
-- `web-ts/src/db`: Drizzle schema, DB instance, seeds
-- `web-ts/src/lib`: shared utilities (`api-utils`, auth helpers, SWR fetcher, etc.)
-- `web-ts/src/hooks`: custom React hooks (including realtime dashboard socket)
-- `socket/src/server.ts`: HTTP + websocket entrypoint
-- `socket/src/twilioSession.ts`: core Twilio <-> AI <-> dashboard session logic
+- `web/src/app`: Next app routes and API routes (`/api/...`)
+- `web/src/components`: UI and feature components
+- `web/src/services`: frontend API service layer (`patients.ts`, `persons.ts`, `appointments.ts`, etc.)
+- `web/src/services/types.ts`: app-level TS types used by services/components
+- `web/src/db`: Drizzle schema, DB instance, seeds
+- `web/src/lib`: shared utilities (`api-utils`, `person.ts`, auth helpers, SWR fetcher, etc.)
+- `web/src/hooks`: custom React hooks (including realtime dashboard socket)
+- `socket/src/server.ts`: HTTP + websocket entrypoint, `/incoming-call` webhook
+- `socket/src/twilioSession.ts`: core Twilio ↔ AI ↔ dashboard session logic and tool handlers
 - `socket/src/systemMessages.ts`: assistant behavior + function tool specs
+- `socket/src/callsApi.ts`: internal Next `/api/calls` client (cached `ensureCallRow`)
+- `socket/src/personsApi.ts`: Next `/api/persons` client (cached `ensurePersonRow`, `updatePersonRow`)
 - `socket/src/types.ts`: realtime message and API-related types
 
 ## Package management
 
 - Use **pnpm** for this repo (not npm or yarn): installs, adds, and scripts should go through `pnpm`.
-- Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from the repo root or from `web-ts/` / `socket/` as needed.
+- Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from `web/` or `socket/` as needed.
+- Schema changes: `pnpm db:push` from `web/` (Drizzle push, not migration files by default).
 
 ## Working Conventions (Important)
 
 ### 1) Services-first API consumption
 
-- For frontend API calls, create/update functions in `web-ts/src/services/*.ts`.
-- Re-export via `web-ts/src/services/index.ts` when appropriate.
-- Use shared axios instance from `web-ts/src/services/api.ts`.
-- Keep route-specific request/response types close to services; shared/domain types live in `web-ts/src/services/types.ts`.
+- For frontend API calls, create/update functions in `web/src/services/*.ts`.
+- Re-export via `web/src/services/index.ts` when appropriate.
+- Use shared axios instance from `web/src/services/api.ts`.
+- Keep route-specific request/response types close to services; shared/domain types live in `web/src/services/types.ts`.
 
 ### 2) Types are explicit and centralized
 
-- DB-backed types often derive from Drizzle (`InferSelectModel`) in `web-ts/src/services/types.ts`.
+- DB-backed types often derive from Drizzle (`InferSelectModel`) in `web/src/services/types.ts`.
 - Add composed UI/API-friendly types there when reused in multiple places.
 - Realtime message contracts are defined in `socket/src/types.ts`.
 
 ### 3) Validation with Zod
 
-- API routes in `web-ts/src/app/api/**/route.ts` validate query/body using `zod`.
+- API routes in `web/src/app/api/**/route.ts` validate query/body using `zod`.
 - Forms use `react-hook-form` + `zodResolver`.
 - Keep schema near the route/component that owns the validation.
 
@@ -80,39 +84,63 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - Use `useSWR(key, serviceFn)` in client components.
 - Keep fetch logic in services, not inline in components.
-- Shared fetcher helper exists in `web-ts/src/lib/swr.ts`.
+- Shared fetcher helper exists in `web/src/lib/swr.ts`.
 
 ### 5) Tailwind + shadcn UI style
 
 - Styling is utility-class driven with Tailwind.
-- Prefer existing UI primitives from `web-ts/src/components/ui/*`.
-- Theme tokens and custom utilities live in `web-ts/src/app/globals.css`.
+- Prefer existing UI primitives from `web/src/components/ui/*`.
+- Theme tokens and custom utilities live in `web/src/app/globals.css`.
 
 ### 6) API route style in Next
 
 - Route handlers usually:
   - parse input with Zod
-  - enforce auth/role with helpers from `web-ts/src/lib/api-utils.ts`
+  - enforce auth/role with helpers from `web/src/lib/api-utils.ts` (`requireSession`, `requireDoctorProfile`, `requireAdmin`, `requireInternal`)
   - run Drizzle query/mutation
   - return typed JSON helper responses (`json`, `apiError`, `validationError`)
 
 ### 7) Realtime architecture rules
 
-- `socket` manages two websocket channels:
+- `socket` manages websocket channels:
   - Twilio media stream (`/media-stream`)
   - Dashboard monitoring (`/dashboard`)
+  - WhatsApp admin (`/whatsapp`)
 - `twilioSession.ts` sends dashboard events (`call_start`, transcripts, function calls, booking status).
-- `socket` depends on Next API endpoints (for doctor slot finding and external appointment creation).
+- `socket` calls Next API endpoints for doctor slots, external appointment creation, call persistence, and person upsert/update.
+- Server-to-server routes use `requireInternal` + `x-internal-secret` header (`INTERNAL_API_SECRET` on both services).
 
 ## Database Notes
 
-- Drizzle schema lives in `web-ts/src/db/schema.ts`.
-- Main domain tables include:
-  - `speciality`, `cities`
-  - `doctor_profile`, `doctor_application`
-  - `patient`, `patient_medical_file`
-  - `appointment`, `consultation`, `doctor_unavailability`
-- Better Auth tables are integrated via `auth-schema` and re-exported from schema entry.
+- Drizzle schema lives in `web/src/db/schema.ts`.
+- Apply schema to DB: `pnpm db:push` from `web/`.
+
+### Person vs patient (identity model)
+
+- **`person`**: Global identity keyed by **unique `phoneNumber`**. Created on inbound calls (`source: "call"`) or when a doctor adds a patient (`source: "doctor"`). Holds canonical profile fields the AI can enrich (`firstName`, `lastName`, `dateOfBirth`, `gender`, `address`). Upsert helper: `web/src/lib/person.ts` → `upsertPersonByPhone(phone, source)` — `source` is set only on insert.
+- **`patient`**: **Doctor ↔ person** link (`doctorId` + `personId`) plus **per-doctor** fields (`cin`, names, address, etc.) the doctor may customize. Medical files and appointments still reference `patient.id`.
+- Phone bookings without a linked patient still store caller name/phone on `appointment` as `newPatientName` / `newPatientPhoneNumber`.
+
+### Other main tables
+
+- `speciality`, `cities`
+- `doctor_profile`, `doctor_application`, `doctor_unavailability`
+- `patient`, `patient_medical_file`
+- `appointment`, `consultation`
+- `call`, `call_event` (Twilio call logging from socket)
+- Better Auth tables via `auth-schema`, re-exported from schema entry.
+
+## Key API routes (booking & identity)
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `POST /api/persons` | Public | Upsert person by `phoneNumber` (+ optional `source`) |
+| `PATCH /api/persons/[id]` | Public | Update person profile (socket AI `update_person_info`) |
+| `POST /api/patients` | Doctor session | Create patient; upserts person with `source: "doctor"` |
+| `POST /api/appointments/external` | Public | Phone/AI booking; upserts person (`call`), sets `newPatient*` on appointment |
+| `POST /api/calls` | Internal secret | Create call row (socket) |
+| `GET /api/doctors/best-fit` | Public | Slots for AI `find_available_slots` |
+| `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
 
 ## Environment Notes
 
@@ -120,21 +148,24 @@ This document is a compact project guide for AI assistants working on this repo.
   - `NEXT_PUBLIC_APP_URL`
   - `NEXT_PUBLIC_REALTIME_URL`
   - `DATABASE_URL`
+  - `INTERNAL_API_SECRET` (must match socket)
   - R2/CDN vars (`R2_*`, `CDN_URL`)
 - Realtime/socket uses vars like:
   - `PORT`, `LOG_LEVEL`, `PUBLIC_SOCKET_HOST`
+  - `NEXTJS_API_URL` (Next base URL for `nextjsApi`)
+  - `INTERNAL_API_SECRET`
   - AI/audio tuning vars (`VAD_THRESHOLD`, `SILENCE_DURATION_MS`, `MAX_OUTPUT_TOKENS`)
-  - Next API base URL for cross-service calls
+  - Twilio (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`)
 
 ## File uploads (Cloudflare R2)
 
-- **We do not send file bytes through our own API for storage.** The client requests a **presigned upload URL** from `POST /api/upload/signed-url` (session required), which returns `signedUrl` and the final public **`cdnUrl`** (built from `CDN_URL` + object key; see `web-ts/src/app/api/upload/signed-url/route.ts`).
-- **Client helpers** in `web-ts/src/lib/upload.ts`:
+- **We do not send file bytes through our own API for storage.** The client requests a **presigned upload URL** from `POST /api/upload/signed-url` (session required), which returns `signedUrl` and the final public **`cdnUrl`** (built from `CDN_URL` + object key; see `web/src/app/api/upload/signed-url/route.ts`).
+- **Client helpers** in `web/src/lib/upload.ts`:
   - `uploadToR2(file, folder)` for `File` inputs.
   - `uploadBlobToR2(blob, filename, folder)` wraps blobs as `File` (e.g. canvas output from `react-easy-crop`).
-  - Both call `getSignedUploadUrl` in `web-ts/src/services/upload.ts`, **`PUT`** the bytes to `signedUrl`, then return **`cdnUrl`**.
+  - Both call `getSignedUploadUrl` in `web/src/services/upload.ts`, **`PUT`** the bytes to `signedUrl`, then return **`cdnUrl`**.
 - **Folders** (typed as `UploadFolder`): `profile-pictures`, `doctor-applications`, `medical-files`.
-- **Persistence:** after upload, features store only the **public CDN URL string** on the relevant record (e.g. profile picture via `updateProfilePicture(cdnUrl)` after `uploadBlobToR2` in `web-ts/src/components/dashboard/profile/image-cropper.tsx`; doctor application docs use `uploadToR2` similarly).
+- **Persistence:** after upload, features store only the **public CDN URL string** on the relevant record (e.g. profile picture via `updateProfilePicture(cdnUrl)` after `uploadBlobToR2` in `web/src/components/dashboard/profile/image-cropper.tsx`; doctor application docs use `uploadToR2` similarly).
 
 ## Reference Files for Coding Style
 
@@ -142,49 +173,68 @@ Use these as examples before changing related code.
 
 ### Frontend references
 
-- `web-ts/src/components/auth/register-form.tsx` (React Hook Form + Zod + Tailwind UI)
-- `web-ts/src/components/admin/stats.tsx` (SWR + service usage in client component)
-- `web-ts/src/components/admin/applications-table.tsx` (table/data UI conventions)
-- `web-ts/src/components/admin/calls/live-calls.tsx` (realtime dashboard UI pattern)
-- `web-ts/src/hooks/use-realtime-socket.ts` (custom hook with websocket/reconnect logic)
-- `web-ts/src/services/appointments.ts` (service file style and typed axios calls)
-- `web-ts/src/services/doctor-applications.ts` (service naming and API mapping)
-- `web-ts/src/services/types.ts` (shared domain/composite typing)
-- `web-ts/src/app/api/appointments/route.ts` (API route + Zod + auth helper + Drizzle)
-- `web-ts/src/lib/api-utils.ts` (auth/role helpers for API routes)
-- `web-ts/src/lib/upload.ts` + `web-ts/src/services/upload.ts` (R2 presigned upload + `cdnUrl` return)
-- `web-ts/src/components/dashboard/profile/image-cropper.tsx` (crop → blob → `uploadBlobToR2` → save URL)
+- `web/src/components/auth/register-form.tsx` (React Hook Form + Zod + Tailwind UI)
+- `web/src/components/admin/stats.tsx` (SWR + service usage in client component)
+- `web/src/components/admin/applications-table.tsx` (table/data UI conventions)
+- `web/src/components/admin/calls/live-calls.tsx` (realtime dashboard UI pattern)
+- `web/src/hooks/use-realtime-socket.ts` (custom hook with websocket/reconnect logic)
+- `web/src/services/appointments.ts` (service file style and typed axios calls)
+- `web/src/services/patients.ts`, `web/src/services/persons.ts` (CRUD service patterns)
+- `web/src/services/types.ts` (shared domain/composite typing)
+- `web/src/app/api/appointments/route.ts` (API route + Zod + auth helper + Drizzle)
+- `web/src/lib/person.ts` (shared person upsert for routes)
+- `web/src/lib/api-utils.ts` (auth/role/internal helpers for API routes)
+- `web/src/lib/upload.ts` + `web/src/services/upload.ts` (R2 presigned upload + `cdnUrl` return)
+- `web/src/components/dashboard/profile/image-cropper.tsx` (crop → blob → `uploadBlobToR2` → save URL)
 
 ### Backend/realtime references
 
-- `socket/src/server.ts` (Express + websocket server composition)
-- `socket/src/twilioSession.ts` (core session orchestration and function handling)
-- `socket/src/systemMessages.ts` (AI prompt/tool definitions)
+- `socket/src/server.ts` (Express + websocket + `/incoming-call` + early person/call upsert)
+- `socket/src/twilioSession.ts` (session orchestration, tool handlers, `callerPhone` for booking)
+- `socket/src/systemMessages.ts` (AI prompt + tool definitions)
+- `socket/src/personsApi.ts`, `socket/src/callsApi.ts` (cached idempotent Next API clients)
 - `socket/src/types.ts` (message contracts and API data types)
 - `socket/src/constants.ts` and `socket/src/constants/*` (shared static domain data)
 
-## Voice booking / phone numbers (`socket`)
+## Voice booking (`socket`)
 
-- When Twilio passes caller ID into the session, the assistant **must ask** whether to use **that** number or **another**.
-- An alternate number must be **Tunisian local**: **exactly 8 digits**, no `+216`; if unclear or wrong length, the assistant asks the patient to **repeat** until valid.
-- Prompt text lives in `socket/src/systemMessages.ts`; caller-ID injection is appended in `socket/src/twilioSession.ts` (`buildSessionInstructions`).
+### Caller phone
+
+- Twilio `From` is passed into the stream (`callerPhone` custom parameter) and stored on `TwilioSession` as `this.callerPhone`.
+- On `/incoming-call`, `ensurePersonRow(from)` runs in parallel with `ensureCallRow` (same cached promise pattern as media-stream `start`).
+- When `callerPhone` is set, extra instructions are appended in `buildSessionInstructions()` — the assistant must **not ask** the patient about their phone number.
+
+### AI tools (see `systemMessages.ts`)
+
+- `get_specialities`, `get_cities` — static lists in socket constants.
+- `find_available_slots`, `find_doctor_slots` — Next doctor/slot APIs.
+- `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; call after collecting name/details.
+- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` (digits only) server-side.
+- `end_call` — schedules Twilio hangup after closing message.
+
+### Conversation style (prompt)
+
+- **One question per turn** — do not bundle city, time, and symptoms in one sentence.
+- Book only after the patient accepts a slot from tool results; never invent doctor IDs or times.
 
 ## Practical AI Instructions
 
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
+- For schema changes in dev, prefer `pnpm db:push` in `web/`.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
 - When adding or changing frontend data access:
-  - update/create service in `web-ts/src/services`
-  - update types in `web-ts/src/services/types.ts` if shared
+  - update/create service in `web/src/services`
+  - update types in `web/src/services/types.ts` if shared
   - consume via SWR/hooks/components
 - When adding API behavior:
-  - implement in `web-ts/src/app/api/.../route.ts`
+  - implement in `web/src/app/api/.../route.ts`
   - validate with Zod
-  - enforce session/role with `api-utils`
-  - keep error response shape consistent
+  - enforce session/role/internal with `api-utils`
+  - reuse `upsertPersonByPhone` when linking patients or phone bookings to `person`
+  - keep error response shape consistent (`web/src/lib/errors.ts`)
 - When adding realtime events:
   - update message types in `socket/src/types.ts`
   - broadcast from `twilioSession.ts`
-  - handle in `web-ts/src/hooks/use-realtime-socket.ts`
+  - handle in `web/src/hooks/use-realtime-socket.ts`
+- When adding socket → Next calls, follow `callsApi.ts` / `personsApi.ts` patterns (cached promises, structured logging).
 - Prefer consistency with existing files over introducing new patterns.
-

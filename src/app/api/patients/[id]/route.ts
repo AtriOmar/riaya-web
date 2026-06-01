@@ -10,6 +10,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { upsertPersonByPhone } from "@/lib/person";
 
 const updateSchema = z.object({
 	cin: z.string().min(1),
@@ -76,9 +77,17 @@ export async function PATCH(
 
 		const phone = parsed.data.phoneNumber.trim();
 
+		// Upsert the person by phone so personId stays current
+		let personId = existing.personId;
+		if (phone) {
+			const personRow = await upsertPersonByPhone(phone, "doctor");
+			if (personRow) personId = personRow.id;
+		}
+
 		await db
 			.update(patient)
 			.set({
+				personId,
 				cin: parsed.data.cin,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,

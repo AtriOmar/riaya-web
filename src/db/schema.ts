@@ -87,12 +87,34 @@ export const doctorProfile = pgTable(
 	],
 );
 
+// ─── Person ───────────────────────────────────────────────────────────────────
+// Phone-number-based identity. Created automatically when someone calls.
+
+export const person = pgTable(
+	"person",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		phoneNumber: varchar("phone_number", { length: 50 }).notNull().unique(),
+		// call = Twilio / external phone booking; doctor = dashboard patient create
+		source: varchar("source", { length: 50 }).notNull().default("call"),
+		firstName: varchar("first_name", { length: 255 }),
+		lastName: varchar("last_name", { length: 255 }),
+		dateOfBirth: timestamp("date_of_birth"),
+		gender: varchar("gender", { length: 50 }),
+		address: text("address"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [index("person_phone_number_idx").on(table.phoneNumber)],
+);
+
 // ─── Patient ──────────────────────────────────────────────────────────────────
 
 export const patient = pgTable(
 	"patient",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		personId: integer("person_id").references(() => person.id),
 		doctorId: integer("doctor_id").references(() => doctorProfile.id),
 		cin: varchar("cin", { length: 100 }),
 		firstName: varchar("first_name", { length: 255 }),
@@ -338,7 +360,15 @@ export const doctorProfileRelations = relations(
 	}),
 );
 
+export const personRelations = relations(person, ({ many }) => ({
+	patients: many(patient),
+}));
+
 export const patientRelations = relations(patient, ({ one, many }) => ({
+	person: one(person, {
+		fields: [patient.personId],
+		references: [person.id],
+	}),
 	doctor: one(doctorProfile, {
 		fields: [patient.doctorId],
 		references: [doctorProfile.id],

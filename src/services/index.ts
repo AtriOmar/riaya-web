@@ -4,6 +4,7 @@ export * from "./cities";
 export * from "./doctor-applications";
 export * from "./doctors";
 export * from "./patients";
+export * from "./persons";
 export * from "./specialities";
 export * from "./stats";
 export * from "./types";

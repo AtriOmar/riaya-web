@@ -10,6 +10,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { upsertPersonByPhone } from "@/lib/person";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 // Returns patients for the authenticated doctor (with optional search)
@@ -91,9 +92,16 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
+		const personRow = await upsertPersonByPhone(
+			parsed.data.phoneNumber,
+			"doctor",
+		);
+		if (!personRow) return apiError("VALIDATION_ERROR");
+
 		const [created] = await db
 			.insert(patient)
 			.values({
+				personId: personRow.id,
 				doctorId: profile.id,
 				cin: parsed.data.cin,
 				firstName: parsed.data.firstName,

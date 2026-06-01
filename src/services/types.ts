@@ -8,6 +8,7 @@ import type {
 	doctorProfile,
 	patient,
 	patientMedicalFile,
+	person,
 	speciality,
 } from "@/db/schema";
 
@@ -15,6 +16,8 @@ import type {
 
 export type Appointment = InferSelectModel<typeof appointment>;
 export type Patient = InferSelectModel<typeof patient>;
+export type Person = InferSelectModel<typeof person>;
+export type PersonSource = "call" | "doctor";
 export type PatientMedicalFile = InferSelectModel<typeof patientMedicalFile>;
 export type DoctorProfile = InferSelectModel<typeof doctorProfile>;
 export type DoctorApplication = InferSelectModel<typeof doctorApplication>;
@@ -59,6 +62,8 @@ export type PatientSummary = Pick<
 export type PatientWithMedicalFiles = Patient & {
 	medicalFiles: PatientMedicalFile[];
 };
+
+export type PatientWithPerson = Patient & { person: Person | null };
 
 type ApplicationUser = { id: string; username: string | null; email: string };
 type ApplicationSpeciality = {
