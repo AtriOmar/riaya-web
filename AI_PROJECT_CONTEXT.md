@@ -47,11 +47,11 @@ This document is a compact project guide for AI assistants working on this repo.
 - `web/src/lib`: shared utilities (`api-utils`, `person.ts`, auth helpers, SWR fetcher, etc.)
 - `web/src/hooks`: custom React hooks (including realtime dashboard socket)
 - `socket/src/server.ts`: HTTP + websocket entrypoint, `/incoming-call` webhook
-- `socket/src/twilioSession.ts`: core Twilio ↔ AI ↔ dashboard session logic and tool handlers
-- `socket/src/systemMessages.ts`: assistant behavior + function tool specs
-- `socket/src/callsApi.ts`: internal Next `/api/calls` client (cached `ensureCallRow`)
-- `socket/src/personsApi.ts`: Next `/api/persons` client (cached `ensurePersonRow`, `updatePersonRow`)
-- `socket/src/types.ts`: realtime message and API-related types
+- `socket/src/sessions/twilioSession.ts`: core phone ↔ AI ↔ dashboard session logic and tool handlers
+- `socket/src/sessions/systemMessages.ts`: assistant behavior + function tool specs
+- `socket/src/api/callsApi.ts`: internal Next `/api/calls` client (cached `ensureCallRow`)
+- `socket/src/api/personsApi.ts`: Next `/api/persons` client (cached `ensurePersonRow`, `updatePersonRow`)
+- `socket/src/types/index.ts`: realtime message and API-related types
 
 ## Package management
 
@@ -72,7 +72,7 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - DB-backed types often derive from Drizzle (`InferSelectModel`) in `web/src/services/types.ts`.
 - Add composed UI/API-friendly types there when reused in multiple places.
-- Realtime message contracts are defined in `socket/src/types.ts`.
+- Realtime message contracts are defined in `socket/src/types/index.ts`.
 
 ### 3) Validation with Zod
 
@@ -190,11 +190,11 @@ Use these as examples before changing related code.
 ### Backend/realtime references
 
 - `socket/src/server.ts` (Express + websocket + `/incoming-call` + early person/call upsert)
-- `socket/src/twilioSession.ts` (session orchestration, tool handlers, `callerPhone` for booking)
-- `socket/src/systemMessages.ts` (AI prompt + tool definitions)
-- `socket/src/personsApi.ts`, `socket/src/callsApi.ts` (cached idempotent Next API clients)
-- `socket/src/types.ts` (message contracts and API data types)
-- `socket/src/constants.ts` and `socket/src/constants/*` (shared static domain data)
+- `socket/src/sessions/twilioSession.ts` (session orchestration, tool handlers, `callerPhone` for booking)
+- `socket/src/sessions/systemMessages.ts` (AI prompt + tool definitions)
+- `socket/src/api/personsApi.ts`, `socket/src/api/callsApi.ts` (cached idempotent Next API clients)
+- `socket/src/types/index.ts` (message contracts and API data types)
+- `socket/src/constants/*` (shared static domain data: cities, specialities)
 
 ## Voice booking (`socket`)
 
@@ -233,8 +233,8 @@ Use these as examples before changing related code.
   - reuse `upsertPersonByPhone` when linking patients or phone bookings to `person`
   - keep error response shape consistent (`web/src/lib/errors.ts`)
 - When adding realtime events:
-  - update message types in `socket/src/types.ts`
-  - broadcast from `twilioSession.ts`
+  - update message types in `socket/src/types/index.ts`
+  - broadcast from `sessions/twilioSession.ts`
   - handle in `web/src/hooks/use-realtime-socket.ts`
-- When adding socket → Next calls, follow `callsApi.ts` / `personsApi.ts` patterns (cached promises, structured logging).
+- When adding socket → Next calls, follow `api/callsApi.ts` / `api/personsApi.ts` patterns (cached promises, structured logging).
 - Prefer consistency with existing files over introducing new patterns.
