@@ -11,7 +11,7 @@
 		"fix:lint": "biome check --write",
 		"fix:format": "biome format --write",
 		"fix:all": "biome check --write && biome format --write",
-		"typecheck": "tsc --noEmit",
+		"tsc": "tsc --noEmit",
 		"prepare": "husky",
 		"db:push": "drizzle-kit push",
 		"db:seed": "tsx src/db/seed.ts"
