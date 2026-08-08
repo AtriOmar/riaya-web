@@ -24,3 +24,4 @@ services:
 networks:
   riaya_network:
     name: riaya_network
+    external: true
