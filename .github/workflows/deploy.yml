@@ -73,7 +73,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "docker-compose.prod.yml,.env,package.json,pnpm-lock.yaml,drizzle.config.ts,src/db"
+          source: "docker-compose.prod.yml,.env,package.json,pnpm-lock.yaml,drizzle.config.ts,drizzle,src/db"
           target: "/home/riaya.omaratri.com/public_html"
 
       - name: Execute deployment commands via SSH
