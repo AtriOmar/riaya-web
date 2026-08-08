@@ -219,6 +219,7 @@ Use these as examples before changing related code.
 
 ## Practical AI Instructions
 
+- **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
 - For schema changes in dev, prefer `pnpm db:push` in `web/`.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).

@@ -1,0 +1,20 @@
+services:
+  web:
+    image: ${DOCKER_IMAGE}
+    container_name: riaya_web
+    restart: unless-stopped
+    ports:
+      - "50002:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    # --- Security Hardening ---
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache

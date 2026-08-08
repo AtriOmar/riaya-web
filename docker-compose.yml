@@ -1,17 +1,27 @@
 services:
-  postgres:
-    image: postgres:18.0
-    container_name: postgres_db
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: riaya_web
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: riaya
     ports:
-      - "5432:5432"
-    volumes:
-      - riaya_postgres_data:/var/lib/postgresql
-
-volumes:
-  riaya_postgres_data:
-    name: riaya_postgres_data
+      - "50002:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    # --- Security Hardening ---
+    # Make the container file system read-only
+    read_only: true
+    # Drop all root capabilities by default to prevent privilege escalation
+    cap_drop:
+      - ALL
+    # Prevent the container processes from gaining new privileges
+    security_opt:
+      - no-new-privileges:true
+    # Mount temporary file systems for directories that Next.js needs to write to
+    tmpfs:
+      - /tmp
+      # Next.js image optimization and data cache
+      - /app/.next/cache
