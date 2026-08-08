@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     ports:
       - "50002:3000"
+    networks:
+      - riaya_network
     environment:
       - NODE_ENV=production
     env_file:
@@ -18,3 +20,7 @@ services:
     tmpfs:
       - /tmp
       - /app/.next/cache
+
+networks:
+  riaya_network:
+    name: riaya_network
