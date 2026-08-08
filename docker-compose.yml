@@ -3,10 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: web_app
+    container_name: riaya_web
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "50002:3000"
     environment:
       - NODE_ENV=production
     env_file:
