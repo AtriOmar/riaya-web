@@ -94,7 +94,7 @@ jobs:
             
             # 1. Run Database Migrations
             echo "Running Drizzle Migrations..."
-            docker run --rm -e CI=true -v $(pwd):/app -w /app --network host node:22-alpine sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm db:migrate"
+            docker run --rm -e CI=true -v $(pwd):/app -w /app --network riaya_network node:22-alpine sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm db:migrate"
             
             # 2. Pull the latest image
             docker compose -f docker-compose.prod.yml pull web
