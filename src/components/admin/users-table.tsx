@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWRInfinite from "swr/infinite";
@@ -8,6 +9,7 @@ import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 import { getUsers } from "@/services";
 import type { UserRow } from "@/services/types";
 
@@ -63,7 +65,8 @@ const columns: Column<UserRow>[] = [
 
 export default function UsersTable() {
 	const router = useRouter();
-	const [search, setSearch] = useState("");
+	const [inputValue, setInputValue] = useState("");
+	const search = useDebounce(inputValue, 300);
 	const limit = 20;
 
 	const getKey = (pageIndex: number, previousPageData: UserRow[] | null) => {
@@ -87,12 +90,15 @@ export default function UsersTable() {
 
 	return (
 		<div>
-			<Input
-				placeholder="Search by email or name..."
-				value={search}
-				onChange={(e) => setSearch(e.target.value)}
-				className="max-w-sm mb-4"
-			/>
+			<div className="relative max-w-sm mb-3">
+				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+				<Input
+					placeholder="Search by email or name..."
+					value={inputValue}
+					onChange={(e) => setInputValue(e.target.value)}
+					className="pl-9 bg-card border-border rounded-sm"
+				/>
+			</div>
 			<DataTable
 				columns={columns}
 				data={users}
