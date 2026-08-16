@@ -1,6 +1,14 @@
 "use client";
 
-import { FileCheck, Home, List, Phone, Settings, Users } from "lucide-react";
+import {
+	FileCheck,
+	Home,
+	List,
+	MessageSquare,
+	Phone,
+	Settings,
+	Users,
+} from "lucide-react";
 import { useAppContext } from "@/components/contexts/app-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
@@ -28,6 +36,11 @@ const items1: SidebarItemData[] = [
 		name: "Live Calls",
 		icon: <Phone className="size-5" />,
 		path: "/admin/calls",
+	},
+	{
+		name: "WhatsApp Config",
+		icon: <MessageSquare className="size-5" />,
+		path: "/admin/whatsapp-config",
 	},
 ];
 
