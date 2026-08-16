@@ -113,3 +113,15 @@ export async function deleteMedicalFile(
 		params: { medicalFileId },
 	});
 }
+
+// ─── POST /api/patients/[id]/medical-files/[fileId]/send ─────────────────────
+
+export async function sendMedicalFileViaWhatsapp(
+	patientId: number,
+	medicalFileId: number,
+): Promise<PatientMedicalFile> {
+	const { data: res } = await api.post<PatientMedicalFile>(
+		`/api/patients/${patientId}/medical-files/${medicalFileId}/send`,
+	);
+	return res;
+}

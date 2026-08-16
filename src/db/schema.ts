@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+	boolean,
 	doublePrecision,
 	index,
 	integer,
@@ -144,6 +145,7 @@ export const patientMedicalFile = pgTable(
 		title: varchar("title", { length: 255 }),
 		description: text("description"),
 		documents: text("documents").array(),
+		sentViaWhatsapp: boolean("sent_via_whatsapp").default(false),
 		createdAt: timestamp("created_at").defaultNow(),
 	},
 	(table) => [index("patient_medical_file_patient_id_idx").on(table.patientId)],

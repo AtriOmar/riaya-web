@@ -38,7 +38,11 @@ export async function GET(
 
 		const record = await db.query.patient.findFirst({
 			where: and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)),
-			with: { medicalFiles: true },
+			with: {
+				medicalFiles: {
+					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
+				},
+			},
 		});
 
 		if (!record) return apiError("PATIENT_NOT_FOUND");
@@ -101,7 +105,11 @@ export async function PATCH(
 
 		const record = await db.query.patient.findFirst({
 			where: and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)),
-			with: { medicalFiles: true },
+			with: {
+				medicalFiles: {
+					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
+				},
+			},
 		});
 
 		if (!record) return apiError("PATIENT_NOT_FOUND");

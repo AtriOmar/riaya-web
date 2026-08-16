@@ -1,6 +1,14 @@
 "use client";
 
-import { Calendar, FileText, Pencil, Trash2 } from "lucide-react";
+import {
+	Calendar,
+	CheckCircle2,
+	FileText,
+	Loader2,
+	MessageSquare,
+	Pencil,
+	Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import ConfirmationDialog from "@/components/confirmation-dialog";
@@ -10,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { isLikelyImageUrl } from "@/lib/document-file";
 import { cn } from "@/lib/utils";
-import { deleteMedicalFile, updateMedicalFile } from "@/services";
+import {
+	deleteMedicalFile,
+	sendMedicalFileViaWhatsapp,
+	updateMedicalFile,
+} from "@/services";
 import type { PatientMedicalFile } from "@/services/types";
 import {
 	formatMedicalFileType,
@@ -90,6 +102,8 @@ function MedicalFileCard({
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [isSending, setIsSending] = useState(false);
+	const [resendDialogOpen, setResendDialogOpen] = useState(false);
 
 	const startEdit = () => {
 		setDraft(draftFromFile(file));
@@ -136,6 +150,30 @@ function MedicalFileCard({
 			toast.error("Failed to delete medical file");
 		} finally {
 			setIsDeleting(false);
+		}
+	};
+
+	const sendViaWhatsapp = async () => {
+		setIsSending(true);
+		try {
+			await sendMedicalFileViaWhatsapp(patientId, file.id);
+			toast.success("Document sent via WhatsApp");
+			setResendDialogOpen(false);
+			onChanged();
+		} catch (err: any) {
+			toast.error(
+				err?.response?.data?.error || "Failed to send document via WhatsApp",
+			);
+		} finally {
+			setIsSending(false);
+		}
+	};
+
+	const handleSendClick = () => {
+		if (file.sentViaWhatsapp) {
+			setResendDialogOpen(true);
+		} else {
+			sendViaWhatsapp();
 		}
 	};
 
@@ -264,6 +302,30 @@ function MedicalFileCard({
 					<Button
 						type="button"
 						variant="ghost"
+						size="sm"
+						className={cn(
+							"h-7 px-2 text-xs",
+							file.sentViaWhatsapp
+								? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+								: "text-muted-foreground hover:text-green-600",
+						)}
+						onClick={handleSendClick}
+						disabled={isSending}
+						aria-label="Send via WhatsApp"
+						title="Send via WhatsApp"
+					>
+						{isSending ? (
+							<Loader2 className="mr-1.5 size-3.5 animate-spin" />
+						) : file.sentViaWhatsapp ? (
+							<CheckCircle2 className="mr-1.5 size-3.5" />
+						) : (
+							<MessageSquare className="mr-1.5 size-3.5" />
+						)}
+						{file.sentViaWhatsapp ? "Sent" : "Send"}
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
 						size="icon-sm"
 						className="text-muted-foreground hover:text-foreground"
 						onClick={startEdit}
@@ -295,6 +357,17 @@ function MedicalFileCard({
 				isLoading={isDeleting}
 				alertTitle="This cannot be undone"
 				alertMessage="You can add a new medical file later if needed."
+			/>
+
+			<ConfirmationDialog
+				open={resendDialogOpen}
+				onOpenChange={setResendDialogOpen}
+				title="Resend to patient?"
+				description="This medical file has already been sent to the patient. Are you sure you want to send it again?"
+				variant="info"
+				confirmText="Resend"
+				onConfirm={sendViaWhatsapp}
+				isLoading={isSending}
 			/>
 		</div>
 	);
