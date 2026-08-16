@@ -43,12 +43,12 @@ export default function DataTable<T>({
 		>
 			<Table>
 				<TableHeader>
-					<TableRow className="bg-muted/50 hover:bg-muted/50">
+					<TableRow className="hover:bg-transparent border-b">
 						{columns.map((col) => (
 							<TableHead
 								key={col.key}
 								className={cn(
-									"font-semibold text-muted-foreground text-xs uppercase tracking-wider",
+									"h-11 px-4 text-sm font-medium text-muted-foreground",
 									col.className,
 								)}
 							>
@@ -78,7 +78,10 @@ export default function DataTable<T>({
 								)}
 							>
 								{columns.map((col) => (
-									<TableCell key={col.key} className={col.className}>
+									<TableCell
+										key={col.key}
+										className={cn("px-4 py-3", col.className)}
+									>
 										{col.cell(row)}
 									</TableCell>
 								))}
