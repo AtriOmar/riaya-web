@@ -4,6 +4,7 @@ import {
 	Calendar,
 	CalendarDays,
 	Home,
+	MessageSquare,
 	Settings,
 	Stethoscope,
 	User,
@@ -42,6 +43,11 @@ const items2: SidebarItemData[] = [
 		name: "Profile",
 		icon: <User className="size-5" />,
 		path: "/dashboard/profile",
+	},
+	{
+		name: "WhatsApp",
+		icon: <MessageSquare className="size-5" />,
+		path: "/dashboard/whatsapp-config",
 	},
 	{
 		name: "Settings",
