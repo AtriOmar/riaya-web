@@ -1,8 +1,9 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Copy, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
 import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
@@ -21,7 +22,7 @@ const columns: Column<UserRow>[] = [
 		header: "User",
 		cell: (row) => (
 			<div className="flex items-center gap-3">
-				<Avatar className="h-8 w-8">
+				<Avatar className="w-8 h-8">
 					<AvatarImage src={row.image ?? undefined} />
 					<AvatarFallback>
 						{(row.displayName ?? row.name ?? row.email).charAt(0).toUpperCase()}
@@ -29,6 +30,18 @@ const columns: Column<UserRow>[] = [
 				</Avatar>
 				<div className="flex items-center gap-2">
 					<span className="font-medium">{row.email}</span>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							navigator.clipboard.writeText(row.email);
+							toast.success("Email copied to clipboard");
+						}}
+						className="text-muted-foreground hover:text-foreground transition-colors"
+						title="Copy email"
+					>
+						<Copy className="w-3 h-3" />
+					</button>
 					{row.accessId && row.accessId >= 3 && (
 						<Badge variant="outline" className="text-[10px]">
 							{ROLES[row.accessId] ?? "Admin"}
@@ -90,13 +103,13 @@ export default function UsersTable() {
 
 	return (
 		<div>
-			<div className="relative max-w-sm mb-3">
-				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+			<div className="relative mb-3 max-w-sm">
+				<Search className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2" />
 				<Input
 					placeholder="Search by email or name..."
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
-					className="pl-9 bg-card border-border rounded-sm"
+					className="bg-card pl-9 border-border rounded-sm"
 				/>
 			</div>
 			<DataTable
