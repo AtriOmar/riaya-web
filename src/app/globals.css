@@ -60,41 +60,41 @@
 }
 
 :root {
-	--background: var(--color-white);
-	--foreground: var(--color-stone-950);
-	--card: var(--color-white);
-	--card-foreground: var(--color-stone-950);
-	--popover: var(--color-white);
-	--popover-foreground: var(--color-stone-950);
-	--primary: var(--color-orange-500);
-	--primary-foreground: var(--color-white);
-	--secondary: var(--color-orange-100);
-	--secondary-foreground: var(--color-orange-900);
-	--muted: var(--color-stone-100);
-	--muted-foreground: var(--color-stone-500);
-	--accent: var(--color-orange-100);
-	--accent-foreground: var(--color-orange-900);
-	--destructive: var(--color-red-500);
-	--destructive-foreground: var(--color-white);
-	--border: var(--color-stone-200);
-	--input: var(--color-stone-200);
-	--ring: var(--color-orange-500);
-	--chart-1: var(--color-orange-500);
-	--chart-2: var(--color-orange-400);
-	--chart-3: var(--color-orange-300);
-	--chart-4: var(--color-orange-200);
-	--chart-5: var(--color-orange-100);
-	--primary-50: var(--color-orange-50);
-	--primary-100: var(--color-orange-100);
-	--primary-200: var(--color-orange-200);
-	--primary-300: var(--color-orange-300);
-	--primary-400: var(--color-orange-400);
-	--primary-500: var(--color-orange-500);
-	--primary-600: var(--color-orange-600);
-	--primary-700: var(--color-orange-700);
-	--primary-800: var(--color-orange-800);
-	--primary-900: var(--color-orange-900);
-	--primary-950: var(--color-orange-950);
+	--background: hsl(0 0% 100%);
+	--foreground: hsl(150 30% 10%);
+	--card: hsl(0 0% 100%);
+	--card-foreground: hsl(150 30% 10%);
+	--popover: hsl(0 0% 100%);
+	--popover-foreground: hsl(150 30% 10%);
+	--primary: hsl(142 76% 36%);
+	--primary-foreground: hsl(0 0% 100%);
+	--secondary: hsl(140 40% 96%);
+	--secondary-foreground: hsl(142 76% 26%);
+	--muted: hsl(140 20% 96%);
+	--muted-foreground: hsl(150 10% 45%);
+	--accent: hsl(142 60% 92%);
+	--accent-foreground: hsl(142 76% 26%);
+	--destructive: hsl(0 84% 60%);
+	--destructive-foreground: hsl(0 0% 98%);
+	--border: hsl(140 20% 90%);
+	--input: hsl(140 20% 90%);
+	--ring: hsl(142 76% 36%);
+	--chart-1: oklch(0.871 0.15 154.449);
+	--chart-2: oklch(0.723 0.219 149.579);
+	--chart-3: oklch(0.627 0.194 149.214);
+	--chart-4: oklch(0.527 0.154 150.069);
+	--chart-5: oklch(0.448 0.119 151.328);
+	--primary-50: hsl(140 60% 97%);
+	--primary-100: hsl(140 50% 92%);
+	--primary-200: hsl(142 50% 82%);
+	--primary-300: hsl(142 50% 68%);
+	--primary-400: hsl(142 60% 50%);
+	--primary-500: hsl(142 76% 36%);
+	--primary-600: hsl(142 80% 28%);
+	--primary-700: hsl(144 80% 22%);
+	--primary-800: hsl(146 75% 18%);
+	--primary-900: hsl(148 70% 12%);
+	--primary-950: hsl(148 75% 8%);
 	--gradient-primary: linear-gradient(
 		135deg,
 		var(--primary-500) 0%,
@@ -116,9 +116,9 @@
 		rgb(255 255 255 / 90%) 0%,
 		rgb(255 255 255 / 70%) 100%
 	);
-	--shadow-soft: 0 4px 20px -4px color-mix(in srgb, var(--primary-500) 15%, transparent);
-	--shadow-medium: 0 8px 30px -8px color-mix(in srgb, var(--primary-500) 20%, transparent);
-	--shadow-glow: 0 0 40px color-mix(in srgb, var(--primary-500) 30%, transparent);
+	--shadow-soft: 0 4px 20px -4px rgb(34 197 94 / 15%);
+	--shadow-medium: 0 8px 30px -8px rgb(34 197 94 / 20%);
+	--shadow-glow: 0 0 40px rgb(34 197 94 / 30%);
 	--scrollbar-thumb: color-mix(in oklab, var(--primary-500) 55%, white 45%);
 	--scrollbar-thumb-hover: color-mix(
 		in oklab,
@@ -137,30 +137,30 @@
 }
 
 .dark {
-	--background: var(--color-stone-950);
-	--foreground: var(--color-stone-50);
-	--card: var(--color-stone-900);
-	--card-foreground: var(--color-stone-50);
-	--popover: var(--color-stone-900);
-	--popover-foreground: var(--color-stone-50);
-	--primary: var(--color-orange-500);
-	--primary-foreground: var(--color-stone-950);
-	--secondary: var(--color-stone-800);
-	--secondary-foreground: var(--color-stone-50);
-	--muted: var(--color-stone-800);
-	--muted-foreground: var(--color-stone-400);
-	--accent: var(--color-stone-800);
-	--accent-foreground: var(--color-stone-50);
-	--destructive: var(--color-red-900);
-	--destructive-foreground: var(--color-stone-50);
-	--border: var(--color-stone-800);
-	--input: var(--color-stone-800);
-	--ring: var(--color-orange-500);
-	--chart-1: var(--color-orange-500);
-	--chart-2: var(--color-orange-600);
-	--chart-3: var(--color-orange-700);
-	--chart-4: var(--color-orange-800);
-	--chart-5: var(--color-orange-900);
+	--background: hsl(148 30% 6%);
+	--foreground: hsl(140 20% 96%);
+	--card: hsl(148 25% 10%);
+	--card-foreground: hsl(140 20% 96%);
+	--popover: hsl(148 25% 10%);
+	--popover-foreground: hsl(140 20% 96%);
+	--primary: hsl(142 70% 45%);
+	--primary-foreground: hsl(148 30% 6%);
+	--secondary: hsl(148 20% 15%);
+	--secondary-foreground: hsl(140 20% 96%);
+	--muted: hsl(148 20% 15%);
+	--muted-foreground: hsl(140 15% 60%);
+	--accent: hsl(148 20% 18%);
+	--accent-foreground: hsl(140 20% 96%);
+	--destructive: hsl(0 62% 50%);
+	--destructive-foreground: hsl(0 0% 98%);
+	--border: hsl(148 20% 18%);
+	--input: hsl(148 20% 18%);
+	--ring: hsl(142 70% 45%);
+	--chart-1: oklch(0.871 0.15 154.449);
+	--chart-2: oklch(0.723 0.219 149.579);
+	--chart-3: oklch(0.627 0.194 149.214);
+	--chart-4: oklch(0.527 0.154 150.069);
+	--chart-5: oklch(0.448 0.119 151.328);
 	--sidebar: hsl(0 0% 98%);
 	--sidebar-foreground: hsl(240 5.3% 26.1%);
 	--sidebar-primary: hsl(240 5.9% 10%);
@@ -288,10 +288,10 @@ html {
 @keyframes pulse-glow {
 	0%,
 	100% {
-		box-shadow: 0 0 20px color-mix(in srgb, var(--primary-500) 20%, transparent);
+		box-shadow: 0 0 20px hsl(142 76% 36% / 0.2);
 	}
 	50% {
-		box-shadow: 0 0 40px color-mix(in srgb, var(--primary-500) 40%, transparent);
+		box-shadow: 0 0 40px hsl(142 76% 36% / 0.4);
 	}
 }
 
@@ -302,7 +302,7 @@ html {
 	height: 36px;
 	border-radius: 50%;
 	border: 3px solid transparent;
-	border-top-color: var(--primary);
+	border-top-color: oklch(var(--primary));
 	animation: ring-spin 0.8s linear infinite;
 }
 
@@ -324,7 +324,7 @@ html {
 
 .cube_item {
 	border-radius: 3px;
-	background: var(--primary);
+	background: hsl(var(--primary));
 }
 
 .cube_x {
