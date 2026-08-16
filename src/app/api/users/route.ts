@@ -1,4 +1,4 @@
-import { eq, ilike, or } from "drizzle-orm";
+import { desc, eq, ilike, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -16,6 +16,8 @@ import {
 
 const getSchema = z.object({
 	search: z.string().optional(),
+	limit: z.coerce.number().min(1).max(100).default(50),
+	page: z.coerce.number().min(1).default(1),
 });
 
 export async function GET(req: NextRequest) {
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
 		const parsed = getSchema.safeParse(params);
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const search = parsed.data.search;
+		const { search, limit, page } = parsed.data;
 
 		const users = await db
 			.select({
@@ -54,7 +56,10 @@ export async function GET(req: NextRequest) {
 							ilike(userTable.username, `%${search}%`),
 						)
 					: undefined,
-			);
+			)
+			.orderBy(desc(userTable.createdAt))
+			.limit(limit)
+			.offset((page - 1) * limit);
 
 		return json(users);
 	} catch (e) {

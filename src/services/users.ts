@@ -12,6 +12,8 @@ import type {
 
 export async function getUsers(params?: {
 	search?: string;
+	limit?: number;
+	page?: number;
 }): Promise<UserRow[]> {
 	const { data } = await api.get<UserRow[]>("/api/users", { params });
 	return data;
