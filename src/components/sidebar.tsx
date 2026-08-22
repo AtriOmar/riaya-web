@@ -9,10 +9,13 @@ import {
 	Stethoscope,
 	User,
 } from "lucide-react";
+import useSWR from "swr";
 import { useAppContext } from "@/components/contexts/app-provider";
+import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { getMe } from "@/services/users";
 
 const items1: SidebarItemData[] = [
 	{
@@ -57,13 +60,22 @@ const items2: SidebarItemData[] = [
 ];
 
 function SidebarContent() {
+	const { user } = useAuth();
+	const { data: me } = useSWR(user ? "/api/users/me" : null, () => getMe());
+	const isVerified = me?.doctorProfile?.status === "verified";
+
 	return (
 		<>
 			<SidebarUserInfo />
 			<ul className="px-2 font-medium text-sm">
 				{items1.map((item) => (
 					<li key={item.path}>
-						<SidebarItem item={item} />
+						<SidebarItem
+							item={{
+								...item,
+								disabled: !isVerified && item.path !== "/dashboard/profile",
+							}}
+						/>
 					</li>
 				))}
 				<li>
@@ -71,7 +83,12 @@ function SidebarContent() {
 				</li>
 				{items2.map((item) => (
 					<li key={item.path}>
-						<SidebarItem item={item} />
+						<SidebarItem
+							item={{
+								...item,
+								disabled: !isVerified && item.path !== "/dashboard/profile",
+							}}
+						/>
 					</li>
 				))}
 			</ul>

@@ -1,31 +1,35 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
-import ApplicationStatus from "@/components/dashboard/application-status";
-import { getMyDoctorApplication } from "@/services";
 import { getMe } from "@/services/users";
 
 export default function DashboardHome() {
 	const { user } = useAuth();
+	const router = useRouter();
 
-	const { data: me } = useSWR(user ? "/api/users/me" : null, () => getMe());
-
-	const { data: application } = useSWR(
-		user ? "/api/doctor-applications/me" : null,
-		() => getMyDoctorApplication().catch(() => null),
+	const { data: me, isLoading } = useSWR(user ? "/api/users/me" : null, () =>
+		getMe(),
 	);
 
-	const profile = me?.doctorProfile ?? null;
-	const status = profile?.status ?? application?.status ?? "none";
+	const isVerified = me?.doctorProfile?.status === "verified";
+
+	useEffect(() => {
+		if (!isLoading && me && !isVerified) {
+			router.replace("/dashboard/profile");
+		}
+	}, [isLoading, me, isVerified, router]);
+
+	if (!isVerified) {
+		return null;
+	}
 
 	return (
 		<div className="pr-2 md:pr-10 pb-20 pl-2">
 			<h3 className="font-bold text-2xl">Dashboard</h3>
-			<ApplicationStatus
-				status={status}
-				rejectionReasons={application?.rejectionReasons}
-			/>
+			{/* Dashboard content will go here when verified */}
 		</div>
 	);
 }
