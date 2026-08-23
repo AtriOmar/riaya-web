@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -15,6 +16,16 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { adminUpdateUser, getUserById } from "@/services";
+
+const CabinetLocationMap = dynamic(
+	() => import("@/components/dashboard/profile/cabinet-location-map"),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="bg-muted rounded-lg w-full h-[300px] animate-pulse" />
+		),
+	},
+);
 
 export default function UserDetail({ userId }: { userId: string }) {
 	const {
@@ -113,6 +124,25 @@ export default function UserDetail({ userId }: { userId: string }) {
 							<p className="font-medium">{doctorSpecialityName ?? "—"}</p>
 						</div>
 					</div>
+					{user.doctorProfile.cabinetLatitude &&
+						user.doctorProfile.cabinetLongitude && (
+							<div className="mt-6 relative z-0">
+								<p className="mb-2 text-muted-foreground text-sm">
+									Location Map
+								</p>
+								<CabinetLocationMap
+									className="h-[300px]"
+									center={{
+										lat: user.doctorProfile.cabinetLatitude,
+										lng: user.doctorProfile.cabinetLongitude,
+									}}
+									marker={{
+										lat: user.doctorProfile.cabinetLatitude,
+										lng: user.doctorProfile.cabinetLongitude,
+									}}
+								/>
+							</div>
+						)}
 				</div>
 			)}
 

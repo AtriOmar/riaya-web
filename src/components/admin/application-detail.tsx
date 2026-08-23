@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +21,16 @@ import {
 	getDoctorApplicationById,
 	updateDoctorApplicationStatus,
 } from "@/services";
+
+const CabinetLocationMap = dynamic(
+	() => import("@/components/dashboard/profile/cabinet-location-map"),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="bg-muted rounded-lg w-full h-[300px] animate-pulse" />
+		),
+	},
+);
 
 export default function ApplicationDetail({
 	applicationId,
@@ -146,7 +157,7 @@ export default function ApplicationDetail({
 			</Dialog>
 
 			{/* Application Info */}
-			<div className="gap-4 grid sm:grid-cols-2 p-6 border rounded-xl bg-card">
+			<div className="gap-4 grid sm:grid-cols-2 bg-card p-6 border rounded-xl">
 				<div>
 					<p className="text-muted-foreground text-sm">Email</p>
 					<p className="font-medium">{app.user?.email ?? "—"}</p>
@@ -189,6 +200,18 @@ export default function ApplicationDetail({
 				</div>
 			</div>
 
+			{/* Location Map */}
+			{app.cabinetLatitude && app.cabinetLongitude && (
+				<div className="bg-card p-6 border rounded-xl relative z-0">
+					<p className="mb-4 font-semibold">Location Map</p>
+					<CabinetLocationMap
+						className="h-[300px]"
+						center={{ lat: app.cabinetLatitude, lng: app.cabinetLongitude }}
+						marker={{ lat: app.cabinetLatitude, lng: app.cabinetLongitude }}
+					/>
+				</div>
+			)}
+
 			{/* CIN Images */}
 			<div className="gap-4 grid lg:grid-cols-2">
 				{app.cinRecto && (
@@ -202,7 +225,7 @@ export default function ApplicationDetail({
 							alt="CIN Recto"
 							width={400}
 							height={300}
-							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
+							className="border rounded-lg w-full max-w-[400px] aspect-[14/9]"
 						/>
 					</div>
 				)}
@@ -217,7 +240,7 @@ export default function ApplicationDetail({
 							alt="CIN Verso"
 							width={400}
 							height={300}
-							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
+							className="border rounded-lg w-full max-w-[400px] aspect-[14/9]"
 						/>
 					</div>
 				)}
@@ -225,20 +248,20 @@ export default function ApplicationDetail({
 
 			{/* Actions */}
 			{app.status === "pending" && (
-				<div className="flex gap-3">
-					<Button onClick={() => setApproveOpen(true)}>
-						<Check className="w-4 h-4" />
-						Approve
-					</Button>
+				<div className="flex justify-end gap-3">
 					<Button variant="destructive" onClick={() => setRejectOpen(true)}>
 						<X className="w-4 h-4" />
 						Reject
+					</Button>
+					<Button onClick={() => setApproveOpen(true)}>
+						<Check className="w-4 h-4" />
+						Approve
 					</Button>
 				</div>
 			)}
 
 			{app.rejectionReasons && app.rejectionReasons.length > 0 && (
-				<div className="p-4 border border-destructive/30 rounded-xl bg-destructive/5">
+				<div className="bg-destructive/5 p-4 border border-destructive/30 rounded-xl">
 					<p className="mb-2 font-medium text-destructive text-sm">
 						Rejection Reasons:
 					</p>
