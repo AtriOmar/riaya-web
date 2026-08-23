@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, Loader2, WifiOff } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -129,10 +130,10 @@ export default function WhatsappConfig({ userId }: Props) {
 
 					{status.type === "qr" && (
 						<div className="flex flex-col items-center gap-3">
-							<img
+							<Image
 								src={status.data}
 								alt="WhatsApp QR code"
-								className="w-56 h-56 border rounded-lg"
+								className="border rounded-lg w-56 h-56"
 							/>
 							<p className="text-muted-foreground text-xs">
 								Open WhatsApp {">"} Linked devices {">"} Link a device
@@ -172,13 +173,13 @@ export default function WhatsappConfig({ userId }: Props) {
 function StatusBadge({ status }: { status: WsStatus }) {
 	if (status.type === "connected")
 		return (
-			<Badge className="border-green-200 bg-green-100 text-green-700">
+			<Badge className="bg-green-100 border-green-200 text-green-700">
 				Connected
 			</Badge>
 		);
 	if (status.type === "qr")
 		return (
-			<Badge className="border-yellow-200 bg-yellow-100 text-yellow-700">
+			<Badge className="bg-yellow-100 border-yellow-200 text-yellow-700">
 				Scan QR
 			</Badge>
 		);

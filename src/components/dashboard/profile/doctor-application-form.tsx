@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload } from "lucide-react";
+import { Layers, Maximize2, Minimize2, Upload } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -12,10 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadToR2 } from "@/lib/upload";
+import { cn } from "@/lib/utils";
 import { createDoctorApplication } from "@/services";
 import type { City, Speciality } from "@/services/types";
+import AddressSearchBar, { type GeoLocation } from "./address-search-bar";
 import CitySelect from "./city-select";
 import SpecialitySelect from "./speciality-select";
+
+const CabinetLocationMap = dynamic(() => import("./cabinet-location-map"), {
+	ssr: false,
+	loading: () => (
+		<div className="flex justify-center items-center bg-muted rounded-lg w-full h-[300px] animate-pulse">
+			Loading map...
+		</div>
+	),
+});
 
 const schema = z.object({
 	firstName: z
@@ -28,6 +41,14 @@ const schema = z.object({
 		.regex(/^[A-Za-z ]+$/, "Letters only"),
 	cabinetName: z.string().min(2, "Cabinet name is required"),
 	cabinetCityId: z.string().min(1, "City is required"),
+	cabinetLatitude: z.custom<number>(
+		(val) => typeof val === "number",
+		"Exact location on map is required",
+	),
+	cabinetLongitude: z.custom<number>(
+		(val) => typeof val === "number",
+		"Exact location on map is required",
+	),
 	specialityId: z.string().min(1, "Speciality is required"),
 	tin: z
 		.string()
@@ -49,11 +70,11 @@ function CinPlaceholder({ src }: { src: string }) {
 				src={src}
 				alt=""
 				fill
-				className="object-cover opacity-35"
+				className="opacity-35 object-cover"
 				sizes="300px"
 			/>
-			<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-				<span className="flex size-12 items-center justify-center rounded-md bg-background/90 text-primary shadow-md ring-1 ring-border backdrop-blur-[2px]">
+			<div className="z-10 absolute inset-0 flex justify-center items-center pointer-events-none">
+				<span className="flex justify-center items-center bg-background/90 shadow-md backdrop-blur-[2px] ring-border rounded-md ring-1 size-12 text-primary">
 					<Upload className="size-5" aria-hidden />
 				</span>
 			</div>
@@ -66,6 +87,9 @@ export default function DoctorApplicationForm({
 	cities,
 	onApplicationSubmitted,
 }: Props) {
+	ReactDOM.preconnect("https://maps.geoapify.com");
+	ReactDOM.preconnect("https://api.geoapify.com");
+
 	const { user } = useAuth();
 
 	const [cinRecto, setCinRecto] = useState<File | null>(null);
@@ -73,6 +97,9 @@ export default function DoctorApplicationForm({
 	const [cinRectoError, setCinRectoError] = useState<string | null>(null);
 	const [cinVersoError, setCinVersoError] = useState<string | null>(null);
 	const [sending, setSending] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [mapStyle, setMapStyle] = useState<"street" | "satellite">("street");
+	const [mapCenter, setMapCenter] = useState({ lat: 36.8065, lng: 10.1815 });
 	const [_cinModal, setCinModal] = useState<{
 		side: "recto" | "verso";
 		imageUrl: string;
@@ -80,6 +107,7 @@ export default function DoctorApplicationForm({
 
 	const cinRectoRef = useRef<HTMLInputElement>(null);
 	const cinVersoRef = useRef<HTMLInputElement>(null);
+	const mapContainerRef = useRef<HTMLDivElement>(null);
 
 	const {
 		register,
@@ -87,6 +115,7 @@ export default function DoctorApplicationForm({
 		formState: { errors },
 		setValue,
 		watch,
+		clearErrors,
 	} = useForm<FormValues>({
 		resolver: zodResolver(schema),
 		defaultValues: {
@@ -96,11 +125,46 @@ export default function DoctorApplicationForm({
 			cabinetCityId: "",
 			specialityId: "",
 			tin: "",
+			cabinetLatitude: undefined as unknown as number,
+			cabinetLongitude: undefined as unknown as number,
 		},
 	});
 
+	useEffect(() => {
+		function handleFullscreenChange() {
+			setIsFullscreen(!!document.fullscreenElement);
+		}
+		document.addEventListener("fullscreenchange", handleFullscreenChange);
+		return () =>
+			document.removeEventListener("fullscreenchange", handleFullscreenChange);
+	}, []);
+
 	const specialityId = watch("specialityId");
 	const cabinetCityId = watch("cabinetCityId");
+	const cabinetLatitude = watch("cabinetLatitude");
+	const cabinetLongitude = watch("cabinetLongitude");
+
+	function handleLocationSelect(loc: GeoLocation) {
+		setValue("cabinetLatitude", loc.lat, { shouldValidate: true });
+		setValue("cabinetLongitude", loc.lon, { shouldValidate: true });
+		setMapCenter({ lat: loc.lat, lng: loc.lon });
+
+		if (loc.city) {
+			const lowerCity = loc.city.toLowerCase();
+			const found = cities.find(
+				(c) =>
+					c.enName?.toLowerCase().includes(lowerCity) ||
+					c.frName?.toLowerCase().includes(lowerCity) ||
+					c.arName?.toLowerCase().includes(lowerCity) ||
+					lowerCity.includes(c.enName?.toLowerCase() || "---"),
+			);
+			if (found) {
+				setValue("cabinetCityId", found.id.toString(), {
+					shouldValidate: true,
+				});
+			}
+		}
+	}
 
 	function handleCinFile(side: "recto" | "verso", file: File) {
 		const url = URL.createObjectURL(file);
@@ -136,6 +200,8 @@ export default function DoctorApplicationForm({
 				lastName: values.lastName,
 				cabinetName: values.cabinetName,
 				cabinetCityId: Number(values.cabinetCityId),
+				cabinetLatitude: values.cabinetLatitude,
+				cabinetLongitude: values.cabinetLongitude,
 				specialityId: Number(values.specialityId),
 				tin: values.tin,
 				cinRecto: cinRectoUrl,
@@ -156,7 +222,7 @@ export default function DoctorApplicationForm({
 			<h3 className="mt-5 font-semibold text-xl">Your Information</h3>
 			<div className="mt-4">
 				<Label>Email</Label>
-				<div className="px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm">
+				<div className="bg-muted px-3 py-1.5 rounded-md text-muted-foreground text-sm">
 					{user?.email}
 				</div>
 			</div>
@@ -191,7 +257,7 @@ export default function DoctorApplicationForm({
 					</div>
 				</div>
 
-				<div className="h-px my-6 bg-border" />
+				<div className="my-6 bg-border h-px" />
 				<h3 className="font-semibold text-xl">Business Information</h3>
 
 				<div>
@@ -221,6 +287,90 @@ export default function DoctorApplicationForm({
 							{errors.cabinetName.message}
 						</p>
 					)}
+				</div>
+
+				<div>
+					<Label>
+						Exact Location <span className="text-destructive">*</span>
+					</Label>
+					<div
+						ref={mapContainerRef}
+						className={cn(
+							"mt-2 transition-all duration-300 bg-background relative z-10",
+							isFullscreen ? "w-full h-screen" : "",
+						)}
+					>
+						<div className="relative w-full">
+							<div className="top-3 left-1/2 z-[2000] absolute w-11/12 max-w-sm -translate-x-1/2">
+								<AddressSearchBar
+									onLocationSelect={handleLocationSelect}
+									biasLocation={mapCenter}
+									className="w-full"
+								/>
+							</div>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								className="right-14 bottom-3 z-[2000] absolute shadow-md rounded-lg"
+								onClick={() =>
+									setMapStyle(mapStyle === "street" ? "satellite" : "street")
+								}
+								title="Toggle Map Style"
+							>
+								<Layers className="size-4" />
+							</Button>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								className="right-3 bottom-3 z-[2000] absolute shadow-md rounded-lg"
+								onClick={async () => {
+									if (!document.fullscreenElement) {
+										await mapContainerRef.current?.requestFullscreen();
+									} else {
+										await document.exitFullscreen();
+									}
+								}}
+								title="Toggle Fullscreen"
+							>
+								{isFullscreen ? (
+									<Minimize2 className="size-4" />
+								) : (
+									<Maximize2 className="size-4" />
+								)}
+							</Button>
+							<CabinetLocationMap
+								className={
+									isFullscreen ? "h-[100dvh] rounded-none" : "h-[500px]"
+								}
+								center={mapCenter}
+								mapStyle={mapStyle}
+								marker={
+									cabinetLatitude && cabinetLongitude
+										? { lat: cabinetLatitude, lng: cabinetLongitude }
+										: null
+								}
+								onMarkerClick={() => {
+									// @ts-expect-error - intentionally setting to undefined to clear
+									setValue("cabinetLatitude", undefined);
+									// @ts-expect-error - intentionally setting to undefined to clear
+									setValue("cabinetLongitude", undefined);
+									clearErrors(["cabinetLatitude", "cabinetLongitude"]);
+								}}
+								onMapClick={(lat, lng) => {
+									setValue("cabinetLatitude", lat, { shouldValidate: true });
+									setValue("cabinetLongitude", lng, { shouldValidate: true });
+								}}
+							/>
+						</div>
+						{(errors.cabinetLatitude || errors.cabinetLongitude) && (
+							<p className="mt-1 text-destructive text-sm">
+								{errors.cabinetLatitude?.message ||
+									errors.cabinetLongitude?.message}
+							</p>
+						)}
+					</div>
 				</div>
 
 				<div>
@@ -278,14 +428,14 @@ export default function DoctorApplicationForm({
 							type="button"
 							onClick={() => cinRectoRef.current?.click()}
 							aria-label="Upload CIN recto. Example card shown faded."
-							className="relative block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
+							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
 						>
 							{cinRecto ? (
 								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
 								<img
 									src={URL.createObjectURL(cinRecto)}
 									alt="CIN Recto"
-									className="w-full aspect-[14/9] object-cover"
+									className="w-full object-cover aspect-[14/9]"
 								/>
 							) : (
 								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
@@ -313,14 +463,14 @@ export default function DoctorApplicationForm({
 							type="button"
 							onClick={() => cinVersoRef.current?.click()}
 							aria-label="Upload CIN verso. Example card shown faded."
-							className="relative block w-full max-w-[300px] aspect-[14/9] overflow-hidden mt-2 border-2 hover:border-primary border-dashed rounded-lg transition"
+							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
 						>
 							{cinVerso ? (
 								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
 								<img
 									src={URL.createObjectURL(cinVerso)}
 									alt="CIN Verso"
-									className="w-full aspect-[14/9] object-cover"
+									className="w-full object-cover aspect-[14/9]"
 								/>
 							) : (
 								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
@@ -332,7 +482,7 @@ export default function DoctorApplicationForm({
 					</div>
 				</div>
 
-				<Button type="submit" className="w-full mt-4" disabled={sending}>
+				<Button type="submit" className="mt-4 w-full" disabled={sending}>
 					{sending ? "Submitting..." : "Apply For Verification"}
 				</Button>
 			</form>
