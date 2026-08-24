@@ -123,8 +123,9 @@ export default function SpecialitiesManager() {
 			cell: (row) => (
 				<div className="flex justify-end gap-2">
 					<Button
-						variant="outline"
-						size="sm"
+						variant="ghost"
+						size="icon"
+						title="Edit"
 						onClick={() => {
 							setEditItem(row);
 							setEditEnName(row.enName ?? "");
@@ -133,16 +134,15 @@ export default function SpecialitiesManager() {
 							setEditSlug(row.slug ?? "");
 						}}
 					>
-						<Pencil className="w-3 h-3" />
-						Edit
+						<Pencil className="w-4 h-4 text-muted-foreground" />
 					</Button>
 					<Button
-						variant="destructive"
-						size="sm"
+						variant="ghost"
+						size="icon"
+						title="Delete"
 						onClick={() => setDeleteItem(row)}
 					>
-						<Trash2 className="w-3 h-3" />
-						Delete
+						<Trash2 className="w-4 h-4 text-destructive/80 hover:text-destructive" />
 					</Button>
 				</div>
 			),
