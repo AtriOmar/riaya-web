@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Search } from "lucide-react";
+import { Copy, Inbox, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -117,7 +117,17 @@ export default function UsersTable() {
 				data={users}
 				keyExtractor={(row) => row.id}
 				onRowClick={(row) => router.push(`/admin/users/${row.id}`)}
-				emptyMessage="No users found."
+				emptyMessage={
+					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+						<Inbox className="mb-4 w-12 h-12 opacity-50" />
+						<span className="font-semibold text-foreground">
+							No users found
+						</span>
+						<span className="mt-1 text-sm">
+							Try adjusting your filters or search terms
+						</span>
+					</div>
+				}
 			/>
 			<InfiniteScrollTrigger
 				onLoadMore={() => setSize(size + 1)}

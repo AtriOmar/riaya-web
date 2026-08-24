@@ -8,11 +8,22 @@ import type {
 // ─── GET /api/doctor-applications ─────────────────────────────────────────────
 // Admin-only
 
-export async function getDoctorApplications(): Promise<
-	DoctorApplicationSummary[]
-> {
+export async function getDoctorApplications(params?: {
+	status?: string;
+	search?: string;
+	page?: number;
+	limit?: number;
+}): Promise<DoctorApplicationSummary[]> {
+	const searchParams = new URLSearchParams();
+	if (params?.status) searchParams.set("status", params.status);
+	if (params?.search) searchParams.set("search", params.search);
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+
+	const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
+
 	const { data } = await api.get<DoctorApplicationSummary[]>(
-		"/api/doctor-applications",
+		`/api/doctor-applications${query}`,
 	);
 	return data;
 }

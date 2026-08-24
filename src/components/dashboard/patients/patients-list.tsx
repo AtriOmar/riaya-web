@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Inbox, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -56,7 +56,17 @@ export default function PatientsList() {
 				data={patients ?? []}
 				keyExtractor={(row) => row.id}
 				onRowClick={(row) => router.push(`/dashboard/patients/${row.id}`)}
-				emptyMessage="No patients found."
+				emptyMessage={
+					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+						<Inbox className="mb-4 w-12 h-12 opacity-50" />
+						<span className="font-semibold text-foreground">
+							No patients found
+						</span>
+						<span className="mt-1 text-sm">
+							Try adjusting your filters or search terms
+						</span>
+					</div>
+				}
 			/>
 		</div>
 	);

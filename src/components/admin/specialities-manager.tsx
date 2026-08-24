@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Inbox, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -229,7 +229,17 @@ export default function SpecialitiesManager() {
 				columns={columns}
 				data={specialities ?? []}
 				keyExtractor={(row) => row.id}
-				emptyMessage="No specialities found."
+				emptyMessage={
+					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+						<Inbox className="mb-4 w-12 h-12 opacity-50" />
+						<span className="font-semibold text-foreground">
+							No specialities found
+						</span>
+						<span className="mt-1 text-sm">
+							Try adjusting your filters or search terms
+						</span>
+					</div>
+				}
 			/>
 
 			{/* Add form */}

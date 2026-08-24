@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ilike, inArray, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
+import { user as userTable } from "@/db/auth-schema";
 import { doctorApplication } from "@/db/schema";
 import {
 	apiError,
@@ -14,16 +15,48 @@ import {
 // ─── GET /api/doctor-applications ─────────────────────────────────────────────
 // Admin-only: returns all pending applications
 
-export async function GET() {
+const getSchema = z.object({
+	status: z.string().optional().default("pending"),
+	search: z.string().optional(),
+	limit: z.coerce.number().min(1).max(100).default(50),
+	page: z.coerce.number().min(1).default(1),
+});
+
+export async function GET(req: NextRequest) {
 	try {
 		await requireAdmin();
 
+		const params = Object.fromEntries(req.nextUrl.searchParams);
+		const parsed = getSchema.safeParse(params);
+		if (!parsed.success) return validationError(parsed.error.issues);
+
+		const { status, search, limit, page } = parsed.data;
+
 		const applications = await db.query.doctorApplication.findMany({
-			where: eq(doctorApplication.status, "pending"),
-			orderBy: (t, { asc }) => [asc(t.createdAt)],
+			where: and(
+				status === "all"
+					? undefined
+					: eq(doctorApplication.status, status as any),
+				search
+					? or(
+							ilike(doctorApplication.firstName, `%${search}%`),
+							ilike(doctorApplication.lastName, `%${search}%`),
+							inArray(
+								doctorApplication.userId,
+								db
+									.select({ id: userTable.id })
+									.from(userTable)
+									.where(ilike(userTable.email, `%${search}%`)),
+							),
+						)
+					: undefined,
+			),
+			orderBy: (t, { desc }) => [desc(t.createdAt)],
 			with: {
 				user: { columns: { id: true, username: true, email: true } },
 			},
+			limit: limit,
+			offset: (page - 1) * limit,
 		});
 
 		return json(applications);
