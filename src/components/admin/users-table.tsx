@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Inbox, Search } from "lucide-react";
+import { Copy, Inbox, Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,8 +43,18 @@ const columns: Column<UserRow>[] = [
 						<Copy className="w-3 h-3" />
 					</button>
 					{row.accessId && row.accessId >= 3 && (
-						<Badge variant="outline" className="text-[10px]">
-							{ROLES[row.accessId] ?? "Admin"}
+						<Badge
+							variant={row.accessId === 5 ? "default" : "secondary"}
+							className="text-[10px] px-1.5 py-0 h-5"
+						>
+							<span className="flex items-center gap-1">
+								{row.accessId === 5 ? (
+									<ShieldAlert size={10} />
+								) : (
+									<ShieldCheck size={10} />
+								)}
+								{ROLES[row.accessId] ?? "Admin"}
+							</span>
 						</Badge>
 					)}
 					{row.active === 0 && (

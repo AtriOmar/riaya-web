@@ -133,7 +133,9 @@ export default function WhatsappConfig({ userId }: Props) {
 							<Image
 								src={status.data}
 								alt="WhatsApp QR code"
-								className="border rounded-lg w-56 h-56"
+								className="border rounded-lg"
+								width={230}
+								height={230}
 							/>
 							<p className="text-muted-foreground text-xs">
 								Open WhatsApp {">"} Linked devices {">"} Link a device

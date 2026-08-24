@@ -5,13 +5,18 @@ import type {
 	DoctorApplicationDetail,
 	DoctorProfileWithRelations,
 } from "@/services/types";
+import CabinetLocationMap from "./cabinet-location-map";
 
 type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
 	info: DoctorProfileWithRelations | DoctorApplicationDetail;
+	title?: string;
 };
 
-export default function UserInfoReadOnly({ info }: Props) {
+export default function UserInfoReadOnly({
+	info,
+	title = "Your Information",
+}: Props) {
 	const cabinetCityName =
 		info.cabinetCity?.enName ??
 		info.cabinetCity?.frName ??
@@ -32,14 +37,14 @@ export default function UserInfoReadOnly({ info }: Props) {
 
 	return (
 		<div className="space-y-4 mt-4">
-			<h3 className="font-semibold text-xl">Your Information</h3>
+			<h3 className="font-semibold text-xl">{title}</h3>
 			<div className="gap-4 grid sm:grid-cols-2">
 				{rows.map((r) => (
 					<div key={r.label}>
 						<p className="font-medium text-muted-foreground text-sm">
 							{r.label}
 						</p>
-						<p className="mt-1 px-3 py-1.5 rounded-md bg-muted text-sm">
+						<p className="mt-1 px-3 py-1.5 rounded-sm border border-border/50 bg-muted text-sm font-medium">
 							{r.value ?? "—"}
 						</p>
 					</div>
@@ -78,6 +83,21 @@ export default function UserInfoReadOnly({ info }: Props) {
 					</div>
 				)}
 			</div>
+
+			{info.cabinetLatitude && info.cabinetLongitude && (
+				<div className="mt-4">
+					<p className="mb-2 font-medium text-muted-foreground text-sm">
+						Cabinet Location
+					</p>
+					<div className="relative z-0">
+						<CabinetLocationMap
+							className="h-[300px]"
+							center={{ lat: info.cabinetLatitude, lng: info.cabinetLongitude }}
+							marker={{ lat: info.cabinetLatitude, lng: info.cabinetLongitude }}
+						/>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

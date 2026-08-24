@@ -1,11 +1,12 @@
 "use client";
 
+import { ShieldAlert, ShieldCheck, Stethoscope } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,16 +17,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { adminUpdateUser, getUserById } from "@/services";
-
-const CabinetLocationMap = dynamic(
-	() => import("@/components/dashboard/profile/cabinet-location-map"),
-	{
-		ssr: false,
-		loading: () => (
-			<div className="bg-muted rounded-lg w-full h-[300px] animate-pulse" />
-		),
-	},
-);
 
 export default function UserDetail({ userId }: { userId: string }) {
 	const {
@@ -45,11 +36,6 @@ export default function UserDetail({ userId }: { userId: string }) {
 	}
 
 	if (!user) return <p className="text-muted-foreground">User not found.</p>;
-
-	const doctorSpecialityName =
-		user.doctorProfile?.speciality?.enName ??
-		user.doctorProfile?.speciality?.frName ??
-		user.doctorProfile?.speciality?.arName;
 
 	async function handleUpdateRole() {
 		if (!accessId) return;
@@ -81,96 +67,82 @@ export default function UserDetail({ userId }: { userId: string }) {
 	}
 
 	return (
-		<div className="space-y-6 max-w-2xl">
-			<div className="gap-4 grid sm:grid-cols-2 p-6 border rounded-xl bg-card">
+		<div className="space-y-8 max-w-2xl">
+			<div className="gap-4 grid sm:grid-cols-2">
 				<div>
-					<p className="text-muted-foreground text-sm">Email</p>
-					<p className="font-medium">{user.email}</p>
+					<p className="font-medium text-muted-foreground text-sm">Email</p>
+					<p className="mt-1 px-3 py-1.5 rounded-sm border border-border/50 bg-muted text-sm font-medium">
+						{user.email}
+					</p>
 				</div>
 				<div>
-					<p className="text-muted-foreground text-sm">Name</p>
-					<p className="font-medium">{user.displayName ?? user.name ?? "—"}</p>
+					<p className="font-medium text-muted-foreground text-sm">Name</p>
+					<p className="mt-1 px-3 py-1.5 rounded-sm border border-border/50 bg-muted text-sm font-medium">
+						{user.displayName ?? user.name ?? "—"}
+					</p>
 				</div>
 				<div>
-					<p className="text-muted-foreground text-sm">Username</p>
-					<p className="font-medium">{user.username ?? "—"}</p>
+					<p className="font-medium text-muted-foreground text-sm">Username</p>
+					<p className="mt-1 px-3 py-1.5 rounded-sm border border-border/50 bg-muted text-sm font-medium">
+						{user.username ?? "—"}
+					</p>
 				</div>
 				<div>
-					<p className="text-muted-foreground text-sm">Access Level</p>
-					<Badge variant="outline">{user.accessId ?? 1}</Badge>
+					<p className="font-medium text-muted-foreground text-sm">
+						Access Level
+					</p>
+					<p className="mt-1 px-3 py-1.5 rounded-sm border border-border/50 bg-muted text-sm font-medium flex items-center gap-1.5">
+						{user.accessId === 5 ? (
+							<>
+								<ShieldAlert size={14} className="text-primary" /> Owner
+							</>
+						) : user.accessId === 3 ? (
+							<>
+								<ShieldCheck size={14} className="text-primary/70" /> Admin
+							</>
+						) : (
+							<>
+								<Stethoscope size={14} className="text-muted-foreground" />{" "}
+								Doctor
+							</>
+						)}
+					</p>
 				</div>
 			</div>
 
 			{user.doctorProfile && (
-				<div className="p-6 border rounded-xl bg-card">
-					<h4 className="mb-3 font-semibold">Doctor Profile</h4>
-					<div className="gap-4 grid sm:grid-cols-2">
-						<div>
-							<p className="text-muted-foreground text-sm">First Name</p>
-							<p className="font-medium">{user.doctorProfile.firstName}</p>
-						</div>
-						<div>
-							<p className="text-muted-foreground text-sm">Last Name</p>
-							<p className="font-medium">{user.doctorProfile.lastName}</p>
-						</div>
-						<div>
-							<p className="text-muted-foreground text-sm">Cabinet Name</p>
-							<p className="font-medium">
-								{user.doctorProfile.cabinetName ?? "—"}
-							</p>
-						</div>
-						<div>
-							<p className="text-muted-foreground text-sm">Speciality</p>
-							<p className="font-medium">{doctorSpecialityName ?? "—"}</p>
-						</div>
-					</div>
-					{user.doctorProfile.cabinetLatitude &&
-						user.doctorProfile.cabinetLongitude && (
-							<div className="mt-6 relative z-0">
-								<p className="mb-2 text-muted-foreground text-sm">
-									Location Map
-								</p>
-								<CabinetLocationMap
-									className="h-[300px]"
-									center={{
-										lat: user.doctorProfile.cabinetLatitude,
-										lng: user.doctorProfile.cabinetLongitude,
-									}}
-									marker={{
-										lat: user.doctorProfile.cabinetLatitude,
-										lng: user.doctorProfile.cabinetLongitude,
-									}}
-								/>
-							</div>
-						)}
+				<div>
+					<UserInfoReadOnly info={user.doctorProfile} title="Doctor Profile" />
 				</div>
 			)}
 
-			<div className="space-y-4 p-6 border rounded-xl bg-card">
-				<h4 className="font-semibold">Actions</h4>
-				<div className="flex items-end gap-3">
-					<div>
-						<Label>Role</Label>
-						<Select
-							value={accessId || String(user.accessId ?? 1)}
-							onValueChange={setAccessId}
-						>
-							<SelectTrigger className="w-[160px]">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="1">Doctor</SelectItem>
-								<SelectItem value="3">Admin</SelectItem>
-								<SelectItem value="5">Owner</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-					<Button onClick={handleUpdateRole} disabled={saving}>
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t">
+				<div className="flex items-center gap-3">
+					<Select
+						value={accessId || String(user.accessId ?? 1)}
+						onValueChange={setAccessId}
+					>
+						<SelectTrigger className="w-[160px] bg-background rounded-full">
+							<SelectValue placeholder="Role" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="1">Doctor</SelectItem>
+							<SelectItem value="3">Admin</SelectItem>
+							<SelectItem value="5">Owner</SelectItem>
+						</SelectContent>
+					</Select>
+					<Button
+						className="rounded-full shadow-md transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+						onClick={handleUpdateRole}
+						disabled={saving}
+					>
 						Update Role
 					</Button>
 				</div>
+
 				<Button
 					variant="destructive"
+					className="w-full sm:w-auto rounded-full shadow-sm transition-all hover:scale-105 active:scale-95"
 					onClick={handleToggleBan}
 					disabled={saving}
 				>

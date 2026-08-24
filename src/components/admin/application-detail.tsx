@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,20 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import {
 	getDoctorApplicationById,
 	updateDoctorApplicationStatus,
 } from "@/services";
-
-const CabinetLocationMap = dynamic(
-	() => import("@/components/dashboard/profile/cabinet-location-map"),
-	{
-		ssr: false,
-		loading: () => (
-			<div className="bg-muted rounded-lg w-full h-[300px] animate-pulse" />
-		),
-	},
-);
 
 export default function ApplicationDetail({
 	applicationId,
@@ -59,13 +51,6 @@ export default function ApplicationDetail({
 
 	if (!app)
 		return <p className="text-muted-foreground">Application not found.</p>;
-
-	const cabinetCityName =
-		app.cabinetCity?.enName ??
-		app.cabinetCity?.frName ??
-		app.cabinetCity?.arName;
-	const specialityName =
-		app.speciality?.enName ?? app.speciality?.frName ?? app.speciality?.arName;
 
 	async function handleApprove() {
 		setSaving(true);
@@ -105,7 +90,7 @@ export default function ApplicationDetail({
 	}
 
 	return (
-		<div className="space-y-6 max-w-2xl">
+		<div className="space-y-8 max-w-2xl">
 			{/* Approve Dialog */}
 			<Dialog open={approveOpen} onOpenChange={setApproveOpen}>
 				<DialogContent>
@@ -157,36 +142,12 @@ export default function ApplicationDetail({
 			</Dialog>
 
 			{/* Application Info */}
-			<div className="gap-4 grid sm:grid-cols-2 bg-card p-6 border rounded-xl">
-				<div>
-					<p className="text-muted-foreground text-sm">Email</p>
-					<p className="font-medium">{app.user?.email ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Name</p>
-					<p className="font-medium">
-						{app.firstName} {app.lastName}
-					</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">TIN</p>
-					<p className="font-medium">{app.tin}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Cabinet Name</p>
-					<p className="font-medium">{app.cabinetName}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Cabinet City</p>
-					<p className="font-medium">{cabinetCityName ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Speciality</p>
-					<p className="font-medium">{specialityName ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Status</p>
+			<div>
+				<UserInfoReadOnly info={app} title="Application Info" />
+				<div className="mt-4">
+					<p className="font-medium text-muted-foreground text-sm">Status</p>
 					<Badge
+						className="mt-1"
 						variant={
 							app.status === "pending"
 								? "secondary"
@@ -200,68 +161,29 @@ export default function ApplicationDetail({
 				</div>
 			</div>
 
-			{/* Location Map */}
-			{app.cabinetLatitude && app.cabinetLongitude && (
-				<div className="bg-card p-6 border rounded-xl relative z-0">
-					<p className="mb-4 font-semibold">Location Map</p>
-					<CabinetLocationMap
-						className="h-[300px]"
-						center={{ lat: app.cabinetLatitude, lng: app.cabinetLongitude }}
-						marker={{ lat: app.cabinetLatitude, lng: app.cabinetLongitude }}
-					/>
-				</div>
-			)}
-
-			{/* CIN Images */}
-			<div className="gap-4 grid lg:grid-cols-2">
-				{app.cinRecto && (
-					<div>
-						<p className="mb-2 font-medium text-muted-foreground text-sm">
-							CIN Recto
-						</p>
-						<Image
-							unoptimized
-							src={app.cinRecto}
-							alt="CIN Recto"
-							width={400}
-							height={300}
-							className="border rounded-lg w-full max-w-[400px] aspect-[14/9]"
-						/>
-					</div>
-				)}
-				{app.cinVerso && (
-					<div>
-						<p className="mb-2 font-medium text-muted-foreground text-sm">
-							CIN Verso
-						</p>
-						<Image
-							unoptimized
-							src={app.cinVerso}
-							alt="CIN Verso"
-							width={400}
-							height={300}
-							className="border rounded-lg w-full max-w-[400px] aspect-[14/9]"
-						/>
-					</div>
-				)}
-			</div>
-
 			{/* Actions */}
 			{app.status === "pending" && (
-				<div className="flex justify-end gap-3">
-					<Button variant="destructive" onClick={() => setRejectOpen(true)}>
-						<X className="w-4 h-4" />
-						Reject
+				<div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t mt-4">
+					<Button
+						variant="outline"
+						className="w-full sm:w-auto rounded-full border-destructive/30 text-destructive hover:bg-destructive/10 transition-all hover:scale-105 active:scale-95 shadow-sm"
+						onClick={() => setRejectOpen(true)}
+					>
+						<X className="w-4 h-4 mr-2" />
+						Reject Application
 					</Button>
-					<Button onClick={() => setApproveOpen(true)}>
-						<Check className="w-4 h-4" />
-						Approve
+					<Button
+						className="w-full sm:w-auto rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary transition-all hover:scale-105 active:scale-95 shadow-md"
+						onClick={() => setApproveOpen(true)}
+					>
+						<Check className="w-4 h-4 mr-2" />
+						Approve Application
 					</Button>
 				</div>
 			)}
 
 			{app.rejectionReasons && app.rejectionReasons.length > 0 && (
-				<div className="bg-destructive/5 p-4 border border-destructive/30 rounded-xl">
+				<div className="bg-destructive/5 p-4 rounded-xl">
 					<p className="mb-2 font-medium text-destructive text-sm">
 						Rejection Reasons:
 					</p>
