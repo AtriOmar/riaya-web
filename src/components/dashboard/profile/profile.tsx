@@ -5,7 +5,7 @@ import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
 import { getCities, getMyDoctorApplication, getSpecialities } from "@/services";
 import { getMe } from "@/services/users";
-import DoctorApplicationForm from "./doctor-application-form";
+import DoctorApplicationForm from "./doctor-application";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 

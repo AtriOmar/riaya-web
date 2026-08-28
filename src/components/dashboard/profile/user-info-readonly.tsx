@@ -5,7 +5,7 @@ import type {
 	DoctorApplicationDetail,
 	DoctorProfileWithRelations,
 } from "@/services/types";
-import CabinetLocationMap from "./cabinet-location-map";
+import CabinetLocationMap from "./doctor-application/cabinet-location-map";
 
 type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
