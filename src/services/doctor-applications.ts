@@ -41,6 +41,8 @@ export interface CreateDoctorApplicationInput {
 	cabinetLatitude?: number;
 	specialityId: number;
 	tin: string;
+	medicalCouncilNumber: string;
+	medicalCouncilCertificate: string; // R2 URL
 }
 
 export async function createDoctorApplication(

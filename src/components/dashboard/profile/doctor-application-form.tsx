@@ -53,6 +53,7 @@ const schema = z.object({
 	tin: z
 		.string()
 		.regex(/^\d{7}[A-Z]$/, "Format: 0000000X (7 digits + uppercase letter)"),
+	medicalCouncilNumber: z.string().min(1, "Registration number is required"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -96,6 +97,10 @@ export default function DoctorApplicationForm({
 	const [cinVerso, setCinVerso] = useState<File | null>(null);
 	const [cinRectoError, setCinRectoError] = useState<string | null>(null);
 	const [cinVersoError, setCinVersoError] = useState<string | null>(null);
+	const [medicalCouncilCertificate, setMedicalCouncilCertificate] =
+		useState<File | null>(null);
+	const [medicalCouncilCertificateError, setMedicalCouncilCertificateError] =
+		useState<string | null>(null);
 	const [sending, setSending] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const [mapStyle, setMapStyle] = useState<"street" | "satellite">("street");
@@ -107,6 +112,7 @@ export default function DoctorApplicationForm({
 
 	const cinRectoRef = useRef<HTMLInputElement>(null);
 	const cinVersoRef = useRef<HTMLInputElement>(null);
+	const medicalCouncilCertificateRef = useRef<HTMLInputElement>(null);
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 
 	const {
@@ -127,6 +133,7 @@ export default function DoctorApplicationForm({
 			tin: "",
 			cabinetLatitude: undefined as unknown as number,
 			cabinetLongitude: undefined as unknown as number,
+			medicalCouncilNumber: "",
 		},
 	});
 
@@ -178,6 +185,11 @@ export default function DoctorApplicationForm({
 		}
 	}
 
+	function handleMedicalCouncilCertificateFile(file: File) {
+		setMedicalCouncilCertificate(file);
+		setMedicalCouncilCertificateError(null);
+	}
+
 	async function onSubmit(values: FormValues) {
 		if (!cinRecto) {
 			setCinRectoError("CIN Recto is required");
@@ -187,12 +199,19 @@ export default function DoctorApplicationForm({
 			setCinVersoError("CIN Verso is required");
 			return;
 		}
+		if (!medicalCouncilCertificate) {
+			setMedicalCouncilCertificateError(
+				"Medical Council Certificate is required",
+			);
+			return;
+		}
 
 		setSending(true);
 		try {
-			const [cinRectoUrl, cinVersoUrl] = await Promise.all([
+			const [cinRectoUrl, cinVersoUrl, certUrl] = await Promise.all([
 				uploadToR2(cinRecto, "doctor-applications"),
 				uploadToR2(cinVerso, "doctor-applications"),
+				uploadToR2(medicalCouncilCertificate, "doctor-applications"),
 			]);
 
 			await createDoctorApplication({
@@ -204,6 +223,8 @@ export default function DoctorApplicationForm({
 				cabinetLongitude: values.cabinetLongitude,
 				specialityId: Number(values.specialityId),
 				tin: values.tin,
+				medicalCouncilNumber: values.medicalCouncilNumber,
+				medicalCouncilCertificate: certUrl,
 				cinRecto: cinRectoUrl,
 				cinVerso: cinVersoUrl,
 			});
@@ -220,7 +241,7 @@ export default function DoctorApplicationForm({
 	return (
 		<div>
 			<h3 className="mt-5 font-semibold text-xl">Your Information</h3>
-			<div className="mt-4">
+			<div className="mt-4 space-y-2">
 				<Label>Email</Label>
 				<div className="bg-muted px-3 py-1.5 rounded-md text-muted-foreground text-sm">
 					{user?.email}
@@ -229,7 +250,7 @@ export default function DoctorApplicationForm({
 
 			<form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
 				<div className="gap-3 grid grid-cols-2">
-					<div>
+					<div className="space-y-2">
 						<Label htmlFor="firstName">
 							First Name <span className="text-destructive">*</span>
 						</Label>
@@ -244,7 +265,7 @@ export default function DoctorApplicationForm({
 							</p>
 						)}
 					</div>
-					<div>
+					<div className="space-y-2">
 						<Label htmlFor="lastName">
 							Last Name <span className="text-destructive">*</span>
 						</Label>
@@ -257,23 +278,193 @@ export default function DoctorApplicationForm({
 					</div>
 				</div>
 
-				<div className="my-6 bg-border h-px" />
-				<h3 className="font-semibold text-xl">Business Information</h3>
+				<div className="gap-4 grid lg:grid-cols-2 mt-4">
+					<div className="space-y-2">
+						<Label>
+							CIN Recto <span className="text-destructive">*</span>
+						</Label>
+						<input
+							ref={cinRectoRef}
+							type="file"
+							accept="image/*"
+							className="hidden"
+							onChange={(e) => {
+								const f = e.target.files?.[0];
+								if (f) handleCinFile("recto", f);
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => cinRectoRef.current?.click()}
+							aria-label="Upload CIN recto. Example card shown faded."
+							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
+						>
+							{cinRecto ? (
+								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
+								<img
+									src={URL.createObjectURL(cinRecto)}
+									alt="CIN Recto"
+									className="w-full object-cover aspect-[14/9]"
+								/>
+							) : (
+								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
+							)}
+						</button>
+						{cinRectoError && (
+							<p className="mt-1 text-destructive text-sm">{cinRectoError}</p>
+						)}
+					</div>
+					<div className="space-y-2">
+						<Label>
+							CIN Verso <span className="text-destructive">*</span>
+						</Label>
+						<input
+							ref={cinVersoRef}
+							type="file"
+							accept="image/*"
+							className="hidden"
+							onChange={(e) => {
+								const f = e.target.files?.[0];
+								if (f) handleCinFile("verso", f);
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => cinVersoRef.current?.click()}
+							aria-label="Upload CIN verso. Example card shown faded."
+							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
+						>
+							{cinVerso ? (
+								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
+								<img
+									src={URL.createObjectURL(cinVerso)}
+									alt="CIN Verso"
+									className="w-full object-cover aspect-[14/9]"
+								/>
+							) : (
+								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
+							)}
+						</button>
+						{cinVersoError && (
+							<p className="mt-1 text-destructive text-sm">{cinVersoError}</p>
+						)}
+					</div>
+				</div>
 
-				<div>
-					<Label htmlFor="tin">
-						TIN (Tax Identification Number){" "}
-						<span className="text-destructive">*</span>
+				<div className="my-6 bg-border h-px" />
+				<h3 className="font-semibold text-xl">Professional Information</h3>
+
+				<div className="space-y-2">
+					<Label>
+						Speciality <span className="text-destructive">*</span>
 					</Label>
-					<Input id="tin" placeholder="1234567X" {...register("tin")} />
-					{errors.tin && (
+					<SpecialitySelect
+						specialities={specialities}
+						value={specialityId}
+						onChange={(v) =>
+							setValue("specialityId", v, { shouldValidate: true })
+						}
+					/>
+					{errors.specialityId && (
 						<p className="mt-1 text-destructive text-sm">
-							{errors.tin.message}
+							{errors.specialityId.message}
 						</p>
 					)}
 				</div>
 
-				<div>
+				<div className="space-y-2">
+					<Label htmlFor="medicalCouncilNumber">
+						Medical Council Registration Number{" "}
+						<span className="text-destructive">*</span>
+					</Label>
+					<Input
+						id="medicalCouncilNumber"
+						placeholder="12345/M"
+						{...register("medicalCouncilNumber")}
+					/>
+					{errors.medicalCouncilNumber && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.medicalCouncilNumber.message}
+						</p>
+					)}
+				</div>
+
+				<div className="mt-4">
+					<div className="space-y-2">
+						<Label>
+							Medical Council Certificate (Attestation d'inscription){" "}
+							<span className="text-destructive">*</span>
+						</Label>
+						<input
+							ref={medicalCouncilCertificateRef}
+							type="file"
+							accept="image/*,.pdf"
+							className="hidden"
+							onChange={(e) => {
+								const f = e.target.files?.[0];
+								if (f) handleMedicalCouncilCertificateFile(f);
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => medicalCouncilCertificateRef.current?.click()}
+							aria-label="Upload Medical Council Certificate"
+							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
+						>
+							{medicalCouncilCertificate ? (
+								medicalCouncilCertificate.type.startsWith("image/") ? (
+									// biome-ignore lint/performance/noImgElement: blob URL preview
+									<img
+										src={URL.createObjectURL(medicalCouncilCertificate)}
+										alt="Medical Council Certificate"
+										className="w-full object-cover aspect-[14/9]"
+									/>
+								) : medicalCouncilCertificate.type === "application/pdf" ? (
+									<object
+										data={URL.createObjectURL(medicalCouncilCertificate)}
+										type="application/pdf"
+										className="w-full h-full aspect-[14/9] pointer-events-none"
+									>
+										<div className="flex flex-col justify-center items-center bg-muted/50 w-full h-full text-sm">
+											<Layers className="mb-2 size-8 text-muted-foreground" />
+											<span className="font-medium text-center truncate max-w-[90%] px-4">
+												{medicalCouncilCertificate.name}
+											</span>
+											<span className="text-xs text-muted-foreground mt-1">
+												PDF Selected
+											</span>
+										</div>
+									</object>
+								) : (
+									<div className="flex flex-col justify-center items-center bg-muted/50 w-full h-full text-sm">
+										<Layers className="mb-2 size-8 text-muted-foreground" />
+										<span className="font-medium text-center truncate max-w-[90%] px-4">
+											{medicalCouncilCertificate.name}
+										</span>
+									</div>
+								)
+							) : (
+								<div className="flex flex-col justify-center items-center bg-muted/20 w-full h-full text-muted-foreground hover:text-primary transition-colors">
+									<Upload className="mb-2 size-8" />
+									<span className="text-sm font-medium">
+										Click to upload document
+									</span>
+									<span className="text-xs opacity-70 mt-1">Image or PDF</span>
+								</div>
+							)}
+						</button>
+						{medicalCouncilCertificateError && (
+							<p className="mt-1 text-destructive text-sm">
+								{medicalCouncilCertificateError}
+							</p>
+						)}
+					</div>
+				</div>
+
+				<div className="my-6 bg-border h-px" />
+				<h3 className="font-semibold text-xl">Cabinet Information</h3>
+
+				<div className="space-y-2">
 					<Label htmlFor="cabinetName">
 						Cabinet Name <span className="text-destructive">*</span>
 					</Label>
@@ -289,7 +480,38 @@ export default function DoctorApplicationForm({
 					)}
 				</div>
 
-				<div>
+				<div className="space-y-2">
+					<Label htmlFor="tin">
+						TIN (Tax Identification Number){" "}
+						<span className="text-destructive">*</span>
+					</Label>
+					<Input id="tin" placeholder="1234567X" {...register("tin")} />
+					{errors.tin && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.tin.message}
+						</p>
+					)}
+				</div>
+
+				<div className="space-y-2">
+					<Label>
+						Cabinet city <span className="text-destructive">*</span>
+					</Label>
+					<CitySelect
+						cities={cities}
+						value={cabinetCityId}
+						onChange={(v) =>
+							setValue("cabinetCityId", v, { shouldValidate: true })
+						}
+					/>
+					{errors.cabinetCityId && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.cabinetCityId.message}
+						</p>
+					)}
+				</div>
+
+				<div className="space-y-2">
 					<Label>
 						Exact Location <span className="text-destructive">*</span>
 					</Label>
@@ -369,115 +591,6 @@ export default function DoctorApplicationForm({
 								{errors.cabinetLatitude?.message ||
 									errors.cabinetLongitude?.message}
 							</p>
-						)}
-					</div>
-				</div>
-
-				<div>
-					<Label>
-						Cabinet city <span className="text-destructive">*</span>
-					</Label>
-					<CitySelect
-						cities={cities}
-						value={cabinetCityId}
-						onChange={(v) =>
-							setValue("cabinetCityId", v, { shouldValidate: true })
-						}
-					/>
-					{errors.cabinetCityId && (
-						<p className="mt-1 text-destructive text-sm">
-							{errors.cabinetCityId.message}
-						</p>
-					)}
-				</div>
-
-				<div>
-					<Label>
-						Speciality <span className="text-destructive">*</span>
-					</Label>
-					<SpecialitySelect
-						specialities={specialities}
-						value={specialityId}
-						onChange={(v) =>
-							setValue("specialityId", v, { shouldValidate: true })
-						}
-					/>
-					{errors.specialityId && (
-						<p className="mt-1 text-destructive text-sm">
-							{errors.specialityId.message}
-						</p>
-					)}
-				</div>
-
-				<div className="gap-4 grid lg:grid-cols-2 mt-4">
-					<div>
-						<Label>
-							CIN Recto <span className="text-destructive">*</span>
-						</Label>
-						<input
-							ref={cinRectoRef}
-							type="file"
-							accept="image/*"
-							className="hidden"
-							onChange={(e) => {
-								const f = e.target.files?.[0];
-								if (f) handleCinFile("recto", f);
-							}}
-						/>
-						<button
-							type="button"
-							onClick={() => cinRectoRef.current?.click()}
-							aria-label="Upload CIN recto. Example card shown faded."
-							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
-						>
-							{cinRecto ? (
-								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
-								<img
-									src={URL.createObjectURL(cinRecto)}
-									alt="CIN Recto"
-									className="w-full object-cover aspect-[14/9]"
-								/>
-							) : (
-								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
-							)}
-						</button>
-						{cinRectoError && (
-							<p className="mt-1 text-destructive text-sm">{cinRectoError}</p>
-						)}
-					</div>
-					<div>
-						<Label>
-							CIN Verso <span className="text-destructive">*</span>
-						</Label>
-						<input
-							ref={cinVersoRef}
-							type="file"
-							accept="image/*"
-							className="hidden"
-							onChange={(e) => {
-								const f = e.target.files?.[0];
-								if (f) handleCinFile("verso", f);
-							}}
-						/>
-						<button
-							type="button"
-							onClick={() => cinVersoRef.current?.click()}
-							aria-label="Upload CIN verso. Example card shown faded."
-							className="block relative mt-2 border-2 hover:border-primary border-dashed rounded-lg w-full max-w-[300px] aspect-[14/9] overflow-hidden transition"
-						>
-							{cinVerso ? (
-								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
-								<img
-									src={URL.createObjectURL(cinVerso)}
-									alt="CIN Verso"
-									className="w-full object-cover aspect-[14/9]"
-								/>
-							) : (
-								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
-							)}
-						</button>
-						{cinVersoError && (
-							<p className="mt-1 text-destructive text-sm">{cinVersoError}</p>
 						)}
 					</div>
 				</div>

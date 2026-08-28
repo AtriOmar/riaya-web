@@ -80,6 +80,8 @@ const createSchema = z.object({
 	cabinetLatitude: z.coerce.number().optional(),
 	specialityId: z.coerce.number().int().positive(),
 	tin: z.string().min(1),
+	medicalCouncilNumber: z.string().min(1),
+	medicalCouncilCertificate: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
@@ -109,6 +111,8 @@ export async function POST(req: NextRequest) {
 				cabinetLatitude: parsed.data.cabinetLatitude,
 				specialityId: parsed.data.specialityId,
 				tin: parsed.data.tin,
+				medicalCouncilNumber: parsed.data.medicalCouncilNumber,
+				medicalCouncilCertificate: parsed.data.medicalCouncilCertificate,
 				status: "pending",
 			})
 			.returning();

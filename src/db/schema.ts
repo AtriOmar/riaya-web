@@ -76,6 +76,10 @@ export const doctorProfile = pgTable(
 		availability: jsonb("availability"),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
+		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
+		medicalCouncilCertificate: varchar("medical_council_certificate", {
+			length: 255,
+		}),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -218,6 +222,10 @@ export const doctorApplication = pgTable(
 		tin: varchar("tin", { length: 100 }),
 		rejectionReasons: text("rejection_reasons").array(),
 		specialityId: integer("speciality_id").references(() => speciality.id),
+		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
+		medicalCouncilCertificate: varchar("medical_council_certificate", {
+			length: 255,
+		}),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
