@@ -1,4 +1,4 @@
-import { Upload, X } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
@@ -105,38 +105,50 @@ export default function PersonalInfo({
 							if (f) handleCinFile("recto", f);
 						}}
 					/>
-					<div className="relative mt-2 w-full max-w-[300px]">
-						<button
-							type="button"
-							onClick={() => cinRectoRef.current?.click()}
-							aria-label="Upload CIN recto. Example card shown faded."
-							className="block border-2 hover:border-primary border-dashed rounded-lg w-full h-full aspect-[14/9] overflow-hidden transition"
-						>
-							{cinRecto ? (
-								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
+					<div className="relative mt-2 w-full max-w-[300px] group overflow-hidden rounded-lg border-2 border-dashed hover:border-primary transition">
+						{cinRecto ? (
+							<>
+								{/* biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs */}
 								<img
 									src={URL.createObjectURL(cinRecto)}
 									alt="CIN Recto"
 									className="w-full object-cover aspect-[14/9]"
 								/>
-							) : (
-								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
-							)}
-						</button>
-						{cinRecto && (
-							<Button
+								<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col sm:flex-row gap-2 items-center justify-center transition-opacity duration-200">
+									<button
+										type="button"
+										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-green-500/40 border border-green-500/50 text-green-100 hover:bg-green-500/60 hover:text-white"
+										onClick={(e) => {
+											e.stopPropagation();
+											cinRectoRef.current?.click();
+										}}
+									>
+										<Upload className="size-4 mr-2" />
+										Change
+									</button>
+									<button
+										type="button"
+										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-red-500/40 border border-red-500/50 text-red-100 hover:bg-red-500/60 hover:text-white"
+										onClick={(e) => {
+											e.stopPropagation();
+											setCinRecto(null);
+											if (cinRectoRef.current) cinRectoRef.current.value = "";
+										}}
+									>
+										<Trash2 className="size-4 mr-2" />
+										Remove
+									</button>
+								</div>
+							</>
+						) : (
+							<button
 								type="button"
-								variant="destructive"
-								size="icon"
-								className="-top-2 -right-2 z-10 absolute shadow-sm rounded-full size-7"
-								onClick={(e) => {
-									e.stopPropagation();
-									setCinRecto(null);
-									if (cinRectoRef.current) cinRectoRef.current.value = "";
-								}}
+								onClick={() => cinRectoRef.current?.click()}
+								aria-label="Upload CIN recto. Example card shown faded."
+								className="block w-full h-full aspect-[14/9]"
 							>
-								<X className="size-4" />
-							</Button>
+								<CinPlaceholder src="/cin_recto_placeholder.jpg" />
+							</button>
 						)}
 					</div>
 					{cinRectoError && (
@@ -157,38 +169,50 @@ export default function PersonalInfo({
 							if (f) handleCinFile("verso", f);
 						}}
 					/>
-					<div className="relative mt-2 w-full max-w-[300px]">
-						<button
-							type="button"
-							onClick={() => cinVersoRef.current?.click()}
-							aria-label="Upload CIN verso. Example card shown faded."
-							className="block border-2 hover:border-primary border-dashed rounded-lg w-full h-full aspect-[14/9] overflow-hidden transition"
-						>
-							{cinVerso ? (
-								// biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs
+					<div className="relative mt-2 w-full max-w-[300px] group overflow-hidden rounded-lg border-2 border-dashed hover:border-primary transition">
+						{cinVerso ? (
+							<>
+								{/* biome-ignore lint/performance/noImgElement: blob URL preview, next/image doesn't support blob URLs */}
 								<img
 									src={URL.createObjectURL(cinVerso)}
 									alt="CIN Verso"
 									className="w-full object-cover aspect-[14/9]"
 								/>
-							) : (
-								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
-							)}
-						</button>
-						{cinVerso && (
-							<Button
+								<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col sm:flex-row gap-2 items-center justify-center transition-opacity duration-200">
+									<button
+										type="button"
+										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-green-500/40 border border-green-500/50 text-green-100 hover:bg-green-500/60 hover:text-white"
+										onClick={(e) => {
+											e.stopPropagation();
+											cinVersoRef.current?.click();
+										}}
+									>
+										<Upload className="size-4 mr-2" />
+										Change
+									</button>
+									<button
+										type="button"
+										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-red-500/40 border border-red-500/50 text-red-100 hover:bg-red-500/60 hover:text-white"
+										onClick={(e) => {
+											e.stopPropagation();
+											setCinVerso(null);
+											if (cinVersoRef.current) cinVersoRef.current.value = "";
+										}}
+									>
+										<Trash2 className="size-4 mr-2" />
+										Remove
+									</button>
+								</div>
+							</>
+						) : (
+							<button
 								type="button"
-								variant="destructive"
-								size="icon"
-								className="-top-2 -right-2 z-10 absolute shadow-sm rounded-full size-7"
-								onClick={(e) => {
-									e.stopPropagation();
-									setCinVerso(null);
-									if (cinVersoRef.current) cinVersoRef.current.value = "";
-								}}
+								onClick={() => cinVersoRef.current?.click()}
+								aria-label="Upload CIN verso. Example card shown faded."
+								className="block w-full h-full aspect-[14/9]"
 							>
-								<X className="size-4" />
-							</Button>
+								<CinPlaceholder src="/cin_verso_placeholder.jpg" />
+							</button>
 						)}
 					</div>
 					{cinVersoError && (
