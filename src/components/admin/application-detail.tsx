@@ -1,15 +1,12 @@
 "use client";
 
 import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
-import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

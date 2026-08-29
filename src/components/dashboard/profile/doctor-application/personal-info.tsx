@@ -3,7 +3,6 @@ import Image from "next/image";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { useAuth } from "@/components/contexts/auth-provider";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FormValues } from "./schema";

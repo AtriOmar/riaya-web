@@ -18,7 +18,11 @@
 		"rules": {
 			"recommended": true,
 			"correctness": {
-				"useExhaustiveDependencies": "off"
+				"useExhaustiveDependencies": "off",
+				"noUnusedImports": {
+					"level": "on",
+					"fix": "safe"
+				}
 			},
 			"a11y": {
 				"noStaticElementInteractions": "off"

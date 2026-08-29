@@ -1,14 +1,12 @@
 "use client";
 
 import { ShieldAlert, ShieldCheck, Stethoscope } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
