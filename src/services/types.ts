@@ -40,6 +40,7 @@ export type UserRow = {
 	active: number | null;
 	type: number | null;
 	createdAt: Date;
+	hasDoctorProfile: boolean;
 };
 
 export type UserAdminUpdateResult = {

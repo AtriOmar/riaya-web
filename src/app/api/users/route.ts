@@ -1,4 +1,4 @@
-import { desc, eq, ilike, or } from "drizzle-orm";
+import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -46,8 +46,13 @@ export async function GET(req: NextRequest) {
 				active: userTable.active,
 				type: userTable.type,
 				createdAt: userTable.createdAt,
+				hasDoctorProfile:
+					sql<boolean>`CASE WHEN ${doctorProfile.id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
+						"hasDoctorProfile",
+					),
 			})
 			.from(userTable)
+			.leftJoin(doctorProfile, eq(doctorProfile.userId, userTable.id))
 			.where(
 				search
 					? or(

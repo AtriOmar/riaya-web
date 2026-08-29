@@ -57,6 +57,17 @@ const columns: Column<UserRow>[] = [
 							</span>
 						</Badge>
 					)}
+					{row.accessId === 1 && !row.hasDoctorProfile && (
+						<Badge
+							variant="secondary"
+							className="text-[10px] px-1.5 py-0 h-5 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20"
+						>
+							<span className="flex items-center gap-1">
+								<ShieldAlert size={10} />
+								Unverified
+							</span>
+						</Badge>
+					)}
 					{row.active === 0 && (
 						<Badge variant="destructive" className="text-[10px]">
 							Banned
