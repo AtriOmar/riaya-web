@@ -30,9 +30,9 @@ const columns: Column<DoctorApplicationSummary>[] = [
 			<Badge
 				variant={
 					row.status === "pending"
-						? "secondary"
+						? "warning"
 						: row.status === "verified"
-							? "default"
+							? "success"
 							: "destructive"
 				}
 			>

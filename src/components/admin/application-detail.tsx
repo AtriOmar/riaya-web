@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -141,59 +142,69 @@ export default function ApplicationDetail({
 				</DialogContent>
 			</Dialog>
 
+			{/* Application Status Banner */}
+			<Alert
+				variant={
+					app.status === "pending"
+						? "warning"
+						: app.status === "verified"
+							? "success"
+							: "destructive"
+				}
+				className="mb-8"
+			>
+				{app.status === "pending" && <Clock className="size-4" />}
+				{app.status === "verified" && <CheckCircle2 className="size-4" />}
+				{app.status === "rejected" && <AlertCircle className="size-4" />}
+				<AlertTitle className="flex items-center gap-2 uppercase">
+					{app.status} Application
+				</AlertTitle>
+				<AlertDescription>
+					{app.status === "pending" &&
+						"This application is currently pending review."}
+					{app.status === "verified" &&
+						"This application has been verified and approved."}
+					{app.status === "rejected" && "This application was rejected."}
+
+					{app.status === "rejected" &&
+						app.rejectionReasons &&
+						app.rejectionReasons.length > 0 && (
+							<div className="mt-3">
+								<p className="mb-1 font-medium">Rejection Reasons:</p>
+								<ul className="space-y-1 list-disc list-inside">
+									{app.rejectionReasons.map((reason, i) => (
+										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+										<li key={i}>{reason}</li>
+									))}
+								</ul>
+							</div>
+						)}
+				</AlertDescription>
+			</Alert>
+
 			{/* Application Info */}
 			<div>
-				<UserInfoReadOnly info={app} title="Application Info" />
-				<div className="mt-4">
-					<p className="font-medium text-muted-foreground text-sm">Status</p>
-					<Badge
-						className="mt-1"
-						variant={
-							app.status === "pending"
-								? "secondary"
-								: app.status === "verified"
-									? "default"
-									: "destructive"
-						}
-					>
-						{app.status}
-					</Badge>
-				</div>
+				<UserInfoReadOnly info={app} title="" />
 			</div>
 
 			{/* Actions */}
 			{app.status === "pending" && (
-				<div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t mt-4">
+				<div className="flex sm:flex-row flex-col justify-end gap-3 mt-4 pt-6 border-t">
 					<Button
-						variant="outline"
-						className="w-full sm:w-auto rounded-full border-destructive/30 text-destructive hover:bg-destructive/10 transition-all hover:scale-105 active:scale-95 shadow-sm"
+						variant="destructive"
+						className="w-full sm:w-auto"
 						onClick={() => setRejectOpen(true)}
 					>
-						<X className="w-4 h-4 mr-2" />
+						<X className="mr-2 w-4 h-4" />
 						Reject Application
 					</Button>
 					<Button
-						className="w-full sm:w-auto rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary transition-all hover:scale-105 active:scale-95 shadow-md"
+						className="w-full sm:w-auto"
 						onClick={() => setApproveOpen(true)}
 					>
-						<Check className="w-4 h-4 mr-2" />
+						<Check className="mr-2 w-4 h-4" />
 						Approve Application
 					</Button>
-				</div>
-			)}
-
-			{app.rejectionReasons && app.rejectionReasons.length > 0 && (
-				<div className="bg-destructive/5 p-4 rounded-xl">
-					<p className="mb-2 font-medium text-destructive text-sm">
-						Rejection Reasons:
-					</p>
-					<ul className="space-y-1 ml-6 list-disc">
-						{app.rejectionReasons.map((r) => (
-							<li key={r} className="text-destructive/80 text-sm">
-								{r}
-							</li>
-						))}
-					</ul>
 				</div>
 			)}
 		</div>
