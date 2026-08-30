@@ -14,6 +14,46 @@ const schema = z.object({
 	time: z.string().optional(),
 	limit: z.coerce.number().int().min(1).max(10).optional(),
 });
+
+import { registry } from "@/lib/openapi";
+
+const responseSchema = z.object({
+	doctor: z.object({
+		id: z.number(),
+		firstName: z.string(),
+		lastName: z.string(),
+		cabinetName: z.string().nullable(),
+		address: z.string().nullable(),
+	}),
+	found: z.boolean(),
+	slots: z.array(
+		z.object({
+			start: z.string(), // ISO string from Date
+			end: z.string(),
+		}),
+	),
+});
+
+registry.registerPath({
+	method: "get",
+	path: "/api/doctors/availability",
+	tags: ["Doctors"],
+	summary: "Get doctor availability",
+	request: {
+		query: schema,
+	},
+	responses: {
+		200: {
+			description: "Successful response",
+			content: {
+				"application/json": {
+					schema: responseSchema,
+				},
+			},
+		},
+	},
+});
+
 export async function GET(req: NextRequest) {
 	try {
 		const searchParams = Object.fromEntries(req.nextUrl.searchParams);

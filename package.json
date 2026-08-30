@@ -16,9 +16,11 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:up": "docker compose -f docker-compose.db.yml up -d",
-		"db:down": "docker compose -f docker-compose.db.yml down"
+		"db:down": "docker compose -f docker-compose.db.yml down",
+		"generate:api": "tsx scripts/generate-openapi.ts && orval"
 	},
 	"dependencies": {
+		"@asteasolutions/zod-to-openapi": "^9.1.0",
 		"@aws-sdk/client-s3": "^3.1004.0",
 		"@aws-sdk/s3-request-presigner": "^3.1004.0",
 		"@base-ui/react": "^1.4.1",
@@ -69,8 +71,10 @@
 		"@types/react-big-calendar": "^1.16.3",
 		"@types/react-dom": "^19",
 		"drizzle-kit": "^0.31.9",
+		"fast-glob": "^3.3.3",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.3.2",
+		"orval": "^8.26.0",
 		"tailwindcss": "^4",
 		"tsx": "^4.21.0",
 		"typescript": "^5"
