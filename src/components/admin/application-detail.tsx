@@ -3,7 +3,6 @@
 import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,26 +17,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
-	getDoctorApplicationById,
-	updateDoctorApplicationStatus,
-} from "@/services";
+	useGetApiDoctorApplicationsId,
+	usePutApiDoctorApplicationsId,
+} from "@/services/generated/doctors/doctors";
 
 export default function ApplicationDetail({
 	applicationId,
 }: {
 	applicationId: number;
 }) {
-	const {
-		data: app,
-		isLoading,
-		mutate,
-	} = useSWR(`admin-application-${applicationId}`, () =>
-		getDoctorApplicationById(applicationId),
-	);
+	const id = String(applicationId);
+	const { data: app, isLoading, mutate } = useGetApiDoctorApplicationsId(id);
+
+	const { trigger: updateApplication, isMutating: saving } =
+		usePutApiDoctorApplicationsId(id);
+
 	const [approveOpen, setApproveOpen] = useState(false);
 	const [rejectOpen, setRejectOpen] = useState(false);
 	const [rejectReasons, setRejectReasons] = useState("");
-	const [saving, setSaving] = useState(false);
 
 	if (isLoading) {
 		return (
@@ -51,9 +48,8 @@ export default function ApplicationDetail({
 		return <p className="text-muted-foreground">Application not found.</p>;
 
 	async function handleApprove() {
-		setSaving(true);
 		try {
-			await updateDoctorApplicationStatus(applicationId, {
+			await updateApplication({
 				status: "verified",
 			});
 			toast.success("Application approved");
@@ -61,19 +57,16 @@ export default function ApplicationDetail({
 			mutate();
 		} catch {
 			toast.error("Failed to approve application");
-		} finally {
-			setSaving(false);
 		}
 	}
 
 	async function handleReject() {
-		setSaving(true);
 		try {
 			const reasons = rejectReasons
 				.split("\n")
 				.map((r) => r.trim())
 				.filter(Boolean);
-			await updateDoctorApplicationStatus(applicationId, {
+			await updateApplication({
 				status: "rejected",
 				rejectionReasons: reasons,
 			});
@@ -82,8 +75,6 @@ export default function ApplicationDetail({
 			mutate();
 		} catch {
 			toast.error("Failed to reject application");
-		} finally {
-			setSaving(false);
 		}
 	}
 

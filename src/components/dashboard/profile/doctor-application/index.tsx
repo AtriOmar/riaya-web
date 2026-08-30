@@ -7,16 +7,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { uploadToR2 } from "@/lib/upload";
-import { createDoctorApplication } from "@/services";
-import type { City, Speciality } from "@/services/types";
+import type {
+	GetApiCities200Item,
+	GetApiSpecialities200Item,
+} from "@/services/generated/api.schemas";
+import { usePostApiDoctorApplications } from "@/services/generated/doctors/doctors";
 import BusinessInfo from "./business-info";
 import PersonalInfo from "./personal-info";
 import ProfessionalInfo from "./professional-info";
 import { type FormValues, schema } from "./schema";
 
 type Props = {
-	specialities: Speciality[];
-	cities: City[];
+	specialities: GetApiSpecialities200Item[];
+	cities: GetApiCities200Item[];
 	onApplicationSubmitted: () => void;
 };
 
@@ -33,7 +36,8 @@ export default function DoctorApplicationForm({
 		useState<File | null>(null);
 	const [medicalCouncilCertificateError, setMedicalCouncilCertificateError] =
 		useState<string | null>(null);
-	const [sending, setSending] = useState(false);
+	const { trigger: createDoctorApplication, isMutating: sending } =
+		usePostApiDoctorApplications();
 
 	const methods = useForm<FormValues>({
 		resolver: zodResolver(schema),
@@ -112,7 +116,6 @@ export default function DoctorApplicationForm({
 			return;
 		}
 
-		setSending(true);
 		try {
 			const cinRectoUrl = await uploadToR2(cinRecto, "doctor-applications");
 			const cinVersoUrl = await uploadToR2(cinVerso, "doctor-applications");
@@ -138,8 +141,6 @@ export default function DoctorApplicationForm({
 			onApplicationSubmitted();
 		} catch {
 			toast.error("Failed to submit application");
-		} finally {
-			setSending(false);
 		}
 	};
 

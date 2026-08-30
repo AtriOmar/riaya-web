@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadToR2 } from "@/lib/upload";
 import { cn } from "@/lib/utils";
-import { createMedicalFile } from "@/services";
+import { usePostApiPatientsIdMedicalFiles } from "@/services/generated/patients/patients";
 import DocumentUpload, { type DocumentItem } from "./document-upload";
 import {
 	MEDICAL_FILE_TYPE_VALUES,
@@ -77,6 +77,9 @@ export function AddMedicalFile({
 	const [documents, setDocuments] = useState<DocumentItem[]>([]);
 	const titleTouchedRef = useRef(false);
 
+	const { trigger: createMedicalFile, isMutating: isSubmittingAPI } =
+		usePostApiPatientsIdMedicalFiles(patientId.toString());
+
 	const {
 		register,
 		handleSubmit,
@@ -111,7 +114,7 @@ export function AddMedicalFile({
 				}
 			}
 
-			await createMedicalFile(patientId, {
+			await createMedicalFile({
 				type: values.type,
 				date: new Date(values.date).toISOString(),
 				title: values.title,
@@ -224,8 +227,12 @@ export function AddMedicalFile({
 					/>
 				</div>
 
-				<Button type="submit" className="w-full" disabled={isSubmitting}>
-					{isSubmitting ? "Adding…" : "Add Medical File"}
+				<Button
+					type="submit"
+					className="w-full"
+					disabled={isSubmitting || isSubmittingAPI}
+				>
+					{isSubmitting || isSubmittingAPI ? "Adding…" : "Add Medical File"}
 				</Button>
 			</form>
 		</div>

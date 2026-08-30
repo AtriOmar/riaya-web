@@ -8,10 +8,10 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from "@/components/ui/combobox";
-import type { City } from "@/services/types";
+import type { GetApiCities200Item } from "@/services/generated/api.schemas";
 
 type Props = {
-	cities: City[];
+	cities: GetApiCities200Item[];
 	value?: string;
 	onChange: (value: string) => void;
 };
@@ -22,11 +22,11 @@ type CityOption = {
 	keywords: string[];
 };
 
-function getCityLabel(c: City) {
+function getCityLabel(c: GetApiCities200Item) {
 	return c.enName ?? c.frName ?? c.arName ?? "—";
 }
 
-function cityKeywords(c: City): string[] {
+function cityKeywords(c: GetApiCities200Item): string[] {
 	const parts = [
 		c.enName,
 		c.frName,

@@ -1,4 +1,5 @@
-import { getSignedUploadUrl, type UploadFolder } from "@/services/upload";
+import type { PostApiUploadSignedUrlBodyFolder } from "@/services/generated/api.schemas";
+import { postApiUploadSignedUrl } from "@/services/generated/miscellaneous/miscellaneous";
 
 /**
  * Upload a file to R2 via a presigned URL.
@@ -6,13 +7,13 @@ import { getSignedUploadUrl, type UploadFolder } from "@/services/upload";
  */
 export async function uploadToR2(
 	file: File,
-	folder: UploadFolder,
+	folder: PostApiUploadSignedUrlBodyFolder,
 ): Promise<string> {
-	const { signedUrl, cdnUrl } = await getSignedUploadUrl(
-		file.name,
-		file.type,
+	const { signedUrl, cdnUrl } = await postApiUploadSignedUrl({
+		filename: file.name,
+		contentType: file.type,
 		folder,
-	);
+	});
 
 	await fetch(signedUrl, {
 		method: "PUT",
@@ -29,7 +30,7 @@ export async function uploadToR2(
 export async function uploadBlobToR2(
 	blob: Blob,
 	filename: string,
-	folder: UploadFolder,
+	folder: PostApiUploadSignedUrlBodyFolder,
 ): Promise<string> {
 	const file = new File([blob], filename, { type: blob.type });
 	return uploadToR2(file, folder);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { City } from "@/services/types";
+import type { GetApiCities200Item } from "@/services/generated/api.schemas";
 import AddressSearchBar, { type GeoLocation } from "./address-search-bar";
 import CabinetLocationMap from "./cabinet-location-map";
 import CitySelect from "./city-select";
@@ -14,7 +14,7 @@ import type { FormValues } from "./schema";
 const DEFAULT_CENTER = { lat: 33.8869, lng: 9.5375 }; // Tunisia center
 
 type Props = {
-	cities: City[];
+	cities: GetApiCities200Item[];
 };
 
 export default function BusinessInfo({ cities }: Props) {

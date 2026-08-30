@@ -20,10 +20,14 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { toast } from "sonner";
-import useSWR from "swr";
 import { CubeLoader } from "@/components/loaders";
-import { getAppointments, getMe, updateAppointment } from "@/services";
-import type { AppointmentWithPatient, Availability } from "@/services/types";
+import type { GetApiAppointments200Item } from "@/services/generated/api.schemas";
+import {
+	useGetApiAppointments,
+	usePutApiAppointments,
+} from "@/services/generated/appointments/appointments";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
+import type { Availability } from "@/services/types";
 import AddAppointmentModal from "./add-appointment-modal";
 import EditAppointmentModal, {
 	type CalendarEvent,
@@ -74,12 +78,9 @@ function buildAvailabilityByDay(avail: Availability | undefined) {
 }
 
 export default function AppointmentsCalendar() {
-	const {
-		data: appointments,
-		isLoading,
-		mutate,
-	} = useSWR("appointments", () => getAppointments());
-	const { data: me } = useSWR("me", () => getMe());
+	const { data: appointments, isLoading, mutate } = useGetApiAppointments();
+	const { data: me } = useGetApiUsersMe();
+	const { trigger: updateAppointment } = usePutApiAppointments();
 
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [currentView, setCurrentView] = useState<View>("week");
@@ -226,11 +227,15 @@ export default function AppointmentsCalendar() {
 			moveInFlight.current = true;
 
 			await mutate(
-				(current: AppointmentWithPatient[] | undefined) => {
+				(current: GetApiAppointments200Item[] | undefined) => {
 					if (!current) return current;
 					return current.map((a) =>
 						a.id === event.id
-							? { ...a, start: roundedStart, end: roundedEnd }
+							? {
+									...a,
+									start: roundedStart.toISOString(),
+									end: roundedEnd.toISOString(),
+								}
 							: a,
 					);
 				},

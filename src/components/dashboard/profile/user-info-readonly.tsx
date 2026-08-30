@@ -3,14 +3,20 @@
 import { Layers } from "lucide-react";
 import Image from "next/image";
 import type {
-	DoctorApplicationDetail,
-	DoctorProfileWithRelations,
-} from "@/services/types";
+	GetApiDoctorApplicationsId200,
+	GetApiDoctorApplicationsMe200,
+	GetApiUsersId200DoctorProfile,
+	GetApiUsersMe200DoctorProfile,
+} from "@/services/generated/api.schemas";
 import CabinetLocationMap from "./doctor-application/cabinet-location-map";
 
 type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
-	info: DoctorProfileWithRelations | DoctorApplicationDetail;
+	info:
+		| GetApiDoctorApplicationsId200
+		| GetApiDoctorApplicationsMe200
+		| GetApiUsersId200DoctorProfile
+		| GetApiUsersMe200DoctorProfile;
 	title?: string;
 };
 
@@ -35,6 +41,8 @@ export default function UserInfoReadOnly({
 	info,
 	title = "Your Information",
 }: Props) {
+	if (!info) return null;
+
 	const cabinetCityName =
 		info.cabinetCity?.enName ??
 		info.cabinetCity?.frName ??

@@ -24,9 +24,24 @@ export const selectPatientMedicalFileSchema =
 export const selectAppointmentSchema = createSelectSchema(appointment);
 export const selectDoctorApplicationSchema =
 	createSelectSchema(doctorApplication);
+export const selectUserSchema = createSelectSchema(user);
+export const selectDoctorApplicationWithRelationsSchema =
+	selectDoctorApplicationSchema.merge(
+		z.object({
+			speciality: selectSpecialitySchema.nullable(),
+			cabinetCity: selectCitiesSchema.nullable(),
+			user: selectUserSchema
+				.pick({ id: true, username: true, email: true })
+				.nullable(),
+		}),
+	);
 export const selectCallSchema = createSelectSchema(call);
 export const selectCallEventSchema = createSelectSchema(callEvent);
-export const selectUserSchema = createSelectSchema(user);
+export const selectCallWithEventsSchema = selectCallSchema.merge(
+	z.object({
+		events: z.array(selectCallEventSchema),
+	}),
+);
 
 export const selectDoctorProfileWithRelationsSchema =
 	selectDoctorProfileSchema.merge(

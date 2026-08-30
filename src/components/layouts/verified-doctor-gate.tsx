@@ -3,10 +3,9 @@
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
 import DoctorAppointmentSocketListener from "@/components/dashboard/appointments/doctor-appointment-socket-listener";
-import { getMe } from "@/services/users";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 export default function VerifiedDoctorGate({
 	children,
@@ -16,9 +15,9 @@ export default function VerifiedDoctorGate({
 	const { user } = useAuth();
 	const router = useRouter();
 
-	const { data: me, isLoading } = useSWR(user ? "/api/users/me" : null, () =>
-		getMe(),
-	);
+	const { data: me, isLoading } = useGetApiUsersMe({
+		swr: { enabled: !!user },
+	});
 
 	const profile = me?.doctorProfile;
 	const isVerified = profile?.status === "verified";

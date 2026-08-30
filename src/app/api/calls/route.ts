@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
 	}
 }
 
-import { selectCallSchema } from "@/db/zod";
+import { selectCallSchema, selectCallWithEventsSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 registry.registerPath({
@@ -145,7 +145,7 @@ registry.registerPath({
 			description: "List of calls",
 			content: {
 				"application/json": {
-					schema: z.array(selectCallSchema),
+					schema: z.array(selectCallWithEventsSchema),
 				},
 			},
 		},

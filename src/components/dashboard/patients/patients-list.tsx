@@ -3,14 +3,13 @@
 import { Inbox, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
 import DataTable, { type Column } from "@/components/data-table";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
-import { getPatients } from "@/services";
-import type { PatientSummary } from "@/services/types";
+import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
+import { useGetApiPatients } from "@/services/generated/patients/patients";
 
-const columns: Column<PatientSummary>[] = [
+const columns: Column<GetApiPatients200Item>[] = [
 	{ key: "cin", header: "CIN", cell: (row) => row.cin },
 	{ key: "firstName", header: "First Name", cell: (row) => row.firstName },
 	{ key: "lastName", header: "Last Name", cell: (row) => row.lastName },
@@ -30,7 +29,7 @@ const columns: Column<PatientSummary>[] = [
 
 export default function PatientsList() {
 	const router = useRouter();
-	const { data: patients, isLoading } = useSWR("patients", () => getPatients());
+	const { data: patients, isLoading } = useGetApiPatients();
 
 	if (isLoading) {
 		return (

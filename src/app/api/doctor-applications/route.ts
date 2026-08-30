@@ -131,7 +131,10 @@ export async function POST(req: NextRequest) {
 	}
 }
 
-import { selectDoctorApplicationSchema, selectUserSchema } from "@/db/zod";
+import {
+	selectDoctorApplicationSchema,
+	selectDoctorApplicationWithRelationsSchema,
+} from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 registry.registerPath({
@@ -145,17 +148,7 @@ registry.registerPath({
 			description: "List of applications",
 			content: {
 				"application/json": {
-					schema: z.array(
-						selectDoctorApplicationSchema.merge(
-							z.object({
-								user: selectUserSchema.pick({
-									id: true,
-									username: true,
-									email: true,
-								}),
-							}),
-						),
-					),
+					schema: z.array(selectDoctorApplicationWithRelationsSchema),
 				},
 			},
 		},

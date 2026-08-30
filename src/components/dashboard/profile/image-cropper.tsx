@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import { uploadBlobToR2 } from "@/lib/upload";
-import { updateProfilePicture } from "@/services";
+import { usePostApiUsersPicture } from "@/services/generated/users/users";
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 	const image = new Image();
@@ -54,7 +54,8 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 	const [crop, setCrop] = useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-	const [saving, setSaving] = useState(false);
+	const { trigger: updateProfilePicture, isMutating: saving } =
+		usePostApiUsersPicture();
 	const { refetch } = useAuth();
 
 	const onCropComplete = useCallback((_: Area, pixels: Area) => {
@@ -63,7 +64,6 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 
 	async function handleSave() {
 		if (!croppedAreaPixels) return;
-		setSaving(true);
 		try {
 			const blob = await getCroppedImg(imageUrl, croppedAreaPixels);
 			const cdnUrl = await uploadBlobToR2(
@@ -71,14 +71,12 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 				"profile.jpg",
 				"profile-pictures",
 			);
-			await updateProfilePicture(cdnUrl);
+			await updateProfilePicture({ pictureUrl: cdnUrl });
 			toast.success("Profile picture updated");
 			onDone();
 			refetch();
 		} catch {
 			toast.error("Failed to update profile picture");
-		} finally {
-			setSaving(false);
 		}
 	}
 

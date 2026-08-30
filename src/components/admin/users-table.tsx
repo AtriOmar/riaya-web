@@ -11,12 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getUsers } from "@/services";
-import type { UserRow } from "@/services/types";
+import type { GetApiUsers200Item } from "@/services/generated/api.schemas";
+import { getApiUsers } from "@/services/generated/users/users";
 
 const ROLES: Record<number, string> = { 1: "Doctor", 3: "Admin", 5: "Owner" };
 
-const columns: Column<UserRow>[] = [
+const columns: Column<GetApiUsers200Item>[] = [
 	{
 		key: "user",
 		header: "User",
@@ -103,7 +103,10 @@ export default function UsersTable() {
 	const search = useDebounce(inputValue, 300);
 	const limit = 20;
 
-	const getKey = (pageIndex: number, previousPageData: UserRow[] | null) => {
+	const getKey = (
+		pageIndex: number,
+		previousPageData: GetApiUsers200Item[] | null,
+	) => {
 		if (previousPageData && !previousPageData.length) return null; // reached the end
 		return ["admin-users", search, pageIndex + 1]; // SWR key
 	};
@@ -111,7 +114,7 @@ export default function UsersTable() {
 	const { data, size, setSize, isValidating } = useSWRInfinite(
 		getKey,
 		([, search, page]) =>
-			getUsers({ search: search as string, page: page as number, limit }),
+			getApiUsers({ search: search as string, page: page as number, limit }),
 	);
 
 	const users = data ? data.flat() : [];

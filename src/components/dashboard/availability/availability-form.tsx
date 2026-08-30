@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { updateAvailability } from "@/services";
-import type { Availability } from "@/services/types";
+import type { PutApiUsersBodyAvailability } from "@/services/generated/api.schemas";
+import { usePutApiUsers } from "@/services/generated/users/users";
 
 const DAYS = [
 	"Monday",
@@ -32,7 +32,7 @@ function parseTime(val: string): number {
 	return h * 60 + m;
 }
 
-const defaultAvailability: Availability = {
+const defaultAvailability: PutApiUsersBodyAvailability = {
 	0: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
 	1: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
 	2: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
@@ -44,12 +44,13 @@ const defaultAvailability: Availability = {
 
 export default function AvailabilityForm() {
 	const [availability, setAvailability] =
-		useState<Availability>(defaultAvailability);
-	const [saving, setSaving] = useState(false);
+		useState<PutApiUsersBodyAvailability>(defaultAvailability);
+	const { trigger: updateAvailability, isMutating: saving } = usePutApiUsers();
 
 	function handleToggle(day: number) {
 		setAvailability((prev) => {
-			const slots = prev[day as keyof Availability] ?? [];
+			const slots =
+				prev[day.toString() as keyof PutApiUsersBodyAvailability] ?? [];
 			return {
 				...prev,
 				[day]: slots.length
@@ -66,7 +67,8 @@ export default function AvailabilityForm() {
 	) {
 		const minutes = parseTime(value);
 		setAvailability((prev) => {
-			const slots = prev[day as keyof Availability] ?? [];
+			const slots =
+				prev[day.toString() as keyof PutApiUsersBodyAvailability] ?? [];
 			if (!slots[0]) return prev;
 			const updated = [{ ...slots[0], [field]: minutes }];
 			return { ...prev, [day]: updated };
@@ -75,21 +77,20 @@ export default function AvailabilityForm() {
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		setSaving(true);
 		try {
-			await updateAvailability(availability);
+			await updateAvailability({ availability });
 			toast.success("Availability updated successfully");
 		} catch {
 			toast.error("Failed to update availability");
-		} finally {
-			setSaving(false);
 		}
 	}
 
 	return (
 		<form className="space-y-3 mt-4" onSubmit={handleSubmit}>
 			{DAYS.map((day, index) => {
-				const slots = availability[index as keyof Availability] ?? [];
+				const slots =
+					availability[index.toString() as keyof PutApiUsersBodyAvailability] ??
+					[];
 				const active = slots.length > 0;
 
 				return (

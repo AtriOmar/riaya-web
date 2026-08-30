@@ -1,12 +1,11 @@
 "use client";
 
 import { Ban, Clock, Shield, ShieldCheck, Users } from "lucide-react";
-import useSWR from "swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getStats } from "@/services";
+import { useGetApiStats } from "@/services/generated/miscellaneous/miscellaneous";
 
 export default function AdminStats() {
-	const { data: stats } = useSWR("admin-stats", getStats);
+	const { data: stats } = useGetApiStats();
 
 	const items = [
 		{

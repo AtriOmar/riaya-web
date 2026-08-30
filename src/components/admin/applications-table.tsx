@@ -16,10 +16,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getDoctorApplications } from "@/services";
-import type { DoctorApplicationSummary } from "@/services/types";
+import type { GetApiDoctorApplications200Item } from "@/services/generated/api.schemas";
+import { getApiDoctorApplications } from "@/services/generated/doctors/doctors";
 
-const columns: Column<DoctorApplicationSummary>[] = [
+const columns: Column<GetApiDoctorApplications200Item>[] = [
 	{ key: "email", header: "Email", cell: (row) => row.user?.email ?? "—" },
 	{ key: "firstName", header: "First Name", cell: (row) => row.firstName },
 	{ key: "lastName", header: "Last Name", cell: (row) => row.lastName },
@@ -63,7 +63,7 @@ export default function ApplicationsTable() {
 
 	const getKey = (
 		pageIndex: number,
-		previousPageData: DoctorApplicationSummary[] | null,
+		previousPageData: GetApiDoctorApplications200Item[] | null,
 	) => {
 		if (previousPageData && !previousPageData.length) return null;
 		return ["admin-applications", statusFilter, search, pageIndex + 1];
@@ -72,8 +72,8 @@ export default function ApplicationsTable() {
 	const { data, size, setSize, isValidating } = useSWRInfinite(
 		getKey,
 		([, status, search, page]) =>
-			getDoctorApplications({
-				status: status as string,
+			getApiDoctorApplications({
+				status: status as "all" | "pending" | "verified" | "rejected",
 				search: search as string,
 				page: page as number,
 				limit,

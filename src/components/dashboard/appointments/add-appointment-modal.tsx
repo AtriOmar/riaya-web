@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import useSWR from "swr";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +22,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createAppointment, getPatients } from "@/services";
+import { usePostApiAppointments } from "@/services/generated/appointments/appointments";
+import { useGetApiPatients } from "@/services/generated/patients/patients";
 
 const schema = z.object({
 	patientId: z.string().min(1, "Patient is required"),
@@ -46,10 +46,11 @@ export default function AddAppointmentModal({
 	range,
 	onSuccess,
 }: Props) {
-	const { data: patients, isLoading: patientsLoading } = useSWR(
-		"patients-all",
-		() => getPatients({ all: true }),
-	);
+	const { data: patients, isLoading: patientsLoading } = useGetApiPatients({
+		all: true,
+	});
+	const { trigger: createAppointment, isMutating: isSubmittingAPI } =
+		usePostApiAppointments();
 
 	const patientList = patients ?? [];
 	const hasPatients = patientList.length > 0;
@@ -191,8 +192,8 @@ export default function AddAppointmentModal({
 						<Button type="button" variant="quiet" onClick={onClose}>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Adding..." : "Add"}
+						<Button type="submit" disabled={isSubmitting || isSubmittingAPI}>
+							{isSubmitting || isSubmittingAPI ? "Adding..." : "Add"}
 						</Button>
 					</div>
 				</form>

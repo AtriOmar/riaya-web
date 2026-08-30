@@ -3,7 +3,6 @@
 import { ShieldAlert, ShieldCheck, Stethoscope } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
@@ -14,15 +13,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { adminUpdateUser, getUserById } from "@/services";
+import {
+	useGetApiUsersId,
+	usePutApiUsersId,
+} from "@/services/generated/users/users";
 
 export default function UserDetail({ userId }: { userId: string }) {
-	const {
-		data: user,
-		isLoading,
-		mutate,
-	} = useSWR(`admin-user-${userId}`, () => getUserById(userId));
-	const [saving, setSaving] = useState(false);
+	const { data: user, isLoading, mutate } = useGetApiUsersId(userId);
+	const { trigger: updateUser, isMutating: saving } = usePutApiUsersId(userId);
 	const [accessId, setAccessId] = useState<string>("");
 
 	if (isLoading) {
@@ -37,30 +35,24 @@ export default function UserDetail({ userId }: { userId: string }) {
 
 	async function handleUpdateRole() {
 		if (!accessId) return;
-		setSaving(true);
 		try {
-			await adminUpdateUser(userId, { accessId: Number(accessId) });
+			await updateUser({ accessId: Number(accessId) });
 			toast.success("User role updated");
 			mutate();
 		} catch {
 			toast.error("Failed to update role");
-		} finally {
-			setSaving(false);
 		}
 	}
 
 	async function handleToggleBan() {
-		setSaving(true);
 		try {
-			await adminUpdateUser(userId, {
+			await updateUser({
 				status: user?.active === 0 ? "active" : "banned",
 			});
 			toast.success(user?.active === 0 ? "User unbanned" : "User banned");
 			mutate();
 		} catch {
 			toast.error("Failed to update user status");
-		} finally {
-			setSaving(false);
 		}
 	}
 

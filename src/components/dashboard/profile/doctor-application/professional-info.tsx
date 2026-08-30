@@ -3,12 +3,12 @@ import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Speciality } from "@/services/types";
+import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 import type { FormValues } from "./schema";
 import SpecialitySelect from "./speciality-select";
 
 type Props = {
-	specialities: Speciality[];
+	specialities: GetApiSpecialities200Item[];
 	medicalCouncilCertificate: File | null;
 	setMedicalCouncilCertificate: (f: File | null) => void;
 	medicalCouncilCertificateError: string | null;

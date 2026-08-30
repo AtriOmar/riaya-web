@@ -48,7 +48,7 @@ export async function GET() {
 	}
 }
 
-import { selectDoctorApplicationSchema } from "@/db/zod";
+import { selectDoctorApplicationWithRelationsSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 registry.registerPath({
@@ -60,7 +60,9 @@ registry.registerPath({
 		200: {
 			description: "Application details",
 			content: {
-				"application/json": { schema: selectDoctorApplicationSchema },
+				"application/json": {
+					schema: selectDoctorApplicationWithRelationsSchema,
+				},
 			},
 		},
 	},

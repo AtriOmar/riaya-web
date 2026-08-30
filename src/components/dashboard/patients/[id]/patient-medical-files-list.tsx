@@ -18,12 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { isLikelyImageUrl } from "@/lib/document-file";
 import { cn } from "@/lib/utils";
+import type { GetApiPatientsId200MedicalFilesItem } from "@/services/generated/api.schemas";
 import {
-	deleteMedicalFile,
-	sendMedicalFileViaWhatsapp,
-	updateMedicalFile,
-} from "@/services";
-import type { PatientMedicalFile } from "@/services/types";
+	useDeleteApiPatientsIdMedicalFiles,
+	usePostApiPatientsIdMedicalFilesFileIdSend,
+	usePutApiPatientsIdMedicalFiles,
+} from "@/services/generated/patients/patients";
 import {
 	formatMedicalFileType,
 	MEDICAL_FILE_TYPES,
@@ -35,7 +35,9 @@ function toDatetimeLocalValue(d: Date): string {
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function fileToDatetimeLocal(file: PatientMedicalFile): string {
+function fileToDatetimeLocal(
+	file: GetApiPatientsId200MedicalFilesItem,
+): string {
 	if (!file.date) return toDatetimeLocalValue(new Date());
 	const d = new Date(file.date);
 	if (Number.isNaN(d.getTime())) return toDatetimeLocalValue(new Date());
@@ -79,7 +81,7 @@ type Draft = {
 	dateLocal: string;
 };
 
-function draftFromFile(file: PatientMedicalFile): Draft {
+function draftFromFile(file: GetApiPatientsId200MedicalFilesItem): Draft {
 	return {
 		title: file.title ?? "",
 		description: file.description ?? "",
@@ -93,16 +95,25 @@ function MedicalFileCard({
 	patientId,
 	onChanged,
 }: {
-	file: PatientMedicalFile;
+	file: GetApiPatientsId200MedicalFilesItem;
 	patientId: number;
 	onChanged: () => void;
 }) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [draft, setDraft] = useState<Draft>(() => draftFromFile(file));
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [isDeleting, setIsDeleting] = useState(false);
-	const [isSending, setIsSending] = useState(false);
+
+	const { trigger: updateMedicalFile, isMutating: isSaving } =
+		usePutApiPatientsIdMedicalFiles(patientId.toString());
+	const { trigger: deleteMedicalFile, isMutating: isDeleting } =
+		useDeleteApiPatientsIdMedicalFiles(patientId.toString(), {
+			medicalFileId: file.id,
+		});
+	const { trigger: sendMedicalFileViaWhatsapp, isMutating: isSending } =
+		usePostApiPatientsIdMedicalFilesFileIdSend(
+			patientId.toString(),
+			file.id.toString(),
+		);
 	const [resendDialogOpen, setResendDialogOpen] = useState(false);
 
 	const startEdit = () => {
@@ -120,9 +131,8 @@ function MedicalFileCard({
 			toast.error("Title is required");
 			return;
 		}
-		setIsSaving(true);
 		try {
-			await updateMedicalFile(patientId, {
+			await updateMedicalFile({
 				medicalFileId: file.id,
 				title: draft.title.trim(),
 				description: draft.description,
@@ -134,29 +144,23 @@ function MedicalFileCard({
 			onChanged();
 		} catch {
 			toast.error("Failed to update medical file");
-		} finally {
-			setIsSaving(false);
 		}
 	};
 
 	const confirmDelete = async () => {
-		setIsDeleting(true);
 		try {
-			await deleteMedicalFile(patientId, file.id);
+			await deleteMedicalFile();
 			toast.success("Medical file deleted");
 			setDeleteDialogOpen(false);
 			onChanged();
 		} catch {
 			toast.error("Failed to delete medical file");
-		} finally {
-			setIsDeleting(false);
 		}
 	};
 
 	const sendViaWhatsapp = async () => {
-		setIsSending(true);
 		try {
-			await sendMedicalFileViaWhatsapp(patientId, file.id);
+			await sendMedicalFileViaWhatsapp();
 			toast.success("Document sent via WhatsApp");
 			setResendDialogOpen(false);
 			onChanged();
@@ -164,8 +168,6 @@ function MedicalFileCard({
 			toast.error(
 				err?.response?.data?.error || "Failed to send document via WhatsApp",
 			);
-		} finally {
-			setIsSending(false);
 		}
 	};
 
@@ -375,7 +377,7 @@ function MedicalFileCard({
 
 type PatientMedicalFilesListProps = {
 	patientId: number;
-	medicalFiles: PatientMedicalFile[] | null | undefined;
+	medicalFiles: GetApiPatientsId200MedicalFilesItem[] | null | undefined;
 	onChanged: () => void;
 };
 

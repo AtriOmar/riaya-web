@@ -169,12 +169,7 @@ export async function PUT(
 	}
 }
 
-import {
-	selectCitiesSchema,
-	selectDoctorApplicationSchema,
-	selectSpecialitySchema,
-	selectUserSchema,
-} from "@/db/zod";
+import { selectDoctorApplicationWithRelationsSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const paramsSchema = z.object({ id: z.string() });
@@ -190,34 +185,7 @@ registry.registerPath({
 			description: "Application details",
 			content: {
 				"application/json": {
-					schema: selectDoctorApplicationSchema.merge(
-						z.object({
-							user: selectUserSchema.pick({
-								id: true,
-								username: true,
-								email: true,
-							}),
-							speciality: selectSpecialitySchema
-								.pick({
-									id: true,
-									enName: true,
-									frName: true,
-									arName: true,
-									slug: true,
-								})
-								.nullable(),
-							cabinetCity: selectCitiesSchema
-								.pick({
-									id: true,
-									postalCode: true,
-									enName: true,
-									frName: true,
-									arName: true,
-									slug: true,
-								})
-								.nullable(),
-						}),
-					),
+					schema: selectDoctorApplicationWithRelationsSchema,
 				},
 			},
 		},
