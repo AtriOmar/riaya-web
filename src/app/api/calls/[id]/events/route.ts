@@ -66,3 +66,29 @@ export async function POST(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectCallEventSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({
+	id: z.string(),
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/calls/{id}/events",
+	tags: ["Calls"],
+	summary: "Create call event",
+	request: {
+		params: paramsSchema,
+		body: {
+			content: { "application/json": { schema: createEventSchema } },
+		},
+	},
+	responses: {
+		201: {
+			description: "Created event",
+			content: { "application/json": { schema: selectCallEventSchema } },
+		},
+	},
+});

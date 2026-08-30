@@ -106,3 +106,22 @@ export async function POST(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectAppointmentSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "post",
+	path: "/api/appointments/external",
+	tags: ["Appointments"],
+	summary: "Book external appointment",
+	request: {
+		body: { content: { "application/json": { schema: externalSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Booked appointment",
+			content: { "application/json": { schema: selectAppointmentSchema } },
+		},
+	},
+});

@@ -168,3 +168,79 @@ export async function PUT(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import {
+	selectCitiesSchema,
+	selectDoctorApplicationSchema,
+	selectSpecialitySchema,
+	selectUserSchema,
+} from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string() });
+
+registry.registerPath({
+	method: "get",
+	path: "/api/doctor-applications/{id}",
+	tags: ["Doctors"],
+	summary: "Get application by ID (Admin)",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Application details",
+			content: {
+				"application/json": {
+					schema: selectDoctorApplicationSchema.merge(
+						z.object({
+							user: selectUserSchema.pick({
+								id: true,
+								username: true,
+								email: true,
+							}),
+							speciality: selectSpecialitySchema
+								.pick({
+									id: true,
+									enName: true,
+									frName: true,
+									arName: true,
+									slug: true,
+								})
+								.nullable(),
+							cabinetCity: selectCitiesSchema
+								.pick({
+									id: true,
+									postalCode: true,
+									enName: true,
+									frName: true,
+									arName: true,
+									slug: true,
+								})
+								.nullable(),
+						}),
+					),
+				},
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/doctor-applications/{id}",
+	tags: ["Doctors"],
+	summary: "Update application status (Admin)",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Success",
+			content: {
+				"application/json": {
+					schema: z.object({ message: z.string() }),
+				},
+			},
+		},
+	},
+});

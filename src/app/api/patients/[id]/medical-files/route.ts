@@ -184,3 +184,67 @@ export async function DELETE(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectPatientMedicalFileSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string() });
+
+registry.registerPath({
+	method: "post",
+	path: "/api/patients/{id}/medical-files",
+	tags: ["Patients"],
+	summary: "Create medical file",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Created medical file",
+			content: {
+				"application/json": { schema: selectPatientMedicalFileSchema },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/patients/{id}/medical-files",
+	tags: ["Patients"],
+	summary: "Update medical file",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated medical file",
+			content: {
+				"application/json": { schema: selectPatientMedicalFileSchema },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/patients/{id}/medical-files",
+	tags: ["Patients"],
+	summary: "Delete medical file",
+	request: {
+		params: paramsSchema,
+		query: deleteSchema,
+	},
+	responses: {
+		200: {
+			description: "Deleted medical file",
+			content: {
+				"application/json": {
+					schema: z.object({ message: z.string() }),
+				},
+			},
+		},
+	},
+});

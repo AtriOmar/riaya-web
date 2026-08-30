@@ -56,3 +56,39 @@ export async function PATCH(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectPersonSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string() });
+
+registry.registerPath({
+	method: "get",
+	path: "/api/persons/{id}",
+	tags: ["Users"],
+	summary: "Get person by ID",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Person details",
+			content: { "application/json": { schema: selectPersonSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "patch",
+	path: "/api/persons/{id}",
+	tags: ["Users"],
+	summary: "Update person by ID",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated person",
+			content: { "application/json": { schema: selectPersonSchema } },
+		},
+	},
+});

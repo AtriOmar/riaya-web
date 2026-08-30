@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { z } from "zod";
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
 import { doctorProfile } from "@/db/schema";
@@ -107,3 +106,42 @@ export async function PUT(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { z } from "zod";
+import { selectUserWithDoctorProfileSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string() });
+
+registry.registerPath({
+	method: "get",
+	path: "/api/users/{id}",
+	tags: ["Users"],
+	summary: "Get user by ID",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "User profile",
+			content: {
+				"application/json": { schema: selectUserWithDoctorProfileSchema },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/users/{id}",
+	tags: ["Users"],
+	summary: "Update user by ID",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: adminUpdateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated user",
+			content: { "application/json": { schema: z.any() } },
+		},
+	},
+});

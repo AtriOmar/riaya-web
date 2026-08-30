@@ -51,3 +51,19 @@ export async function GET() {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { statsResponseSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/stats",
+	tags: ["Miscellaneous"],
+	summary: "Get platform statistics (Admin)",
+	responses: {
+		200: {
+			description: "Statistics",
+			content: { "application/json": { schema: statsResponseSchema } },
+		},
+	},
+});

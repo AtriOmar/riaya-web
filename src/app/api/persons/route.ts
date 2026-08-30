@@ -31,3 +31,39 @@ export async function POST(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectPersonSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/persons",
+	tags: ["Users"],
+	summary: "List persons",
+	responses: {
+		200: {
+			description: "List of persons",
+			content: { "application/json": { schema: z.array(selectPersonSchema) } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/persons",
+	tags: ["Users"],
+	summary: "Create or get person",
+	request: {
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Existing person",
+			content: { "application/json": { schema: selectPersonSchema } },
+		},
+		201: {
+			description: "Created person",
+			content: { "application/json": { schema: selectPersonSchema } },
+		},
+	},
+});

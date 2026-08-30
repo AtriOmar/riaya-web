@@ -120,3 +120,45 @@ export async function PATCH(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectPatientMedicalFileSchema, selectPatientSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string() });
+
+const patientWithFilesSchema = selectPatientSchema.merge(
+	z.object({
+		medicalFiles: z.array(selectPatientMedicalFileSchema),
+	}),
+);
+
+registry.registerPath({
+	method: "get",
+	path: "/api/patients/{id}",
+	tags: ["Patients"],
+	summary: "Get patient by ID",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Patient details",
+			content: { "application/json": { schema: patientWithFilesSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "patch",
+	path: "/api/patients/{id}",
+	tags: ["Patients"],
+	summary: "Update patient by ID",
+	request: {
+		params: paramsSchema,
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated patient",
+			content: { "application/json": { schema: patientWithFilesSchema } },
+		},
+	},
+});

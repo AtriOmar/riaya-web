@@ -227,3 +227,74 @@ export async function DELETE(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectAppointmentSchema, selectPatientSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const appointmentWithPatientSchema = selectAppointmentSchema.merge(
+	z.object({ patient: selectPatientSchema.nullable() }),
+);
+
+registry.registerPath({
+	method: "get",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "List appointments",
+	request: { query: getSchema },
+	responses: {
+		200: {
+			description: "List of appointments",
+			content: {
+				"application/json": { schema: z.array(appointmentWithPatientSchema) },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Create appointment",
+	request: {
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Created appointment",
+			content: { "application/json": { schema: selectAppointmentSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Update appointment",
+	request: {
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated appointment",
+			content: { "application/json": { schema: selectAppointmentSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Delete appointment",
+	request: { query: deleteSchema },
+	responses: {
+		200: {
+			description: "Deleted appointment",
+			content: {
+				"application/json": { schema: z.object({ message: z.string() }) },
+			},
+		},
+	},
+});

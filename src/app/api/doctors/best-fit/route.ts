@@ -164,3 +164,22 @@ export async function GET(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectBestFitDoctorSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/doctors/best-fit",
+	tags: ["Doctors"],
+	summary: "Find best fit doctors",
+	request: { query: schema },
+	responses: {
+		200: {
+			description: "List of best fit doctors",
+			content: {
+				"application/json": { schema: z.array(selectBestFitDoctorSchema) },
+			},
+		},
+	},
+});

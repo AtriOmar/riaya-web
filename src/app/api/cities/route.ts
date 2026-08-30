@@ -13,3 +13,20 @@ export async function GET() {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { z } from "zod";
+import { selectCitiesSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/cities",
+	tags: ["Miscellaneous"],
+	summary: "List cities",
+	responses: {
+		200: {
+			description: "List of cities",
+			content: { "application/json": { schema: z.array(selectCitiesSchema) } },
+		},
+	},
+});

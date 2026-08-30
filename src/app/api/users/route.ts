@@ -112,3 +112,50 @@ export async function PUT(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectUserSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const userRowSchema = selectUserSchema.merge(
+	z.object({ hasDoctorProfile: z.boolean() }),
+);
+
+registry.registerPath({
+	method: "get",
+	path: "/api/users",
+	tags: ["Users"],
+	summary: "List users (Admin)",
+	request: { query: getSchema },
+	responses: {
+		200: {
+			description: "List of users",
+			content: { "application/json": { schema: z.array(userRowSchema) } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/users",
+	tags: ["Users"],
+	summary: "Update user (Admin)",
+	request: {
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated user",
+			content: {
+				"application/json": {
+					schema: selectUserSchema.pick({
+						id: true,
+						name: true,
+						email: true,
+						accessId: true,
+						active: true,
+					}),
+				},
+			},
+		},
+	},
+});
