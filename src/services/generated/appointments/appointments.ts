@@ -10,11 +10,7 @@ import type { Arguments, Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
-import getApiAppointmentsMutator from "../../api";
-import postApiAppointmentsMutator from "../../api";
-import putApiAppointmentsMutator from "../../api";
-import deleteApiAppointmentsMutator from "../../api";
-import postApiAppointmentsExternalMutator from "../../api";
+import { customInstance } from "../../api";
 import type {
 	DeleteApiAppointments200,
 	DeleteApiAppointmentsParams,
@@ -28,47 +24,18 @@ import type {
 	PutApiAppointmentsBody,
 } from "../api.schemas";
 
-export type getApiAppointmentsResponse200 = {
-	data: GetApiAppointments200Item[];
-	status: 200;
-};
-
-export type getApiAppointmentsResponseSuccess =
-	getApiAppointmentsResponse200 & {
-		headers: Headers;
-	};
-
-export type getApiAppointmentsResponse = getApiAppointmentsResponseSuccess;
-
-export const getGetApiAppointmentsUrl = (params?: GetApiAppointmentsParams) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/appointments?${stringifiedParams}`
-		: `/api/appointments`;
-};
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary List appointments
  */
-export const getApiAppointments = async (
+export const getApiAppointments = (
 	params?: GetApiAppointmentsParams,
-	options?: RequestInit,
-): Promise<getApiAppointmentsResponse> => {
-	return getApiAppointmentsMutator<getApiAppointmentsResponse>(
-		getGetApiAppointmentsUrl(params),
-		{
-			...options,
-			method: "GET",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiAppointments200Item[]>(
+		{ url: `/api/appointments`, method: "GET", params },
+		options,
 	);
 };
 
@@ -89,15 +56,16 @@ export const useGetApiAppointments = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiAppointments>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiAppointmentsKey(params) : null));
-	const swrFn = () => getApiAppointments(params);
+	const swrFn = () => getApiAppointments(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -110,54 +78,29 @@ export const useGetApiAppointments = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiAppointmentsResponse201 = {
-	data: PostApiAppointments201;
-	status: 201;
-};
-
-export type postApiAppointmentsResponseSuccess =
-	postApiAppointmentsResponse201 & {
-		headers: Headers;
-	};
-
-export type postApiAppointmentsResponse = postApiAppointmentsResponseSuccess;
-
-export const getPostApiAppointmentsUrl = () => {
-	return `/api/appointments`;
-};
-
 /**
  * @summary Create appointment
  */
-export const postApiAppointments = async (
+export const postApiAppointments = (
 	postApiAppointmentsBody?: PostApiAppointmentsBody,
-	options?: RequestInit,
-): Promise<postApiAppointmentsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiAppointmentsMutator<postApiAppointmentsResponse>(
-		getPostApiAppointmentsUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiAppointments201>(
 		{
-			...options,
+			url: `/api/appointments`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiAppointmentsBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiAppointmentsBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiAppointmentsMutationFetcher = () => {
+export const getPostApiAppointmentsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiAppointmentsBody | undefined }) => {
-		return postApiAppointments(arg);
+		return postApiAppointments(arg, options);
 	};
 };
 export const getPostApiAppointmentsMutationKey = () =>
@@ -178,11 +121,12 @@ export const usePostApiAppointments = <TError = unknown>(options?: {
 		PostApiAppointmentsBody | undefined,
 		Awaited<ReturnType<typeof postApiAppointments>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiAppointmentsMutationKey();
-	const swrFn = getPostApiAppointmentsMutationFetcher();
+	const swrFn = getPostApiAppointmentsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -191,54 +135,29 @@ export const usePostApiAppointments = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type putApiAppointmentsResponse200 = {
-	data: PutApiAppointments200;
-	status: 200;
-};
-
-export type putApiAppointmentsResponseSuccess =
-	putApiAppointmentsResponse200 & {
-		headers: Headers;
-	};
-
-export type putApiAppointmentsResponse = putApiAppointmentsResponseSuccess;
-
-export const getPutApiAppointmentsUrl = () => {
-	return `/api/appointments`;
-};
-
 /**
  * @summary Update appointment
  */
-export const putApiAppointments = async (
+export const putApiAppointments = (
 	putApiAppointmentsBody?: PutApiAppointmentsBody,
-	options?: RequestInit,
-): Promise<putApiAppointmentsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiAppointmentsMutator<putApiAppointmentsResponse>(
-		getPutApiAppointmentsUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiAppointments200>(
 		{
-			...options,
+			url: `/api/appointments`,
 			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(putApiAppointmentsBody),
+			headers: { "Content-Type": "application/json" },
+			data: putApiAppointmentsBody,
 		},
+		options,
 	);
 };
 
-export const getPutApiAppointmentsMutationFetcher = () => {
+export const getPutApiAppointmentsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PutApiAppointmentsBody | undefined }) => {
-		return putApiAppointments(arg);
+		return putApiAppointments(arg, options);
 	};
 };
 export const getPutApiAppointmentsMutationKey = () =>
@@ -259,11 +178,12 @@ export const usePutApiAppointments = <TError = unknown>(options?: {
 		PutApiAppointmentsBody | undefined,
 		Awaited<ReturnType<typeof putApiAppointments>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiAppointmentsMutationKey();
-	const swrFn = getPutApiAppointmentsMutationFetcher();
+	const swrFn = getPutApiAppointmentsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -272,58 +192,25 @@ export const usePutApiAppointments = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type deleteApiAppointmentsResponse200 = {
-	data: DeleteApiAppointments200;
-	status: 200;
-};
-
-export type deleteApiAppointmentsResponseSuccess =
-	deleteApiAppointmentsResponse200 & {
-		headers: Headers;
-	};
-
-export type deleteApiAppointmentsResponse =
-	deleteApiAppointmentsResponseSuccess;
-
-export const getDeleteApiAppointmentsUrl = (
-	params: DeleteApiAppointmentsParams,
-) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/appointments?${stringifiedParams}`
-		: `/api/appointments`;
-};
-
 /**
  * @summary Delete appointment
  */
-export const deleteApiAppointments = async (
+export const deleteApiAppointments = (
 	params: DeleteApiAppointmentsParams,
-	options?: RequestInit,
-): Promise<deleteApiAppointmentsResponse> => {
-	return deleteApiAppointmentsMutator<deleteApiAppointmentsResponse>(
-		getDeleteApiAppointmentsUrl(params),
-		{
-			...options,
-			method: "DELETE",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiAppointments200>(
+		{ url: `/api/appointments`, method: "DELETE", params },
+		options,
 	);
 };
 
 export const getDeleteApiAppointmentsMutationFetcher = (
 	params: DeleteApiAppointmentsParams,
+	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (_: Key, __: { arg: Arguments }) => {
-		return deleteApiAppointments(params);
+		return deleteApiAppointments(params, options);
 	};
 };
 export const getDeleteApiAppointmentsMutationKey = (
@@ -347,13 +234,14 @@ export const useDeleteApiAppointments = <TError = unknown>(
 			Arguments,
 			Awaited<ReturnType<typeof deleteApiAppointments>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ?? getDeleteApiAppointmentsMutationKey(params);
-	const swrFn = getDeleteApiAppointmentsMutationFetcher(params);
+	const swrFn = getDeleteApiAppointmentsMutationFetcher(params, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -362,58 +250,32 @@ export const useDeleteApiAppointments = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiAppointmentsExternalResponse201 = {
-	data: PostApiAppointmentsExternal201;
-	status: 201;
-};
-
-export type postApiAppointmentsExternalResponseSuccess =
-	postApiAppointmentsExternalResponse201 & {
-		headers: Headers;
-	};
-
-export type postApiAppointmentsExternalResponse =
-	postApiAppointmentsExternalResponseSuccess;
-
-export const getPostApiAppointmentsExternalUrl = () => {
-	return `/api/appointments/external`;
-};
-
 /**
  * @summary Book external appointment
  */
-export const postApiAppointmentsExternal = async (
+export const postApiAppointmentsExternal = (
 	postApiAppointmentsExternalBody?: PostApiAppointmentsExternalBody,
-	options?: RequestInit,
-): Promise<postApiAppointmentsExternalResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiAppointmentsExternalMutator<postApiAppointmentsExternalResponse>(
-		getPostApiAppointmentsExternalUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiAppointmentsExternal201>(
 		{
-			...options,
+			url: `/api/appointments/external`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiAppointmentsExternalBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiAppointmentsExternalBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiAppointmentsExternalMutationFetcher = () => {
+export const getPostApiAppointmentsExternalMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (
 		_: Key,
 		{ arg }: { arg: PostApiAppointmentsExternalBody | undefined },
 	) => {
-		return postApiAppointmentsExternal(arg);
+		return postApiAppointmentsExternal(arg, options);
 	};
 };
 export const getPostApiAppointmentsExternalMutationKey = () =>
@@ -434,12 +296,13 @@ export const usePostApiAppointmentsExternal = <TError = unknown>(options?: {
 		PostApiAppointmentsExternalBody | undefined,
 		Awaited<ReturnType<typeof postApiAppointmentsExternal>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiAppointmentsExternalMutationKey();
-	const swrFn = getPostApiAppointmentsExternalMutationFetcher();
+	const swrFn = getPostApiAppointmentsExternalMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

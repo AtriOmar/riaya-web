@@ -10,13 +10,7 @@ import type { Arguments, Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
-import getApiCitiesMutator from "../../api";
-import getApiSpecialitiesMutator from "../../api";
-import postApiSpecialitiesMutator from "../../api";
-import putApiSpecialitiesMutator from "../../api";
-import deleteApiSpecialitiesMutator from "../../api";
-import getApiStatsMutator from "../../api";
-import postApiUploadSignedUrlMutator from "../../api";
+import { customInstance } from "../../api";
 import type {
 	DeleteApiSpecialities200,
 	DeleteApiSpecialitiesParams,
@@ -31,31 +25,18 @@ import type {
 	PutApiSpecialitiesBody,
 } from "../api.schemas";
 
-export type getApiCitiesResponse200 = {
-	data: GetApiCities200Item[];
-	status: 200;
-};
-
-export type getApiCitiesResponseSuccess = getApiCitiesResponse200 & {
-	headers: Headers;
-};
-
-export type getApiCitiesResponse = getApiCitiesResponseSuccess;
-
-export const getGetApiCitiesUrl = () => {
-	return `/api/cities`;
-};
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary List cities
  */
-export const getApiCities = async (
-	options?: RequestInit,
-): Promise<getApiCitiesResponse> => {
-	return getApiCitiesMutator<getApiCitiesResponse>(getGetApiCitiesUrl(), {
-		...options,
-		method: "GET",
-	});
+export const getApiCities = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiCities200Item[]>(
+		{ url: `/api/cities`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiCitiesKey = () => [`/api/cities`] as const;
@@ -72,13 +53,14 @@ export const useGetApiCities = <TError = unknown>(options?: {
 		swrKey?: Key;
 		enabled?: boolean;
 	};
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiCitiesKey() : null));
-	const swrFn = () => getApiCities();
+	const swrFn = () => getApiCities(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -91,34 +73,15 @@ export const useGetApiCities = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type getApiSpecialitiesResponse200 = {
-	data: GetApiSpecialities200Item[];
-	status: 200;
-};
-
-export type getApiSpecialitiesResponseSuccess =
-	getApiSpecialitiesResponse200 & {
-		headers: Headers;
-	};
-
-export type getApiSpecialitiesResponse = getApiSpecialitiesResponseSuccess;
-
-export const getGetApiSpecialitiesUrl = () => {
-	return `/api/specialities`;
-};
-
 /**
  * @summary List specialities
  */
-export const getApiSpecialities = async (
-	options?: RequestInit,
-): Promise<getApiSpecialitiesResponse> => {
-	return getApiSpecialitiesMutator<getApiSpecialitiesResponse>(
-		getGetApiSpecialitiesUrl(),
-		{
-			...options,
-			method: "GET",
-		},
+export const getApiSpecialities = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiSpecialities200Item[]>(
+		{ url: `/api/specialities`, method: "GET" },
+		options,
 	);
 };
 
@@ -136,14 +99,15 @@ export const useGetApiSpecialities = <TError = unknown>(options?: {
 		Awaited<ReturnType<typeof getApiSpecialities>>,
 		TError
 	> & { swrKey?: Key; enabled?: boolean };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiSpecialitiesKey() : null));
-	const swrFn = () => getApiSpecialities();
+	const swrFn = () => getApiSpecialities(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -156,54 +120,29 @@ export const useGetApiSpecialities = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type postApiSpecialitiesResponse201 = {
-	data: PostApiSpecialities201;
-	status: 201;
-};
-
-export type postApiSpecialitiesResponseSuccess =
-	postApiSpecialitiesResponse201 & {
-		headers: Headers;
-	};
-
-export type postApiSpecialitiesResponse = postApiSpecialitiesResponseSuccess;
-
-export const getPostApiSpecialitiesUrl = () => {
-	return `/api/specialities`;
-};
-
 /**
  * @summary Create speciality
  */
-export const postApiSpecialities = async (
+export const postApiSpecialities = (
 	postApiSpecialitiesBody?: PostApiSpecialitiesBody,
-	options?: RequestInit,
-): Promise<postApiSpecialitiesResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiSpecialitiesMutator<postApiSpecialitiesResponse>(
-		getPostApiSpecialitiesUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiSpecialities201>(
 		{
-			...options,
+			url: `/api/specialities`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiSpecialitiesBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiSpecialitiesBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiSpecialitiesMutationFetcher = () => {
+export const getPostApiSpecialitiesMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiSpecialitiesBody | undefined }) => {
-		return postApiSpecialities(arg);
+		return postApiSpecialities(arg, options);
 	};
 };
 export const getPostApiSpecialitiesMutationKey = () =>
@@ -224,11 +163,12 @@ export const usePostApiSpecialities = <TError = unknown>(options?: {
 		PostApiSpecialitiesBody | undefined,
 		Awaited<ReturnType<typeof postApiSpecialities>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiSpecialitiesMutationKey();
-	const swrFn = getPostApiSpecialitiesMutationFetcher();
+	const swrFn = getPostApiSpecialitiesMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -237,54 +177,29 @@ export const usePostApiSpecialities = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type putApiSpecialitiesResponse200 = {
-	data: PutApiSpecialities200;
-	status: 200;
-};
-
-export type putApiSpecialitiesResponseSuccess =
-	putApiSpecialitiesResponse200 & {
-		headers: Headers;
-	};
-
-export type putApiSpecialitiesResponse = putApiSpecialitiesResponseSuccess;
-
-export const getPutApiSpecialitiesUrl = () => {
-	return `/api/specialities`;
-};
-
 /**
  * @summary Update speciality
  */
-export const putApiSpecialities = async (
+export const putApiSpecialities = (
 	putApiSpecialitiesBody?: PutApiSpecialitiesBody,
-	options?: RequestInit,
-): Promise<putApiSpecialitiesResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiSpecialitiesMutator<putApiSpecialitiesResponse>(
-		getPutApiSpecialitiesUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiSpecialities200>(
 		{
-			...options,
+			url: `/api/specialities`,
 			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(putApiSpecialitiesBody),
+			headers: { "Content-Type": "application/json" },
+			data: putApiSpecialitiesBody,
 		},
+		options,
 	);
 };
 
-export const getPutApiSpecialitiesMutationFetcher = () => {
+export const getPutApiSpecialitiesMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PutApiSpecialitiesBody | undefined }) => {
-		return putApiSpecialities(arg);
+		return putApiSpecialities(arg, options);
 	};
 };
 export const getPutApiSpecialitiesMutationKey = () =>
@@ -305,11 +220,12 @@ export const usePutApiSpecialities = <TError = unknown>(options?: {
 		PutApiSpecialitiesBody | undefined,
 		Awaited<ReturnType<typeof putApiSpecialities>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiSpecialitiesMutationKey();
-	const swrFn = getPutApiSpecialitiesMutationFetcher();
+	const swrFn = getPutApiSpecialitiesMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -318,58 +234,25 @@ export const usePutApiSpecialities = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type deleteApiSpecialitiesResponse200 = {
-	data: DeleteApiSpecialities200;
-	status: 200;
-};
-
-export type deleteApiSpecialitiesResponseSuccess =
-	deleteApiSpecialitiesResponse200 & {
-		headers: Headers;
-	};
-
-export type deleteApiSpecialitiesResponse =
-	deleteApiSpecialitiesResponseSuccess;
-
-export const getDeleteApiSpecialitiesUrl = (
-	params: DeleteApiSpecialitiesParams,
-) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/specialities?${stringifiedParams}`
-		: `/api/specialities`;
-};
-
 /**
  * @summary Delete speciality
  */
-export const deleteApiSpecialities = async (
+export const deleteApiSpecialities = (
 	params: DeleteApiSpecialitiesParams,
-	options?: RequestInit,
-): Promise<deleteApiSpecialitiesResponse> => {
-	return deleteApiSpecialitiesMutator<deleteApiSpecialitiesResponse>(
-		getDeleteApiSpecialitiesUrl(params),
-		{
-			...options,
-			method: "DELETE",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiSpecialities200>(
+		{ url: `/api/specialities`, method: "DELETE", params },
+		options,
 	);
 };
 
 export const getDeleteApiSpecialitiesMutationFetcher = (
 	params: DeleteApiSpecialitiesParams,
+	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (_: Key, __: { arg: Arguments }) => {
-		return deleteApiSpecialities(params);
+		return deleteApiSpecialities(params, options);
 	};
 };
 export const getDeleteApiSpecialitiesMutationKey = (
@@ -393,13 +276,14 @@ export const useDeleteApiSpecialities = <TError = unknown>(
 			Arguments,
 			Awaited<ReturnType<typeof deleteApiSpecialities>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ?? getDeleteApiSpecialitiesMutationKey(params);
-	const swrFn = getDeleteApiSpecialitiesMutationFetcher(params);
+	const swrFn = getDeleteApiSpecialitiesMutationFetcher(params, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -408,31 +292,16 @@ export const useDeleteApiSpecialities = <TError = unknown>(
 		...query,
 	};
 };
-export type getApiStatsResponse200 = {
-	data: GetApiStats200;
-	status: 200;
-};
-
-export type getApiStatsResponseSuccess = getApiStatsResponse200 & {
-	headers: Headers;
-};
-
-export type getApiStatsResponse = getApiStatsResponseSuccess;
-
-export const getGetApiStatsUrl = () => {
-	return `/api/stats`;
-};
-
 /**
  * @summary Get platform statistics (Admin)
  */
-export const getApiStats = async (
-	options?: RequestInit,
-): Promise<getApiStatsResponse> => {
-	return getApiStatsMutator<getApiStatsResponse>(getGetApiStatsUrl(), {
-		...options,
-		method: "GET",
-	});
+export const getApiStats = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiStats200>(
+		{ url: `/api/stats`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiStatsKey = () => [`/api/stats`] as const;
@@ -449,13 +318,14 @@ export const useGetApiStats = <TError = unknown>(options?: {
 		swrKey?: Key;
 		enabled?: boolean;
 	};
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiStatsKey() : null));
-	const swrFn = () => getApiStats();
+	const swrFn = () => getApiStats(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -468,55 +338,29 @@ export const useGetApiStats = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type postApiUploadSignedUrlResponse200 = {
-	data: PostApiUploadSignedUrl200;
-	status: 200;
-};
-
-export type postApiUploadSignedUrlResponseSuccess =
-	postApiUploadSignedUrlResponse200 & {
-		headers: Headers;
-	};
-
-export type postApiUploadSignedUrlResponse =
-	postApiUploadSignedUrlResponseSuccess;
-
-export const getPostApiUploadSignedUrlUrl = () => {
-	return `/api/upload/signed-url`;
-};
-
 /**
  * @summary Generate R2 signed upload URL
  */
-export const postApiUploadSignedUrl = async (
+export const postApiUploadSignedUrl = (
 	postApiUploadSignedUrlBody?: PostApiUploadSignedUrlBody,
-	options?: RequestInit,
-): Promise<postApiUploadSignedUrlResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiUploadSignedUrlMutator<postApiUploadSignedUrlResponse>(
-		getPostApiUploadSignedUrlUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiUploadSignedUrl200>(
 		{
-			...options,
+			url: `/api/upload/signed-url`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiUploadSignedUrlBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiUploadSignedUrlBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiUploadSignedUrlMutationFetcher = () => {
+export const getPostApiUploadSignedUrlMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiUploadSignedUrlBody | undefined }) => {
-		return postApiUploadSignedUrl(arg);
+		return postApiUploadSignedUrl(arg, options);
 	};
 };
 export const getPostApiUploadSignedUrlMutationKey = () =>
@@ -537,11 +381,12 @@ export const usePostApiUploadSignedUrl = <TError = unknown>(options?: {
 		PostApiUploadSignedUrlBody | undefined,
 		Awaited<ReturnType<typeof postApiUploadSignedUrl>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiUploadSignedUrlMutationKey();
-	const swrFn = getPostApiUploadSignedUrlMutationFetcher();
+	const swrFn = getPostApiUploadSignedUrlMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

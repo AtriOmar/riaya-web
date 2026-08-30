@@ -10,16 +10,7 @@ import type { Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
-import getApiPersonsMutator from "../../api";
-import postApiPersonsMutator from "../../api";
-import getApiUsersMutator from "../../api";
-import putApiUsersMutator from "../../api";
-import getApiPersonsIdMutator from "../../api";
-import patchApiPersonsIdMutator from "../../api";
-import getApiUsersIdMutator from "../../api";
-import putApiUsersIdMutator from "../../api";
-import getApiUsersMeMutator from "../../api";
-import postApiUsersPictureMutator from "../../api";
+import { customInstance } from "../../api";
 import type {
 	GetApiPersons200Item,
 	GetApiPersonsId200,
@@ -39,31 +30,18 @@ import type {
 	PutApiUsersIdBody,
 } from "../api.schemas";
 
-export type getApiPersonsResponse200 = {
-	data: GetApiPersons200Item[];
-	status: 200;
-};
-
-export type getApiPersonsResponseSuccess = getApiPersonsResponse200 & {
-	headers: Headers;
-};
-
-export type getApiPersonsResponse = getApiPersonsResponseSuccess;
-
-export const getGetApiPersonsUrl = () => {
-	return `/api/persons`;
-};
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary List persons
  */
-export const getApiPersons = async (
-	options?: RequestInit,
-): Promise<getApiPersonsResponse> => {
-	return getApiPersonsMutator<getApiPersonsResponse>(getGetApiPersonsUrl(), {
-		...options,
-		method: "GET",
-	});
+export const getApiPersons = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPersons200Item[]>(
+		{ url: `/api/persons`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiPersonsKey = () => [`/api/persons`] as const;
@@ -80,13 +58,14 @@ export const useGetApiPersons = <TError = unknown>(options?: {
 		swrKey?: Key;
 		enabled?: boolean;
 	};
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiPersonsKey() : null));
-	const swrFn = () => getApiPersons();
+	const swrFn = () => getApiPersons(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -99,58 +78,29 @@ export const useGetApiPersons = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type postApiPersonsResponse200 = {
-	data: PostApiPersons200;
-	status: 200;
-};
-
-export type postApiPersonsResponse201 = {
-	data: PostApiPersons201;
-	status: 201;
-};
-
-export type postApiPersonsResponseSuccess = (
-	| postApiPersonsResponse200
-	| postApiPersonsResponse201
-) & {
-	headers: Headers;
-};
-
-export type postApiPersonsResponse = postApiPersonsResponseSuccess;
-
-export const getPostApiPersonsUrl = () => {
-	return `/api/persons`;
-};
-
 /**
  * @summary Create or get person
  */
-export const postApiPersons = async (
+export const postApiPersons = (
 	postApiPersonsBody?: PostApiPersonsBody,
-	options?: RequestInit,
-): Promise<postApiPersonsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiPersonsMutator<postApiPersonsResponse>(getPostApiPersonsUrl(), {
-		...options,
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiPersons200 | PostApiPersons201>(
+		{
+			url: `/api/persons`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiPersonsBody,
 		},
-		body: JSON.stringify(postApiPersonsBody),
-	});
+		options,
+	);
 };
 
-export const getPostApiPersonsMutationFetcher = () => {
+export const getPostApiPersonsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiPersonsBody | undefined }) => {
-		return postApiPersons(arg);
+		return postApiPersons(arg, options);
 	};
 };
 export const getPostApiPersonsMutationKey = () => [`/api/persons`] as const;
@@ -170,11 +120,12 @@ export const usePostApiPersons = <TError = unknown>(options?: {
 		PostApiPersonsBody | undefined,
 		Awaited<ReturnType<typeof postApiPersons>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiPersonsMutationKey();
-	const swrFn = getPostApiPersonsMutationFetcher();
+	const swrFn = getPostApiPersonsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -183,44 +134,17 @@ export const usePostApiPersons = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type getApiUsersResponse200 = {
-	data: GetApiUsers200Item[];
-	status: 200;
-};
-
-export type getApiUsersResponseSuccess = getApiUsersResponse200 & {
-	headers: Headers;
-};
-
-export type getApiUsersResponse = getApiUsersResponseSuccess;
-
-export const getGetApiUsersUrl = (params?: GetApiUsersParams) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/users?${stringifiedParams}`
-		: `/api/users`;
-};
-
 /**
  * @summary List users (Admin)
  */
-export const getApiUsers = async (
+export const getApiUsers = (
 	params?: GetApiUsersParams,
-	options?: RequestInit,
-): Promise<getApiUsersResponse> => {
-	return getApiUsersMutator<getApiUsersResponse>(getGetApiUsersUrl(params), {
-		...options,
-		method: "GET",
-	});
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiUsers200Item[]>(
+		{ url: `/api/users`, method: "GET", params },
+		options,
+	);
 };
 
 export const getGetApiUsersKey = (params?: GetApiUsersParams) =>
@@ -240,15 +164,16 @@ export const useGetApiUsers = <TError = unknown>(
 			swrKey?: Key;
 			enabled?: boolean;
 		};
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiUsersKey(params) : null));
-	const swrFn = () => getApiUsers(params);
+	const swrFn = () => getApiUsers(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -261,50 +186,29 @@ export const useGetApiUsers = <TError = unknown>(
 		...query,
 	};
 };
-export type putApiUsersResponse200 = {
-	data: PutApiUsers200;
-	status: 200;
-};
-
-export type putApiUsersResponseSuccess = putApiUsersResponse200 & {
-	headers: Headers;
-};
-
-export type putApiUsersResponse = putApiUsersResponseSuccess;
-
-export const getPutApiUsersUrl = () => {
-	return `/api/users`;
-};
-
 /**
  * @summary Update user (Admin)
  */
-export const putApiUsers = async (
+export const putApiUsers = (
 	putApiUsersBody?: PutApiUsersBody,
-	options?: RequestInit,
-): Promise<putApiUsersResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiUsersMutator<putApiUsersResponse>(getPutApiUsersUrl(), {
-		...options,
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiUsers200>(
+		{
+			url: `/api/users`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiUsersBody,
 		},
-		body: JSON.stringify(putApiUsersBody),
-	});
+		options,
+	);
 };
 
-export const getPutApiUsersMutationFetcher = () => {
+export const getPutApiUsersMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PutApiUsersBody | undefined }) => {
-		return putApiUsers(arg);
+		return putApiUsers(arg, options);
 	};
 };
 export const getPutApiUsersMutationKey = () => [`/api/users`] as const;
@@ -324,11 +228,12 @@ export const usePutApiUsers = <TError = unknown>(options?: {
 		PutApiUsersBody | undefined,
 		Awaited<ReturnType<typeof putApiUsers>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiUsersMutationKey();
-	const swrFn = getPutApiUsersMutationFetcher();
+	const swrFn = getPutApiUsersMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -337,34 +242,16 @@ export const usePutApiUsers = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type getApiPersonsIdResponse200 = {
-	data: GetApiPersonsId200;
-	status: 200;
-};
-
-export type getApiPersonsIdResponseSuccess = getApiPersonsIdResponse200 & {
-	headers: Headers;
-};
-
-export type getApiPersonsIdResponse = getApiPersonsIdResponseSuccess;
-
-export const getGetApiPersonsIdUrl = (id: string) => {
-	return `/api/persons/${id}`;
-};
-
 /**
  * @summary Get person by ID
  */
-export const getApiPersonsId = async (
+export const getApiPersonsId = (
 	id: string,
-	options?: RequestInit,
-): Promise<getApiPersonsIdResponse> => {
-	return getApiPersonsIdMutator<getApiPersonsIdResponse>(
-		getGetApiPersonsIdUrl(id),
-		{
-			...options,
-			method: "GET",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPersonsId200>(
+		{ url: `/api/persons/${id}`, method: "GET" },
+		options,
 	);
 };
 
@@ -385,16 +272,17 @@ export const useGetApiPersonsId = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiPersonsId>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled =
 		swrOptions?.enabled !== false && id !== null && id !== undefined;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPersonsIdKey(id) : null));
-	const swrFn = () => getApiPersonsId(id);
+	const swrFn = () => getApiPersonsId(id, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -407,54 +295,31 @@ export const useGetApiPersonsId = <TError = unknown>(
 		...query,
 	};
 };
-export type patchApiPersonsIdResponse200 = {
-	data: PatchApiPersonsId200;
-	status: 200;
-};
-
-export type patchApiPersonsIdResponseSuccess = patchApiPersonsIdResponse200 & {
-	headers: Headers;
-};
-
-export type patchApiPersonsIdResponse = patchApiPersonsIdResponseSuccess;
-
-export const getPatchApiPersonsIdUrl = (id: string) => {
-	return `/api/persons/${id}`;
-};
-
 /**
  * @summary Update person by ID
  */
-export const patchApiPersonsId = async (
+export const patchApiPersonsId = (
 	id: string,
 	patchApiPersonsIdBody?: PatchApiPersonsIdBody,
-	options?: RequestInit,
-): Promise<patchApiPersonsIdResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return patchApiPersonsIdMutator<patchApiPersonsIdResponse>(
-		getPatchApiPersonsIdUrl(id),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiPersonsId200>(
 		{
-			...options,
+			url: `/api/persons/${id}`,
 			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(patchApiPersonsIdBody),
+			headers: { "Content-Type": "application/json" },
+			data: patchApiPersonsIdBody,
 		},
+		options,
 	);
 };
 
-export const getPatchApiPersonsIdMutationFetcher = (id: string) => {
+export const getPatchApiPersonsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PatchApiPersonsIdBody | undefined }) => {
-		return patchApiPersonsId(id, arg);
+		return patchApiPersonsId(id, arg, options);
 	};
 };
 export const getPatchApiPersonsIdMutationKey = (id: string) =>
@@ -477,12 +342,13 @@ export const usePatchApiPersonsId = <TError = unknown>(
 			PatchApiPersonsIdBody | undefined,
 			Awaited<ReturnType<typeof patchApiPersonsId>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPatchApiPersonsIdMutationKey(id);
-	const swrFn = getPatchApiPersonsIdMutationFetcher(id);
+	const swrFn = getPatchApiPersonsIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -491,32 +357,120 @@ export const usePatchApiPersonsId = <TError = unknown>(
 		...query,
 	};
 };
-export type getApiUsersIdResponse200 = {
-	data: GetApiUsersId200;
-	status: 200;
+/**
+ * @summary Get current user profile
+ */
+export const getApiUsersMe = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiUsersMe200>(
+		{ url: `/api/users/me`, method: "GET" },
+		options,
+	);
 };
 
-export type getApiUsersIdResponseSuccess = getApiUsersIdResponse200 & {
-	headers: Headers;
+export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
+
+export type GetApiUsersMeQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiUsersMe>>
+>;
+
+/**
+ * @summary Get current user profile
+ */
+export const useGetApiUsersMe = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
+		swrKey?: Key;
+		enabled?: boolean;
+	};
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
+	const swrFn = () => getApiUsersMe(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Update profile picture
+ */
+export const postApiUsersPicture = (
+	postApiUsersPictureBody?: PostApiUsersPictureBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiUsersPicture200>(
+		{
+			url: `/api/users/picture`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiUsersPictureBody,
+		},
+		options,
+	);
 };
 
-export type getApiUsersIdResponse = getApiUsersIdResponseSuccess;
-
-export const getGetApiUsersIdUrl = (id: string) => {
-	return `/api/users/${id}`;
+export const getPostApiUsersPictureMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PostApiUsersPictureBody | undefined }) => {
+		return postApiUsersPicture(arg, options);
+	};
 };
+export const getPostApiUsersPictureMutationKey = () =>
+	[`/api/users/picture`] as const;
 
+export type PostApiUsersPictureMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiUsersPicture>>
+>;
+
+/**
+ * @summary Update profile picture
+ */
+export const usePostApiUsersPicture = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiUsersPicture>>,
+		TError,
+		Key,
+		PostApiUsersPictureBody | undefined,
+		Awaited<ReturnType<typeof postApiUsersPicture>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPostApiUsersPictureMutationKey();
+	const swrFn = getPostApiUsersPictureMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Get user by ID
  */
-export const getApiUsersId = async (
+export const getApiUsersId = (
 	id: string,
-	options?: RequestInit,
-): Promise<getApiUsersIdResponse> => {
-	return getApiUsersIdMutator<getApiUsersIdResponse>(getGetApiUsersIdUrl(id), {
-		...options,
-		method: "GET",
-	});
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiUsersId200>(
+		{ url: `/api/users/${id}`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiUsersIdKey = (id: string) =>
@@ -536,15 +490,16 @@ export const useGetApiUsersId = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiUsersId>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled =
 		swrOptions?.enabled !== false && id !== null && id !== undefined;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersIdKey(id) : null));
-	const swrFn = () => getApiUsersId(id);
+	const swrFn = () => getApiUsersId(id, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -557,51 +512,31 @@ export const useGetApiUsersId = <TError = unknown>(
 		...query,
 	};
 };
-export type putApiUsersIdResponse200 = {
-	data: unknown | null;
-	status: 200;
-};
-
-export type putApiUsersIdResponseSuccess = putApiUsersIdResponse200 & {
-	headers: Headers;
-};
-
-export type putApiUsersIdResponse = putApiUsersIdResponseSuccess;
-
-export const getPutApiUsersIdUrl = (id: string) => {
-	return `/api/users/${id}`;
-};
-
 /**
  * @summary Update user by ID
  */
-export const putApiUsersId = async (
+export const putApiUsersId = (
 	id: string,
 	putApiUsersIdBody?: PutApiUsersIdBody,
-	options?: RequestInit,
-): Promise<putApiUsersIdResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiUsersIdMutator<putApiUsersIdResponse>(getPutApiUsersIdUrl(id), {
-		...options,
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<unknown | null>(
+		{
+			url: `/api/users/${id}`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiUsersIdBody,
 		},
-		body: JSON.stringify(putApiUsersIdBody),
-	});
+		options,
+	);
 };
 
-export const getPutApiUsersIdMutationFetcher = (id: string) => {
+export const getPutApiUsersIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PutApiUsersIdBody | undefined }) => {
-		return putApiUsersId(id, arg);
+		return putApiUsersId(id, arg, options);
 	};
 };
 export const getPutApiUsersIdMutationKey = (id: string) =>
@@ -624,153 +559,13 @@ export const usePutApiUsersId = <TError = unknown>(
 			PutApiUsersIdBody | undefined,
 			Awaited<ReturnType<typeof putApiUsersId>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiUsersIdMutationKey(id);
-	const swrFn = getPutApiUsersIdMutationFetcher(id);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-export type getApiUsersMeResponse200 = {
-	data: GetApiUsersMe200;
-	status: 200;
-};
-
-export type getApiUsersMeResponseSuccess = getApiUsersMeResponse200 & {
-	headers: Headers;
-};
-
-export type getApiUsersMeResponse = getApiUsersMeResponseSuccess;
-
-export const getGetApiUsersMeUrl = () => {
-	return `/api/users/me`;
-};
-
-/**
- * @summary Get current user profile
- */
-export const getApiUsersMe = async (
-	options?: RequestInit,
-): Promise<getApiUsersMeResponse> => {
-	return getApiUsersMeMutator<getApiUsersMeResponse>(getGetApiUsersMeUrl(), {
-		...options,
-		method: "GET",
-	});
-};
-
-export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
-
-export type GetApiUsersMeQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiUsersMe>>
->;
-
-/**
- * @summary Get current user profile
- */
-export const useGetApiUsersMe = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
-		swrKey?: Key;
-		enabled?: boolean;
-	};
-}) => {
-	const { swr: swrOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
-	const swrFn = () => getApiUsersMe();
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-export type postApiUsersPictureResponse200 = {
-	data: PostApiUsersPicture200;
-	status: 200;
-};
-
-export type postApiUsersPictureResponseSuccess =
-	postApiUsersPictureResponse200 & {
-		headers: Headers;
-	};
-
-export type postApiUsersPictureResponse = postApiUsersPictureResponseSuccess;
-
-export const getPostApiUsersPictureUrl = () => {
-	return `/api/users/picture`;
-};
-
-/**
- * @summary Update profile picture
- */
-export const postApiUsersPicture = async (
-	postApiUsersPictureBody?: PostApiUsersPictureBody,
-	options?: RequestInit,
-): Promise<postApiUsersPictureResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiUsersPictureMutator<postApiUsersPictureResponse>(
-		getPostApiUsersPictureUrl(),
-		{
-			...options,
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiUsersPictureBody),
-		},
-	);
-};
-
-export const getPostApiUsersPictureMutationFetcher = () => {
-	return (_: Key, { arg }: { arg: PostApiUsersPictureBody | undefined }) => {
-		return postApiUsersPicture(arg);
-	};
-};
-export const getPostApiUsersPictureMutationKey = () =>
-	[`/api/users/picture`] as const;
-
-export type PostApiUsersPictureMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiUsersPicture>>
->;
-
-/**
- * @summary Update profile picture
- */
-export const usePostApiUsersPicture = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiUsersPicture>>,
-		TError,
-		Key,
-		PostApiUsersPictureBody | undefined,
-		Awaited<ReturnType<typeof postApiUsersPicture>>
-	> & { swrKey?: string };
-}) => {
-	const { swr: swrOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPostApiUsersPictureMutationKey();
-	const swrFn = getPostApiUsersPictureMutationFetcher();
+	const swrFn = getPutApiUsersIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

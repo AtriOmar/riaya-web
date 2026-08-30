@@ -10,14 +10,7 @@ import type { Arguments, Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
-import getApiPatientsMutator from "../../api";
-import postApiPatientsMutator from "../../api";
-import getApiPatientsIdMutator from "../../api";
-import patchApiPatientsIdMutator from "../../api";
-import postApiPatientsIdMedicalFilesMutator from "../../api";
-import putApiPatientsIdMedicalFilesMutator from "../../api";
-import deleteApiPatientsIdMedicalFilesMutator from "../../api";
-import postApiPatientsIdMedicalFilesFileIdSendMutator from "../../api";
+import { customInstance } from "../../api";
 import type {
 	DeleteApiPatientsIdMedicalFiles200,
 	DeleteApiPatientsIdMedicalFilesParams,
@@ -34,46 +27,18 @@ import type {
 	PutApiPatientsIdMedicalFilesBody,
 } from "../api.schemas";
 
-export type getApiPatientsResponse200 = {
-	data: GetApiPatients200Item[];
-	status: 200;
-};
-
-export type getApiPatientsResponseSuccess = getApiPatientsResponse200 & {
-	headers: Headers;
-};
-
-export type getApiPatientsResponse = getApiPatientsResponseSuccess;
-
-export const getGetApiPatientsUrl = (params?: GetApiPatientsParams) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/patients?${stringifiedParams}`
-		: `/api/patients`;
-};
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary List patients
  */
-export const getApiPatients = async (
+export const getApiPatients = (
 	params?: GetApiPatientsParams,
-	options?: RequestInit,
-): Promise<getApiPatientsResponse> => {
-	return getApiPatientsMutator<getApiPatientsResponse>(
-		getGetApiPatientsUrl(params),
-		{
-			...options,
-			method: "GET",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPatients200Item[]>(
+		{ url: `/api/patients`, method: "GET", params },
+		options,
 	);
 };
 
@@ -94,15 +59,16 @@ export const useGetApiPatients = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiPatients>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPatientsKey(params) : null));
-	const swrFn = () => getApiPatients(params);
+	const swrFn = () => getApiPatients(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -115,53 +81,29 @@ export const useGetApiPatients = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiPatientsResponse201 = {
-	data: PostApiPatients201;
-	status: 201;
-};
-
-export type postApiPatientsResponseSuccess = postApiPatientsResponse201 & {
-	headers: Headers;
-};
-
-export type postApiPatientsResponse = postApiPatientsResponseSuccess;
-
-export const getPostApiPatientsUrl = () => {
-	return `/api/patients`;
-};
-
 /**
  * @summary Create patient
  */
-export const postApiPatients = async (
+export const postApiPatients = (
 	postApiPatientsBody?: PostApiPatientsBody,
-	options?: RequestInit,
-): Promise<postApiPatientsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiPatientsMutator<postApiPatientsResponse>(
-		getPostApiPatientsUrl(),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiPatients201>(
 		{
-			...options,
+			url: `/api/patients`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiPatientsBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiPatientsBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiPatientsMutationFetcher = () => {
+export const getPostApiPatientsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiPatientsBody | undefined }) => {
-		return postApiPatients(arg);
+		return postApiPatients(arg, options);
 	};
 };
 export const getPostApiPatientsMutationKey = () => [`/api/patients`] as const;
@@ -181,11 +123,12 @@ export const usePostApiPatients = <TError = unknown>(options?: {
 		PostApiPatientsBody | undefined,
 		Awaited<ReturnType<typeof postApiPatients>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiPatientsMutationKey();
-	const swrFn = getPostApiPatientsMutationFetcher();
+	const swrFn = getPostApiPatientsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -194,34 +137,16 @@ export const usePostApiPatients = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type getApiPatientsIdResponse200 = {
-	data: GetApiPatientsId200;
-	status: 200;
-};
-
-export type getApiPatientsIdResponseSuccess = getApiPatientsIdResponse200 & {
-	headers: Headers;
-};
-
-export type getApiPatientsIdResponse = getApiPatientsIdResponseSuccess;
-
-export const getGetApiPatientsIdUrl = (id: string) => {
-	return `/api/patients/${id}`;
-};
-
 /**
  * @summary Get patient by ID
  */
-export const getApiPatientsId = async (
+export const getApiPatientsId = (
 	id: string,
-	options?: RequestInit,
-): Promise<getApiPatientsIdResponse> => {
-	return getApiPatientsIdMutator<getApiPatientsIdResponse>(
-		getGetApiPatientsIdUrl(id),
-		{
-			...options,
-			method: "GET",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPatientsId200>(
+		{ url: `/api/patients/${id}`, method: "GET" },
+		options,
 	);
 };
 
@@ -242,16 +167,17 @@ export const useGetApiPatientsId = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiPatientsId>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled =
 		swrOptions?.enabled !== false && id !== null && id !== undefined;
 	const swrKey =
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPatientsIdKey(id) : null));
-	const swrFn = () => getApiPatientsId(id);
+	const swrFn = () => getApiPatientsId(id, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -264,55 +190,31 @@ export const useGetApiPatientsId = <TError = unknown>(
 		...query,
 	};
 };
-export type patchApiPatientsIdResponse200 = {
-	data: PatchApiPatientsId200;
-	status: 200;
-};
-
-export type patchApiPatientsIdResponseSuccess =
-	patchApiPatientsIdResponse200 & {
-		headers: Headers;
-	};
-
-export type patchApiPatientsIdResponse = patchApiPatientsIdResponseSuccess;
-
-export const getPatchApiPatientsIdUrl = (id: string) => {
-	return `/api/patients/${id}`;
-};
-
 /**
  * @summary Update patient by ID
  */
-export const patchApiPatientsId = async (
+export const patchApiPatientsId = (
 	id: string,
 	patchApiPatientsIdBody?: PatchApiPatientsIdBody,
-	options?: RequestInit,
-): Promise<patchApiPatientsIdResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return patchApiPatientsIdMutator<patchApiPatientsIdResponse>(
-		getPatchApiPatientsIdUrl(id),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiPatientsId200>(
 		{
-			...options,
+			url: `/api/patients/${id}`,
 			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(patchApiPatientsIdBody),
+			headers: { "Content-Type": "application/json" },
+			data: patchApiPatientsIdBody,
 		},
+		options,
 	);
 };
 
-export const getPatchApiPatientsIdMutationFetcher = (id: string) => {
+export const getPatchApiPatientsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PatchApiPatientsIdBody | undefined }) => {
-		return patchApiPatientsId(id, arg);
+		return patchApiPatientsId(id, arg, options);
 	};
 };
 export const getPatchApiPatientsIdMutationKey = (id: string) =>
@@ -335,12 +237,13 @@ export const usePatchApiPatientsId = <TError = unknown>(
 			PatchApiPatientsIdBody | undefined,
 			Awaited<ReturnType<typeof patchApiPatientsId>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPatchApiPatientsIdMutationKey(id);
-	const swrFn = getPatchApiPatientsIdMutationFetcher(id);
+	const swrFn = getPatchApiPatientsIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -349,59 +252,34 @@ export const usePatchApiPatientsId = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiPatientsIdMedicalFilesResponse201 = {
-	data: PostApiPatientsIdMedicalFiles201;
-	status: 201;
-};
-
-export type postApiPatientsIdMedicalFilesResponseSuccess =
-	postApiPatientsIdMedicalFilesResponse201 & {
-		headers: Headers;
-	};
-
-export type postApiPatientsIdMedicalFilesResponse =
-	postApiPatientsIdMedicalFilesResponseSuccess;
-
-export const getPostApiPatientsIdMedicalFilesUrl = (id: string) => {
-	return `/api/patients/${id}/medical-files`;
-};
-
 /**
  * @summary Create medical file
  */
-export const postApiPatientsIdMedicalFiles = async (
+export const postApiPatientsIdMedicalFiles = (
 	id: string,
 	postApiPatientsIdMedicalFilesBody?: PostApiPatientsIdMedicalFilesBody,
-	options?: RequestInit,
-): Promise<postApiPatientsIdMedicalFilesResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiPatientsIdMedicalFilesMutator<postApiPatientsIdMedicalFilesResponse>(
-		getPostApiPatientsIdMedicalFilesUrl(id),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiPatientsIdMedicalFiles201>(
 		{
-			...options,
+			url: `/api/patients/${id}/medical-files`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiPatientsIdMedicalFilesBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiPatientsIdMedicalFilesBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiPatientsIdMedicalFilesMutationFetcher = (id: string) => {
+export const getPostApiPatientsIdMedicalFilesMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (
 		_: Key,
 		{ arg }: { arg: PostApiPatientsIdMedicalFilesBody | undefined },
 	) => {
-		return postApiPatientsIdMedicalFiles(id, arg);
+		return postApiPatientsIdMedicalFiles(id, arg, options);
 	};
 };
 export const getPostApiPatientsIdMedicalFilesMutationKey = (id: string) =>
@@ -424,13 +302,17 @@ export const usePostApiPatientsIdMedicalFiles = <TError = unknown>(
 			PostApiPatientsIdMedicalFilesBody | undefined,
 			Awaited<ReturnType<typeof postApiPatientsIdMedicalFiles>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiPatientsIdMedicalFilesMutationKey(id);
-	const swrFn = getPostApiPatientsIdMedicalFilesMutationFetcher(id);
+	const swrFn = getPostApiPatientsIdMedicalFilesMutationFetcher(
+		id,
+		requestOptions,
+	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -439,59 +321,34 @@ export const usePostApiPatientsIdMedicalFiles = <TError = unknown>(
 		...query,
 	};
 };
-export type putApiPatientsIdMedicalFilesResponse200 = {
-	data: PutApiPatientsIdMedicalFiles200;
-	status: 200;
-};
-
-export type putApiPatientsIdMedicalFilesResponseSuccess =
-	putApiPatientsIdMedicalFilesResponse200 & {
-		headers: Headers;
-	};
-
-export type putApiPatientsIdMedicalFilesResponse =
-	putApiPatientsIdMedicalFilesResponseSuccess;
-
-export const getPutApiPatientsIdMedicalFilesUrl = (id: string) => {
-	return `/api/patients/${id}/medical-files`;
-};
-
 /**
  * @summary Update medical file
  */
-export const putApiPatientsIdMedicalFiles = async (
+export const putApiPatientsIdMedicalFiles = (
 	id: string,
 	putApiPatientsIdMedicalFilesBody?: PutApiPatientsIdMedicalFilesBody,
-	options?: RequestInit,
-): Promise<putApiPatientsIdMedicalFilesResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiPatientsIdMedicalFilesMutator<putApiPatientsIdMedicalFilesResponse>(
-		getPutApiPatientsIdMedicalFilesUrl(id),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiPatientsIdMedicalFiles200>(
 		{
-			...options,
+			url: `/api/patients/${id}/medical-files`,
 			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(putApiPatientsIdMedicalFilesBody),
+			headers: { "Content-Type": "application/json" },
+			data: putApiPatientsIdMedicalFilesBody,
 		},
+		options,
 	);
 };
 
-export const getPutApiPatientsIdMedicalFilesMutationFetcher = (id: string) => {
+export const getPutApiPatientsIdMedicalFilesMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (
 		_: Key,
 		{ arg }: { arg: PutApiPatientsIdMedicalFilesBody | undefined },
 	) => {
-		return putApiPatientsIdMedicalFiles(id, arg);
+		return putApiPatientsIdMedicalFiles(id, arg, options);
 	};
 };
 export const getPutApiPatientsIdMedicalFilesMutationKey = (id: string) =>
@@ -514,13 +371,17 @@ export const usePutApiPatientsIdMedicalFiles = <TError = unknown>(
 			PutApiPatientsIdMedicalFilesBody | undefined,
 			Awaited<ReturnType<typeof putApiPatientsIdMedicalFiles>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ?? getPutApiPatientsIdMedicalFilesMutationKey(id);
-	const swrFn = getPutApiPatientsIdMedicalFilesMutationFetcher(id);
+	const swrFn = getPutApiPatientsIdMedicalFilesMutationFetcher(
+		id,
+		requestOptions,
+	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -529,61 +390,27 @@ export const usePutApiPatientsIdMedicalFiles = <TError = unknown>(
 		...query,
 	};
 };
-export type deleteApiPatientsIdMedicalFilesResponse200 = {
-	data: DeleteApiPatientsIdMedicalFiles200;
-	status: 200;
-};
-
-export type deleteApiPatientsIdMedicalFilesResponseSuccess =
-	deleteApiPatientsIdMedicalFilesResponse200 & {
-		headers: Headers;
-	};
-
-export type deleteApiPatientsIdMedicalFilesResponse =
-	deleteApiPatientsIdMedicalFilesResponseSuccess;
-
-export const getDeleteApiPatientsIdMedicalFilesUrl = (
-	id: string,
-	params: DeleteApiPatientsIdMedicalFilesParams,
-) => {
-	const normalizedParams = new URLSearchParams();
-
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
-
-	const stringifiedParams = normalizedParams.toString();
-
-	return stringifiedParams.length > 0
-		? `/api/patients/${id}/medical-files?${stringifiedParams}`
-		: `/api/patients/${id}/medical-files`;
-};
-
 /**
  * @summary Delete medical file
  */
-export const deleteApiPatientsIdMedicalFiles = async (
+export const deleteApiPatientsIdMedicalFiles = (
 	id: string,
 	params: DeleteApiPatientsIdMedicalFilesParams,
-	options?: RequestInit,
-): Promise<deleteApiPatientsIdMedicalFilesResponse> => {
-	return deleteApiPatientsIdMedicalFilesMutator<deleteApiPatientsIdMedicalFilesResponse>(
-		getDeleteApiPatientsIdMedicalFilesUrl(id, params),
-		{
-			...options,
-			method: "DELETE",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiPatientsIdMedicalFiles200>(
+		{ url: `/api/patients/${id}/medical-files`, method: "DELETE", params },
+		options,
 	);
 };
 
 export const getDeleteApiPatientsIdMedicalFilesMutationFetcher = (
 	id: string,
 	params: DeleteApiPatientsIdMedicalFilesParams,
+	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (_: Key, __: { arg: Arguments }) => {
-		return deleteApiPatientsIdMedicalFiles(id, params);
+		return deleteApiPatientsIdMedicalFiles(id, params, options);
 	};
 };
 export const getDeleteApiPatientsIdMedicalFilesMutationKey = (
@@ -610,14 +437,19 @@ export const useDeleteApiPatientsIdMedicalFiles = <TError = unknown>(
 			Arguments,
 			Awaited<ReturnType<typeof deleteApiPatientsIdMedicalFiles>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ??
 		getDeleteApiPatientsIdMedicalFilesMutationKey(id, params);
-	const swrFn = getDeleteApiPatientsIdMedicalFilesMutationFetcher(id, params);
+	const swrFn = getDeleteApiPatientsIdMedicalFilesMutationFetcher(
+		id,
+		params,
+		requestOptions,
+	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -626,49 +458,27 @@ export const useDeleteApiPatientsIdMedicalFiles = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiPatientsIdMedicalFilesFileIdSendResponse200 = {
-	data: unknown | null;
-	status: 200;
-};
-
-export type postApiPatientsIdMedicalFilesFileIdSendResponseSuccess =
-	postApiPatientsIdMedicalFilesFileIdSendResponse200 & {
-		headers: Headers;
-	};
-
-export type postApiPatientsIdMedicalFilesFileIdSendResponse =
-	postApiPatientsIdMedicalFilesFileIdSendResponseSuccess;
-
-export const getPostApiPatientsIdMedicalFilesFileIdSendUrl = (
-	id: string,
-	fileId: string,
-) => {
-	return `/api/patients/${id}/medical-files/${fileId}/send`;
-};
-
 /**
  * @summary Send medical file via WhatsApp
  */
-export const postApiPatientsIdMedicalFilesFileIdSend = async (
+export const postApiPatientsIdMedicalFilesFileIdSend = (
 	id: string,
 	fileId: string,
-	options?: RequestInit,
-): Promise<postApiPatientsIdMedicalFilesFileIdSendResponse> => {
-	return postApiPatientsIdMedicalFilesFileIdSendMutator<postApiPatientsIdMedicalFilesFileIdSendResponse>(
-		getPostApiPatientsIdMedicalFilesFileIdSendUrl(id, fileId),
-		{
-			...options,
-			method: "POST",
-		},
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<unknown | null>(
+		{ url: `/api/patients/${id}/medical-files/${fileId}/send`, method: "POST" },
+		options,
 	);
 };
 
 export const getPostApiPatientsIdMedicalFilesFileIdSendMutationFetcher = (
 	id: string,
 	fileId: string,
+	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (_: Key, __: { arg: Arguments }) => {
-		return postApiPatientsIdMedicalFilesFileIdSend(id, fileId);
+		return postApiPatientsIdMedicalFilesFileIdSend(id, fileId, options);
 	};
 };
 export const getPostApiPatientsIdMedicalFilesFileIdSendMutationKey = (
@@ -694,9 +504,10 @@ export const usePostApiPatientsIdMedicalFilesFileIdSend = <TError = unknown>(
 			Arguments,
 			Awaited<ReturnType<typeof postApiPatientsIdMedicalFilesFileIdSend>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
 		swrOptions?.swrKey ??
@@ -704,6 +515,7 @@ export const usePostApiPatientsIdMedicalFilesFileIdSend = <TError = unknown>(
 	const swrFn = getPostApiPatientsIdMedicalFilesFileIdSendMutationFetcher(
 		id,
 		fileId,
+		requestOptions,
 	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);

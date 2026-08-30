@@ -7,10 +7,11 @@ export default defineConfig({
 			mode: "tags-split",
 			target: "./src/services/generated/api.ts",
 			client: "swr",
+			httpClient: "axios",
 			override: {
 				mutator: {
 					path: "./src/services/api.ts",
-					default: true,
+					name: "customInstance",
 				},
 			},
 		},

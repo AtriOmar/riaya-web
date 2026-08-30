@@ -10,11 +10,7 @@ import type { Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
-import getApiCallsMutator from "../../api";
-import postApiCallsMutator from "../../api";
-import getApiCallsIdMutator from "../../api";
-import putApiCallsIdMutator from "../../api";
-import postApiCallsIdEventsMutator from "../../api";
+import { customInstance } from "../../api";
 import type {
 	GetApiCalls200Item,
 	GetApiCallsId200,
@@ -26,31 +22,18 @@ import type {
 	PutApiCallsIdBody,
 } from "../api.schemas";
 
-export type getApiCallsResponse200 = {
-	data: GetApiCalls200Item[];
-	status: 200;
-};
-
-export type getApiCallsResponseSuccess = getApiCallsResponse200 & {
-	headers: Headers;
-};
-
-export type getApiCallsResponse = getApiCallsResponseSuccess;
-
-export const getGetApiCallsUrl = () => {
-	return `/api/calls`;
-};
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * @summary List all calls
  */
-export const getApiCalls = async (
-	options?: RequestInit,
-): Promise<getApiCallsResponse> => {
-	return getApiCallsMutator<getApiCallsResponse>(getGetApiCallsUrl(), {
-		...options,
-		method: "GET",
-	});
+export const getApiCalls = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiCalls200Item[]>(
+		{ url: `/api/calls`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiCallsKey = () => [`/api/calls`] as const;
@@ -67,13 +50,14 @@ export const useGetApiCalls = <TError = unknown>(options?: {
 		swrKey?: Key;
 		enabled?: boolean;
 	};
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiCallsKey() : null));
-	const swrFn = () => getApiCalls();
+	const swrFn = () => getApiCalls(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -86,50 +70,29 @@ export const useGetApiCalls = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type postApiCallsResponse201 = {
-	data: PostApiCalls201;
-	status: 201;
-};
-
-export type postApiCallsResponseSuccess = postApiCallsResponse201 & {
-	headers: Headers;
-};
-
-export type postApiCallsResponse = postApiCallsResponseSuccess;
-
-export const getPostApiCallsUrl = () => {
-	return `/api/calls`;
-};
-
 /**
  * @summary Create a call (Internal)
  */
-export const postApiCalls = async (
+export const postApiCalls = (
 	postApiCallsBody?: PostApiCallsBody,
-	options?: RequestInit,
-): Promise<postApiCallsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiCallsMutator<postApiCallsResponse>(getPostApiCallsUrl(), {
-		...options,
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiCalls201>(
+		{
+			url: `/api/calls`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiCallsBody,
 		},
-		body: JSON.stringify(postApiCallsBody),
-	});
+		options,
+	);
 };
 
-export const getPostApiCallsMutationFetcher = () => {
+export const getPostApiCallsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiCallsBody | undefined }) => {
-		return postApiCalls(arg);
+		return postApiCalls(arg, options);
 	};
 };
 export const getPostApiCallsMutationKey = () => [`/api/calls`] as const;
@@ -149,11 +112,12 @@ export const usePostApiCalls = <TError = unknown>(options?: {
 		PostApiCallsBody | undefined,
 		Awaited<ReturnType<typeof postApiCalls>>
 	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
 }) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiCallsMutationKey();
-	const swrFn = getPostApiCallsMutationFetcher();
+	const swrFn = getPostApiCallsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -162,32 +126,17 @@ export const usePostApiCalls = <TError = unknown>(options?: {
 		...query,
 	};
 };
-export type getApiCallsIdResponse200 = {
-	data: GetApiCallsId200;
-	status: 200;
-};
-
-export type getApiCallsIdResponseSuccess = getApiCallsIdResponse200 & {
-	headers: Headers;
-};
-
-export type getApiCallsIdResponse = getApiCallsIdResponseSuccess;
-
-export const getGetApiCallsIdUrl = (id: string) => {
-	return `/api/calls/${id}`;
-};
-
 /**
  * @summary Get call by ID
  */
-export const getApiCallsId = async (
+export const getApiCallsId = (
 	id: string,
-	options?: RequestInit,
-): Promise<getApiCallsIdResponse> => {
-	return getApiCallsIdMutator<getApiCallsIdResponse>(getGetApiCallsIdUrl(id), {
-		...options,
-		method: "GET",
-	});
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiCallsId200>(
+		{ url: `/api/calls/${id}`, method: "GET" },
+		options,
+	);
 };
 
 export const getGetApiCallsIdKey = (id: string) =>
@@ -207,15 +156,16 @@ export const useGetApiCallsId = <TError = unknown>(
 			Awaited<ReturnType<typeof getApiCallsId>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const isEnabled =
 		swrOptions?.enabled !== false && id !== null && id !== undefined;
 	const swrKey =
 		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiCallsIdKey(id) : null));
-	const swrFn = () => getApiCallsId(id);
+	const swrFn = () => getApiCallsId(id, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -228,51 +178,31 @@ export const useGetApiCallsId = <TError = unknown>(
 		...query,
 	};
 };
-export type putApiCallsIdResponse200 = {
-	data: PutApiCallsId200;
-	status: 200;
-};
-
-export type putApiCallsIdResponseSuccess = putApiCallsIdResponse200 & {
-	headers: Headers;
-};
-
-export type putApiCallsIdResponse = putApiCallsIdResponseSuccess;
-
-export const getPutApiCallsIdUrl = (id: string) => {
-	return `/api/calls/${id}`;
-};
-
 /**
  * @summary Update call by ID
  */
-export const putApiCallsId = async (
+export const putApiCallsId = (
 	id: string,
 	putApiCallsIdBody?: PutApiCallsIdBody,
-	options?: RequestInit,
-): Promise<putApiCallsIdResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return putApiCallsIdMutator<putApiCallsIdResponse>(getPutApiCallsIdUrl(id), {
-		...options,
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiCallsId200>(
+		{
+			url: `/api/calls/${id}`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiCallsIdBody,
 		},
-		body: JSON.stringify(putApiCallsIdBody),
-	});
+		options,
+	);
 };
 
-export const getPutApiCallsIdMutationFetcher = (id: string) => {
+export const getPutApiCallsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PutApiCallsIdBody | undefined }) => {
-		return putApiCallsId(id, arg);
+		return putApiCallsId(id, arg, options);
 	};
 };
 export const getPutApiCallsIdMutationKey = (id: string) =>
@@ -295,12 +225,13 @@ export const usePutApiCallsId = <TError = unknown>(
 			PutApiCallsIdBody | undefined,
 			Awaited<ReturnType<typeof putApiCallsId>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiCallsIdMutationKey(id);
-	const swrFn = getPutApiCallsIdMutationFetcher(id);
+	const swrFn = getPutApiCallsIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -309,55 +240,31 @@ export const usePutApiCallsId = <TError = unknown>(
 		...query,
 	};
 };
-export type postApiCallsIdEventsResponse201 = {
-	data: PostApiCallsIdEvents201;
-	status: 201;
-};
-
-export type postApiCallsIdEventsResponseSuccess =
-	postApiCallsIdEventsResponse201 & {
-		headers: Headers;
-	};
-
-export type postApiCallsIdEventsResponse = postApiCallsIdEventsResponseSuccess;
-
-export const getPostApiCallsIdEventsUrl = (id: string) => {
-	return `/api/calls/${id}/events`;
-};
-
 /**
  * @summary Create call event
  */
-export const postApiCallsIdEvents = async (
+export const postApiCallsIdEvents = (
 	id: string,
 	postApiCallsIdEventsBody?: PostApiCallsIdEventsBody,
-	options?: RequestInit,
-): Promise<postApiCallsIdEventsResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Array.isArray(h)) return Object.fromEntries(h);
-		return h;
-	};
-	return postApiCallsIdEventsMutator<postApiCallsIdEventsResponse>(
-		getPostApiCallsIdEventsUrl(id),
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiCallsIdEvents201>(
 		{
-			...options,
+			url: `/api/calls/${id}/events`,
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(postApiCallsIdEventsBody),
+			headers: { "Content-Type": "application/json" },
+			data: postApiCallsIdEventsBody,
 		},
+		options,
 	);
 };
 
-export const getPostApiCallsIdEventsMutationFetcher = (id: string) => {
+export const getPostApiCallsIdEventsMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
 	return (_: Key, { arg }: { arg: PostApiCallsIdEventsBody | undefined }) => {
-		return postApiCallsIdEvents(id, arg);
+		return postApiCallsIdEvents(id, arg, options);
 	};
 };
 export const getPostApiCallsIdEventsMutationKey = (id: string) =>
@@ -380,12 +287,13 @@ export const usePostApiCallsIdEvents = <TError = unknown>(
 			PostApiCallsIdEventsBody | undefined,
 			Awaited<ReturnType<typeof postApiCallsIdEvents>>
 		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
 	},
 ) => {
-	const { swr: swrOptions } = options ?? {};
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiCallsIdEventsMutationKey(id);
-	const swrFn = getPostApiCallsIdEventsMutationFetcher(id);
+	const swrFn = getPostApiCallsIdEventsMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
