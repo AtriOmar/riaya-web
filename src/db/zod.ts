@@ -10,6 +10,7 @@ import {
 	patient,
 	patientMedicalFile,
 	person,
+	review,
 	speciality,
 	user,
 } from "./schema";
@@ -25,6 +26,7 @@ export const selectAppointmentSchema = createSelectSchema(appointment);
 export const selectDoctorApplicationSchema =
 	createSelectSchema(doctorApplication);
 export const selectUserSchema = createSelectSchema(user);
+export const selectReviewSchema = createSelectSchema(review);
 export const selectDoctorApplicationWithRelationsSchema =
 	selectDoctorApplicationSchema.merge(
 		z.object({

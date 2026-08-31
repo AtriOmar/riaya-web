@@ -15,8 +15,8 @@
 		"db:seed": "tsx src/db/seed.ts",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:up": "docker compose -f docker-compose.db.yml up -d",
-		"db:down": "docker compose -f docker-compose.db.yml down",
+		"infra:up": "docker compose -f docker-compose.infra.yml up -d",
+		"infra:down": "docker compose -f docker-compose.infra.yml down",
 		"generate:api": "tsx scripts/generate-openapi.ts && orval"
 	},
 	"dependencies": {
@@ -32,6 +32,7 @@
 		"aos": "^2.3.4",
 		"axios": "^1.13.6",
 		"better-auth": "^1.5.4",
+		"bullmq": "^6.3.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
@@ -40,6 +41,7 @@
 		"drizzle-orm": "^0.45.1",
 		"drizzle-zod": "^0.8.3",
 		"input-otp": "^1.4.2",
+		"ioredis": "^6.0.0",
 		"leaflet": "^1.9.4",
 		"lucide-react": "^0.577.0",
 		"moment": "^2.30.1",

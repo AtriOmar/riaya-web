@@ -1,8 +1,6 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE}
     container_name: riaya_web
     restart: unless-stopped
     ports:
@@ -14,18 +12,13 @@ services:
     env_file:
       - .env
     # --- Security Hardening ---
-    # Make the container file system read-only
     read_only: true
-    # Drop all root capabilities by default to prevent privilege escalation
     cap_drop:
       - ALL
-    # Prevent the container processes from gaining new privileges
     security_opt:
       - no-new-privileges:true
-    # Mount temporary file systems for directories that Next.js needs to write to
     tmpfs:
       - /tmp
-      # Next.js image optimization and data cache
       - /app/.next/cache
 
 networks:

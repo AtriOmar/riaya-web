@@ -11,6 +11,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { reviewQueue } from "@/lib/queue";
 
 // Internal socket service URL — used to fire-and-forget WhatsApp messages
 const SOCKET_INTERNAL_URL =
@@ -179,10 +180,31 @@ export async function PUT(req: NextRequest) {
 						await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
 							phone,
 							message,
+							doctorId: full?.doctor?.userId,
 						});
 					}
-				} catch {
-					// Non-critical — do not let WhatsApp errors affect the API response
+
+					// Schedule a review request 2 hours after the appointment ends
+					if (updated.end) {
+						const delay = Math.max(
+							0,
+							new Date(updated.end).getTime() + 2 * 60 * 60 * 1000 - Date.now(),
+						);
+						await reviewQueue.add(
+							"sendReview",
+							{
+								appointmentId: updated.id,
+								doctorId: updated.doctorId,
+								patientId: updated.patientId,
+							},
+							{ delay },
+						);
+					}
+				} catch (err) {
+					console.error(
+						"Failed to send WhatsApp confirmation or schedule review:",
+						err,
+					);
 				}
 			})();
 		}

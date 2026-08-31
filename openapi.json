@@ -515,84 +515,6 @@
         }
       }
     },
-    "/api/cities": {
-      "get": {
-        "tags": [
-          "Miscellaneous"
-        ],
-        "summary": "List cities",
-        "responses": {
-          "200": {
-            "description": "List of cities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "postalCode": {
-                        "type": "integer",
-                        "nullable": true,
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "latitude": {
-                        "type": "number",
-                        "nullable": true,
-                        "minimum": -140737488355328,
-                        "maximum": 140737488355327
-                      },
-                      "longitude": {
-                        "type": "number",
-                        "nullable": true,
-                        "minimum": -140737488355328,
-                        "maximum": 140737488355327
-                      },
-                      "enName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "frName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "arName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "slug": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "postalCode",
-                      "latitude",
-                      "longitude",
-                      "enName",
-                      "frName",
-                      "arName",
-                      "slug"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/calls": {
       "get": {
         "tags": [
@@ -1474,6 +1396,84 @@
                     "createdAt",
                     "updatedAt"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cities": {
+      "get": {
+        "tags": [
+          "Miscellaneous"
+        ],
+        "summary": "List cities",
+        "responses": {
+          "200": {
+            "description": "List of cities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "postalCode": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "latitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
+                      "enName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "frName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "arName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "slug": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "postalCode",
+                      "latitude",
+                      "longitude",
+                      "enName",
+                      "frName",
+                      "arName",
+                      "slug"
+                    ]
+                  }
                 }
               }
             }
@@ -2605,147 +2605,6 @@
         }
       }
     },
-    "/api/appointments/external": {
-      "post": {
-        "tags": [
-          "Appointments"
-        ],
-        "summary": "Book external appointment",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "^\\d+$"
-                  },
-                  "start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "end": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "illness": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "doctorId",
-                  "name",
-                  "phoneNumber",
-                  "start",
-                  "end",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Booked appointment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "start": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "end": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "name": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "newPatientName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "newPatientPhoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "start",
-                    "end",
-                    "status",
-                    "name",
-                    "description",
-                    "newPatientName",
-                    "newPatientPhoneNumber",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/calls/{id}": {
       "get": {
         "tags": [
@@ -3142,6 +3001,147 @@
                     "recordingSid",
                     "recordingKey",
                     "recordingUrl",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/external": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book external appointment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 8,
+                    "pattern": "^\\d+$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "illness": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "doctorId",
+                  "name",
+                  "phoneNumber",
+                  "start",
+                  "end",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booked appointment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "newPatientName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "newPatientPhoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "start",
+                    "end",
+                    "status",
+                    "name",
+                    "description",
+                    "newPatientName",
+                    "newPatientPhoneNumber",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -4050,6 +4050,348 @@
         }
       }
     },
+    "/api/persons/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get person by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "phoneNumber",
+                    "source",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update person by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "address": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated person",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "phoneNumber",
+                    "source",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reviews/submit": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Submit a review via magic link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "waitTime": {
+                    "type": "string",
+                    "enum": [
+                      "short",
+                      "medium",
+                      "long"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "rating",
+                  "waitTime"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/upload/signed-url": {
+      "post": {
+        "tags": [
+          "Miscellaneous"
+        ],
+        "summary": "Generate R2 signed upload URL",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filename": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "folder": {
+                    "type": "string",
+                    "enum": [
+                      "profile-pictures",
+                      "doctor-applications",
+                      "medical-files"
+                    ]
+                  }
+                },
+                "required": [
+                  "filename",
+                  "contentType",
+                  "folder"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signedUrl": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "cdnUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "signedUrl",
+                    "key",
+                    "cdnUrl"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}": {
       "get": {
         "tags": [
@@ -4432,216 +4774,6 @@
                     "createdAt",
                     "updatedAt",
                     "medicalFiles"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/persons/{id}": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Get person by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Person details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "phoneNumber": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "phoneNumber",
-                    "source",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update person by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "dateOfBirth": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "gender": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated person",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "phoneNumber": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "phoneNumber",
-                    "source",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "createdAt",
-                    "updatedAt"
                   ]
                 }
               }
@@ -5049,180 +5181,6 @@
         }
       }
     },
-    "/api/upload/signed-url": {
-      "post": {
-        "tags": [
-          "Miscellaneous"
-        ],
-        "summary": "Generate R2 signed upload URL",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "filename": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "contentType": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "folder": {
-                    "type": "string",
-                    "enum": [
-                      "profile-pictures",
-                      "doctor-applications",
-                      "medical-files"
-                    ]
-                  }
-                },
-                "required": [
-                  "filename",
-                  "contentType",
-                  "folder"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Signed URL details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "signedUrl": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "cdnUrl": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "signedUrl",
-                    "key",
-                    "cdnUrl"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/picture": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update profile picture",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "pictureUrl": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": [
-                  "pictureUrl"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "displayName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "username": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "accessId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "active": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "emailVerified",
-                    "image",
-                    "displayName",
-                    "username",
-                    "accessId",
-                    "active",
-                    "type",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/calls/{id}/events": {
       "post": {
         "tags": [
@@ -5400,176 +5358,25 @@
         }
       }
     },
-    "/api/patients/{id}/medical-files": {
+    "/api/users/picture": {
       "post": {
         "tags": [
-          "Patients"
+          "Users"
         ],
-        "summary": "Create medical file",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+        "summary": "Update profile picture",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": {
+                  "pictureUrl": {
                     "type": "string",
-                    "minLength": 1
-                  },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "title": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "documents": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uri"
-                    }
+                    "format": "uri"
                   }
                 },
                 "required": [
-                  "type",
-                  "date",
-                  "title",
-                  "description"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created medical file",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "date": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "title": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "documents": {
-                      "type": "array",
-                      "nullable": true,
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "sentViaWhatsapp": {
-                      "type": "boolean",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "patientId",
-                    "type",
-                    "date",
-                    "title",
-                    "description",
-                    "documents",
-                    "sentViaWhatsapp",
-                    "createdAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Update medical file",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "medicalFileId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                },
-                "required": [
-                  "medicalFileId"
+                  "pictureUrl"
                 ]
               }
             }
@@ -5577,115 +5384,78 @@
         },
         "responses": {
           "200": {
-            "description": "Updated medical file",
+            "description": "Updated user",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "date": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "title": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "documents": {
-                      "type": "array",
-                      "nullable": true,
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "sentViaWhatsapp": {
-                      "type": "boolean",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "patientId",
-                    "type",
-                    "date",
-                    "title",
-                    "description",
-                    "documents",
-                    "sentViaWhatsapp",
-                    "createdAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Delete medical file",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "exclusiveMinimum": true
-            },
-            "required": true,
-            "name": "medicalFileId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted medical file",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
                       "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "emailVerified": {
+                      "type": "boolean"
+                    },
+                    "image": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "accessId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "active": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "message"
+                    "id",
+                    "name",
+                    "email",
+                    "emailVerified",
+                    "image",
+                    "displayName",
+                    "username",
+                    "accessId",
+                    "active",
+                    "type",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -6031,6 +5801,351 @@
                     "hasDoctorProfile",
                     "doctorProfile"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{id}/medical-files": {
+      "post": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Create medical file",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "documents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "date",
+                  "title",
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created medical file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "date": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "documents": {
+                      "type": "array",
+                      "nullable": true,
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sentViaWhatsapp": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "patientId",
+                    "type",
+                    "date",
+                    "title",
+                    "description",
+                    "documents",
+                    "sentViaWhatsapp",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Update medical file",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "medicalFileId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "medicalFileId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated medical file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "date": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "documents": {
+                      "type": "array",
+                      "nullable": true,
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sentViaWhatsapp": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "patientId",
+                    "type",
+                    "date",
+                    "title",
+                    "description",
+                    "documents",
+                    "sentViaWhatsapp",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Delete medical file",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "required": true,
+            "name": "medicalFileId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted medical file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/reviews/process-job": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Process a delayed review job (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "patientId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "appointmentId",
+                  "doctorId",
+                  "patientId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
                 }
               }
             }
