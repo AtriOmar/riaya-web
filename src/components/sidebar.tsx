@@ -9,13 +9,12 @@ import {
 	Stethoscope,
 	User,
 } from "lucide-react";
-import useSWR from "swr";
 import { useAppContext } from "@/components/contexts/app-provider";
 import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { getMe } from "@/services/users";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 const items1: SidebarItemData[] = [
 	{
@@ -61,7 +60,7 @@ const items2: SidebarItemData[] = [
 
 function SidebarContent() {
 	const { user } = useAuth();
-	const { data: me } = useSWR(user ? "/api/users/me" : null, () => getMe());
+	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
 	const isVerified = me?.doctorProfile?.status === "verified";
 
 	return (

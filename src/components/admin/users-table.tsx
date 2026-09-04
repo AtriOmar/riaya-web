@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Search } from "lucide-react";
+import { Copy, Inbox, Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,12 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getUsers } from "@/services";
-import type { UserRow } from "@/services/types";
+import type { GetApiUsers200Item } from "@/services/generated/api.schemas";
+import { getApiUsers } from "@/services/generated/users/users";
 
 const ROLES: Record<number, string> = { 1: "Doctor", 3: "Admin", 5: "Owner" };
 
-const columns: Column<UserRow>[] = [
+const columns: Column<GetApiUsers200Item>[] = [
 	{
 		key: "user",
 		header: "User",
@@ -43,8 +43,29 @@ const columns: Column<UserRow>[] = [
 						<Copy className="w-3 h-3" />
 					</button>
 					{row.accessId && row.accessId >= 3 && (
-						<Badge variant="outline" className="text-[10px]">
-							{ROLES[row.accessId] ?? "Admin"}
+						<Badge
+							variant={row.accessId === 5 ? "default" : "secondary"}
+							className="text-[10px] px-1.5 py-0 h-5"
+						>
+							<span className="flex items-center gap-1">
+								{row.accessId === 5 ? (
+									<ShieldAlert size={10} />
+								) : (
+									<ShieldCheck size={10} />
+								)}
+								{ROLES[row.accessId] ?? "Admin"}
+							</span>
+						</Badge>
+					)}
+					{row.accessId === 1 && !row.hasDoctorProfile && (
+						<Badge
+							variant="secondary"
+							className="text-[10px] px-1.5 py-0 h-5 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20"
+						>
+							<span className="flex items-center gap-1">
+								<ShieldAlert size={10} />
+								Unverified
+							</span>
 						</Badge>
 					)}
 					{row.active === 0 && (
@@ -82,7 +103,10 @@ export default function UsersTable() {
 	const search = useDebounce(inputValue, 300);
 	const limit = 20;
 
-	const getKey = (pageIndex: number, previousPageData: UserRow[] | null) => {
+	const getKey = (
+		pageIndex: number,
+		previousPageData: GetApiUsers200Item[] | null,
+	) => {
 		if (previousPageData && !previousPageData.length) return null; // reached the end
 		return ["admin-users", search, pageIndex + 1]; // SWR key
 	};
@@ -90,7 +114,7 @@ export default function UsersTable() {
 	const { data, size, setSize, isValidating } = useSWRInfinite(
 		getKey,
 		([, search, page]) =>
-			getUsers({ search: search as string, page: page as number, limit }),
+			getApiUsers({ search: search as string, page: page as number, limit }),
 	);
 
 	const users = data ? data.flat() : [];
@@ -117,7 +141,17 @@ export default function UsersTable() {
 				data={users}
 				keyExtractor={(row) => row.id}
 				onRowClick={(row) => router.push(`/admin/users/${row.id}`)}
-				emptyMessage="No users found."
+				emptyMessage={
+					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+						<Inbox className="mb-4 w-12 h-12 opacity-50" />
+						<span className="font-semibold text-foreground">
+							No users found
+						</span>
+						<span className="mt-1 text-sm">
+							Try adjusting your filters or search terms
+						</span>
+					</div>
+				}
 			/>
 			<InfiniteScrollTrigger
 				onLoadMore={() => setSize(size + 1)}

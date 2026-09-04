@@ -119,3 +119,50 @@ export async function POST(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectPatientSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/patients",
+	tags: ["Patients"],
+	summary: "List patients",
+	request: {
+		query: getSchema,
+	},
+	responses: {
+		200: {
+			description: "List of patients",
+			content: {
+				"application/json": {
+					schema: z.array(
+						selectPatientSchema.pick({
+							id: true,
+							firstName: true,
+							lastName: true,
+							cin: true,
+							dateOfBirth: true,
+						}),
+					),
+				},
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/patients",
+	tags: ["Patients"],
+	summary: "Create patient",
+	request: {
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Created patient",
+			content: { "application/json": { schema: selectPatientSchema } },
+		},
+	},
+});

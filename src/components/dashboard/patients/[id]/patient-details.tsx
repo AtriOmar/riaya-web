@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { updatePatient } from "@/services";
-import type { PatientWithMedicalFiles } from "@/services/types";
+import type { GetApiPatientsId200 } from "@/services/generated/api.schemas";
+import { usePatchApiPatientsId } from "@/services/generated/patients/patients";
 
 const schema = z.object({
 	cin: z.string().min(1, "CIN is required"),
@@ -52,10 +52,12 @@ export function PatientDetails({
 	patient,
 	onUpdated,
 }: {
-	patient: PatientWithMedicalFiles;
+	patient: GetApiPatientsId200;
 	onUpdated: () => void;
 }) {
 	const [editing, setEditing] = useState(false);
+	const { trigger: updatePatient, isMutating: isSubmittingAPI } =
+		usePatchApiPatientsId(patient.id.toString());
 
 	const defaults = (): FormValues => ({
 		cin: patient.cin ?? "",
@@ -87,7 +89,7 @@ export function PatientDetails({
 
 	async function onSubmit(values: FormValues) {
 		try {
-			await updatePatient(patient.id, {
+			await updatePatient({
 				...values,
 				dateOfBirth: new Date(values.dateOfBirth).toISOString(),
 			});
@@ -116,8 +118,8 @@ export function PatientDetails({
 						<Button type="button" variant="outline" onClick={cancelEdit}>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving…" : "Save"}
+						<Button type="submit" disabled={isSubmitting || isSubmittingAPI}>
+							{isSubmitting || isSubmittingAPI ? "Saving…" : "Save"}
 						</Button>
 					</div>
 				</div>

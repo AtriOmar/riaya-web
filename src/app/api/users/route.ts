@@ -1,4 +1,4 @@
-import { desc, eq, ilike, or } from "drizzle-orm";
+import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -46,8 +46,13 @@ export async function GET(req: NextRequest) {
 				active: userTable.active,
 				type: userTable.type,
 				createdAt: userTable.createdAt,
+				hasDoctorProfile:
+					sql<boolean>`CASE WHEN ${doctorProfile.id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
+						"hasDoctorProfile",
+					),
 			})
 			.from(userTable)
+			.leftJoin(doctorProfile, eq(doctorProfile.userId, userTable.id))
 			.where(
 				search
 					? or(
@@ -107,3 +112,50 @@ export async function PUT(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectUserSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const userRowSchema = selectUserSchema.merge(
+	z.object({ hasDoctorProfile: z.boolean() }),
+);
+
+registry.registerPath({
+	method: "get",
+	path: "/api/users",
+	tags: ["Users"],
+	summary: "List users (Admin)",
+	request: { query: getSchema },
+	responses: {
+		200: {
+			description: "List of users",
+			content: { "application/json": { schema: z.array(userRowSchema) } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/users",
+	tags: ["Users"],
+	summary: "Update user (Admin)",
+	request: {
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated user",
+			content: {
+				"application/json": {
+					schema: selectUserSchema.pick({
+						id: true,
+						name: true,
+						email: true,
+						accessId: true,
+						active: true,
+					}),
+				},
+			},
+		},
+	},
+});

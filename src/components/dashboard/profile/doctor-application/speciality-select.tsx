@@ -8,10 +8,10 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from "@/components/ui/combobox";
-import type { Speciality } from "@/services/types";
+import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 
 type Props = {
-	specialities: Speciality[];
+	specialities: GetApiSpecialities200Item[];
 	value?: string;
 	onChange: (value: string) => void;
 };
@@ -22,12 +22,12 @@ type SpecialityOption = {
 	keywords: string[];
 };
 
-function getSpecialityLabel(s: Speciality) {
-	return s.enName ?? s.frName ?? s.arName ?? "—";
+function getSpecialityLabel(c: GetApiSpecialities200Item) {
+	return c.enName ?? c.frName ?? c.arName ?? "—";
 }
 
-function specialityKeywords(s: Speciality): string[] {
-	const parts = [s.enName, s.frName, s.arName, s.slug];
+function specialityKeywords(c: GetApiSpecialities200Item): string[] {
+	const parts = [c.enName, c.frName, c.arName, c.slug];
 	return parts.filter((p): p is string => Boolean(p));
 }
 

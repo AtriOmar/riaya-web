@@ -41,3 +41,21 @@ export async function GET() {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectUserWithDoctorProfileSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/users/me",
+	tags: ["Users"],
+	summary: "Get current user profile",
+	responses: {
+		200: {
+			description: "Current user profile",
+			content: {
+				"application/json": { schema: selectUserWithDoctorProfileSchema },
+			},
+		},
+	},
+});

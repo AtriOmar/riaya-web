@@ -126,3 +126,69 @@ export async function DELETE(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectSpecialitySchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/specialities",
+	tags: ["Miscellaneous"],
+	summary: "List specialities",
+	responses: {
+		200: {
+			description: "List of specialities",
+			content: {
+				"application/json": { schema: z.array(selectSpecialitySchema) },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/specialities",
+	tags: ["Miscellaneous"],
+	summary: "Create speciality",
+	request: {
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Created speciality",
+			content: { "application/json": { schema: selectSpecialitySchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/specialities",
+	tags: ["Miscellaneous"],
+	summary: "Update speciality",
+	request: {
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated speciality",
+			content: { "application/json": { schema: selectSpecialitySchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/specialities",
+	tags: ["Miscellaneous"],
+	summary: "Delete speciality",
+	request: { query: deleteSchema },
+	responses: {
+		200: {
+			description: "Success",
+			content: {
+				"application/json": { schema: z.object({ message: z.string() }) },
+			},
+		},
+	},
+});

@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:18.0
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - riaya_network
+    volumes:
+      - riaya_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d riaya"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - riaya_network
+    volumes:
+      - riaya_redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+
+networks:
+  riaya_network:
+    name: riaya_network
+    external: true
+
+volumes:
+  riaya_postgres_data:
+    name: riaya_postgres_data
+  riaya_redis_data:
+    name: riaya_redis_data

@@ -74,7 +74,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "docker-compose.prod.yml,.env,package.json,pnpm-lock.yaml,drizzle.config.ts,drizzle,src/db"
-          target: "/home/riaya.omaratri.com/public_html"
+          target: "/var/www/riaya.omaratri.com"
 
       - name: Execute deployment commands via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -84,7 +84,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            cd /home/riaya.omaratri.com/public_html
+            cd /var/www/riaya.omaratri.com
             
             # Export the exact image we want to use
             export DOCKER_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}:latest
@@ -94,7 +94,7 @@ jobs:
             
             # 1. Run Database Migrations
             echo "Running Drizzle Migrations..."
-            docker run --rm -e CI=true -v $(pwd):/app -w /app --network riaya_network node:22-alpine sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm db:migrate"
+            docker run --rm -e CI=true -v $(pwd):/app -w /app --network riaya_network node:22-alpine sh -c "npm install -g drizzle-kit pg dotenv tsx drizzle-orm && NODE_PATH=\$(npm root -g) drizzle-kit migrate"
             
             # 2. Pull the latest image
             docker compose -f docker-compose.prod.yml pull web

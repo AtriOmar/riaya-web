@@ -11,6 +11,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { reviewQueue } from "@/lib/queue";
 
 // Internal socket service URL — used to fire-and-forget WhatsApp messages
 const SOCKET_INTERNAL_URL =
@@ -179,10 +180,31 @@ export async function PUT(req: NextRequest) {
 						await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
 							phone,
 							message,
+							doctorId: full?.doctor?.userId,
 						});
 					}
-				} catch {
-					// Non-critical — do not let WhatsApp errors affect the API response
+
+					// Schedule a review request 2 hours after the appointment ends
+					if (updated.end) {
+						const delay = Math.max(
+							0,
+							new Date(updated.end).getTime() + 2 * 60 * 60 * 1000 - Date.now(),
+						);
+						await reviewQueue.add(
+							"sendReview",
+							{
+								appointmentId: updated.id,
+								doctorId: updated.doctorId,
+								patientId: updated.patientId,
+							},
+							{ delay },
+						);
+					}
+				} catch (err) {
+					console.error(
+						"Failed to send WhatsApp confirmation or schedule review:",
+						err,
+					);
 				}
 			})();
 		}
@@ -227,3 +249,74 @@ export async function DELETE(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectAppointmentSchema, selectPatientSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const appointmentWithPatientSchema = selectAppointmentSchema.merge(
+	z.object({ patient: selectPatientSchema.nullable() }),
+);
+
+registry.registerPath({
+	method: "get",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "List appointments",
+	request: { query: getSchema },
+	responses: {
+		200: {
+			description: "List of appointments",
+			content: {
+				"application/json": { schema: z.array(appointmentWithPatientSchema) },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Create appointment",
+	request: {
+		body: { content: { "application/json": { schema: createSchema } } },
+	},
+	responses: {
+		201: {
+			description: "Created appointment",
+			content: { "application/json": { schema: selectAppointmentSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Update appointment",
+	request: {
+		body: { content: { "application/json": { schema: updateSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated appointment",
+			content: { "application/json": { schema: selectAppointmentSchema } },
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/appointments",
+	tags: ["Appointments"],
+	summary: "Delete appointment",
+	request: { query: deleteSchema },
+	responses: {
+		200: {
+			description: "Deleted appointment",
+			content: {
+				"application/json": { schema: z.object({ message: z.string() }) },
+			},
+		},
+	},
+});

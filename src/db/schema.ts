@@ -76,6 +76,10 @@ export const doctorProfile = pgTable(
 		availability: jsonb("availability"),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
+		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
+		medicalCouncilCertificate: varchar("medical_council_certificate", {
+			length: 255,
+		}),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -178,6 +182,31 @@ export const appointment = pgTable(
 	],
 );
 
+// ─── Review ───────────────────────────────────────────────────────────────────
+
+export const review = pgTable(
+	"review",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		appointmentId: integer("appointment_id").references(() => appointment.id),
+		doctorId: integer("doctor_id").references(() => doctorProfile.id),
+		patientId: integer("patient_id").references(() => patient.id),
+		token: varchar("token", { length: 255 }).unique().notNull(),
+		rating: integer("rating"),
+		waitTime: varchar("wait_time", { length: 50 }),
+		comment: text("comment"),
+		status: varchar("status", { length: 50 }).default("pending"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("review_appointment_id_idx").on(table.appointmentId),
+		index("review_doctor_id_idx").on(table.doctorId),
+		index("review_patient_id_idx").on(table.patientId),
+		index("review_token_idx").on(table.token),
+	],
+);
+
 // ─── Consultation ─────────────────────────────────────────────────────────────
 
 export const consultation = pgTable(
@@ -218,6 +247,10 @@ export const doctorApplication = pgTable(
 		tin: varchar("tin", { length: 100 }),
 		rejectionReasons: text("rejection_reasons").array(),
 		specialityId: integer("speciality_id").references(() => speciality.id),
+		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
+		medicalCouncilCertificate: varchar("medical_council_certificate", {
+			length: 255,
+		}),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -359,6 +392,7 @@ export const doctorProfileRelations = relations(
 		appointments: many(appointment),
 		consultations: many(consultation),
 		unavailabilities: many(doctorUnavailability),
+		reviews: many(review),
 	}),
 );
 
@@ -378,6 +412,7 @@ export const patientRelations = relations(patient, ({ one, many }) => ({
 	medicalFiles: many(patientMedicalFile),
 	appointments: many(appointment),
 	consultations: many(consultation),
+	reviews: many(review),
 }));
 
 export const patientMedicalFileRelations = relations(
@@ -400,6 +435,7 @@ export const appointmentRelations = relations(appointment, ({ one, many }) => ({
 		references: [patient.id],
 	}),
 	calls: many(call),
+	reviews: many(review),
 }));
 
 export const callRelations = relations(call, ({ one, many }) => ({
@@ -455,3 +491,18 @@ export const doctorUnavailabilityRelations = relations(
 		}),
 	}),
 );
+
+export const reviewRelations = relations(review, ({ one }) => ({
+	appointment: one(appointment, {
+		fields: [review.appointmentId],
+		references: [appointment.id],
+	}),
+	doctor: one(doctorProfile, {
+		fields: [review.doctorId],
+		references: [doctorProfile.id],
+	}),
+	patient: one(patient, {
+		fields: [review.patientId],
+		references: [patient.id],
+	}),
+}));

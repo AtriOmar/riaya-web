@@ -2,17 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
-import { getMe } from "@/services/users";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 export default function DashboardHome() {
 	const { user } = useAuth();
 	const router = useRouter();
 
-	const { data: me, isLoading } = useSWR(user ? "/api/users/me" : null, () =>
-		getMe(),
-	);
+	const { data: me, isLoading } = useGetApiUsersMe({
+		swr: { enabled: !!user },
+	});
 
 	const isVerified = me?.doctorProfile?.status === "verified";
 

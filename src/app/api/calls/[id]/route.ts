@@ -86,3 +86,51 @@ export async function PUT(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectCallEventSchema, selectCallSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({
+	id: z.string(),
+});
+
+registry.registerPath({
+	method: "get",
+	path: "/api/calls/{id}",
+	tags: ["Calls"],
+	summary: "Get call by ID",
+	request: {
+		params: paramsSchema,
+	},
+	responses: {
+		200: {
+			description: "Call details",
+			content: {
+				"application/json": {
+					schema: selectCallSchema.merge(
+						z.object({ events: z.array(selectCallEventSchema) }),
+					),
+				},
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "put",
+	path: "/api/calls/{id}",
+	tags: ["Calls"],
+	summary: "Update call by ID",
+	request: {
+		params: paramsSchema,
+		body: {
+			content: { "application/json": { schema: updateSchema } },
+		},
+	},
+	responses: {
+		200: {
+			description: "Updated call",
+			content: { "application/json": { schema: selectCallSchema } },
+		},
+	},
+});

@@ -1,32 +1,32 @@
 "use client";
 
-import useSWR from "swr";
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
-import { getCities, getMyDoctorApplication, getSpecialities } from "@/services";
-import { getMe } from "@/services/users";
-import DoctorApplicationForm from "./doctor-application-form";
+import { useGetApiDoctorApplicationsMe } from "@/services/generated/doctors/doctors";
+import {
+	useGetApiCities,
+	useGetApiSpecialities,
+} from "@/services/generated/miscellaneous/miscellaneous";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
+import DoctorApplicationForm from "./doctor-application";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 
 export default function Profile() {
 	const { user } = useAuth();
 
-	const { data: me, mutate: mutateMe } = useSWR(
-		user ? "/api/users/me" : null,
-		() => getMe(),
-	);
+	const { data: me, mutate: mutateMe } = useGetApiUsersMe({
+		swr: { enabled: !!user },
+	});
 
-	const { data: application, mutate: mutateApp } = useSWR(
-		user ? "/api/doctor-applications/me" : null,
-		() => getMyDoctorApplication().catch(() => null),
-	);
+	const { data: application, mutate: mutateApp } =
+		useGetApiDoctorApplicationsMe({
+			swr: { enabled: !!user },
+		});
 
-	const { data: specialities } = useSWR("specialities", () =>
-		getSpecialities(),
-	);
+	const { data: specialities } = useGetApiSpecialities();
 
-	const { data: cities } = useSWR("cities", () => getCities());
+	const { data: cities } = useGetApiCities();
 
 	const profile = me?.doctorProfile ?? null;
 	/** Prefer doctor profile status; fall back to application when there is no profile row yet. */

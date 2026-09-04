@@ -22,7 +22,7 @@ type DataTableProps<T> = {
 	data: T[];
 	keyExtractor: (row: T) => string | number;
 	onRowClick?: (row: T) => void;
-	emptyMessage?: string;
+	emptyMessage?: React.ReactNode;
 	className?: string;
 };
 

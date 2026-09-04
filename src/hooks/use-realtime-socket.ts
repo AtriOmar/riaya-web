@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import useSWR from "swr";
-import { getCalls } from "@/services/calls";
 import type {
-	CallEvent,
-	CallEventType,
-	CallWithEvents,
-	FunctionCallStatus,
-} from "@/services/types";
+	GetApiCalls200Item,
+	GetApiCalls200ItemEventsItem,
+} from "@/services/generated/api.schemas";
+import { useGetApiCalls } from "@/services/generated/calls/calls";
+import type { FunctionCallStatus } from "@/services/types";
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000];
 
@@ -85,12 +83,14 @@ type WsMessage =
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function dbEventToTimeline(event: CallEvent): TimelineEntry | null {
+function dbEventToTimeline(
+	event: GetApiCalls200ItemEventsItem,
+): TimelineEntry | null {
 	const timestamp = event.timestamp
 		? new Date(event.timestamp).getTime()
 		: Date.now();
 	const id = `db-${event.id}`;
-	const type = event.type as CallEventType;
+	const type = event.type;
 
 	switch (type) {
 		case "patient_transcript":
@@ -139,7 +139,7 @@ function dbEventToTimeline(event: CallEvent): TimelineEntry | null {
 	}
 }
 
-function dbCallToData(row: CallWithEvents): CallData {
+function dbCallToData(row: GetApiCalls200Item): CallData {
 	const timeline = row.events
 		.map(dbEventToTimeline)
 		.filter((e): e is TimelineEntry => e !== null)
@@ -206,9 +206,7 @@ export default function useRealtimeSocket() {
 		data: dbCalls,
 		isLoading: isLoadingCalls,
 		mutate: mutateCalls,
-	} = useSWR<CallWithEvents[]>("/api/calls", getCalls, {
-		revalidateOnFocus: false,
-	});
+	} = useGetApiCalls({ swr: { revalidateOnFocus: false } });
 
 	useEffect(() => {
 		if (!dbCalls) return;

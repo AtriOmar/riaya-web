@@ -1,12 +1,11 @@
 "use client";
 
-import { Check, X } from "lucide-react";
-import Image from "next/image";
+import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
+import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -16,27 +15,26 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import {
-	getDoctorApplicationById,
-	updateDoctorApplicationStatus,
-} from "@/services";
+	useGetApiDoctorApplicationsId,
+	usePutApiDoctorApplicationsId,
+} from "@/services/generated/doctors/doctors";
 
 export default function ApplicationDetail({
 	applicationId,
 }: {
 	applicationId: number;
 }) {
-	const {
-		data: app,
-		isLoading,
-		mutate,
-	} = useSWR(`admin-application-${applicationId}`, () =>
-		getDoctorApplicationById(applicationId),
-	);
+	const id = String(applicationId);
+	const { data: app, isLoading, mutate } = useGetApiDoctorApplicationsId(id);
+
+	const { trigger: updateApplication, isMutating: saving } =
+		usePutApiDoctorApplicationsId(id);
+
 	const [approveOpen, setApproveOpen] = useState(false);
 	const [rejectOpen, setRejectOpen] = useState(false);
 	const [rejectReasons, setRejectReasons] = useState("");
-	const [saving, setSaving] = useState(false);
 
 	if (isLoading) {
 		return (
@@ -49,17 +47,9 @@ export default function ApplicationDetail({
 	if (!app)
 		return <p className="text-muted-foreground">Application not found.</p>;
 
-	const cabinetCityName =
-		app.cabinetCity?.enName ??
-		app.cabinetCity?.frName ??
-		app.cabinetCity?.arName;
-	const specialityName =
-		app.speciality?.enName ?? app.speciality?.frName ?? app.speciality?.arName;
-
 	async function handleApprove() {
-		setSaving(true);
 		try {
-			await updateDoctorApplicationStatus(applicationId, {
+			await updateApplication({
 				status: "verified",
 			});
 			toast.success("Application approved");
@@ -67,19 +57,16 @@ export default function ApplicationDetail({
 			mutate();
 		} catch {
 			toast.error("Failed to approve application");
-		} finally {
-			setSaving(false);
 		}
 	}
 
 	async function handleReject() {
-		setSaving(true);
 		try {
 			const reasons = rejectReasons
 				.split("\n")
 				.map((r) => r.trim())
 				.filter(Boolean);
-			await updateDoctorApplicationStatus(applicationId, {
+			await updateApplication({
 				status: "rejected",
 				rejectionReasons: reasons,
 			});
@@ -88,13 +75,11 @@ export default function ApplicationDetail({
 			mutate();
 		} catch {
 			toast.error("Failed to reject application");
-		} finally {
-			setSaving(false);
 		}
 	}
 
 	return (
-		<div className="space-y-6 max-w-2xl">
+		<div className="space-y-8 max-w-2xl">
 			{/* Approve Dialog */}
 			<Dialog open={approveOpen} onOpenChange={setApproveOpen}>
 				<DialogContent>
@@ -145,110 +130,69 @@ export default function ApplicationDetail({
 				</DialogContent>
 			</Dialog>
 
-			{/* Application Info */}
-			<div className="gap-4 grid sm:grid-cols-2 p-6 border rounded-xl bg-card">
-				<div>
-					<p className="text-muted-foreground text-sm">Email</p>
-					<p className="font-medium">{app.user?.email ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Name</p>
-					<p className="font-medium">
-						{app.firstName} {app.lastName}
-					</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">TIN</p>
-					<p className="font-medium">{app.tin}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Cabinet Name</p>
-					<p className="font-medium">{app.cabinetName}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Cabinet City</p>
-					<p className="font-medium">{cabinetCityName ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Speciality</p>
-					<p className="font-medium">{specialityName ?? "—"}</p>
-				</div>
-				<div>
-					<p className="text-muted-foreground text-sm">Status</p>
-					<Badge
-						variant={
-							app.status === "pending"
-								? "secondary"
-								: app.status === "verified"
-									? "default"
-									: "destructive"
-						}
-					>
-						{app.status}
-					</Badge>
-				</div>
-			</div>
+			{/* Application Status Banner */}
+			<Alert
+				variant={
+					app.status === "pending"
+						? "warning"
+						: app.status === "verified"
+							? "success"
+							: "destructive"
+				}
+				className="mb-8"
+			>
+				{app.status === "pending" && <Clock className="size-4" />}
+				{app.status === "verified" && <CheckCircle2 className="size-4" />}
+				{app.status === "rejected" && <AlertCircle className="size-4" />}
+				<AlertTitle className="flex items-center gap-2 uppercase">
+					{app.status} Application
+				</AlertTitle>
+				<AlertDescription>
+					{app.status === "pending" &&
+						"This application is currently pending review."}
+					{app.status === "verified" &&
+						"This application has been verified and approved."}
+					{app.status === "rejected" && "This application was rejected."}
 
-			{/* CIN Images */}
-			<div className="gap-4 grid lg:grid-cols-2">
-				{app.cinRecto && (
-					<div>
-						<p className="mb-2 font-medium text-muted-foreground text-sm">
-							CIN Recto
-						</p>
-						<Image
-							unoptimized
-							src={app.cinRecto}
-							alt="CIN Recto"
-							width={400}
-							height={300}
-							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
-						/>
-					</div>
-				)}
-				{app.cinVerso && (
-					<div>
-						<p className="mb-2 font-medium text-muted-foreground text-sm">
-							CIN Verso
-						</p>
-						<Image
-							unoptimized
-							src={app.cinVerso}
-							alt="CIN Verso"
-							width={400}
-							height={300}
-							className="w-full max-w-[400px] border rounded-lg aspect-[14/9]"
-						/>
-					</div>
-				)}
+					{app.status === "rejected" &&
+						app.rejectionReasons &&
+						app.rejectionReasons.length > 0 && (
+							<div className="mt-3">
+								<p className="mb-1 font-medium">Rejection Reasons:</p>
+								<ul className="space-y-1 list-disc list-inside">
+									{app.rejectionReasons.map((reason, i) => (
+										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+										<li key={i}>{reason}</li>
+									))}
+								</ul>
+							</div>
+						)}
+				</AlertDescription>
+			</Alert>
+
+			{/* Application Info */}
+			<div>
+				<UserInfoReadOnly info={app} title="" />
 			</div>
 
 			{/* Actions */}
 			{app.status === "pending" && (
-				<div className="flex gap-3">
-					<Button onClick={() => setApproveOpen(true)}>
-						<Check className="w-4 h-4" />
-						Approve
+				<div className="flex sm:flex-row flex-col justify-end gap-3 mt-4 pt-6 border-t">
+					<Button
+						variant="destructive"
+						className="w-full sm:w-auto"
+						onClick={() => setRejectOpen(true)}
+					>
+						<X className="mr-2 w-4 h-4" />
+						Reject Application
 					</Button>
-					<Button variant="destructive" onClick={() => setRejectOpen(true)}>
-						<X className="w-4 h-4" />
-						Reject
+					<Button
+						className="w-full sm:w-auto"
+						onClick={() => setApproveOpen(true)}
+					>
+						<Check className="mr-2 w-4 h-4" />
+						Approve Application
 					</Button>
-				</div>
-			)}
-
-			{app.rejectionReasons && app.rejectionReasons.length > 0 && (
-				<div className="p-4 border border-destructive/30 rounded-xl bg-destructive/5">
-					<p className="mb-2 font-medium text-destructive text-sm">
-						Rejection Reasons:
-					</p>
-					<ul className="space-y-1 ml-6 list-disc">
-						{app.rejectionReasons.map((r) => (
-							<li key={r} className="text-destructive/80 text-sm">
-								{r}
-							</li>
-						))}
-					</ul>
 				</div>
 			)}
 		</div>

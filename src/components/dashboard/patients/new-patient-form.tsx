@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { createPatient } from "@/services";
+import { usePostApiPatients } from "@/services/generated/patients/patients";
 
 const schema = z.object({
 	cin: z.string().min(1, "CIN is required"),
@@ -25,6 +25,8 @@ type FormValues = z.infer<typeof schema>;
 
 export default function NewPatientForm() {
 	const router = useRouter();
+	const { trigger: createPatient, isMutating: isSubmittingAPI } =
+		usePostApiPatients();
 
 	const {
 		register,
@@ -48,10 +50,13 @@ export default function NewPatientForm() {
 	const gender = watch("gender");
 
 	async function onSubmit(values: FormValues) {
-		values.dateOfBirth = new Date(values.dateOfBirth).toISOString();
+		const payload = {
+			...values,
+			dateOfBirth: new Date(values.dateOfBirth).toISOString(),
+		};
 
 		try {
-			const patient = await createPatient(values);
+			const patient = await createPatient(payload);
 			toast.success("Patient created successfully");
 			router.push(`/dashboard/patients/${patient.id}`);
 		} catch {
@@ -170,8 +175,12 @@ export default function NewPatientForm() {
 					{...register("address")}
 				/>
 			</div>
-			<Button type="submit" className="w-full" disabled={isSubmitting}>
-				{isSubmitting ? "Creating..." : "Create Patient"}
+			<Button
+				type="submit"
+				className="w-full"
+				disabled={isSubmitting || isSubmittingAPI}
+			>
+				{isSubmitting || isSubmittingAPI ? "Creating..." : "Create Patient"}
 			</Button>
 		</form>
 	);

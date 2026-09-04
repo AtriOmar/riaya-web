@@ -1,9 +1,8 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Inbox, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 import DataTable, { type Column } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,42 +20,42 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 import {
-	createSpeciality,
-	deleteSpeciality,
-	getSpecialities,
-	updateSpeciality,
-} from "@/services";
-import type { Speciality } from "@/services/types";
+	deleteApiSpecialities,
+	postApiSpecialities,
+	putApiSpecialities,
+	useGetApiSpecialities,
+} from "@/services/generated/miscellaneous/miscellaneous";
 
 export default function SpecialitiesManager() {
-	const { data: specialities, mutate } = useSWR(
-		"admin-specialities",
-		getSpecialities,
-	);
+	const { data: specialities, mutate } = useGetApiSpecialities();
 	const [newEnName, setNewEnName] = useState("");
 	const [newFrName, setNewFrName] = useState("");
 	const [newArName, setNewArName] = useState("");
 	const [newSlug, setNewSlug] = useState("");
 	const [adding, setAdding] = useState(false);
 
-	const [editItem, setEditItem] = useState<Speciality | null>(null);
+	const [editItem, setEditItem] = useState<GetApiSpecialities200Item | null>(
+		null,
+	);
 	const [editEnName, setEditEnName] = useState("");
 	const [editFrName, setEditFrName] = useState("");
 	const [editArName, setEditArName] = useState("");
 	const [editSlug, setEditSlug] = useState("");
 
-	const [deleteItem, setDeleteItem] = useState<Speciality | null>(null);
+	const [deleteItem, setDeleteItem] =
+		useState<GetApiSpecialities200Item | null>(null);
 	const [reassignTo, setReassignTo] = useState("");
 
-	const getSpecialityLabel = (s: Speciality) =>
+	const getSpecialityLabel = (s: GetApiSpecialities200Item) =>
 		s.enName ?? s.frName ?? s.arName ?? "—";
 
 	async function handleAdd() {
 		if (!newEnName.trim() || !newFrName.trim() || !newArName.trim()) return;
 		setAdding(true);
 		try {
-			await createSpeciality({
+			await postApiSpecialities({
 				enName: newEnName.trim(),
 				frName: newFrName.trim(),
 				arName: newArName.trim(),
@@ -84,7 +83,8 @@ export default function SpecialitiesManager() {
 		)
 			return;
 		try {
-			await updateSpeciality(editItem.id, {
+			await putApiSpecialities({
+				id: editItem.id,
 				enName: editEnName.trim(),
 				frName: editFrName.trim(),
 				arName: editArName.trim(),
@@ -101,7 +101,10 @@ export default function SpecialitiesManager() {
 	async function handleDelete() {
 		if (!deleteItem || !reassignTo) return;
 		try {
-			await deleteSpeciality(deleteItem.id, Number(reassignTo));
+			await deleteApiSpecialities({
+				id: deleteItem.id,
+				newSpecialityId: parseInt(reassignTo, 10),
+			});
 			toast.success("Speciality deleted");
 			setDeleteItem(null);
 			setReassignTo("");
@@ -111,7 +114,7 @@ export default function SpecialitiesManager() {
 		}
 	}
 
-	const columns: Column<Speciality>[] = [
+	const columns: Column<GetApiSpecialities200Item>[] = [
 		{ key: "enName", header: "English Name", cell: (row) => row.enName ?? "—" },
 		{ key: "frName", header: "French Name", cell: (row) => row.frName ?? "—" },
 		{ key: "arName", header: "Arabic Name", cell: (row) => row.arName ?? "—" },
@@ -123,8 +126,9 @@ export default function SpecialitiesManager() {
 			cell: (row) => (
 				<div className="flex justify-end gap-2">
 					<Button
-						variant="outline"
-						size="sm"
+						variant="ghost"
+						size="icon"
+						title="Edit"
 						onClick={() => {
 							setEditItem(row);
 							setEditEnName(row.enName ?? "");
@@ -133,16 +137,15 @@ export default function SpecialitiesManager() {
 							setEditSlug(row.slug ?? "");
 						}}
 					>
-						<Pencil className="w-3 h-3" />
-						Edit
+						<Pencil className="w-4 h-4 text-muted-foreground" />
 					</Button>
 					<Button
-						variant="destructive"
-						size="sm"
+						variant="ghost"
+						size="icon"
+						title="Delete"
 						onClick={() => setDeleteItem(row)}
 					>
-						<Trash2 className="w-3 h-3" />
-						Delete
+						<Trash2 className="w-4 h-4 text-destructive/80 hover:text-destructive" />
 					</Button>
 				</div>
 			),
@@ -228,8 +231,18 @@ export default function SpecialitiesManager() {
 			<DataTable
 				columns={columns}
 				data={specialities ?? []}
-				keyExtractor={(row) => row.id}
-				emptyMessage="No specialities found."
+				keyExtractor={(row) => String(row.id)}
+				emptyMessage={
+					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+						<Inbox className="mb-4 w-12 h-12 opacity-50" />
+						<span className="font-semibold text-foreground">
+							No specialities found
+						</span>
+						<span className="mt-1 text-sm">
+							Try adjusting your filters or search terms
+						</span>
+					</div>
+				}
 			/>
 
 			{/* Add form */}

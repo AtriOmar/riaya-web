@@ -47,3 +47,23 @@ export async function GET() {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectDoctorApplicationWithRelationsSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/doctor-applications/me",
+	tags: ["Doctors"],
+	summary: "Get current user's application",
+	responses: {
+		200: {
+			description: "Application details",
+			content: {
+				"application/json": {
+					schema: selectDoctorApplicationWithRelationsSchema,
+				},
+			},
+		},
+	},
+});

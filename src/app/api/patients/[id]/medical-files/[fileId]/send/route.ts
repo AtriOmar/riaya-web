@@ -1,6 +1,7 @@
 import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { patient, patientMedicalFile } from "@/db/schema";
 import {
@@ -149,3 +150,21 @@ export async function POST(
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { registry } from "@/lib/openapi";
+
+const paramsSchema = z.object({ id: z.string(), fileId: z.string() });
+
+registry.registerPath({
+	method: "post",
+	path: "/api/patients/{id}/medical-files/{fileId}/send",
+	tags: ["Patients"],
+	summary: "Send medical file via WhatsApp",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Sent successfully",
+			content: { "application/json": { schema: z.any() } },
+		},
+	},
+});

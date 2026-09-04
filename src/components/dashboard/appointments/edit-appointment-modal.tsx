@@ -16,7 +16,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteAppointment, updateAppointment } from "@/services";
+import {
+	useDeleteApiAppointments,
+	usePutApiAppointments,
+} from "@/services/generated/appointments/appointments";
 
 const schema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -53,6 +56,11 @@ export default function EditAppointmentModal({
 	const [pendingAction, setPendingAction] = useState<
 		"accept" | "refuse" | null
 	>(null);
+
+	const { trigger: updateAppointment, isMutating: isUpdating } =
+		usePutApiAppointments();
+	const { trigger: deleteAppointment, isMutating: isDeleting } =
+		useDeleteApiAppointments({ id: event?.id ?? 0 });
 	const {
 		register,
 		handleSubmit,
@@ -90,7 +98,7 @@ export default function EditAppointmentModal({
 	async function handleDelete() {
 		if (!event) return;
 		try {
-			await deleteAppointment(event.id);
+			await deleteAppointment();
 			toast.success("Appointment deleted");
 			onClose();
 			onSuccess();
@@ -151,9 +159,10 @@ export default function EditAppointmentModal({
 								size="sm"
 								className="ml-auto"
 								onClick={handleDelete}
+								disabled={isDeleting}
 							>
 								<Trash2 className="w-4 h-4" />
-								Delete
+								{isDeleting ? "Deleting..." : "Delete"}
 							</Button>
 						)}
 					</div>
@@ -254,8 +263,8 @@ export default function EditAppointmentModal({
 								<Button type="button" variant="quiet" onClick={onClose}>
 									Cancel
 								</Button>
-								<Button type="submit" disabled={isSubmitting}>
-									{isSubmitting ? "Saving..." : "Save"}
+								<Button type="submit" disabled={isSubmitting || isUpdating}>
+									{isSubmitting || isUpdating ? "Saving..." : "Save"}
 								</Button>
 							</>
 						)}

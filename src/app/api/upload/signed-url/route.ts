@@ -41,3 +41,22 @@ export async function POST(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { signedUrlResponseSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "post",
+	path: "/api/upload/signed-url",
+	tags: ["Miscellaneous"],
+	summary: "Generate R2 signed upload URL",
+	request: {
+		body: { content: { "application/json": { schema } } },
+	},
+	responses: {
+		200: {
+			description: "Signed URL details",
+			content: { "application/json": { schema: signedUrlResponseSchema } },
+		},
+	},
+});

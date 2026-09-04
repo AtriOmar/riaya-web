@@ -131,3 +131,49 @@ export async function POST(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectCallSchema, selectCallWithEventsSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "get",
+	path: "/api/calls",
+	tags: ["Calls"],
+	summary: "List all calls",
+	responses: {
+		200: {
+			description: "List of calls",
+			content: {
+				"application/json": {
+					schema: z.array(selectCallWithEventsSchema),
+				},
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "post",
+	path: "/api/calls",
+	tags: ["Calls"],
+	summary: "Create a call (Internal)",
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: createSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		201: {
+			description: "Created call",
+			content: {
+				"application/json": {
+					schema: selectCallSchema,
+				},
+			},
+		},
+	},
+});

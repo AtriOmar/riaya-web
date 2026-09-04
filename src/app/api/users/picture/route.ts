@@ -36,3 +36,22 @@ export async function PUT(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { selectUserSchema } from "@/db/zod";
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "post",
+	path: "/api/users/picture",
+	tags: ["Users"],
+	summary: "Update profile picture",
+	request: {
+		body: { content: { "application/json": { schema: updatePictureSchema } } },
+	},
+	responses: {
+		200: {
+			description: "Updated user",
+			content: { "application/json": { schema: selectUserSchema } },
+		},
+	},
+});

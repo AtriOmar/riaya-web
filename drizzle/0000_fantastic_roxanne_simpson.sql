@@ -83,6 +83,8 @@ CREATE TABLE "doctor_application" (
 	"tin" varchar(100),
 	"rejection_reasons" text[],
 	"speciality_id" integer,
+	"medical_council_number" varchar(100),
+	"medical_council_certificate" varchar(255),
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -104,6 +106,8 @@ CREATE TABLE "doctor_profile" (
 	"availability" jsonb,
 	"cin_recto" varchar(255),
 	"cin_verso" varchar(255),
+	"medical_council_number" varchar(100),
+	"medical_council_certificate" varchar(255),
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
 	CONSTRAINT "doctor_profile_user_id_unique" UNIQUE("user_id")
@@ -141,6 +145,7 @@ CREATE TABLE "patient_medical_file" (
 	"title" varchar(255),
 	"description" text,
 	"documents" text[],
+	"sent_via_whatsapp" boolean DEFAULT false,
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
@@ -156,6 +161,21 @@ CREATE TABLE "person" (
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
 	CONSTRAINT "person_phone_number_unique" UNIQUE("phone_number")
+);
+--> statement-breakpoint
+CREATE TABLE "review" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "review_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"appointment_id" integer,
+	"doctor_id" integer,
+	"patient_id" integer,
+	"token" varchar(255) NOT NULL,
+	"rating" integer,
+	"wait_time" varchar(50),
+	"comment" text,
+	"status" varchar(50) DEFAULT 'pending',
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "review_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
 CREATE TABLE "speciality" (
@@ -237,6 +257,9 @@ ALTER TABLE "doctor_unavailability" ADD CONSTRAINT "doctor_unavailability_doctor
 ALTER TABLE "patient" ADD CONSTRAINT "patient_person_id_person_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."person"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient" ADD CONSTRAINT "patient_doctor_id_doctor_profile_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."doctor_profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_medical_file" ADD CONSTRAINT "patient_medical_file_patient_id_patient_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patient"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "review" ADD CONSTRAINT "review_appointment_id_appointment_id_fk" FOREIGN KEY ("appointment_id") REFERENCES "public"."appointment"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "review" ADD CONSTRAINT "review_doctor_id_doctor_profile_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."doctor_profile"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "review" ADD CONSTRAINT "review_patient_id_patient_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patient"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "appointment_doctor_id_idx" ON "appointment" USING btree ("doctor_id");--> statement-breakpoint
@@ -269,6 +292,10 @@ CREATE INDEX "patient_doctor_profile_id_idx" ON "patient" USING btree ("doctor_i
 CREATE INDEX "patient_cin_idx" ON "patient" USING btree ("cin");--> statement-breakpoint
 CREATE INDEX "patient_medical_file_patient_id_idx" ON "patient_medical_file" USING btree ("patient_id");--> statement-breakpoint
 CREATE INDEX "person_phone_number_idx" ON "person" USING btree ("phone_number");--> statement-breakpoint
+CREATE INDEX "review_appointment_id_idx" ON "review" USING btree ("appointment_id");--> statement-breakpoint
+CREATE INDEX "review_doctor_id_idx" ON "review" USING btree ("doctor_id");--> statement-breakpoint
+CREATE INDEX "review_patient_id_idx" ON "review" USING btree ("patient_id");--> statement-breakpoint
+CREATE INDEX "review_token_idx" ON "review" USING btree ("token");--> statement-breakpoint
 CREATE INDEX "speciality_slug_idx" ON "speciality" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint

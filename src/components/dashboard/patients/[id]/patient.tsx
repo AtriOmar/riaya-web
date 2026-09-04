@@ -1,8 +1,7 @@
 "use client";
 
-import useSWR from "swr";
 import { CubeLoader } from "@/components/loaders";
-import { getPatientById } from "@/services";
+import { useGetApiPatientsId } from "@/services/generated/patients/patients";
 import { AddMedicalFile } from "./add-medical-file";
 import { PatientDetails } from "./patient-details";
 import { PatientMedicalFilesList } from "./patient-medical-files-list";
@@ -12,7 +11,7 @@ export default function Patient({ patientId }: { patientId: number }) {
 		data: patient,
 		isLoading,
 		mutate,
-	} = useSWR(`patient-${patientId}`, () => getPatientById(patientId));
+	} = useGetApiPatientsId(patientId.toString());
 
 	if (isLoading) {
 		return (
