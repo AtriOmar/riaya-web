@@ -97,10 +97,10 @@ jobs:
             docker run --rm -e CI=true -v $(pwd):/app -w /app --network riaya_network node:22-alpine sh -c "npm install -g drizzle-kit pg dotenv tsx drizzle-orm && NODE_PATH=\$(npm root -g) drizzle-kit migrate"
             
             # 2. Pull the latest image
-            docker compose -f docker-compose.prod.yml pull web
+            docker compose -f docker-compose.yml pull web
             
             # 3. Start/Update the container
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.yml up -d
             
             # 4. Cleanup old/dangling docker images to save disk space
             docker image prune -f
