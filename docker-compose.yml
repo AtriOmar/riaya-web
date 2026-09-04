@@ -4,7 +4,7 @@ services:
     container_name: riaya_web
     restart: unless-stopped
     ports:
-      - "50002:3000"
+      - "50000:3000"
     networks:
       - riaya_network
     environment:
