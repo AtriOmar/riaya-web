@@ -34,7 +34,7 @@ prod/infra-logs:
 	docker compose -f docker-compose.infra.prod.yml logs -f
 
 prod/migrate:
-	docker run --rm -v $$(pwd):/app -w /app --env-file .env --network riaya_network node:22-alpine sh -c "npm install -g drizzle-kit pg dotenv tsx drizzle-orm && drizzle-kit migrate"
+	docker run --rm -v $$(pwd):/app -w /app --env-file .env --network riaya_network node:22-alpine sh -c "npm install -g drizzle-kit pg dotenv tsx drizzle-orm && NODE_PATH=\$$(npm root -g) drizzle-kit migrate"
 
 # Web App commands
 web-up:
