@@ -40,9 +40,10 @@ export default async function RootLayout({
 }>) {
 	let initialSession: Awaited<ReturnType<typeof auth.api.getSession>> | null =
 		null;
+	const reqHeaders = await headers();
 	try {
 		initialSession = await auth.api.getSession({
-			headers: await headers(),
+			headers: reqHeaders,
 		});
 	} catch (error) {
 		console.error("[RootLayout] getSession failed", error);
