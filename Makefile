@@ -34,7 +34,7 @@ prod/infra-logs:
 	docker compose -f docker-compose.infra.prod.yml logs -f
 
 prod/migrate:
-	docker run --rm -v $$(pwd):/app -w /app --env-file .env.production --network riaya_network node:22-alpine sh -c "corepack enable pnpm && pnpm install && pnpm run db:migrate"
+	docker run --rm -v $$(pwd):/app -w /app --env-file .env --network riaya_network node:22-alpine sh -c "corepack enable pnpm && pnpm install && pnpm run db:migrate"
 
 # Web App commands
 web-up:
