@@ -1,4 +1,4 @@
-.PHONY: dev/infra-up dev/infra-down dev/infra-logs prod/infra-up prod/infra-down prod/infra-logs web-up web-down help
+.PHONY: dev/infra-up dev/infra-down dev/infra-logs prod/infra-up prod/infra-down prod/infra-logs prod/migrate web-up web-down help
 
 # Default target
 help:
@@ -9,6 +9,7 @@ help:
 	@echo "  make prod/infra-up    - Start the infra containers for production (no ports)"
 	@echo "  make prod/infra-down  - Stop the production infra containers"
 	@echo "  make prod/infra-logs  - View live logs from the production infra containers"
+	@echo "  make prod/migrate     - Run database migrations in a temporary Docker container"
 	@echo "  make web-up           - Build and start the Next.js web application"
 	@echo "  make web-down         - Stop the Next.js web application"
 
@@ -31,6 +32,9 @@ prod/infra-down:
 
 prod/infra-logs:
 	docker compose -f docker-compose.infra.prod.yml logs -f
+
+prod/migrate:
+	docker run --rm -v $$(pwd):/app -w /app --env-file .env.production --network riaya_network node:22-alpine sh -c "corepack enable pnpm && pnpm install && pnpm run db:migrate"
 
 # Web App commands
 web-up:
