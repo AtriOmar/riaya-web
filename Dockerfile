@@ -26,7 +26,8 @@ COPY . .
 # Next.js telemetry can be disabled during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build the Next.js application
+# Build the Next.js application (Provide a dummy auth URL to suppress better-auth build warnings)
+ENV BETTER_AUTH_URL=http://localhost:3000
 RUN pnpm run build
 
 # Production image, copy all the files and run next
