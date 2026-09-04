@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "127.0.0.1:5432:5432"
     networks:
       - riaya_network
     volumes:
@@ -23,8 +21,6 @@ services:
     image: redis:7-alpine
     container_name: redis_db
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
     networks:
       - riaya_network
     volumes:

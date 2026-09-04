@@ -1,23 +1,36 @@
-.PHONY: infra-up infra-down infra-logs web-up web-down help
+.PHONY: dev/infra-up dev/infra-down dev/infra-logs prod/infra-up prod/infra-down prod/infra-logs web-up web-down help
 
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  make infra-up     - Start the infra containers (db/redis)"
-	@echo "  make infra-down   - Stop the infra containers"
-	@echo "  make infra-logs   - View live logs from the infra containers"
-	@echo "  make web-up    - Build and start the Next.js web application"
-	@echo "  make web-down  - Stop the Next.js web application"
+	@echo "  make dev/infra-up     - Start the infra containers locally (db/redis) with ports"
+	@echo "  make dev/infra-down   - Stop the local infra containers"
+	@echo "  make dev/infra-logs   - View live logs from the local infra containers"
+	@echo "  make prod/infra-up    - Start the infra containers for production (no ports)"
+	@echo "  make prod/infra-down  - Stop the production infra containers"
+	@echo "  make prod/infra-logs  - View live logs from the production infra containers"
+	@echo "  make web-up           - Build and start the Next.js web application"
+	@echo "  make web-down         - Stop the Next.js web application"
 
-# Database / Infra commands
-infra-up:
+# Local / Dev Infra commands
+dev/infra-up:
 	docker compose -f docker-compose.infra.yml up -d
 
-infra-down:
+dev/infra-down:
 	docker compose -f docker-compose.infra.yml down
 
-infra-logs:
+dev/infra-logs:
 	docker compose -f docker-compose.infra.yml logs -f
+
+# Prod Infra commands
+prod/infra-up:
+	docker compose -f docker-compose.infra.prod.yml up -d
+
+prod/infra-down:
+	docker compose -f docker-compose.infra.prod.yml down
+
+prod/infra-logs:
+	docker compose -f docker-compose.infra.prod.yml logs -f
 
 # Web App commands
 web-up:
