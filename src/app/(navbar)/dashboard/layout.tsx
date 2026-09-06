@@ -22,8 +22,7 @@ export default async function DashboardLayout({
 			onAccessDenied="redirect"
 			accessDeniedRedirect="/admin"
 		>
-			<Sidebar />
-			<div className="mt-[70px] md:ml-[260px]">{children}</div>
+			<Sidebar>{children}</Sidebar>
 		</PrivateRoute>
 	);
 }
