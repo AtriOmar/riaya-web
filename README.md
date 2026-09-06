@@ -32,7 +32,15 @@ cp .env.example .env
 
 Fill in the values. At minimum you need `DATABASE_URL`, `POSTGRES_*`, and the auth secrets.
 
-### 3. Start Postgres and Redis
+### 3. Create the Docker network
+
+`docker-compose.infra.yml` expects an existing `riaya_network`. Create it once:
+
+```bash
+docker network create riaya_network
+```
+
+### 4. Start Postgres and Redis
 
 ```bash
 make dev/infra-up
@@ -52,7 +60,7 @@ Logs:
 make dev/infra-logs
 ```
 
-### 4. Install and run the app
+### 5. Install and run the app
 
 ```bash
 pnpm install
@@ -82,13 +90,19 @@ Production splits **infrastructure** and **the web app**. They are started separ
 
 ### Infrastructure (manual)
 
-Postgres and Redis are **not** started by CI. On the server, bring them up once (and leave them running) with `docker-compose.infra.prod.yml`:
+Postgres and Redis are **not** started by CI. Create the shared Docker network once on the server (required by both infra and the web container):
+
+```bash
+docker network create riaya_network
+```
+
+Then bring Postgres and Redis up (and leave them running) with `docker-compose.infra.prod.yml`:
 
 ```bash
 make prod/infra-up
 ```
 
-That compose file joins the existing `riaya_network` Docker network and does **not** publish database ports to the host.
+That compose file joins `riaya_network` and does **not** publish database ports to the host.
 
 Stop / inspect:
 
