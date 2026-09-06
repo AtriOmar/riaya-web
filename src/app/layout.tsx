@@ -50,9 +50,14 @@ export default async function RootLayout({
 	}
 
 	return (
-		<html lang="en" className={cn("font-sans", rubik.variable)}>
+		<html
+			lang="en"
+			className={cn("font-sans", rubik.variable)}
+			suppressHydrationWarning
+		>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				suppressHydrationWarning
 			>
 				<Providers initialSession={initialSession}>
 					{children}
