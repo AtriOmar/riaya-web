@@ -52,31 +52,23 @@ const columns: Column<GetApiUsers200Item>[] = [
 					{row.accessId && row.accessId >= 3 && (
 						<Badge
 							variant={row.accessId === 5 ? "default" : "secondary"}
-							className="text-[10px] px-1.5 py-0 h-5"
+							className="h-5 px-1.5 py-0 text-[10px] leading-none [&>svg]:size-2.5!"
 						>
-							<span className="flex items-center gap-1">
-								{row.accessId === 5 ? (
-									<ShieldAlert size={10} />
-								) : (
-									<ShieldCheck size={10} />
-								)}
-								{ROLES[row.accessId] ?? "Admin"}
-							</span>
+							{row.accessId === 5 ? <ShieldAlert /> : <ShieldCheck />}
+							{ROLES[row.accessId] ?? "Admin"}
 						</Badge>
 					)}
 					{row.accessId === 1 && !row.hasDoctorProfile && (
 						<Badge
 							variant="secondary"
-							className="text-[10px] px-1.5 py-0 h-5 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20"
+							className="h-5 bg-orange-500/10 px-1.5 py-0 text-[10px] leading-none text-orange-500 hover:bg-orange-500/20 [&>svg]:size-2.5!"
 						>
-							<span className="flex items-center gap-1">
-								<ShieldAlert size={10} />
-								Unverified
-							</span>
+							<ShieldAlert />
+							Unverified
 						</Badge>
 					)}
 					{row.active === 0 && (
-						<Badge variant="destructive" className="text-[10px]">
+						<Badge variant="destructive" className="text-[10px] leading-none">
 							Banned
 						</Badge>
 					)}
