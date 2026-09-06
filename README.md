@@ -32,15 +32,7 @@ cp .env.example .env
 
 Fill in the values. At minimum you need `DATABASE_URL`, `POSTGRES_*`, and the auth secrets.
 
-### 3. Create the Docker network
-
-`docker-compose.infra.yml` expects an existing `riaya_network`. Create it once:
-
-```bash
-docker network create riaya_network
-```
-
-### 4. Start Postgres and Redis
+### 3. Start Postgres and Redis
 
 ```bash
 make dev/infra-up
@@ -60,7 +52,7 @@ Logs:
 make dev/infra-logs
 ```
 
-### 5. Install and run the app
+### 4. Install and run the app
 
 ```bash
 pnpm install
