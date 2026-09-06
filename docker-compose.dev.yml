@@ -6,7 +6,7 @@ services:
     container_name: riaya_web_dev
     restart: unless-stopped
     ports:
-      - "${PORT:-50000}:3000"
+      - "${PORT:-50000}:${PORT:-50000}"
     volumes:
       # Mount the current directory to /app
       - .:/app
