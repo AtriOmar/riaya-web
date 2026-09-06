@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import {
 	Tooltip,
 	TooltipContent,
-	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -19,14 +18,23 @@ type SidebarItemData = {
 	disabled?: boolean;
 };
 
-export default function SidebarItem({ item }: { item: SidebarItemData }) {
+export default function SidebarItem({
+	item,
+	collapsed = false,
+}: {
+	item: SidebarItemData;
+	collapsed?: boolean;
+}) {
 	const pathname = usePathname();
 	const isActive =
 		(item.strict && pathname === item.path) ||
 		(!item.strict && pathname.startsWith(item.path));
 
 	const className = cn(
-		"items-center gap-3 grid grid-cols-[20px_1fr] mt-1 px-3 py-2.5 rounded-lg transition duration-200",
+		"items-center rounded-lg transition duration-200",
+		collapsed
+			? "flex justify-center mt-1 mx-auto size-10"
+			: "grid grid-cols-[20px_1fr] gap-3 mt-1 px-3 py-2.5",
 		isActive && !item.disabled
 			? "bg-primary hover:bg-primary/90 text-primary-foreground"
 			: "hover:bg-muted text-foreground",
@@ -36,22 +44,28 @@ export default function SidebarItem({ item }: { item: SidebarItemData }) {
 	const content = (
 		<>
 			{item.icon}
-			<span>{item.name}</span>
+			{!collapsed && <span>{item.name}</span>}
 		</>
 	);
 
-	if (item.disabled) {
+	const tooltipLabel = item.disabled
+		? "Verify your profile to access this page"
+		: item.name;
+
+	if (item.disabled || collapsed) {
+		const trigger = item.disabled ? (
+			<div className={className}>{content}</div>
+		) : (
+			<Link href={item.path} className={className}>
+				{content}
+			</Link>
+		);
+
 		return (
-			<TooltipProvider>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<div className={className}>{content}</div>
-					</TooltipTrigger>
-					<TooltipContent side="right">
-						Verify your profile to access this page
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger asChild>{trigger}</TooltipTrigger>
+				<TooltipContent side="right">{tooltipLabel}</TooltipContent>
+			</Tooltip>
 		);
 	}
 
