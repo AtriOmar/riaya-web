@@ -69,7 +69,7 @@ export default function ApplicationsTable() {
 		return ["admin-applications", statusFilter, search, pageIndex + 1];
 	};
 
-	const { data, size, setSize, isValidating } = useSWRInfinite(
+	const { data, size, setSize, isValidating, isLoading } = useSWRInfinite(
 		getKey,
 		([, status, search, page]) =>
 			getApiDoctorApplications({
@@ -82,9 +82,10 @@ export default function ApplicationsTable() {
 
 	const applications = data ? data.flat() : [];
 	const isLoadingMore =
-		isValidating ||
-		(size > 0 && !!data && typeof data[size - 1] === "undefined");
-	const isEmpty = data?.[0]?.length === 0;
+		!isLoading &&
+		(isValidating ||
+			(size > 0 && !!data && typeof data[size - 1] === "undefined"));
+	const isEmpty = !isLoading && data?.[0]?.length === 0;
 	const isReachingEnd =
 		isEmpty || (data && data[data.length - 1]?.length < limit);
 
@@ -115,6 +116,7 @@ export default function ApplicationsTable() {
 			<DataTable
 				columns={columns}
 				data={applications}
+				isLoading={isLoading}
 				keyExtractor={(row) => String(row.id)}
 				onRowClick={(row) =>
 					router.push(`/admin/doctor-applications/${row.id}`)
@@ -134,7 +136,7 @@ export default function ApplicationsTable() {
 			<InfiniteScrollTrigger
 				onLoadMore={() => setSize(size + 1)}
 				isLoading={isLoadingMore}
-				hasMore={!isReachingEnd}
+				hasMore={!isLoading && !isReachingEnd}
 			/>
 		</div>
 	);
