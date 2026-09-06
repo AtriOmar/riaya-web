@@ -1,0 +1,27 @@
+services:
+  web-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: riaya_web_dev
+    restart: unless-stopped
+    ports:
+      - "${PORT:-50000}:3000"
+    volumes:
+      # Mount the current directory to /app
+      - .:/app
+      # Use an anonymous volume for node_modules to avoid host OS conflict
+      - /app/node_modules
+      # Use an anonymous volume for .next to avoid host OS conflict
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    networks:
+      - riaya_network
+
+networks:
+  riaya_network:
+    name: riaya_network
+    external: true
