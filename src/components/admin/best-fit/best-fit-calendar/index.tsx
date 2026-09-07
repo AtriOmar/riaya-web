@@ -125,7 +125,7 @@ export default function BestFitCalendar({
 			{!filtersReady && !isLoading && (
 				<div className="z-10 absolute inset-0 flex flex-col justify-center items-center bg-background/80 rounded-xl backdrop-blur-sm gap-2 text-muted-foreground text-sm min-h-[300px]">
 					<span className="text-2xl">🗓️</span>
-					<p>Pick a speciality and a city to load the calendar.</p>
+					<p>Pick a speciality and a location to load the calendar.</p>
 				</div>
 			)}
 

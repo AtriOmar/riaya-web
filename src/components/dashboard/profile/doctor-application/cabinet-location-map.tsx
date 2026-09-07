@@ -21,6 +21,17 @@ const DefaultIcon = L.icon({
 	iconSize: [25, 41],
 	iconAnchor: [12, 41],
 });
+
+const SmallIcon = L.icon({
+	iconUrl,
+	iconRetinaUrl,
+	shadowUrl,
+	iconSize: [12, 20],
+	iconAnchor: [6, 20],
+	shadowSize: [20, 20],
+	shadowAnchor: [6, 20],
+});
+
 L.Marker.prototype.options.icon = DefaultIcon;
 
 import { cn } from "@/lib/utils";
@@ -32,6 +43,9 @@ type Props = {
 	onMarkerClick?: () => void;
 	className?: string;
 	mapStyle?: "street" | "satellite";
+	/** When false, disables pan/zoom/click — useful for thumbnails. */
+	interactive?: boolean;
+	zoom?: number;
 };
 
 function ClickHandler({
@@ -56,17 +70,16 @@ export default function CabinetLocationMap({
 	onMarkerClick,
 	className,
 	mapStyle = "street",
+	interactive = true,
+	zoom = 13,
 }: Props) {
 	const mapRef = useRef<LeafletMap>(null);
 
 	useEffect(() => {
 		if (mapRef.current && center) {
-			mapRef.current.setView(
-				[center.lat, center.lng],
-				mapRef.current.getZoom(),
-			);
+			mapRef.current.setView([center.lat, center.lng], zoom);
 		}
-	}, [center]);
+	}, [center, zoom]);
 
 	useEffect(() => {
 		if (!mapRef.current) return;
@@ -106,14 +119,21 @@ export default function CabinetLocationMap({
 		<div
 			className={cn(
 				"border rounded-lg w-full h-[450px] overflow-hidden",
+				!interactive && "pointer-events-none",
 				className,
 			)}
 		>
 			<MapContainer
 				center={[center.lat, center.lng]}
-				zoom={13}
+				zoom={zoom}
 				minZoom={5}
-				scrollWheelZoom={true}
+				scrollWheelZoom={interactive}
+				dragging={interactive}
+				doubleClickZoom={interactive}
+				boxZoom={interactive}
+				keyboard={interactive}
+				zoomControl={interactive}
+				attributionControl={interactive}
 				style={{ height: "100%", width: "100%" }}
 				ref={mapRef}
 			>
@@ -127,10 +147,15 @@ export default function CabinetLocationMap({
 				{marker && (
 					<Marker
 						position={[marker.lat, marker.lng]}
-						eventHandlers={onMarkerClick ? { click: onMarkerClick } : undefined}
+						icon={interactive ? DefaultIcon : SmallIcon}
+						eventHandlers={
+							interactive && onMarkerClick
+								? { click: onMarkerClick }
+								: undefined
+						}
 					/>
 				)}
-				<ClickHandler onMapClick={onMapClick} />
+				{interactive && <ClickHandler onMapClick={onMapClick} />}
 			</MapContainer>
 		</div>
 	);

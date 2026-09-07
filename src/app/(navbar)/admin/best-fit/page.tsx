@@ -37,12 +37,20 @@ function parseDateOnly(dateStr: string | null): Date | null {
 	return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
+function parseCoord(value: string | null): number | null {
+	if (value == null || value === "") return null;
+	const n = Number(value);
+	return Number.isFinite(n) ? n : null;
+}
+
 export default function AdminBestFitPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
 	const urlSpecialityId = searchParams.get("specialityId");
 	const urlCityId = searchParams.get("cityId");
+	const urlLat = searchParams.get("lat");
+	const urlLong = searchParams.get("long");
 	const urlDay = searchParams.get("day");
 
 	const [currentDate, setCurrentDate] = useState(() => {
@@ -58,20 +66,27 @@ export default function AdminBestFitPage() {
 		const cityId = urlCityId ? Number(urlCityId) : null;
 		const spec = specialities?.find((s) => s.id === specId);
 		const city = cities?.find((c) => c.id === cityId);
+
+		const latFromUrl = parseCoord(urlLat);
+		const longFromUrl = parseCoord(urlLong);
+
 		return {
 			specialityId: spec?.id ?? null,
 			specialitySlug: spec?.slug ?? spec?.enName ?? null,
 			cityId: city?.id ?? null,
-			lat: city?.latitude ?? null,
-			long: city?.longitude ?? null,
+			// Prefer explicit map/city coords from URL; fall back to city center.
+			lat: latFromUrl ?? city?.latitude ?? null,
+			long: longFromUrl ?? city?.longitude ?? null,
 		};
-	}, [urlSpecialityId, urlCityId, specialities, cities]);
+	}, [urlSpecialityId, urlCityId, urlLat, urlLong, specialities, cities]);
 
 	const updateUrl = useCallback(
 		(
 			next: Partial<{
 				specialityId: number | null;
 				cityId: number | null;
+				lat: number | null;
+				long: number | null;
 				day: string | null;
 			}>,
 		) => {
@@ -83,6 +98,14 @@ export default function AdminBestFitPage() {
 			if ("cityId" in next) {
 				if (next.cityId == null) p.delete("cityId");
 				else p.set("cityId", String(next.cityId));
+			}
+			if ("lat" in next) {
+				if (next.lat == null) p.delete("lat");
+				else p.set("lat", String(next.lat));
+			}
+			if ("long" in next) {
+				if (next.long == null) p.delete("long");
+				else p.set("long", String(next.long));
 			}
 			if ("day" in next) {
 				if (!next.day) p.delete("day");
@@ -97,13 +120,13 @@ export default function AdminBestFitPage() {
 		updateUrl({
 			specialityId: next.specialityId,
 			cityId: next.cityId,
+			lat: next.lat,
+			long: next.long,
 		});
 	}
 
 	const selectedDay = parseDateOnly(urlDay);
 
-	// When viewing a day, fetch that day's week so navigation stays coherent;
-	// week view uses currentDate's week.
 	const rangeAnchor = selectedDay ?? currentDate;
 	const { start, end } = useMemo(() => weekWindow(rangeAnchor), [rangeAnchor]);
 	const filtersReady =
@@ -149,6 +172,8 @@ export default function AdminBestFitPage() {
 		if (filters.specialityId)
 			params.set("specialityId", String(filters.specialityId));
 		if (filters.cityId) params.set("cityId", String(filters.cityId));
+		if (filters.lat != null) params.set("lat", String(filters.lat));
+		if (filters.long != null) params.set("long", String(filters.long));
 		router.push(`/admin/best-fit/doctor/${doctorId}?${params.toString()}`);
 	}
 
