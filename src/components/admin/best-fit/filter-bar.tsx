@@ -2,9 +2,9 @@
 
 import { Check, ChevronsUpDown, MapPin, Stethoscope } from "lucide-react";
 import { useMemo, useState } from "react";
+import { BestFitViewToggle } from "@/components/admin/best-fit/doctors-map";
 import LocationPickerDialog from "@/components/admin/best-fit/location-picker-dialog";
 import LocationPreview from "@/components/admin/best-fit/location-preview";
-import { BestFitViewToggle } from "@/components/admin/best-fit/doctors-map";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
