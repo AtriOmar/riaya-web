@@ -10,6 +10,7 @@ import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { GetApiUsers200Item } from "@/services/generated/api.schemas";
 import { getApiUsers } from "@/services/generated/users/users";
@@ -20,6 +21,12 @@ const columns: Column<GetApiUsers200Item>[] = [
 	{
 		key: "user",
 		header: "User",
+		skeleton: (
+			<div className="flex items-center gap-3">
+				<Skeleton className="size-8 rounded-full" />
+				<Skeleton className="h-4 w-44" />
+			</div>
+		),
 		cell: (row) => (
 			<div className="flex items-center gap-3">
 				<Avatar className="w-8 h-8">
@@ -45,31 +52,23 @@ const columns: Column<GetApiUsers200Item>[] = [
 					{row.accessId && row.accessId >= 3 && (
 						<Badge
 							variant={row.accessId === 5 ? "default" : "secondary"}
-							className="text-[10px] px-1.5 py-0 h-5"
+							className="h-5 px-1.5 py-0 text-[10px] leading-none [&>svg]:size-2.5!"
 						>
-							<span className="flex items-center gap-1">
-								{row.accessId === 5 ? (
-									<ShieldAlert size={10} />
-								) : (
-									<ShieldCheck size={10} />
-								)}
-								{ROLES[row.accessId] ?? "Admin"}
-							</span>
+							{row.accessId === 5 ? <ShieldAlert /> : <ShieldCheck />}
+							{ROLES[row.accessId] ?? "Admin"}
 						</Badge>
 					)}
 					{row.accessId === 1 && !row.hasDoctorProfile && (
 						<Badge
 							variant="secondary"
-							className="text-[10px] px-1.5 py-0 h-5 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20"
+							className="h-5 bg-orange-500/10 px-1.5 py-0 text-[10px] leading-none text-orange-500 hover:bg-orange-500/20 [&>svg]:size-2.5!"
 						>
-							<span className="flex items-center gap-1">
-								<ShieldAlert size={10} />
-								Unverified
-							</span>
+							<ShieldAlert />
+							Unverified
 						</Badge>
 					)}
 					{row.active === 0 && (
-						<Badge variant="destructive" className="text-[10px]">
+						<Badge variant="destructive" className="text-[10px] leading-none">
 							Banned
 						</Badge>
 					)}
@@ -80,12 +79,19 @@ const columns: Column<GetApiUsers200Item>[] = [
 	{
 		key: "name",
 		header: "Name",
+		skeleton: <Skeleton className="h-4 w-28" />,
 		cell: (row) => row.displayName ?? row.name ?? "—",
 	},
-	{ key: "username", header: "Username", cell: (row) => row.username ?? "—" },
+	{
+		key: "username",
+		header: "Username",
+		skeleton: <Skeleton className="h-4 w-20" />,
+		cell: (row) => row.username ?? "—",
+	},
 	{
 		key: "created",
 		header: "Joined",
+		skeleton: <Skeleton className="h-4 w-24" />,
 		cell: (row) =>
 			row.createdAt
 				? new Date(row.createdAt).toLocaleDateString("en-GB", {
@@ -111,7 +117,7 @@ export default function UsersTable() {
 		return ["admin-users", search, pageIndex + 1]; // SWR key
 	};
 
-	const { data, size, setSize, isValidating } = useSWRInfinite(
+	const { data, size, setSize, isValidating, isLoading } = useSWRInfinite(
 		getKey,
 		([, search, page]) =>
 			getApiUsers({ search: search as string, page: page as number, limit }),
@@ -119,9 +125,10 @@ export default function UsersTable() {
 
 	const users = data ? data.flat() : [];
 	const isLoadingMore =
-		isValidating ||
-		(size > 0 && !!data && typeof data[size - 1] === "undefined");
-	const isEmpty = data?.[0]?.length === 0;
+		!isLoading &&
+		(isValidating ||
+			(size > 0 && !!data && typeof data[size - 1] === "undefined"));
+	const isEmpty = !isLoading && data?.[0]?.length === 0;
 	const isReachingEnd =
 		isEmpty || (data && data[data.length - 1]?.length < limit);
 
@@ -139,6 +146,7 @@ export default function UsersTable() {
 			<DataTable
 				columns={columns}
 				data={users}
+				isLoading={isLoading}
 				keyExtractor={(row) => row.id}
 				onRowClick={(row) => router.push(`/admin/users/${row.id}`)}
 				emptyMessage={
@@ -156,7 +164,7 @@ export default function UsersTable() {
 			<InfiniteScrollTrigger
 				onLoadMore={() => setSize(size + 1)}
 				isLoading={isLoadingMore}
-				hasMore={!isReachingEnd}
+				hasMore={!isLoading && !isReachingEnd}
 			/>
 		</div>
 	);

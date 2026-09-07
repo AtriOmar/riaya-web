@@ -5,10 +5,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function SidebarUserInfo({
 	isAdmin = false,
+	collapsed = false,
 }: {
 	isAdmin?: boolean;
+	collapsed?: boolean;
 }) {
 	const { user } = useAuth();
+	const initials = (user?.username ?? user?.name ?? "U")
+		.slice(0, 2)
+		.toUpperCase();
+
+	if (collapsed) {
+		return (
+			<div className="flex flex-col items-center gap-1.5 py-3">
+				{isAdmin && (
+					<span className="font-medium text-[10px] text-primary uppercase tracking-wide">
+						Admin
+					</span>
+				)}
+				<Avatar className="size-8 border-2 border-background shadow-sm">
+					<AvatarImage src={user?.image ?? undefined} alt={user?.name ?? ""} />
+					<AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+				</Avatar>
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -24,9 +45,7 @@ export default function SidebarUserInfo({
 							src={user?.image ?? undefined}
 							alt={user?.name ?? ""}
 						/>
-						<AvatarFallback className="text-lg">
-							{(user?.username ?? user?.name ?? "U").slice(0, 2).toUpperCase()}
-						</AvatarFallback>
+						<AvatarFallback className="text-lg">{initials}</AvatarFallback>
 					</Avatar>
 				</div>
 			</div>

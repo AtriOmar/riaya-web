@@ -5,16 +5,28 @@ import {
 	CalendarDays,
 	Home,
 	MessageSquare,
+	PanelLeftClose,
+	PanelLeftOpen,
 	Settings,
 	Stethoscope,
 	User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAppContext } from "@/components/contexts/app-provider";
 import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { useGetApiUsersMe } from "@/services/generated/users/users";
+
+const STORAGE_KEY = "dashboard-sidebar-collapsed";
 
 const items1: SidebarItemData[] = [
 	{
@@ -58,15 +70,15 @@ const items2: SidebarItemData[] = [
 	},
 ];
 
-function SidebarContent() {
+function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 	const { user } = useAuth();
 	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
 	const isVerified = me?.doctorProfile?.status === "verified";
 
 	return (
 		<>
-			<SidebarUserInfo />
-			<ul className="px-2 font-medium text-sm">
+			<SidebarUserInfo collapsed={collapsed} />
+			<ul className={cn("font-medium text-sm", collapsed ? "px-1" : "px-2")}>
 				{items1.map((item) => (
 					<li key={item.path}>
 						<SidebarItem
@@ -74,6 +86,7 @@ function SidebarContent() {
 								...item,
 								disabled: !isVerified && item.path !== "/dashboard/profile",
 							}}
+							collapsed={collapsed}
 						/>
 					</li>
 				))}
@@ -87,6 +100,7 @@ function SidebarContent() {
 								...item,
 								disabled: !isVerified && item.path !== "/dashboard/profile",
 							}}
+							collapsed={collapsed}
 						/>
 					</li>
 				))}
@@ -95,14 +109,71 @@ function SidebarContent() {
 	);
 }
 
-export default function Sidebar() {
+function useCollapsedState() {
+	const [collapsed, setCollapsed] = useState(false);
+	const [ready, setReady] = useState(false);
+
+	useEffect(() => {
+		const stored = localStorage.getItem(STORAGE_KEY);
+		if (stored === "true") setCollapsed(true);
+		setReady(true);
+	}, []);
+
+	const toggle = () => {
+		setCollapsed((prev) => {
+			const next = !prev;
+			localStorage.setItem(STORAGE_KEY, String(next));
+			return next;
+		});
+	};
+
+	return { collapsed, ready, toggle };
+}
+
+export default function Sidebar({ children }: { children: React.ReactNode }) {
 	const { showMobileSidebar, setShowMobileSidebar, isMobile } = useAppContext();
+	const { collapsed, ready, toggle } = useCollapsedState();
 
 	return (
 		<>
 			{/* Desktop Sidebar */}
-			<div className="hidden md:block top-[70px] bottom-[15px] left-[15px] fixed w-[230px] overflow-hidden rounded-xl bg-background border">
-				<SidebarContent />
+			<div
+				className={cn(
+					"hidden md:flex flex-col top-[70px] bottom-[15px] left-[15px] fixed overflow-hidden border rounded-xl bg-background transition-[width] duration-200",
+					collapsed ? "w-[68px]" : "w-[230px]",
+					!ready && "opacity-0",
+				)}
+			>
+				<div className="flex-1 overflow-y-auto overflow-x-hidden">
+					<SidebarContent collapsed={collapsed} />
+				</div>
+				<div
+					className={cn(
+						"border-t p-2",
+						collapsed ? "flex justify-center" : "flex justify-end",
+					)}
+				>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="size-8"
+								onClick={toggle}
+								aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+							>
+								{collapsed ? (
+									<PanelLeftOpen className="size-4" />
+								) : (
+									<PanelLeftClose className="size-4" />
+								)}
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent side="right">
+							{collapsed ? "Expand" : "Collapse"}
+						</TooltipContent>
+					</Tooltip>
+				</div>
 			</div>
 
 			{/* Mobile Sidebar */}
@@ -114,6 +185,15 @@ export default function Sidebar() {
 					<SidebarContent />
 				</SheetContent>
 			</Sheet>
+
+			<div
+				className={cn(
+					"mt-[70px] transition-[margin] duration-200",
+					collapsed ? "md:ml-[98px]" : "md:ml-[260px]",
+				)}
+			>
+				{children}
+			</div>
 		</>
 	);
 }

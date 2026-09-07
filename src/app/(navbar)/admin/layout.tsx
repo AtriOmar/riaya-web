@@ -21,8 +21,7 @@ export default async function AdminLayout({
 			accessIdMinInclusive={3}
 			onAccessDenied="notFound"
 		>
-			<AdminSidebar />
-			<div className="mt-[70px] md:ml-[260px]">{children}</div>
+			<AdminSidebar>{children}</AdminSidebar>
 		</PrivateRoute>
 	);
 }

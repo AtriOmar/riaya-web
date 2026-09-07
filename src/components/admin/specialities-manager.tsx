@@ -20,6 +20,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 import {
 	deleteApiSpecialities,
@@ -29,7 +30,7 @@ import {
 } from "@/services/generated/miscellaneous/miscellaneous";
 
 export default function SpecialitiesManager() {
-	const { data: specialities, mutate } = useGetApiSpecialities();
+	const { data: specialities, mutate, isLoading } = useGetApiSpecialities();
 	const [newEnName, setNewEnName] = useState("");
 	const [newFrName, setNewFrName] = useState("");
 	const [newArName, setNewArName] = useState("");
@@ -115,14 +116,40 @@ export default function SpecialitiesManager() {
 	}
 
 	const columns: Column<GetApiSpecialities200Item>[] = [
-		{ key: "enName", header: "English Name", cell: (row) => row.enName ?? "—" },
-		{ key: "frName", header: "French Name", cell: (row) => row.frName ?? "—" },
-		{ key: "arName", header: "Arabic Name", cell: (row) => row.arName ?? "—" },
-		{ key: "slug", header: "Slug", cell: (row) => row.slug ?? "—" },
+		{
+			key: "enName",
+			header: "English Name",
+			skeleton: <Skeleton className="h-4 w-28" />,
+			cell: (row) => row.enName ?? "—",
+		},
+		{
+			key: "frName",
+			header: "French Name",
+			skeleton: <Skeleton className="h-4 w-28" />,
+			cell: (row) => row.frName ?? "—",
+		},
+		{
+			key: "arName",
+			header: "Arabic Name",
+			skeleton: <Skeleton className="h-4 w-32" />,
+			cell: (row) => row.arName ?? "—",
+		},
+		{
+			key: "slug",
+			header: "Slug",
+			skeleton: <Skeleton className="h-4 w-24" />,
+			cell: (row) => row.slug ?? "—",
+		},
 		{
 			key: "actions",
 			header: "Actions",
 			className: "text-right",
+			skeleton: (
+				<div className="flex justify-end gap-2">
+					<Skeleton className="size-8 rounded-md" />
+					<Skeleton className="size-8 rounded-md" />
+				</div>
+			),
 			cell: (row) => (
 				<div className="flex justify-end gap-2">
 					<Button
@@ -231,6 +258,7 @@ export default function SpecialitiesManager() {
 			<DataTable
 				columns={columns}
 				data={specialities ?? []}
+				isLoading={isLoading}
 				keyExtractor={(row) => String(row.id)}
 				emptyMessage={
 					<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">

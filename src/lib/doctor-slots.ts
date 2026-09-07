@@ -141,3 +141,32 @@ export function listAvailableSlotsForDoctor(
 	}
 	return results;
 }
+
+/**
+ * List every available 30-min slot for a doctor on a specific calendar day.
+ * Returns slots ordered by start time. Slots earlier than `currentTime` are
+ * skipped so we never surface past availability.
+ */
+export function listSlotsForDay(
+	availability: Availability,
+	appointments: { start: Date | null; end: Date | null }[],
+	currentTime: Date,
+	day: Date,
+): { start: Date; end: Date }[] {
+	const results: { start: Date; end: Date }[] = [];
+	const dayIndex = normalizeDayIndex(day);
+	const slots = availability[dayIndex] || [];
+	for (const slot of slots) {
+		let startMinutes = slot.start;
+		while (startMinutes + 30 <= slot.end) {
+			const start = new Date(day);
+			start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+			const end = new Date(start.getTime() + 30 * 60 * 1000);
+			if (start >= currentTime && isSlotAvailable(start, end, appointments)) {
+				results.push({ start, end });
+			}
+			startMinutes += 30;
+		}
+	}
+	return results;
+}
