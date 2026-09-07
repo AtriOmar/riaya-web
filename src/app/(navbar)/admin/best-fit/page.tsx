@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import BestFitCalendar from "@/components/admin/best-fit/best-fit-calendar";
 import DayCalendar from "@/components/admin/best-fit/day-calendar";
+import DoctorsMap from "@/components/admin/best-fit/doctors-map";
 import BestFitFilterBar, {
 	type BestFitFilters,
 } from "@/components/admin/best-fit/filter-bar";
 import AdminLayout from "@/components/layouts/admin-layout";
+import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
 import { useBestFitRange } from "@/hooks/use-best-fit-range";
 import {
 	useGetApiCities,
@@ -52,11 +54,14 @@ export default function AdminBestFitPage() {
 	const urlLat = searchParams.get("lat");
 	const urlLong = searchParams.get("long");
 	const urlDay = searchParams.get("day");
+	const urlView = searchParams.get("view");
 
 	const [currentDate, setCurrentDate] = useState(() => {
 		const day = parseDateOnly(urlDay);
 		return day ?? new Date();
 	});
+
+	const viewMode: "calendar" | "map" = urlView === "map" ? "map" : "calendar";
 
 	const { data: specialities } = useGetApiSpecialities();
 	const { data: cities } = useGetApiCities();
@@ -74,7 +79,6 @@ export default function AdminBestFitPage() {
 			specialityId: spec?.id ?? null,
 			specialitySlug: spec?.slug ?? spec?.enName ?? null,
 			cityId: city?.id ?? null,
-			// Prefer explicit map/city coords from URL; fall back to city center.
 			lat: latFromUrl ?? city?.latitude ?? null,
 			long: longFromUrl ?? city?.longitude ?? null,
 		};
@@ -88,6 +92,7 @@ export default function AdminBestFitPage() {
 				lat: number | null;
 				long: number | null;
 				day: string | null;
+				view: "calendar" | "map" | null;
 			}>,
 		) => {
 			const p = new URLSearchParams(searchParams.toString());
@@ -110,6 +115,10 @@ export default function AdminBestFitPage() {
 			if ("day" in next) {
 				if (!next.day) p.delete("day");
 				else p.set("day", next.day);
+			}
+			if ("view" in next) {
+				if (!next.view || next.view === "calendar") p.delete("view");
+				else p.set("view", next.view);
 			}
 			router.replace(`?${p.toString()}`, { scroll: false });
 		},
@@ -152,6 +161,25 @@ export default function AdminBestFitPage() {
 		return data.find((d) => d.date === key)?.doctors ?? [];
 	}, [selectedDay, data]);
 
+	const mapDoctors: BestFitRangeDoctor[] = useMemo(() => {
+		if (selectedDay) return selectedDayDoctors;
+		if (!data) return [];
+		return data.flatMap((d) => d.doctors);
+	}, [selectedDay, selectedDayDoctors, data]);
+
+	const mapScopeLabel = useMemo(() => {
+		if (selectedDay) {
+			return selectedDay.toLocaleDateString("en-GB", {
+				weekday: "short",
+				day: "2-digit",
+				month: "short",
+			});
+		}
+		return "this week";
+	}, [selectedDay]);
+
+	const scheduleDate = selectedDay ?? currentDate;
+
 	function openDay(date: Date) {
 		setCurrentDate(date);
 		updateUrl({ day: toDateOnly(date) });
@@ -174,14 +202,33 @@ export default function AdminBestFitPage() {
 		if (filters.cityId) params.set("cityId", String(filters.cityId));
 		if (filters.lat != null) params.set("lat", String(filters.lat));
 		if (filters.long != null) params.set("long", String(filters.long));
+		if (viewMode === "map") params.set("view", "map");
 		router.push(`/admin/best-fit/doctor/${doctorId}?${params.toString()}`);
 	}
 
 	return (
 		<AdminLayout title="Best Fit Finder">
-			<BestFitFilterBar filters={filters} onChange={handleFiltersChange} />
+			<BestFitFilterBar
+				filters={filters}
+				onChange={handleFiltersChange}
+				viewMode={viewMode}
+				onViewChange={(next) => updateUrl({ view: next })}
+			/>
 
-			{selectedDay ? (
+			{viewMode === "map" ? (
+				<DoctorsMap
+					patient={
+						filters.lat != null && filters.long != null
+							? { lat: filters.lat, lng: filters.long }
+							: null
+					}
+					doctors={mapDoctors}
+					isLoading={isLoading}
+					filtersReady={filtersReady}
+					scopeLabel={mapScopeLabel}
+					onSelectDoctor={(id) => goToDoctor(id, scheduleDate)}
+				/>
+			) : selectedDay ? (
 				<DayCalendar
 					key={toDateOnly(selectedDay)}
 					date={selectedDay}

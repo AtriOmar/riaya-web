@@ -12,6 +12,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { TUNISIA_CENTER } from "@/lib/tunisia-map";
 
 const CabinetLocationMap = dynamic(
 	() =>
@@ -27,8 +28,6 @@ const CabinetLocationMap = dynamic(
 		),
 	},
 );
-
-const DEFAULT_CENTER = { lat: 33.8869, lng: 9.5375 }; // Tunisia
 
 type Props = {
 	open: boolean;
@@ -56,7 +55,7 @@ export default function LocationPickerDialog({
 		setDraft(value ?? initialCenter ?? null);
 	}, [open, value, initialCenter]);
 
-	const center = draft ?? initialCenter ?? DEFAULT_CENTER;
+	const center = draft ?? initialCenter ?? TUNISIA_CENTER;
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
