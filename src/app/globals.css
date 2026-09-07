@@ -432,7 +432,11 @@ html {
 .rbc-overlay .rbc-event {
 	border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent) !important;
 	border-radius: calc(var(--radius) * 0.6) !important;
-	background-color: color-mix(in oklab, var(--primary) 10%, transparent) !important;
+	background-color: color-mix(
+		in oklab,
+		var(--primary) 10%,
+		transparent
+	) !important;
 	padding: 0.375rem 0.5rem !important;
 	color: var(--primary) !important;
 	font-size: 0.75rem !important;
@@ -443,7 +447,11 @@ html {
 
 .rbc-overlay .rbc-event:hover,
 .rbc-overlay .rbc-event:focus {
-	background-color: color-mix(in oklab, var(--primary) 18%, transparent) !important;
+	background-color: color-mix(
+		in oklab,
+		var(--primary) 18%,
+		transparent
+	) !important;
 }
 
 .rbc-overlay .rbc-event-content {
@@ -451,7 +459,6 @@ html {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-
 
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
