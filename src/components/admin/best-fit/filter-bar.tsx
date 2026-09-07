@@ -4,6 +4,7 @@ import { Check, ChevronsUpDown, MapPin, Stethoscope } from "lucide-react";
 import { useMemo, useState } from "react";
 import LocationPickerDialog from "@/components/admin/best-fit/location-picker-dialog";
 import LocationPreview from "@/components/admin/best-fit/location-preview";
+import { BestFitViewToggle } from "@/components/admin/best-fit/doctors-map";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -39,13 +40,20 @@ export type BestFitFilters = {
 type Props = {
 	filters: BestFitFilters;
 	onChange: (next: BestFitFilters) => void;
+	viewMode: "calendar" | "map";
+	onViewChange: (next: "calendar" | "map") => void;
 };
 
 function formatCoords(lat: number, lng: number) {
 	return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }
 
-export default function BestFitFilterBar({ filters, onChange }: Props) {
+export default function BestFitFilterBar({
+	filters,
+	onChange,
+	viewMode,
+	onViewChange,
+}: Props) {
 	const { data: specialities, isLoading: specialitiesLoading } =
 		useGetApiSpecialities();
 	const { data: cities, isLoading: citiesLoading } = useGetApiCities();
@@ -125,7 +133,7 @@ export default function BestFitFilterBar({ filters, onChange }: Props) {
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center gap-3 p-4 border rounded-xl bg-card">
+			<div className="flex w-full flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
 				{/* Speciality */}
 				<div className="flex flex-col gap-1.5">
 					<label
@@ -262,19 +270,9 @@ export default function BestFitFilterBar({ filters, onChange }: Props) {
 					/>
 				</div>
 
-				{/* Info */}
-				<div className="ml-auto text-xs text-muted-foreground max-w-xs text-right">
-					{filters.specialityId && hasCustomPin ? (
-						<span>
-							Top best-fit doctors near this pin. Click a day for the full day
-							calendar.
-						</span>
-					) : (
-						<span>
-							Select a speciality and a location (city or map pin) to load the
-							calendar.
-						</span>
-					)}
+				{/* View toggle */}
+				<div className="ml-auto">
+					<BestFitViewToggle value={viewMode} onChange={onViewChange} />
 				</div>
 			</div>
 

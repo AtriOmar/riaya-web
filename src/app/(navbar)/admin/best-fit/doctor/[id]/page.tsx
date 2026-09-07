@@ -78,11 +78,13 @@ export default function AdminBestFitDoctorPage() {
 		const lat = searchParams.get("lat");
 		const long = searchParams.get("long");
 		const day = searchParams.get("from");
+		const view = searchParams.get("view");
 		if (specialityId) p.set("specialityId", specialityId);
 		if (cityId) p.set("cityId", cityId);
 		if (lat) p.set("lat", lat);
 		if (long) p.set("long", long);
 		if (day) p.set("day", day);
+		if (view) p.set("view", view);
 		const qs = p.toString();
 		return `/admin/best-fit${qs ? `?${qs}` : ""}`;
 	}, [searchParams]);

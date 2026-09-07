@@ -2,6 +2,7 @@
 
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
+import { TUNISIA_CENTER } from "@/lib/tunisia-map";
 import { cn } from "@/lib/utils";
 
 const CabinetLocationMap = dynamic(
@@ -19,8 +20,6 @@ const CabinetLocationMap = dynamic(
 	},
 );
 
-const DEFAULT_CENTER = { lat: 33.8869, lng: 9.5375 }; // Tunisia
-
 type Props = {
 	lat: number | null;
 	lng: number | null;
@@ -35,7 +34,7 @@ export default function LocationPreview({
 	className,
 }: Props) {
 	const hasPin = lat != null && lng != null;
-	const center = hasPin ? { lat, lng } : DEFAULT_CENTER;
+	const center = hasPin ? { lat, lng } : TUNISIA_CENTER;
 
 	return (
 		<button

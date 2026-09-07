@@ -1,11 +1,13 @@
 "use client";
 
 import type { Map as LeafletMap } from "leaflet";
+import L from "leaflet";
 import { useEffect, useRef } from "react";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-// Leaflet icon fix for Next.js
-import L from "leaflet";
+import TunisiaDimOverlay from "@/components/maps/tunisia-dim-overlay";
+import { TUNISIA_BOUNDS, TUNISIA_MIN_ZOOM } from "@/lib/tunisia-map";
+import { cn } from "@/lib/utils";
 
 // Fix for default marker icon in Next.js
 const iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
@@ -33,8 +35,6 @@ const SmallIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
-
-import { cn } from "@/lib/utils";
 
 type Props = {
 	center: { lat: number; lng: number };
@@ -126,7 +126,9 @@ export default function CabinetLocationMap({
 			<MapContainer
 				center={[center.lat, center.lng]}
 				zoom={zoom}
-				minZoom={5}
+				minZoom={TUNISIA_MIN_ZOOM}
+				maxBounds={TUNISIA_BOUNDS}
+				maxBoundsViscosity={1}
 				scrollWheelZoom={interactive}
 				dragging={interactive}
 				doubleClickZoom={interactive}
@@ -156,6 +158,7 @@ export default function CabinetLocationMap({
 					/>
 				)}
 				{interactive && <ClickHandler onMapClick={onMapClick} />}
+				<TunisiaDimOverlay />
 			</MapContainer>
 		</div>
 	);
