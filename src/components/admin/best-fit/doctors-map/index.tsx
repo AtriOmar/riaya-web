@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Map as MapIcon, MapPin } from "lucide-react";
+import { CalendarDays, Map as MapIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { CubeLoader } from "@/components/loaders";
@@ -21,7 +21,6 @@ type Props = {
 	patient: { lat: number; lng: number } | null;
 	doctors: BestFitRangeDoctor[];
 	isLoading?: boolean;
-	filtersReady: boolean;
 	/** Label for the scope, e.g. "this week" or a date. */
 	scopeLabel: string;
 	onSelectDoctor: (doctorId: number) => void;
@@ -48,7 +47,6 @@ export default function DoctorsMap({
 	patient,
 	doctors,
 	isLoading,
-	filtersReady,
 	scopeLabel,
 	onSelectDoctor,
 }: Props) {
@@ -62,19 +60,7 @@ export default function DoctorsMap({
 				</div>
 			)}
 
-			{!filtersReady && !isLoading && (
-				<div className="z-10 absolute inset-0 flex flex-col justify-center items-center bg-background/80 rounded-xl backdrop-blur-sm gap-2 text-muted-foreground text-sm min-h-[420px]">
-					<MapPin className="size-8 opacity-40" />
-					<p>Pick a speciality and a location to see doctors on the map.</p>
-				</div>
-			)}
-
-			<div
-				className={cn(
-					"border rounded-xl overflow-hidden bg-card shadow-sm",
-					!filtersReady && "min-h-[420px]",
-				)}
-			>
+			<div className="border rounded-xl overflow-hidden bg-card shadow-sm">
 				<div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b bg-card/80">
 					<div className="flex items-center gap-2 text-sm">
 						<MapIcon className="size-4 text-muted-foreground" />
@@ -107,7 +93,7 @@ export default function DoctorsMap({
 				</div>
 
 				<div className="h-[min(70vh,560px)] w-full">
-					{filtersReady && patient ? (
+					{patient ? (
 						mappable.length === 0 && !isLoading ? (
 							<div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
 								<CalendarDays className="size-8 opacity-40" />
@@ -126,7 +112,7 @@ export default function DoctorsMap({
 				</div>
 			</div>
 
-			{filtersReady && !isLoading && (
+			{mappable.length > 0 && !isLoading && (
 				<p className="mt-2 text-muted-foreground text-xs">
 					Click a doctor marker to open their schedule. Nearby doctors merge
 					into a numbered cluster when zoomed out, and split again when you zoom

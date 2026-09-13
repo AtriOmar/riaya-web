@@ -112,6 +112,10 @@ export async function POST(req: NextRequest) {
 		if (!row) return apiError("INTERNAL_ERROR");
 
 		// Fire-and-forget recording start (don't block the socket response).
+		// Skip for simulated browser calls (CA_SIM* SIDs — no real Twilio call).
+		if (parsed.data.callSid.startsWith("CA_SIM")) {
+			return json(row, 201);
+		}
 		startTwilioRecording(parsed.data.callSid)
 			.then(async (recordingSid) => {
 				if (recordingSid) {

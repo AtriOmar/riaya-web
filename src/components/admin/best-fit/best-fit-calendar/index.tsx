@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarX, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import TimeGutter from "./time-gutter";
 type Props = {
 	data: BestFitRangeDay[] | undefined;
 	isLoading: boolean;
-	filtersReady: boolean;
 	currentDate: Date;
 	onNavigate: (date: Date) => void;
 	onSelectDate: (date: Date) => void;
@@ -35,7 +34,6 @@ type Props = {
 export default function BestFitCalendar({
 	data,
 	isLoading,
-	filtersReady,
 	currentDate,
 	onNavigate,
 	onSelectDate,
@@ -72,6 +70,11 @@ export default function BestFitCalendar({
 		for (const day of data ?? []) map.set(day.date, day.doctors.length);
 		return map;
 	}, [data]);
+
+	const hasDoctors = useMemo(
+		() => (data ?? []).some((day) => day.doctors.length > 0),
+		[data],
+	);
 
 	const timeRows = useMemo(() => {
 		let min: number | null = null;
@@ -122,19 +125,7 @@ export default function BestFitCalendar({
 				</div>
 			)}
 
-			{!filtersReady && !isLoading && (
-				<div className="z-10 absolute inset-0 flex flex-col justify-center items-center bg-background/80 rounded-xl backdrop-blur-sm gap-2 text-muted-foreground text-sm min-h-[300px]">
-					<span className="text-2xl">🗓️</span>
-					<p>Pick a speciality and a location to load the calendar.</p>
-				</div>
-			)}
-
-			<div
-				className={cn(
-					"border rounded-xl overflow-hidden bg-card shadow-sm",
-					!filtersReady && "min-h-[300px]",
-				)}
-			>
+			<div className="border rounded-xl overflow-hidden bg-card shadow-sm">
 				<div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b bg-card/80">
 					<div className="flex items-center gap-1.5">
 						<Button
@@ -167,58 +158,68 @@ export default function BestFitCalendar({
 						{weekLabel}
 					</span>
 
-					<div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
-						<span className="flex items-center gap-1.5">
-							<span className="inline-block size-3 rounded-sm bg-primary/15 border border-primary/25" />
-							Available
-						</span>
-						<span className="flex items-center gap-1.5">
-							<span className="inline-block size-3 rounded-sm bg-green-500/20 border border-green-500/25" />
-							Many options
-						</span>
-					</div>
+					{hasDoctors ? (
+						<div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
+							<span className="flex items-center gap-1.5">
+								<span className="inline-block size-3 rounded-sm bg-primary/15 border border-primary/25" />
+								Available
+							</span>
+							<span className="flex items-center gap-1.5">
+								<span className="inline-block size-3 rounded-sm bg-green-500/20 border border-green-500/25" />
+								Many options
+							</span>
+						</div>
+					) : (
+						<div className="hidden sm:block w-[140px]" />
+					)}
 				</div>
 
-				<div className="overflow-x-auto">
-					<div
-						style={{
-							minWidth: expandedDayKey ? 720 : 580,
-							transition: "min-width 200ms ease",
-						}}
-					>
+				{!hasDoctors && !isLoading ? (
+					<div className="flex flex-col justify-center items-center py-16 text-muted-foreground text-center">
+						<CalendarX className="opacity-40 mb-3 size-10" />
+						<p className="font-semibold text-foreground">
+							No doctors available this week
+						</p>
+						<p className="mt-1 text-sm">
+							Try another week or adjust your filters.
+						</p>
+					</div>
+				) : hasDoctors ? (
+					<div className="overflow-x-auto">
 						<div
-							className="grid sticky top-0 z-10 bg-card transition-[grid-template-columns] duration-200"
-							style={{ gridTemplateColumns: gridCols }}
+							style={{
+								minWidth: expandedDayKey ? 720 : 580,
+								transition: "min-width 200ms ease",
+							}}
 						>
 							<div
-								className="border-b border-r border-border bg-muted/20"
-								style={{ width: TIME_GUTTER_W }}
-							/>
-							{weekDays.map((day) => {
-								const key = toDateKey(day);
-								const expanded = key === expandedDayKey;
-								return (
-									<DayHeader
-										key={key}
-										day={day}
-										count={countsByDate.get(key) ?? 0}
-										isToday={key === todayKey}
-										expanded={expanded}
-										onClick={() => onSelectDate(day)}
-										onToggleExpand={() =>
-											setExpandedDayKey(expanded ? null : key)
-										}
-									/>
-								);
-							})}
-						</div>
-
-						{timeRows.length === 0 && filtersReady && !isLoading ? (
-							<div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
-								No doctors available this week.
+								className="grid sticky top-0 z-10 bg-card transition-[grid-template-columns] duration-200"
+								style={{ gridTemplateColumns: gridCols }}
+							>
+								<div
+									className="border-b border-r border-border bg-muted/20"
+									style={{ width: TIME_GUTTER_W }}
+								/>
+								{weekDays.map((day) => {
+									const key = toDateKey(day);
+									const expanded = key === expandedDayKey;
+									return (
+										<DayHeader
+											key={key}
+											day={day}
+											count={countsByDate.get(key) ?? 0}
+											isToday={key === todayKey}
+											expanded={expanded}
+											onClick={() => onSelectDate(day)}
+											onToggleExpand={() =>
+												setExpandedDayKey(expanded ? null : key)
+											}
+										/>
+									);
+								})}
 							</div>
-						) : (
-							timeRows.map((minutes) => {
+
+							{timeRows.map((minutes) => {
 								const isHour = minutes % 60 === 0;
 								return (
 									<div
@@ -249,13 +250,15 @@ export default function BestFitCalendar({
 										})}
 									</div>
 								);
-							})
-						)}
+							})}
+						</div>
 					</div>
-				</div>
+				) : (
+					<div className="min-h-[240px]" />
+				)}
 			</div>
 
-			{filtersReady && !isLoading && (
+			{hasDoctors && !isLoading && (
 				<p className="mt-2 text-muted-foreground text-xs">
 					Click any day or time cell to open the full day calendar · Click a
 					doctor chip to view their full schedule · Expand a day to see more

@@ -3,36 +3,10 @@
 import { Phone, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import type { CallData } from "@/hooks/use-realtime-socket";
+import { decodeUlaw } from "@/lib/ulaw";
 import { cn } from "@/lib/utils";
 import { getTimelinePreview, useCallDuration } from "./call-helpers";
 import CallTranscript from "./call-transcript";
-
-// µ-law to 16-bit PCM lookup table (ITU-T G.711)
-const ULAW_DECODE_TABLE = new Int16Array(256);
-(() => {
-	for (let i = 0; i < 256; i++) {
-		const mu = ~i & 0xff;
-		const sign = mu & 0x80;
-		const exponent = (mu >> 4) & 0x07;
-		const mantissa = mu & 0x0f;
-		let sample = ((mantissa << 3) + 0x84) << exponent;
-		sample -= 0x84;
-		ULAW_DECODE_TABLE[i] = sign ? -sample : sample;
-	}
-})();
-
-function decodeUlaw(base64Data: string): Float32Array {
-	const binaryStr = atob(base64Data);
-	const bytes = new Uint8Array(binaryStr.length);
-	for (let i = 0; i < binaryStr.length; i++) {
-		bytes[i] = binaryStr.charCodeAt(i);
-	}
-	const pcm = new Float32Array(bytes.length);
-	for (let i = 0; i < bytes.length; i++) {
-		pcm[i] = ULAW_DECODE_TABLE[bytes[i]] / 32768;
-	}
-	return pcm;
-}
 
 type Props = {
 	call: CallData;

@@ -9,6 +9,7 @@ import DoctorsMap from "@/components/admin/best-fit/doctors-map";
 import BestFitFilterBar, {
 	type BestFitFilters,
 } from "@/components/admin/best-fit/filter-bar";
+import BestFitFiltersPrompt from "@/components/admin/best-fit/filters-prompt";
 import AdminLayout from "@/components/layouts/admin-layout";
 import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
 import { useBestFitRange } from "@/hooks/use-best-fit-range";
@@ -202,6 +203,8 @@ export default function AdminBestFitPage() {
 		if (filters.cityId) params.set("cityId", String(filters.cityId));
 		if (filters.lat != null) params.set("lat", String(filters.lat));
 		if (filters.long != null) params.set("long", String(filters.long));
+		// Preserve day-view only when already on a day (not week calendar).
+		if (urlDay) params.set("day", urlDay);
 		if (viewMode === "map") params.set("view", "map");
 		router.push(`/admin/best-fit/doctor/${doctorId}?${params.toString()}`);
 	}
@@ -215,7 +218,9 @@ export default function AdminBestFitPage() {
 				onViewChange={(next) => updateUrl({ view: next })}
 			/>
 
-			{viewMode === "map" ? (
+			{!filtersReady ? (
+				<BestFitFiltersPrompt filters={filters} viewMode={viewMode} />
+			) : viewMode === "map" ? (
 				<DoctorsMap
 					patient={
 						filters.lat != null && filters.long != null
@@ -224,7 +229,6 @@ export default function AdminBestFitPage() {
 					}
 					doctors={mapDoctors}
 					isLoading={isLoading}
-					filtersReady={filtersReady}
 					scopeLabel={mapScopeLabel}
 					onSelectDoctor={(id) => goToDoctor(id, scheduleDate)}
 				/>
@@ -242,7 +246,6 @@ export default function AdminBestFitPage() {
 				<BestFitCalendar
 					data={data}
 					isLoading={isLoading}
-					filtersReady={filtersReady}
 					currentDate={currentDate}
 					onNavigate={setCurrentDate}
 					onSelectDate={openDay}
