@@ -1,5 +1,9 @@
 import { eq } from "drizzle-orm";
 import { auth } from "../../lib/auth";
+import {
+	CityLocationAllocator,
+	hasCityBounds,
+} from "../../lib/tunisia-city-bounds";
 import { user } from "../auth-schema";
 import { db } from "../index";
 import {
@@ -152,9 +156,17 @@ export async function seedDoctors() {
 
 	let insertedProfiles = 0;
 	let insertedApplications = 0;
+	const locations = new CityLocationAllocator();
 
 	for (const { raw, index, cityId, specialityId } of validDoctors) {
 		const city = cityBySlug.get(normalizeSlug(raw.citySlug));
+		const citySlug = normalizeSlug(raw.citySlug);
+		const cabinetLocation = hasCityBounds(citySlug)
+			? locations.next(citySlug)
+			: {
+					lat: city?.latitude ?? null,
+					lng: city?.longitude ?? null,
+				};
 		const firstName = raw.firstName?.trim() ?? "";
 		const lastName = raw.lastName?.trim() ?? "";
 		const fullName = `${firstName} ${lastName}`.trim() || `Doctor ${index + 1}`;
@@ -183,8 +195,8 @@ export async function seedDoctors() {
 			address: raw.address?.trim() ?? null,
 			cabinetName: raw.cabinetName?.trim() ?? null,
 			cabinetCityId: cityId,
-			cabinetLongitude: city?.longitude ?? null,
-			cabinetLatitude: city?.latitude ?? null,
+			cabinetLongitude: cabinetLocation.lng,
+			cabinetLatitude: cabinetLocation.lat,
 			specialityId,
 		};
 
@@ -207,8 +219,8 @@ export async function seedDoctors() {
 				lastName,
 				cabinetName: raw.cabinetName?.trim() ?? null,
 				cabinetCityId: cityId,
-				cabinetLongitude: city?.longitude ?? null,
-				cabinetLatitude: city?.latitude ?? null,
+				cabinetLongitude: cabinetLocation.lng,
+				cabinetLatitude: cabinetLocation.lat,
 				status: "verified",
 				tin: raw.tin?.trim() ?? null,
 				specialityId,
