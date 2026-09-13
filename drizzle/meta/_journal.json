@@ -15,6 +15,13 @@
       "when": 1789301453070,
       "tag": "0001_create_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789301842687,
+      "tag": "0002_invoice_whatsapp_pdf",
+      "breakpoints": true
     }
   ]
 }

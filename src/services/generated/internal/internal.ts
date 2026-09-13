@@ -5,75 +5,68 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-import type { Key } from "swr";
-import type { SWRMutationConfiguration } from "swr/mutation";
-import useSWRMutation from "swr/mutation";
-import { customInstance } from "../../api";
-import type { PostApiInternalReviewsProcessJobBody } from "../api.schemas";
+import type {
+  Key
+} from 'swr';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+import useSWRMutation from 'swr/mutation';
+import type {
+  SWRMutationConfiguration
+} from 'swr/mutation';
 
-/**
+import type {
+  PostApiInternalReviewsProcessJobBody
+} from '../api.schemas';
+
+import { customInstance } from '../../api';
+
+
+
+  type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+ /**
  * @summary Process a delayed review job (Internal)
  */
 export const postApiInternalReviewsProcessJob = (
-	postApiInternalReviewsProcessJobBody?: PostApiInternalReviewsProcessJobBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<unknown | null>(
-		{
-			url: `/api/internal/reviews/process-job`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiInternalReviewsProcessJobBody,
-		},
-		options,
-	);
-};
+    postApiInternalReviewsProcessJobBody?: PostApiInternalReviewsProcessJobBody,
+ options?: SecondParameter<typeof customInstance>) => {
+    return customInstance<unknown | null>(
+    {url: `/api/internal/reviews/process-job`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiInternalReviewsProcessJobBody
+    },
+    options);
+  }
 
-export const getPostApiInternalReviewsProcessJobMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiInternalReviewsProcessJobBody | undefined },
-	) => {
-		return postApiInternalReviewsProcessJob(arg, options);
-	};
-};
-export const getPostApiInternalReviewsProcessJobMutationKey = () =>
-	[`/api/internal/reviews/process-job`] as const;
 
-export type PostApiInternalReviewsProcessJobMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>
->;
+
+export const getPostApiInternalReviewsProcessJobMutationFetcher = ( options?: SecondParameter<typeof customInstance>) => {
+  return (_: Key, { arg }: { arg: PostApiInternalReviewsProcessJobBody | undefined }) => {
+    return postApiInternalReviewsProcessJob(arg, options);
+  }
+}
+export const getPostApiInternalReviewsProcessJobMutationKey = () => [`/api/internal/reviews/process-job`] as const;
+
+export type PostApiInternalReviewsProcessJobMutationResult = NonNullable<Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>>
 
 /**
  * @summary Process a delayed review job (Internal)
  */
-export const usePostApiInternalReviewsProcessJob = <
-	TError = unknown,
->(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>,
-		TError,
-		Key,
-		PostApiInternalReviewsProcessJobBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
+export const usePostApiInternalReviewsProcessJob = <TError = unknown>(
+   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>, TError, Key, PostApiInternalReviewsProcessJobBody | undefined, Awaited<ReturnType<typeof postApiInternalReviewsProcessJob>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+) => {
 
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiInternalReviewsProcessJobMutationKey();
-	const swrFn =
-		getPostApiInternalReviewsProcessJobMutationFetcher(requestOptions);
+  const {swr: swrOptions, request: requestOptions} = options ?? {}
 
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+  const swrKey = swrOptions?.swrKey ?? getPostApiInternalReviewsProcessJobMutationKey();
+  const swrFn = getPostApiInternalReviewsProcessJobMutationFetcher(requestOptions);
 
-	return {
-		swrKey,
-		...query,
-	};
-};
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}

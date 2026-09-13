@@ -40,6 +40,10 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	INVOICE_NOT_FOUND: "Invoice not found.",
 	INVOICE_CANCELLED: "This invoice is cancelled and cannot be modified.",
 	PAYMENT_NOT_FOUND: "Payment not found.",
+	PATIENT_PHONE_REQUIRED:
+		"This patient has no phone number. Add one before sending on WhatsApp.",
+	WHATSAPP_SEND_FAILED:
+		"Failed to send WhatsApp message. Check your WhatsApp connection.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

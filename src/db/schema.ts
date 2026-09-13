@@ -252,6 +252,8 @@ export const invoice = pgTable(
 		// cash | transfer (set when any amount has been paid)
 		paymentMethod: varchar("payment_method", { length: 50 }),
 		notes: text("notes"),
+		pdfUrl: varchar("pdf_url", { length: 1024 }),
+		sentViaWhatsapp: boolean("sent_via_whatsapp").default(false),
 		issuedAt: timestamp("issued_at").defaultNow(),
 		paidAt: timestamp("paid_at"),
 		createdAt: timestamp("created_at").defaultNow(),

@@ -5,71 +5,69 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-import type { Key } from "swr";
-import type { SWRMutationConfiguration } from "swr/mutation";
-import useSWRMutation from "swr/mutation";
-import { customInstance } from "../../api";
 import type {
-	PostApiReviewsSubmit200,
-	PostApiReviewsSubmitBody,
-} from "../api.schemas";
+  Key
+} from 'swr';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+import useSWRMutation from 'swr/mutation';
+import type {
+  SWRMutationConfiguration
+} from 'swr/mutation';
 
-/**
+import type {
+  PostApiReviewsSubmit200,
+  PostApiReviewsSubmitBody
+} from '../api.schemas';
+
+import { customInstance } from '../../api';
+
+
+
+  type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+ /**
  * @summary Submit a review via magic link
  */
 export const postApiReviewsSubmit = (
-	postApiReviewsSubmitBody?: PostApiReviewsSubmitBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiReviewsSubmit200>(
-		{
-			url: `/api/reviews/submit`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiReviewsSubmitBody,
-		},
-		options,
-	);
-};
+    postApiReviewsSubmitBody?: PostApiReviewsSubmitBody,
+ options?: SecondParameter<typeof customInstance>) => {
+    return customInstance<PostApiReviewsSubmit200>(
+    {url: `/api/reviews/submit`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiReviewsSubmitBody
+    },
+    options);
+  }
 
-export const getPostApiReviewsSubmitMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, { arg }: { arg: PostApiReviewsSubmitBody | undefined }) => {
-		return postApiReviewsSubmit(arg, options);
-	};
-};
-export const getPostApiReviewsSubmitMutationKey = () =>
-	[`/api/reviews/submit`] as const;
 
-export type PostApiReviewsSubmitMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiReviewsSubmit>>
->;
+
+export const getPostApiReviewsSubmitMutationFetcher = ( options?: SecondParameter<typeof customInstance>) => {
+  return (_: Key, { arg }: { arg: PostApiReviewsSubmitBody | undefined }) => {
+    return postApiReviewsSubmit(arg, options);
+  }
+}
+export const getPostApiReviewsSubmitMutationKey = () => [`/api/reviews/submit`] as const;
+
+export type PostApiReviewsSubmitMutationResult = NonNullable<Awaited<ReturnType<typeof postApiReviewsSubmit>>>
 
 /**
  * @summary Submit a review via magic link
  */
-export const usePostApiReviewsSubmit = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiReviewsSubmit>>,
-		TError,
-		Key,
-		PostApiReviewsSubmitBody | undefined,
-		Awaited<ReturnType<typeof postApiReviewsSubmit>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
+export const usePostApiReviewsSubmit = <TError = unknown>(
+   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof postApiReviewsSubmit>>, TError, Key, PostApiReviewsSubmitBody | undefined, Awaited<ReturnType<typeof postApiReviewsSubmit>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+) => {
 
-	const swrKey = swrOptions?.swrKey ?? getPostApiReviewsSubmitMutationKey();
-	const swrFn = getPostApiReviewsSubmitMutationFetcher(requestOptions);
+  const {swr: swrOptions, request: requestOptions} = options ?? {}
 
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+  const swrKey = swrOptions?.swrKey ?? getPostApiReviewsSubmitMutationKey();
+  const swrFn = getPostApiReviewsSubmitMutationFetcher(requestOptions);
 
-	return {
-		swrKey,
-		...query,
-	};
-};
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}

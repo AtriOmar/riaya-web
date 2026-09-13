@@ -11,6 +11,23 @@ export const PAYMENT_METHODS = ["cash", "transfer"] as const;
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+	unpaid: "Unpaid",
+	partially_paid: "Partially paid",
+	paid: "Paid",
+	cancelled: "Cancelled",
+};
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+	cash: "Cash",
+	transfer: "Transfer",
+};
+
+export function formatInvoiceStatus(status: string | null | undefined): string {
+	if (!status) return "—";
+	return INVOICE_STATUS_LABELS[status as InvoiceStatus] ?? status;
+}
+
 export function deriveInvoiceStatus(
 	totalCentimes: number,
 	amountPaidCentimes: number,

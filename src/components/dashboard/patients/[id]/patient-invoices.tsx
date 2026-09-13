@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox, Plus } from "lucide-react";
+import { Inbox, MessageSquare, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import ConfirmationDialog from "@/components/confirmation-dialog";
@@ -16,7 +16,10 @@ import { getErrorMessage } from "@/lib/error-handling";
 import type { PaymentMethod } from "@/lib/invoice";
 import { formatTnd } from "@/lib/money";
 import type { GetApiPatientsId200InvoicesItem } from "@/services/generated/api.schemas";
-import { useDeleteApiInvoicesId } from "@/services/generated/invoices/invoices";
+import {
+	postApiInvoicesIdSend,
+	useDeleteApiInvoicesId,
+} from "@/services/generated/invoices/invoices";
 
 type PatientInvoicesProps = {
 	patientId: number;
@@ -37,6 +40,7 @@ export function PatientInvoices({
 	);
 	const [cancelling, setCancelling] =
 		useState<GetApiPatientsId200InvoicesItem | null>(null);
+	const [sendingId, setSendingId] = useState<number | null>(null);
 
 	const { trigger: cancelInvoice, isMutating: isCancelling } =
 		useDeleteApiInvoicesId(cancelling?.id?.toString() ?? "0");
@@ -50,6 +54,19 @@ export function PatientInvoices({
 			onChanged();
 		} catch (error) {
 			toast.error(getErrorMessage(error, "Failed to cancel invoice"));
+		}
+	};
+
+	const onSendWhatsapp = async (row: GetApiPatientsId200InvoicesItem) => {
+		try {
+			setSendingId(row.id);
+			await postApiInvoicesIdSend(row.id.toString());
+			toast.success("Invoice sent on WhatsApp");
+			onChanged();
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Failed to send invoice"));
+		} finally {
+			setSendingId(null);
 		}
 	};
 
@@ -94,6 +111,23 @@ export function PatientInvoices({
 			cell: (row) =>
 				row.status !== "cancelled" ? (
 					<div className="flex flex-wrap justify-end gap-1">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							disabled={sendingId === row.id}
+							onClick={(e) => {
+								e.stopPropagation();
+								void onSendWhatsapp(row);
+							}}
+						>
+							<MessageSquare className="size-4" />
+							{sendingId === row.id
+								? "Sending…"
+								: row.sentViaWhatsapp
+									? "Resend"
+									: "WhatsApp"}
+						</Button>
 						<Button
 							type="button"
 							variant="outline"

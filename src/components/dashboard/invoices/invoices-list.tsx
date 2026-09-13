@@ -1,8 +1,9 @@
 "use client";
 
-import { Inbox } from "lucide-react";
+import { Inbox, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { InvoicePaymentDialog } from "@/components/dashboard/invoices/invoice-payment-dialog";
 import {
 	InvoiceStatusBadge,
@@ -18,6 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { getErrorMessage } from "@/lib/error-handling";
 import type { InvoiceStatus, PaymentMethod } from "@/lib/invoice";
 import { INVOICE_STATUSES } from "@/lib/invoice";
 import { formatTnd } from "@/lib/money";
@@ -25,7 +27,10 @@ import type {
 	GetApiInvoices200Item,
 	GetApiPatientsId200InvoicesItem,
 } from "@/services/generated/api.schemas";
-import { useGetApiInvoices } from "@/services/generated/invoices/invoices";
+import {
+	postApiInvoicesIdSend,
+	useGetApiInvoices,
+} from "@/services/generated/invoices/invoices";
 import { INVOICE_STATUS_LABELS } from "./invoice-status";
 
 function patientName(row: GetApiInvoices200Item): string {
@@ -38,6 +43,7 @@ function patientName(row: GetApiInvoices200Item): string {
 export default function InvoicesList() {
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [paying, setPaying] = useState<GetApiInvoices200Item | null>(null);
+	const [sendingId, setSendingId] = useState<number | null>(null);
 
 	const params = useMemo(
 		() =>
@@ -48,6 +54,19 @@ export default function InvoicesList() {
 	);
 
 	const { data: invoices, isLoading, mutate } = useGetApiInvoices(params);
+
+	const onSendWhatsapp = async (row: GetApiInvoices200Item) => {
+		try {
+			setSendingId(row.id);
+			await postApiInvoicesIdSend(row.id.toString());
+			toast.success("Invoice sent on WhatsApp");
+			void mutate();
+		} catch (error) {
+			toast.error(getErrorMessage(error, "Failed to send invoice"));
+		} finally {
+			setSendingId(null);
+		}
+	};
 
 	const columns: Column<GetApiInvoices200Item>[] = [
 		{
@@ -105,17 +124,36 @@ export default function InvoicesList() {
 			header: "",
 			cell: (row) =>
 				row.status !== "cancelled" ? (
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={(e) => {
-							e.stopPropagation();
-							setPaying(row);
-						}}
-					>
-						Payment
-					</Button>
+					<div className="flex flex-wrap justify-end gap-1">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							disabled={sendingId === row.id}
+							onClick={(e) => {
+								e.stopPropagation();
+								void onSendWhatsapp(row);
+							}}
+						>
+							<MessageSquare className="size-4" />
+							{sendingId === row.id
+								? "Sending…"
+								: row.sentViaWhatsapp
+									? "Resend"
+									: "WhatsApp"}
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPaying(row);
+							}}
+						>
+							Payment
+						</Button>
+					</div>
 				) : null,
 		},
 	];
