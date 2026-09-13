@@ -57,7 +57,7 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - Use **pnpm** for this repo (not npm or yarn): installs, adds, and scripts should go through `pnpm`.
 - Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from `web/` or `socket/` as needed.
-- Schema changes: `pnpm db:push` from `web/` (Drizzle push, not migration files by default).
+- Schema changes: `pnpm db:generate` then `pnpm db:migrate` from `web/` (Drizzle migration files; do not use `db:push`).
 
 ## Working Conventions (Important)
 
@@ -138,7 +138,7 @@ This document is a compact project guide for AI assistants working on this repo.
 ## Database Notes
 
 - Drizzle schema lives in `web/src/db/schema.ts`.
-- Apply schema to DB: `pnpm db:push` from `web/`.
+- Apply schema to DB: `pnpm db:generate` then `pnpm db:migrate` from `web/` (never `db:push`).
 
 ### Person vs patient (identity model)
 
@@ -208,6 +208,8 @@ Use these as examples before changing related code.
 - `web/src/app/api/appointments/route.ts` (API route + Zod + auth helper + Drizzle)
 - `web/src/lib/person.ts` (shared person upsert for routes)
 - `web/src/lib/api-utils.ts` (auth/role/internal helpers for API routes)
+- `web/src/lib/errors.ts` (API `ErrorCode` constants + `apiError` responses)
+- `web/src/lib/error-handling.ts` (`getErrorMessage` / `getApiErrorCode` for client-side API errors)
 - `web/src/lib/upload.ts` + `web/src/services/upload.ts` (R2 presigned upload + `cdnUrl` return)
 - `web/src/components/dashboard/profile/image-cropper.tsx` (crop → blob → `uploadBlobToR2` → save URL)
 - `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx` (dashboard/admin page layout wrapper pattern)
@@ -246,7 +248,7 @@ Use these as examples before changing related code.
 
 - **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
-- For schema changes in dev, prefer `pnpm db:push` in `web/`.
+- For schema changes in `web/`: run `pnpm db:generate` then `pnpm db:migrate`. Do **not** use `pnpm db:push`.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
 - When creating pages in `dashboard` or `admin`: keep `page.tsx` thin and wrap content in layout primitives (e.g. `<DashboardLayout title="...">` or `<AdminLayout title="...">`) as seen in `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx`.
 - When adding or changing frontend data access:
@@ -254,12 +256,14 @@ Use these as examples before changing related code.
   - For external APIs, proxy via Next.js if you need to hide secrets or want Orval to generate the hook.
   - If proxying is overkill, or you just want a simple direct fetcher, place it in `web/src/services/manual/`.
   - consume via SWR/hooks/components
+  - For API error UX in client components: use `getErrorMessage` / `getApiErrorCode` from `web/src/lib/error-handling.ts`. Do **not** invent local axios error mappers. When adding a new `ErrorCode` in `web/src/lib/errors.ts`, also add a user-facing string in the `errorMessages` map in `error-handling.ts`.
 - When adding API behavior:
   - implement in `web/src/app/api/.../route.ts`
   - validate with Zod
   - enforce session/role/internal with `api-utils`
   - reuse `upsertPersonByPhone` when linking patients or phone bookings to `person`
   - keep error response shape consistent (`web/src/lib/errors.ts`)
+  - return errors via `apiError` / `validationError` from `web/src/lib/api-utils.ts` (codes defined in `web/src/lib/errors.ts`)
 - When adding realtime events:
   - update message types in `socket/src/types/index.ts`
   - broadcast from `sessions/twilioSession.ts`
