@@ -5,379 +5,494 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-import useSwr from 'swr';
+
+import type { Arguments, Key, SWRConfiguration } from "swr";
+import useSwr from "swr";
+import type { SWRMutationConfiguration } from "swr/mutation";
+import useSWRMutation from "swr/mutation";
+import { customInstance } from "../../api";
 import type {
-  Arguments,
-  Key,
-  SWRConfiguration
-} from 'swr';
+	DeleteApiInvoicesId200,
+	DeleteApiInvoicesIdPayments200,
+	DeleteApiInvoicesIdPaymentsParams,
+	GetApiInvoices200Item,
+	GetApiInvoicesId200,
+	GetApiInvoicesParams,
+	PatchApiInvoicesId200,
+	PatchApiInvoicesIdBody,
+	PostApiInvoices201,
+	PostApiInvoicesBody,
+	PostApiInvoicesIdPayments201,
+	PostApiInvoicesIdPaymentsBody,
+	PostApiInvoicesIdSend200,
+} from "../api.schemas";
 
-import useSWRMutation from 'swr/mutation';
-import type {
-  SWRMutationConfiguration
-} from 'swr/mutation';
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-import type {
-  DeleteApiInvoicesId200,
-  DeleteApiInvoicesIdPayments200,
-  DeleteApiInvoicesIdPaymentsParams,
-  GetApiInvoices200Item,
-  GetApiInvoicesId200,
-  GetApiInvoicesParams,
-  PatchApiInvoicesId200,
-  PatchApiInvoicesIdBody,
-  PostApiInvoices201,
-  PostApiInvoicesBody,
-  PostApiInvoicesIdPayments201,
-  PostApiInvoicesIdPaymentsBody,
-  PostApiInvoicesIdSend200
-} from '../api.schemas';
-
-import { customInstance } from '../../api';
-
-
-
-  type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
-
- /**
+/**
  * @summary List invoices for the authenticated doctor
  */
 export const getApiInvoices = (
-    params?: GetApiInvoicesParams,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<GetApiInvoices200Item[]>(
-    {url: `/api/invoices`, method: 'GET',
-        params
-    },
-    options);
-  }
+	params?: GetApiInvoicesParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiInvoices200Item[]>(
+		{ url: `/api/invoices`, method: "GET", params },
+		options,
+	);
+};
 
+export const getGetApiInvoicesKey = (params?: GetApiInvoicesParams) =>
+	[`/api/invoices`, ...(params ? [params] : [])] as const;
 
-
-export const getGetApiInvoicesKey = (params?: GetApiInvoicesParams,) => [`/api/invoices`, ...(params ? [params]: [])] as const;
-
-export type GetApiInvoicesQueryResult = NonNullable<Awaited<ReturnType<typeof getApiInvoices>>>
+export type GetApiInvoicesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiInvoices>>
+>;
 
 /**
  * @summary List invoices for the authenticated doctor
  */
 export const useGetApiInvoices = <TError = unknown>(
-  params?: GetApiInvoicesParams, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getApiInvoices>>, TError> & { swrKey?: Key, enabled?: boolean }, request?: SecondParameter<typeof customInstance> }
+	params?: GetApiInvoicesParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiInvoices>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetApiInvoicesKey(params) : null);
-  const swrFn = () => getApiInvoices(params, requestOptions)
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiInvoicesKey(params) : null));
+	const swrFn = () => getApiInvoices(params, requestOptions);
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Create an invoice
  */
 export const postApiInvoices = (
-    postApiInvoicesBody?: PostApiInvoicesBody,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<PostApiInvoices201>(
-    {url: `/api/invoices`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postApiInvoicesBody
-    },
-    options);
-  }
+	postApiInvoicesBody?: PostApiInvoicesBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInvoices201>(
+		{
+			url: `/api/invoices`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInvoicesBody,
+		},
+		options,
+	);
+};
 
-
-
-export const getPostApiInvoicesMutationFetcher = ( options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, { arg }: { arg: PostApiInvoicesBody | undefined }) => {
-    return postApiInvoices(arg, options);
-  }
-}
+export const getPostApiInvoicesMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PostApiInvoicesBody | undefined }) => {
+		return postApiInvoices(arg, options);
+	};
+};
 export const getPostApiInvoicesMutationKey = () => [`/api/invoices`] as const;
 
-export type PostApiInvoicesMutationResult = NonNullable<Awaited<ReturnType<typeof postApiInvoices>>>
+export type PostApiInvoicesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInvoices>>
+>;
 
 /**
  * @summary Create an invoice
  */
-export const usePostApiInvoices = <TError = unknown>(
-   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof postApiInvoices>>, TError, Key, PostApiInvoicesBody | undefined, Awaited<ReturnType<typeof postApiInvoices>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
-) => {
+export const usePostApiInvoices = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInvoices>>,
+		TError,
+		Key,
+		PostApiInvoicesBody | undefined,
+		Awaited<ReturnType<typeof postApiInvoices>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesMutationKey();
+	const swrFn = getPostApiInvoicesMutationFetcher(requestOptions);
 
-  const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesMutationKey();
-  const swrFn = getPostApiInvoicesMutationFetcher(requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Get invoice by ID
  */
 export const getApiInvoicesId = (
-    id: string,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<GetApiInvoicesId200>(
-    {url: `/api/invoices/${id}`, method: 'GET'
-    },
-    options);
-  }
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiInvoicesId200>(
+		{ url: `/api/invoices/${id}`, method: "GET" },
+		options,
+	);
+};
 
+export const getGetApiInvoicesIdKey = (id: string) =>
+	[`/api/invoices/${id}`] as const;
 
-
-export const getGetApiInvoicesIdKey = (id: string,) => [`/api/invoices/${id}`] as const;
-
-export type GetApiInvoicesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getApiInvoicesId>>>
+export type GetApiInvoicesIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiInvoicesId>>
+>;
 
 /**
  * @summary Get invoice by ID
  */
 export const useGetApiInvoicesId = <TError = unknown>(
-  id: string, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getApiInvoicesId>>, TError> & { swrKey?: Key, enabled?: boolean }, request?: SecondParameter<typeof customInstance> }
+	id: string,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiInvoicesId>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false && id !== null && id !== undefined
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetApiInvoicesIdKey(id) : null);
-  const swrFn = () => getApiInvoicesId(id, requestOptions)
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiInvoicesIdKey(id) : null));
+	const swrFn = () => getApiInvoicesId(id, requestOptions);
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Update invoice (items, notes, or cancel)
  */
 export const patchApiInvoicesId = (
-    id: string,
-    patchApiInvoicesIdBody?: PatchApiInvoicesIdBody,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<PatchApiInvoicesId200>(
-    {url: `/api/invoices/${id}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchApiInvoicesIdBody
-    },
-    options);
-  }
+	id: string,
+	patchApiInvoicesIdBody?: PatchApiInvoicesIdBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiInvoicesId200>(
+		{
+			url: `/api/invoices/${id}`,
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			data: patchApiInvoicesIdBody,
+		},
+		options,
+	);
+};
 
+export const getPatchApiInvoicesIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PatchApiInvoicesIdBody | undefined }) => {
+		return patchApiInvoicesId(id, arg, options);
+	};
+};
+export const getPatchApiInvoicesIdMutationKey = (id: string) =>
+	[`/api/invoices/${id}`] as const;
 
-
-export const getPatchApiInvoicesIdMutationFetcher = (id: string, options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, { arg }: { arg: PatchApiInvoicesIdBody | undefined }) => {
-    return patchApiInvoicesId(id, arg, options);
-  }
-}
-export const getPatchApiInvoicesIdMutationKey = (id: string,) => [`/api/invoices/${id}`] as const;
-
-export type PatchApiInvoicesIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchApiInvoicesId>>>
+export type PatchApiInvoicesIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchApiInvoicesId>>
+>;
 
 /**
  * @summary Update invoice (items, notes, or cancel)
  */
 export const usePatchApiInvoicesId = <TError = unknown>(
-  id: string, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof patchApiInvoicesId>>, TError, Key, PatchApiInvoicesIdBody | undefined, Awaited<ReturnType<typeof patchApiInvoicesId>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof patchApiInvoicesId>>,
+			TError,
+			Key,
+			PatchApiInvoicesIdBody | undefined,
+			Awaited<ReturnType<typeof patchApiInvoicesId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey = swrOptions?.swrKey ?? getPatchApiInvoicesIdMutationKey(id);
+	const swrFn = getPatchApiInvoicesIdMutationFetcher(id, requestOptions);
 
-  const swrKey = swrOptions?.swrKey ?? getPatchApiInvoicesIdMutationKey(id);
-  const swrFn = getPatchApiInvoicesIdMutationFetcher(id, requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Cancel an invoice
  */
 export const deleteApiInvoicesId = (
-    id: string,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<DeleteApiInvoicesId200>(
-    {url: `/api/invoices/${id}`, method: 'DELETE'
-    },
-    options);
-  }
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiInvoicesId200>(
+		{ url: `/api/invoices/${id}`, method: "DELETE" },
+		options,
+	);
+};
 
+export const getDeleteApiInvoicesIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return deleteApiInvoicesId(id, options);
+	};
+};
+export const getDeleteApiInvoicesIdMutationKey = (id: string) =>
+	[`/api/invoices/${id}`] as const;
 
-
-export const getDeleteApiInvoicesIdMutationFetcher = (id: string, options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, __: { arg: Arguments }) => {
-    return deleteApiInvoicesId(id, options);
-  }
-}
-export const getDeleteApiInvoicesIdMutationKey = (id: string,) => [`/api/invoices/${id}`] as const;
-
-export type DeleteApiInvoicesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiInvoicesId>>>
+export type DeleteApiInvoicesIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteApiInvoicesId>>
+>;
 
 /**
  * @summary Cancel an invoice
  */
 export const useDeleteApiInvoicesId = <TError = unknown>(
-  id: string, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteApiInvoicesId>>, TError, Key, Arguments, Awaited<ReturnType<typeof deleteApiInvoicesId>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof deleteApiInvoicesId>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof deleteApiInvoicesId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey = swrOptions?.swrKey ?? getDeleteApiInvoicesIdMutationKey(id);
+	const swrFn = getDeleteApiInvoicesIdMutationFetcher(id, requestOptions);
 
-  const swrKey = swrOptions?.swrKey ?? getDeleteApiInvoicesIdMutationKey(id);
-  const swrFn = getDeleteApiInvoicesIdMutationFetcher(id, requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Generate invoice PDF and send via WhatsApp
  */
 export const postApiInvoicesIdSend = (
-    id: string,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<PostApiInvoicesIdSend200>(
-    {url: `/api/invoices/${id}/send`, method: 'POST'
-    },
-    options);
-  }
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInvoicesIdSend200>(
+		{ url: `/api/invoices/${id}/send`, method: "POST" },
+		options,
+	);
+};
 
+export const getPostApiInvoicesIdSendMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return postApiInvoicesIdSend(id, options);
+	};
+};
+export const getPostApiInvoicesIdSendMutationKey = (id: string) =>
+	[`/api/invoices/${id}/send`] as const;
 
-
-export const getPostApiInvoicesIdSendMutationFetcher = (id: string, options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, __: { arg: Arguments }) => {
-    return postApiInvoicesIdSend(id, options);
-  }
-}
-export const getPostApiInvoicesIdSendMutationKey = (id: string,) => [`/api/invoices/${id}/send`] as const;
-
-export type PostApiInvoicesIdSendMutationResult = NonNullable<Awaited<ReturnType<typeof postApiInvoicesIdSend>>>
+export type PostApiInvoicesIdSendMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInvoicesIdSend>>
+>;
 
 /**
  * @summary Generate invoice PDF and send via WhatsApp
  */
 export const usePostApiInvoicesIdSend = <TError = unknown>(
-  id: string, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof postApiInvoicesIdSend>>, TError, Key, Arguments, Awaited<ReturnType<typeof postApiInvoicesIdSend>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiInvoicesIdSend>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof postApiInvoicesIdSend>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesIdSendMutationKey(id);
+	const swrFn = getPostApiInvoicesIdSendMutationFetcher(id, requestOptions);
 
-  const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesIdSendMutationKey(id);
-  const swrFn = getPostApiInvoicesIdSendMutationFetcher(id, requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Add a payment to an invoice
  */
 export const postApiInvoicesIdPayments = (
-    id: string,
-    postApiInvoicesIdPaymentsBody?: PostApiInvoicesIdPaymentsBody,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<PostApiInvoicesIdPayments201>(
-    {url: `/api/invoices/${id}/payments`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postApiInvoicesIdPaymentsBody
-    },
-    options);
-  }
+	id: string,
+	postApiInvoicesIdPaymentsBody?: PostApiInvoicesIdPaymentsBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInvoicesIdPayments201>(
+		{
+			url: `/api/invoices/${id}/payments`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInvoicesIdPaymentsBody,
+		},
+		options,
+	);
+};
 
+export const getPostApiInvoicesIdPaymentsMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInvoicesIdPaymentsBody | undefined },
+	) => {
+		return postApiInvoicesIdPayments(id, arg, options);
+	};
+};
+export const getPostApiInvoicesIdPaymentsMutationKey = (id: string) =>
+	[`/api/invoices/${id}/payments`] as const;
 
-
-export const getPostApiInvoicesIdPaymentsMutationFetcher = (id: string, options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, { arg }: { arg: PostApiInvoicesIdPaymentsBody | undefined }) => {
-    return postApiInvoicesIdPayments(id, arg, options);
-  }
-}
-export const getPostApiInvoicesIdPaymentsMutationKey = (id: string,) => [`/api/invoices/${id}/payments`] as const;
-
-export type PostApiInvoicesIdPaymentsMutationResult = NonNullable<Awaited<ReturnType<typeof postApiInvoicesIdPayments>>>
+export type PostApiInvoicesIdPaymentsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInvoicesIdPayments>>
+>;
 
 /**
  * @summary Add a payment to an invoice
  */
 export const usePostApiInvoicesIdPayments = <TError = unknown>(
-  id: string, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof postApiInvoicesIdPayments>>, TError, Key, PostApiInvoicesIdPaymentsBody | undefined, Awaited<ReturnType<typeof postApiInvoicesIdPayments>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiInvoicesIdPayments>>,
+			TError,
+			Key,
+			PostApiInvoicesIdPaymentsBody | undefined,
+			Awaited<ReturnType<typeof postApiInvoicesIdPayments>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInvoicesIdPaymentsMutationKey(id);
+	const swrFn = getPostApiInvoicesIdPaymentsMutationFetcher(id, requestOptions);
 
-  const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesIdPaymentsMutationKey(id);
-  const swrFn = getPostApiInvoicesIdPaymentsMutationFetcher(id, requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Remove a payment from an invoice
  */
 export const deleteApiInvoicesIdPayments = (
-    id: string,
-    params: DeleteApiInvoicesIdPaymentsParams,
- options?: SecondParameter<typeof customInstance>) => {
-    return customInstance<DeleteApiInvoicesIdPayments200>(
-    {url: `/api/invoices/${id}/payments`, method: 'DELETE',
-        params
-    },
-    options);
-  }
+	id: string,
+	params: DeleteApiInvoicesIdPaymentsParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiInvoicesIdPayments200>(
+		{ url: `/api/invoices/${id}/payments`, method: "DELETE", params },
+		options,
+	);
+};
 
+export const getDeleteApiInvoicesIdPaymentsMutationFetcher = (
+	id: string,
+	params: DeleteApiInvoicesIdPaymentsParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return deleteApiInvoicesIdPayments(id, params, options);
+	};
+};
+export const getDeleteApiInvoicesIdPaymentsMutationKey = (
+	id: string,
+	params: DeleteApiInvoicesIdPaymentsParams,
+) => [`/api/invoices/${id}/payments`, ...(params ? [params] : [])] as const;
 
-
-export const getDeleteApiInvoicesIdPaymentsMutationFetcher = (id: string,
-    params: DeleteApiInvoicesIdPaymentsParams, options?: SecondParameter<typeof customInstance>) => {
-  return (_: Key, __: { arg: Arguments }) => {
-    return deleteApiInvoicesIdPayments(id, params, options);
-  }
-}
-export const getDeleteApiInvoicesIdPaymentsMutationKey = (id: string,
-    params: DeleteApiInvoicesIdPaymentsParams,) => [`/api/invoices/${id}/payments`, ...(params ? [params]: [])] as const;
-
-export type DeleteApiInvoicesIdPaymentsMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>>
+export type DeleteApiInvoicesIdPaymentsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>
+>;
 
 /**
  * @summary Remove a payment from an invoice
  */
 export const useDeleteApiInvoicesIdPayments = <TError = unknown>(
-  id: string,
-    params: DeleteApiInvoicesIdPaymentsParams, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>, TError, Key, Arguments, Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>> & { swrKey?: string }, request?: SecondParameter<typeof customInstance>}
+	id: string,
+	params: DeleteApiInvoicesIdPaymentsParams,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof deleteApiInvoicesIdPayments>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
 ) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-  const {swr: swrOptions, request: requestOptions} = options ?? {}
+	const swrKey =
+		swrOptions?.swrKey ?? getDeleteApiInvoicesIdPaymentsMutationKey(id, params);
+	const swrFn = getDeleteApiInvoicesIdPaymentsMutationFetcher(
+		id,
+		params,
+		requestOptions,
+	);
 
-  const swrKey = swrOptions?.swrKey ?? getDeleteApiInvoicesIdPaymentsMutationKey(id,params);
-  const swrFn = getDeleteApiInvoicesIdPaymentsMutationFetcher(id,params, requestOptions);
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
-
-  return {
-    swrKey,
-    ...query
-  }
-}
+	return {
+		swrKey,
+		...query,
+	};
+};
