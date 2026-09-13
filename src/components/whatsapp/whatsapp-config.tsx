@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2, Loader2, WifiOff } from "lucide-react";
+import { CheckCircle2, Loader2, LogOut, WifiOff } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -34,6 +35,7 @@ type Props = {
 
 export default function WhatsappConfig({ userId }: Props) {
 	const [status, setStatus] = useState<WsStatus>({ type: "connecting" });
+	const [loggingOut, setLoggingOut] = useState(false);
 	const wsRef = useRef<WebSocket | null>(null);
 
 	useEffect(() => {
@@ -76,7 +78,12 @@ export default function WhatsappConfig({ userId }: Props) {
 			ws.onmessage = (e) => {
 				try {
 					const msg = JSON.parse(e.data as string) as WsStatus;
-					if (!cancelled) setStatus(msg);
+					if (!cancelled) {
+						setStatus(msg);
+						if (msg.type === "qr" || msg.type === "disconnected") {
+							setLoggingOut(false);
+						}
+					}
 				} catch {}
 			};
 
@@ -101,6 +108,28 @@ export default function WhatsappConfig({ userId }: Props) {
 		};
 	}, [userId]);
 
+	async function handleLogout() {
+		setLoggingOut(true);
+		const ws = wsRef.current;
+		if (ws && ws.readyState === WebSocket.OPEN) {
+			ws.send(JSON.stringify({ type: "logout" }));
+			return;
+		}
+
+		// Fallback if the WS is not open
+		try {
+			const base = getSocketHttpBase();
+			const res = await fetch(`${base}/whatsapp-logout`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ userId }),
+			});
+			if (!res.ok) setLoggingOut(false);
+		} catch {
+			setLoggingOut(false);
+		}
+	}
+
 	return (
 		<div className="max-w-lg">
 			<Card>
@@ -123,7 +152,7 @@ export default function WhatsappConfig({ userId }: Props) {
 					</CardDescription>
 				</CardHeader>
 
-				<CardContent className="flex justify-center py-6">
+				<CardContent className="flex flex-col items-center gap-4 py-6">
 					{status.type === "connecting" && (
 						<Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
 					)}
@@ -144,10 +173,29 @@ export default function WhatsappConfig({ userId }: Props) {
 					)}
 
 					{status.type === "connected" && (
-						<div className="flex flex-col items-center gap-2 py-4 text-green-600">
-							<CheckCircle2 className="w-12 h-12" />
-							<p className="font-medium text-sm">
-								{status.phone ? `+${status.phone}` : "Connected"}
+						<div className="flex flex-col items-center gap-4">
+							<div className="flex flex-col items-center gap-2 py-2 text-green-600">
+								<CheckCircle2 className="w-12 h-12" />
+								<p className="font-medium text-sm">
+									{status.phone ? `+${status.phone}` : "Connected"}
+								</p>
+							</div>
+							<Button
+								variant="destructive"
+								size="sm"
+								disabled={loggingOut}
+								onClick={handleLogout}
+							>
+								{loggingOut ? (
+									<Loader2 className="animate-spin" />
+								) : (
+									<LogOut />
+								)}
+								{loggingOut ? "Logging out…" : "Log out"}
+							</Button>
+							<p className="max-w-xs text-center text-muted-foreground text-xs">
+								Unlink this WhatsApp account to scan a new QR code and link a
+								different one.
 							</p>
 						</div>
 					)}
@@ -155,9 +203,11 @@ export default function WhatsappConfig({ userId }: Props) {
 					{status.type === "disconnected" && (
 						<div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
 							<WifiOff className="w-12 h-12" />
-							{status.reason && status.reason !== "idle_shutdown" && (
-								<p className="text-xs">Reason: {status.reason}</p>
-							)}
+							{status.reason &&
+								status.reason !== "idle_shutdown" &&
+								status.reason !== "logged_out" && (
+									<p className="text-xs">Reason: {status.reason}</p>
+								)}
 						</div>
 					)}
 				</CardContent>
