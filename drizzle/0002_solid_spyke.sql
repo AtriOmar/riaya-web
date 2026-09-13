@@ -1,1 +1,0 @@
-ALTER TABLE "invoice" ALTER COLUMN "currency" SET DEFAULT 'TND';

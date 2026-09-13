@@ -57,7 +57,7 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - Use **pnpm** for this repo (not npm or yarn): installs, adds, and scripts should go through `pnpm`.
 - Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from `web/` or `socket/` as needed.
-- Schema changes: `pnpm db:generate` then `pnpm db:migrate` from `web/` (Drizzle migration files; do not use `db:push`).
+- Schema changes: `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate` from `web/` (Drizzle migration files; do not use `db:push`). Always pass `--name` so migrations are readable (e.g. `create_invoices`), never leave the random Marvel-style default names.
 
 ## Working Conventions (Important)
 
@@ -256,7 +256,7 @@ Use these as examples before changing related code.
 
 - **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
-- For schema changes in `web/`: run `pnpm db:generate` then `pnpm db:migrate`. Do **not** use `pnpm db:push`.
+- For schema changes in `web/`: run `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate`. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not the random defaults.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
 - When creating pages in `dashboard` or `admin`: keep `page.tsx` thin and wrap content in layout primitives (e.g. `<DashboardLayout title="...">` or `<AdminLayout title="...">`) as seen in `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx`.
 - When adding or changing frontend data access:
