@@ -37,6 +37,19 @@ export function shortName(d: BestFitRangeDoctor): string {
 	return d.cabinetName ?? `#${d.id}`;
 }
 
+/** Full display name: "Dr. First Last" → cabinetName → "#id". */
+export function fullName(d: BestFitRangeDoctor): string {
+	const parts = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
+	if (parts) return `Dr. ${parts}`;
+	return d.cabinetName ?? `#${d.id}`;
+}
+
+export function initials(d: BestFitRangeDoctor): string {
+	const a = d.firstName?.[0]?.toUpperCase() ?? "";
+	const b = d.lastName?.[0]?.toUpperCase() ?? "";
+	return `${a}${b}` || "DR";
+}
+
 export function formatFullDate(d: Date): string {
 	return d.toLocaleDateString("en-GB", {
 		weekday: "long",
