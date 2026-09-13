@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { buildRegistrationOtpEmail } from "@/lib/emails/registration-otp";
 
 function requireEnv(name: string): string {
 	const value = process.env[name];
@@ -44,15 +45,9 @@ export async function sendRegistrationOtpEmail(params: {
 	otp: string;
 	expiresInMinutes: number;
 }) {
-	const subject = "Your Riaya verification code";
-	const text = `Your Riaya verification code is ${params.otp}. It expires in ${params.expiresInMinutes} minutes. If you did not request this, you can ignore this email.`;
-	const html = `
-		<div style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111;">
-			<p>Your Riaya verification code is:</p>
-			<p style="font-size: 28px; font-weight: 700; letter-spacing: 6px;">${params.otp}</p>
-			<p>This code expires in ${params.expiresInMinutes} minutes.</p>
-			<p style="color: #666;">If you did not request this, you can ignore this email.</p>
-		</div>
-	`;
+	const { subject, text, html } = buildRegistrationOtpEmail({
+		otp: params.otp,
+		expiresInMinutes: params.expiresInMinutes,
+	});
 	await sendMail({ to: params.to, subject, text, html });
 }
