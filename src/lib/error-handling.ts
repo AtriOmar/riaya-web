@@ -23,6 +23,7 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	DOCTOR_UNAVAILABLE_TIME: "The doctor is not available at this time.",
 	APPOINTMENT_CONFLICT:
 		"This time slot conflicts with an existing appointment.",
+	EMAIL_ALREADY_EXISTS: "An account with this email already exists.",
 	APPOINTMENT_NOT_FOUND: "Appointment not found.",
 	PATIENT_NOT_FOUND: "Patient not found.",
 	MEDICAL_FILE_NOT_FOUND: "Medical file not found.",
@@ -31,13 +32,19 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	APPLICATION_NOT_FOUND: "Application not found.",
 	SPECIALITY_NOT_FOUND: "Speciality not found.",
 	USER_NOT_FOUND: "User not found.",
+	INVALID_OTP: "Invalid verification code. Please try again.",
+	OTP_EXPIRED: "This code has expired. Please request a new one.",
+	OTP_RATE_LIMITED: "Too many attempts. Please wait and try again.",
+	PENDING_SIGNUP_NOT_FOUND:
+		"No pending registration found. Please start again.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 
 /** Get a user-friendly message for an error. */
-export function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: unknown, fallback?: string): string {
 	const code = getApiErrorCode(error);
 	if (code && errorMessages[code]) return errorMessages[code];
+	if (isAxiosError(error)) return fallback ?? "Something went wrong.";
 	if (error instanceof Error) return error.message;
-	return "Something went wrong.";
+	return fallback ?? "Something went wrong.";
 }
