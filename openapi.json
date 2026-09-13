@@ -16,385 +16,6 @@
     "parameters": {}
   },
   "paths": {
-    "/api/calls": {
-      "get": {
-        "tags": [
-          "Calls"
-        ],
-        "summary": "List all calls",
-        "responses": {
-          "200": {
-            "description": "List of calls",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "callSid": {
-                        "type": "string",
-                        "maxLength": 100
-                      },
-                      "from": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 50
-                      },
-                      "to": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 50
-                      },
-                      "direction": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 50
-                      },
-                      "status": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 50
-                      },
-                      "callerName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "startedAt": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "date-time"
-                      },
-                      "endedAt": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "date-time"
-                      },
-                      "duration": {
-                        "type": "integer",
-                        "nullable": true,
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "appointmentId": {
-                        "type": "integer",
-                        "nullable": true,
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "recordingSid": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 100
-                      },
-                      "recordingKey": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 512
-                      },
-                      "recordingUrl": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 1024
-                      },
-                      "createdAt": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "date-time"
-                      },
-                      "updatedAt": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "date-time"
-                      },
-                      "events": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "callId": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "type": {
-                              "type": "string",
-                              "maxLength": 50
-                            },
-                            "content": {
-                              "type": "string",
-                              "nullable": true
-                            },
-                            "functionName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 100
-                            },
-                            "functionArgs": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "boolean"
-                                },
-                                {
-                                  "nullable": true
-                                },
-                                {
-                                  "type": "object",
-                                  "additionalProperties": {
-                                    "nullable": true
-                                  }
-                                },
-                                {
-                                  "type": "array",
-                                  "items": {
-                                    "nullable": true
-                                  }
-                                }
-                              ]
-                            },
-                            "functionResult": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "boolean"
-                                },
-                                {
-                                  "nullable": true
-                                },
-                                {
-                                  "type": "object",
-                                  "additionalProperties": {
-                                    "nullable": true
-                                  }
-                                },
-                                {
-                                  "type": "array",
-                                  "items": {
-                                    "nullable": true
-                                  }
-                                }
-                              ]
-                            },
-                            "functionStatus": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 50
-                            },
-                            "timestamp": {
-                              "type": "string",
-                              "nullable": true,
-                              "format": "date-time"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "callId",
-                            "type",
-                            "content",
-                            "functionName",
-                            "functionArgs",
-                            "functionResult",
-                            "functionStatus",
-                            "timestamp"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "callSid",
-                      "from",
-                      "to",
-                      "direction",
-                      "status",
-                      "callerName",
-                      "startedAt",
-                      "endedAt",
-                      "duration",
-                      "appointmentId",
-                      "recordingSid",
-                      "recordingKey",
-                      "recordingUrl",
-                      "createdAt",
-                      "updatedAt",
-                      "events"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Calls"
-        ],
-        "summary": "Create a call (Internal)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "callSid": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "from": {
-                    "type": "string"
-                  },
-                  "to": {
-                    "type": "string"
-                  },
-                  "direction": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "callSid"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created call",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "callSid": {
-                      "type": "string",
-                      "maxLength": 100
-                    },
-                    "from": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "to": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "direction": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "callerName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "endedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "duration": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "appointmentId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "recordingSid": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "recordingKey": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 512
-                    },
-                    "recordingUrl": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 1024
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "callSid",
-                    "from",
-                    "to",
-                    "direction",
-                    "status",
-                    "callerName",
-                    "startedAt",
-                    "endedAt",
-                    "duration",
-                    "appointmentId",
-                    "recordingSid",
-                    "recordingKey",
-                    "recordingUrl",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/appointments": {
       "get": {
         "tags": [
@@ -886,6 +507,385 @@
                   },
                   "required": [
                     "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calls": {
+      "get": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "List all calls",
+        "responses": {
+          "200": {
+            "description": "List of calls",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "callSid": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "from": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                      },
+                      "to": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                      },
+                      "direction": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                      },
+                      "status": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                      },
+                      "callerName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "startedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "endedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "appointmentId": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "recordingSid": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 100
+                      },
+                      "recordingKey": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 512
+                      },
+                      "recordingUrl": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 1024
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "events": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "callId": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "type": {
+                              "type": "string",
+                              "maxLength": 50
+                            },
+                            "content": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "functionName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 100
+                            },
+                            "functionArgs": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "nullable": true
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "nullable": true
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "nullable": true
+                                  }
+                                }
+                              ]
+                            },
+                            "functionResult": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "nullable": true
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "nullable": true
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "nullable": true
+                                  }
+                                }
+                              ]
+                            },
+                            "functionStatus": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 50
+                            },
+                            "timestamp": {
+                              "type": "string",
+                              "nullable": true,
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "callId",
+                            "type",
+                            "content",
+                            "functionName",
+                            "functionArgs",
+                            "functionResult",
+                            "functionStatus",
+                            "timestamp"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "callSid",
+                      "from",
+                      "to",
+                      "direction",
+                      "status",
+                      "callerName",
+                      "startedAt",
+                      "endedAt",
+                      "duration",
+                      "appointmentId",
+                      "recordingSid",
+                      "recordingKey",
+                      "recordingUrl",
+                      "createdAt",
+                      "updatedAt",
+                      "events"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Create a call (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "callSid": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "direction": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "callSid"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created call",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "callSid": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "from": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "to": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "direction": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "callerName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "endedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "recordingSid": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "recordingKey": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 512
+                    },
+                    "recordingUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 1024
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "callSid",
+                    "from",
+                    "to",
+                    "direction",
+                    "status",
+                    "callerName",
+                    "startedAt",
+                    "endedAt",
+                    "duration",
+                    "appointmentId",
+                    "recordingSid",
+                    "recordingKey",
+                    "recordingUrl",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -1473,6 +1473,542 @@
                     "medicalCouncilCertificate",
                     "createdAt",
                     "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "List invoices for the authenticated doctor",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "required": false,
+            "name": "patientId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unpaid",
+                "partially_paid",
+                "paid",
+                "cancelled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "doctorId": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "patientId": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "appointmentId": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "number": {
+                        "type": "string",
+                        "maxLength": 50
+                      },
+                      "status": {
+                        "type": "string",
+                        "maxLength": 50
+                      },
+                      "currency": {
+                        "type": "string",
+                        "maxLength": 10
+                      },
+                      "totalCentimes": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "amountPaidCentimes": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "paymentMethod": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                      },
+                      "notes": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "issuedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "paidAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "invoiceId": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 255
+                            },
+                            "quantity": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "unitPriceCentimes": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "invoiceId",
+                            "description",
+                            "quantity",
+                            "unitPriceCentimes",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "payments": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "invoiceId": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "amountCentimes": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "paymentMethod": {
+                              "type": "string",
+                              "maxLength": 50
+                            },
+                            "paidAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "notes": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "invoiceId",
+                            "amountCentimes",
+                            "paymentMethod",
+                            "paidAt",
+                            "notes",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "patient": {
+                        "type": "object",
+                        "nullable": true,
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "cin": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 100
+                          },
+                          "phoneNumber": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 50
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "firstName",
+                          "lastName",
+                          "cin",
+                          "phoneNumber"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "doctorId",
+                      "patientId",
+                      "appointmentId",
+                      "number",
+                      "status",
+                      "currency",
+                      "totalCentimes",
+                      "amountPaidCentimes",
+                      "paymentMethod",
+                      "notes",
+                      "issuedAt",
+                      "paidAt",
+                      "createdAt",
+                      "updatedAt",
+                      "items",
+                      "payments",
+                      "patient"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Create an invoice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "default": 1
+                        },
+                        "unitPriceCentimes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "description",
+                        "unitPriceCentimes"
+                      ]
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "patientId",
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments"
                   ]
                 }
               }
@@ -2605,6 +3141,147 @@
         }
       }
     },
+    "/api/appointments/external": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book external appointment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 8,
+                    "pattern": "^\\d+$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "illness": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "doctorId",
+                  "name",
+                  "phoneNumber",
+                  "start",
+                  "end",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booked appointment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "newPatientName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "newPatientPhoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "start",
+                    "end",
+                    "status",
+                    "name",
+                    "description",
+                    "newPatientName",
+                    "newPatientPhoneNumber",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/calls/{id}": {
       "get": {
         "tags": [
@@ -3001,147 +3678,6 @@
                     "recordingSid",
                     "recordingKey",
                     "recordingUrl",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/appointments/external": {
-      "post": {
-        "tags": [
-          "Appointments"
-        ],
-        "summary": "Book external appointment",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "^\\d+$"
-                  },
-                  "start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "end": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "illness": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "doctorId",
-                  "name",
-                  "phoneNumber",
-                  "start",
-                  "end",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Booked appointment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "start": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "end": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "name": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "newPatientName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "newPatientPhoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "start",
-                    "end",
-                    "status",
-                    "name",
-                    "description",
-                    "newPatientName",
-                    "newPatientPhoneNumber",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -3736,6 +4272,780 @@
                     "speciality",
                     "cabinetCity",
                     "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices/{id}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Get invoice by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "patient": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "phoneNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 50
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "phoneNumber"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments",
+                    "patient"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Update invoice (items, notes, or cancel)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "default": 1
+                        },
+                        "unitPriceCentimes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "description",
+                        "unitPriceCentimes"
+                      ]
+                    },
+                    "minItems": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "cancelled"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Cancel an invoice",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "patient": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "phoneNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 50
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "phoneNumber"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments",
+                    "patient"
                   ]
                 }
               }
@@ -4396,6 +5706,784 @@
                       "nextSlot"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{id}": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Get patient by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patient details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "personId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "medicalFiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "patientId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "type": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 100
+                          },
+                          "date": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "title": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "documents": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sentViaWhatsapp": {
+                            "type": "boolean",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "patientId",
+                          "type",
+                          "date",
+                          "title",
+                          "description",
+                          "documents",
+                          "sentViaWhatsapp",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "invoices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "doctorId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "patientId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "appointmentId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "number": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "status": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "currency": {
+                            "type": "string",
+                            "maxLength": 10
+                          },
+                          "totalCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountPaidCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 50
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "issuedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "invoiceId": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "maxLength": 255
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "unitPriceCentimes": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "invoiceId",
+                                "description",
+                                "quantity",
+                                "unitPriceCentimes",
+                                "createdAt"
+                              ]
+                            }
+                          },
+                          "payments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "invoiceId": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "amountCentimes": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "paymentMethod": {
+                                  "type": "string",
+                                  "maxLength": 50
+                                },
+                                "paidAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "invoiceId",
+                                "amountCentimes",
+                                "paymentMethod",
+                                "paidAt",
+                                "notes",
+                                "createdAt"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "doctorId",
+                          "patientId",
+                          "appointmentId",
+                          "number",
+                          "status",
+                          "currency",
+                          "totalCentimes",
+                          "amountPaidCentimes",
+                          "paymentMethod",
+                          "notes",
+                          "issuedAt",
+                          "paidAt",
+                          "createdAt",
+                          "updatedAt",
+                          "items",
+                          "payments"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "personId",
+                    "doctorId",
+                    "cin",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "phoneNumber",
+                    "createdAt",
+                    "updatedAt",
+                    "medicalFiles",
+                    "invoices"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Update patient by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cin": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "cin",
+                  "firstName",
+                  "lastName",
+                  "dateOfBirth",
+                  "gender",
+                  "address",
+                  "phoneNumber"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated patient",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "personId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "medicalFiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "patientId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "type": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 100
+                          },
+                          "date": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "title": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "documents": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sentViaWhatsapp": {
+                            "type": "boolean",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "patientId",
+                          "type",
+                          "date",
+                          "title",
+                          "description",
+                          "documents",
+                          "sentViaWhatsapp",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "invoices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "doctorId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "patientId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "appointmentId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "number": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "status": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "currency": {
+                            "type": "string",
+                            "maxLength": 10
+                          },
+                          "totalCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountPaidCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 50
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "issuedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "invoiceId": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "maxLength": 255
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "unitPriceCentimes": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "invoiceId",
+                                "description",
+                                "quantity",
+                                "unitPriceCentimes",
+                                "createdAt"
+                              ]
+                            }
+                          },
+                          "payments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "invoiceId": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "amountCentimes": {
+                                  "type": "integer",
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "paymentMethod": {
+                                  "type": "string",
+                                  "maxLength": 50
+                                },
+                                "paidAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "invoiceId",
+                                "amountCentimes",
+                                "paymentMethod",
+                                "paidAt",
+                                "notes",
+                                "createdAt"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "doctorId",
+                          "patientId",
+                          "appointmentId",
+                          "number",
+                          "status",
+                          "currency",
+                          "totalCentimes",
+                          "amountPaidCentimes",
+                          "paymentMethod",
+                          "notes",
+                          "issuedAt",
+                          "paidAt",
+                          "createdAt",
+                          "updatedAt",
+                          "items",
+                          "payments"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "personId",
+                    "doctorId",
+                    "cin",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "phoneNumber",
+                    "createdAt",
+                    "updatedAt",
+                    "medicalFiles",
+                    "invoices"
+                  ]
                 }
               }
             }
@@ -5940,6 +8028,533 @@
         }
       }
     },
+    "/api/internal/reviews/process-job": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Process a delayed review job (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "patientId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "appointmentId",
+                  "doctorId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices/{id}/payments": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Add a payment to an invoice",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amountCentimes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "cash",
+                      "transfer"
+                    ]
+                  },
+                  "paidAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amountCentimes",
+                  "paymentMethod"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invoice with updated payments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Remove a payment from an invoice",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "required": true,
+            "name": "paymentId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice with updated payments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "number": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "totalCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "amountPaidCentimes": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "paymentMethod": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "issuedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "unitPriceCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "description",
+                          "quantity",
+                          "unitPriceCentimes",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "invoiceId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "amountCentimes": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "paidAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceId",
+                          "amountCentimes",
+                          "paymentMethod",
+                          "paidAt",
+                          "notes",
+                          "createdAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "appointmentId",
+                    "number",
+                    "status",
+                    "currency",
+                    "totalCentimes",
+                    "amountPaidCentimes",
+                    "paymentMethod",
+                    "notes",
+                    "issuedAt",
+                    "paidAt",
+                    "createdAt",
+                    "updatedAt",
+                    "items",
+                    "payments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/best-fit/range": {
       "get": {
         "tags": [
@@ -6158,447 +8773,6 @@
                       "doctors"
                     ]
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/reviews/process-job": {
-      "post": {
-        "tags": [
-          "Internal"
-        ],
-        "summary": "Process a delayed review job (Internal)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "patientId": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                },
-                "required": [
-                  "appointmentId",
-                  "doctorId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Job processed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "nullable": true
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/patients/{id}": {
-      "get": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Get patient by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Patient details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "personId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "cin": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "phoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "medicalFiles": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer",
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "patientId": {
-                            "type": "integer",
-                            "nullable": true,
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "type": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 100
-                          },
-                          "date": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          },
-                          "title": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 255
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "documents": {
-                            "type": "array",
-                            "nullable": true,
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "sentViaWhatsapp": {
-                            "type": "boolean",
-                            "nullable": true
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "patientId",
-                          "type",
-                          "date",
-                          "title",
-                          "description",
-                          "documents",
-                          "sentViaWhatsapp",
-                          "createdAt"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "personId",
-                    "doctorId",
-                    "cin",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "phoneNumber",
-                    "createdAt",
-                    "updatedAt",
-                    "medicalFiles"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Update patient by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "cin": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "firstName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "dateOfBirth": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "gender": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "address": {
-                    "type": "string"
-                  },
-                  "phoneNumber": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "cin",
-                  "firstName",
-                  "lastName",
-                  "dateOfBirth",
-                  "gender",
-                  "address",
-                  "phoneNumber"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated patient",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "personId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "cin": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "phoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "medicalFiles": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer",
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "patientId": {
-                            "type": "integer",
-                            "nullable": true,
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "type": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 100
-                          },
-                          "date": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          },
-                          "title": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 255
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "documents": {
-                            "type": "array",
-                            "nullable": true,
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "sentViaWhatsapp": {
-                            "type": "boolean",
-                            "nullable": true
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "patientId",
-                          "type",
-                          "date",
-                          "title",
-                          "description",
-                          "documents",
-                          "sentViaWhatsapp",
-                          "createdAt"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "personId",
-                    "doctorId",
-                    "cin",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "phoneNumber",
-                    "createdAt",
-                    "updatedAt",
-                    "medicalFiles"
-                  ]
                 }
               }
             }

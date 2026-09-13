@@ -7,6 +7,9 @@ import {
 	cities,
 	doctorApplication,
 	doctorProfile,
+	invoice,
+	invoiceItem,
+	invoicePayment,
 	patient,
 	patientMedicalFile,
 	person,
@@ -23,6 +26,29 @@ export const selectPatientSchema = createSelectSchema(patient);
 export const selectPatientMedicalFileSchema =
 	createSelectSchema(patientMedicalFile);
 export const selectAppointmentSchema = createSelectSchema(appointment);
+export const selectInvoiceItemSchema = createSelectSchema(invoiceItem);
+export const selectInvoicePaymentSchema = createSelectSchema(invoicePayment);
+export const selectInvoiceSchema = createSelectSchema(invoice);
+export const selectInvoiceWithItemsSchema = selectInvoiceSchema.merge(
+	z.object({
+		items: z.array(selectInvoiceItemSchema),
+		payments: z.array(selectInvoicePaymentSchema),
+	}),
+);
+export const selectInvoiceWithPatientSchema =
+	selectInvoiceWithItemsSchema.merge(
+		z.object({
+			patient: selectPatientSchema
+				.pick({
+					id: true,
+					firstName: true,
+					lastName: true,
+					cin: true,
+					phoneNumber: true,
+				})
+				.nullable(),
+		}),
+	);
 export const selectDoctorApplicationSchema =
 	createSelectSchema(doctorApplication);
 export const selectUserSchema = createSelectSchema(user);

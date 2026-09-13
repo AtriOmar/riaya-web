@@ -186,11 +186,7 @@ export default function WhatsappConfig({ userId }: Props) {
 								disabled={loggingOut}
 								onClick={handleLogout}
 							>
-								{loggingOut ? (
-									<Loader2 className="animate-spin" />
-								) : (
-									<LogOut />
-								)}
+								{loggingOut ? <Loader2 className="animate-spin" /> : <LogOut />}
 								{loggingOut ? "Logging out…" : "Log out"}
 							</Button>
 							<p className="max-w-xs text-center text-muted-foreground text-xs">

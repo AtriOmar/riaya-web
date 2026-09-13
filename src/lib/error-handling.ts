@@ -37,6 +37,9 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	OTP_RATE_LIMITED: "Too many attempts. Please wait and try again.",
 	PENDING_SIGNUP_NOT_FOUND:
 		"No pending registration found. Please start again.",
+	INVOICE_NOT_FOUND: "Invoice not found.",
+	INVOICE_CANCELLED: "This invoice is cancelled and cannot be modified.",
+	PAYMENT_NOT_FOUND: "Payment not found.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

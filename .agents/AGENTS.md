@@ -61,6 +61,14 @@ This document is a compact project guide for AI assistants working on this repo.
 
 ## Working Conventions (Important)
 
+### 0) UX quality is required
+
+- **Good UX is always required** for doctor dashboard, admin, and patient-facing UI — not optional polish.
+- Prefer clear hierarchy, one obvious primary action, short labels, and flows that match how doctors actually work (e.g. payments as a list of events, not a single overwriteable field).
+- Avoid dead-end screens, empty states without next steps, and dense cards when a simple table/list communicates better.
+- Keep forms minimal: only ask for what is needed now; progressive disclosure for secondary details.
+- Mobile and desktop must both be usable; interactive controls need clear affordance and feedback (loading, success, errors via `getErrorMessage`).
+
 ### 1) Generated API Client (`zod-to-openapi` + Orval)
 
 - **API routes MUST register their schemas**: Every route in `web/src/app/api/**/route.ts` must call `registry.registerPath()` at the bottom to define its OpenAPI spec.
@@ -270,3 +278,4 @@ Use these as examples before changing related code.
   - handle in `web/src/hooks/use-realtime-socket.ts`
 - When adding socket → Next calls, follow `api/callsApi.ts` / `api/personsApi.ts` patterns (cached promises, structured logging).
 - Prefer consistency with existing files over introducing new patterns.
+- **UX**: Always aim for good UX (see [Working Conventions §0](#0-ux-quality-is-required)). Do not ship confusing or incomplete interaction patterns when a clearer alternative is obvious.
