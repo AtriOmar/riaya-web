@@ -42,6 +42,18 @@ export async function GET(
 				medicalFiles: {
 					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
 				},
+				invoices: {
+					with: {
+						items: true,
+						payments: {
+							orderBy: (payments, { asc }) => [
+								asc(payments.paidAt),
+								asc(payments.id),
+							],
+						},
+					},
+					orderBy: (invoices, { desc }) => [desc(invoices.issuedAt)],
+				},
 			},
 		});
 
@@ -109,6 +121,18 @@ export async function PATCH(
 				medicalFiles: {
 					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
 				},
+				invoices: {
+					with: {
+						items: true,
+						payments: {
+							orderBy: (payments, { asc }) => [
+								asc(payments.paidAt),
+								asc(payments.id),
+							],
+						},
+					},
+					orderBy: (invoices, { desc }) => [desc(invoices.issuedAt)],
+				},
 			},
 		});
 
@@ -121,7 +145,11 @@ export async function PATCH(
 	}
 }
 
-import { selectPatientMedicalFileSchema, selectPatientSchema } from "@/db/zod";
+import {
+	selectInvoiceWithItemsSchema,
+	selectPatientMedicalFileSchema,
+	selectPatientSchema,
+} from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const paramsSchema = z.object({ id: z.string() });
@@ -129,6 +157,7 @@ const paramsSchema = z.object({ id: z.string() });
 const patientWithFilesSchema = selectPatientSchema.merge(
 	z.object({
 		medicalFiles: z.array(selectPatientMedicalFileSchema),
+		invoices: z.array(selectInvoiceWithItemsSchema),
 	}),
 );
 

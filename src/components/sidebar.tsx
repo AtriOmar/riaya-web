@@ -7,6 +7,7 @@ import {
 	MessageSquare,
 	PanelLeftClose,
 	PanelLeftOpen,
+	Receipt,
 	Settings,
 	Stethoscope,
 	User,
@@ -44,6 +45,11 @@ const items1: SidebarItemData[] = [
 		name: "Appointments",
 		icon: <CalendarDays className="size-5" />,
 		path: "/dashboard/appointments",
+	},
+	{
+		name: "Invoices",
+		icon: <Receipt className="size-5" />,
+		path: "/dashboard/invoices",
 	},
 	{
 		name: "Availability",

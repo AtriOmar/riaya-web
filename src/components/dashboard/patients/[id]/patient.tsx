@@ -4,6 +4,7 @@ import { CubeLoader } from "@/components/loaders";
 import { useGetApiPatientsId } from "@/services/generated/patients/patients";
 import { AddMedicalFile } from "./add-medical-file";
 import { PatientDetails } from "./patient-details";
+import { PatientInvoices } from "./patient-invoices";
 import { PatientMedicalFilesList } from "./patient-medical-files-list";
 
 export default function Patient({ patientId }: { patientId: number }) {
@@ -35,6 +36,11 @@ export default function Patient({ patientId }: { patientId: number }) {
 				/>
 				<AddMedicalFile patientId={patientId} onFileAdded={() => mutate()} />
 			</div>
+			<PatientInvoices
+				patientId={patientId}
+				invoices={patient.invoices ?? []}
+				onChanged={() => mutate()}
+			/>
 		</div>
 	);
 }

@@ -227,6 +227,82 @@ export const consultation = pgTable(
 	],
 );
 
+// ─── Invoice ──────────────────────────────────────────────────────────────────
+// Amounts are stored in millimes (1 TND = 1000). Column names use *Centimes
+// historically. Status is derived from amountPaid vs total except for explicit
+// "cancelled".
+
+export const invoice = pgTable(
+	"invoice",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id),
+		patientId: integer("patient_id")
+			.notNull()
+			.references(() => patient.id),
+		appointmentId: integer("appointment_id").references(() => appointment.id),
+		number: varchar("number", { length: 50 }).notNull(),
+		// unpaid | partially_paid | paid | cancelled
+		status: varchar("status", { length: 50 }).notNull().default("unpaid"),
+		currency: varchar("currency", { length: 10 }).notNull().default("TND"),
+		totalCentimes: integer("total_centimes").notNull().default(0),
+		amountPaidCentimes: integer("amount_paid_centimes").notNull().default(0),
+		// cash | transfer (set when any amount has been paid)
+		paymentMethod: varchar("payment_method", { length: 50 }),
+		notes: text("notes"),
+		pdfUrl: varchar("pdf_url", { length: 1024 }),
+		sentViaWhatsapp: boolean("sent_via_whatsapp").default(false),
+		issuedAt: timestamp("issued_at").defaultNow(),
+		paidAt: timestamp("paid_at"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("invoice_doctor_id_idx").on(table.doctorId),
+		index("invoice_patient_id_idx").on(table.patientId),
+		index("invoice_status_idx").on(table.status),
+		index("invoice_number_idx").on(table.number),
+		index("invoice_issued_at_idx").on(table.issuedAt),
+	],
+);
+
+export const invoiceItem = pgTable(
+	"invoice_item",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		invoiceId: integer("invoice_id")
+			.notNull()
+			.references(() => invoice.id, { onDelete: "cascade" }),
+		description: varchar("description", { length: 255 }).notNull(),
+		quantity: integer("quantity").notNull().default(1),
+		unitPriceCentimes: integer("unit_price_centimes").notNull(),
+		createdAt: timestamp("created_at").defaultNow(),
+	},
+	(table) => [index("invoice_item_invoice_id_idx").on(table.invoiceId)],
+);
+
+export const invoicePayment = pgTable(
+	"invoice_payment",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		invoiceId: integer("invoice_id")
+			.notNull()
+			.references(() => invoice.id, { onDelete: "cascade" }),
+		amountCentimes: integer("amount_centimes").notNull(),
+		// cash | transfer
+		paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+		paidAt: timestamp("paid_at").defaultNow().notNull(),
+		notes: text("notes"),
+		createdAt: timestamp("created_at").defaultNow(),
+	},
+	(table) => [
+		index("invoice_payment_invoice_id_idx").on(table.invoiceId),
+		index("invoice_payment_paid_at_idx").on(table.paidAt),
+	],
+);
+
 // ─── Doctor Application ───────────────────────────────────────────────────────
 // userId references better-auth's user — the applicant doesn't have a doctor profile yet.
 
@@ -391,6 +467,7 @@ export const doctorProfileRelations = relations(
 		patients: many(patient),
 		appointments: many(appointment),
 		consultations: many(consultation),
+		invoices: many(invoice),
 		unavailabilities: many(doctorUnavailability),
 		reviews: many(review),
 	}),
@@ -412,6 +489,7 @@ export const patientRelations = relations(patient, ({ one, many }) => ({
 	medicalFiles: many(patientMedicalFile),
 	appointments: many(appointment),
 	consultations: many(consultation),
+	invoices: many(invoice),
 	reviews: many(review),
 }));
 
@@ -461,6 +539,37 @@ export const consultationRelations = relations(consultation, ({ one }) => ({
 	patient: one(patient, {
 		fields: [consultation.patientId],
 		references: [patient.id],
+	}),
+}));
+
+export const invoiceRelations = relations(invoice, ({ one, many }) => ({
+	doctor: one(doctorProfile, {
+		fields: [invoice.doctorId],
+		references: [doctorProfile.id],
+	}),
+	patient: one(patient, {
+		fields: [invoice.patientId],
+		references: [patient.id],
+	}),
+	appointment: one(appointment, {
+		fields: [invoice.appointmentId],
+		references: [appointment.id],
+	}),
+	items: many(invoiceItem),
+	payments: many(invoicePayment),
+}));
+
+export const invoiceItemRelations = relations(invoiceItem, ({ one }) => ({
+	invoice: one(invoice, {
+		fields: [invoiceItem.invoiceId],
+		references: [invoice.id],
+	}),
+}));
+
+export const invoicePaymentRelations = relations(invoicePayment, ({ one }) => ({
+	invoice: one(invoice, {
+		fields: [invoicePayment.invoiceId],
+		references: [invoice.id],
 	}),
 }));
 

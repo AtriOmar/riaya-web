@@ -21,67 +21,6 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary Request registration OTP
- */
-export const postApiRegisterRequestOtp = (
-	postApiRegisterRequestOtpBody?: PostApiRegisterRequestOtpBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiRegisterRequestOtp200>(
-		{
-			url: `/api/register/request-otp`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiRegisterRequestOtpBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiRegisterRequestOtpMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiRegisterRequestOtpBody | undefined },
-	) => {
-		return postApiRegisterRequestOtp(arg, options);
-	};
-};
-export const getPostApiRegisterRequestOtpMutationKey = () =>
-	[`/api/register/request-otp`] as const;
-
-export type PostApiRegisterRequestOtpMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiRegisterRequestOtp>>
->;
-
-/**
- * @summary Request registration OTP
- */
-export const usePostApiRegisterRequestOtp = <TError = void>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiRegisterRequestOtp>>,
-		TError,
-		Key,
-		PostApiRegisterRequestOtpBody | undefined,
-		Awaited<ReturnType<typeof postApiRegisterRequestOtp>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiRegisterRequestOtpMutationKey();
-	const swrFn = getPostApiRegisterRequestOtpMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Resend registration OTP
  */
 export const postApiRegisterResendOtp = (
@@ -193,6 +132,67 @@ export const usePostApiRegisterVerifyOtp = <TError = void>(options?: {
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiRegisterVerifyOtpMutationKey();
 	const swrFn = getPostApiRegisterVerifyOtpMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Request registration OTP
+ */
+export const postApiRegisterRequestOtp = (
+	postApiRegisterRequestOtpBody?: PostApiRegisterRequestOtpBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiRegisterRequestOtp200>(
+		{
+			url: `/api/register/request-otp`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiRegisterRequestOtpBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiRegisterRequestOtpMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiRegisterRequestOtpBody | undefined },
+	) => {
+		return postApiRegisterRequestOtp(arg, options);
+	};
+};
+export const getPostApiRegisterRequestOtpMutationKey = () =>
+	[`/api/register/request-otp`] as const;
+
+export type PostApiRegisterRequestOtpMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiRegisterRequestOtp>>
+>;
+
+/**
+ * @summary Request registration OTP
+ */
+export const usePostApiRegisterRequestOtp = <TError = void>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiRegisterRequestOtp>>,
+		TError,
+		Key,
+		PostApiRegisterRequestOtpBody | undefined,
+		Awaited<ReturnType<typeof postApiRegisterRequestOtp>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiRegisterRequestOtpMutationKey();
+	const swrFn = getPostApiRegisterRequestOtpMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
