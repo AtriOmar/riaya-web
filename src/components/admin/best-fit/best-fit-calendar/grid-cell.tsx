@@ -28,7 +28,12 @@ export default function GridCell({
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: calendar grid cell
 		<div
-			onClick={() => onSelectDate(day)}
+			onClick={(e) => {
+				// Doctor chips are nested buttons — ignore their clicks so we don't
+				// open the day view right after navigating to the doctor page.
+				if ((e.target as HTMLElement).closest("button")) return;
+				onSelectDate(day);
+			}}
 			className={cn(
 				"grid content-center items-stretch gap-0.5 px-1.5 min-w-0 overflow-hidden",
 				expanded ? "grid-cols-3" : "grid-cols-2",

@@ -7,8 +7,7 @@ import {
 	Stethoscope,
 	UserRound,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import DoctorAvailabilityCalendar from "@/components/admin/best-fit/doctor-availability-calendar";
 import AdminLayout from "@/components/layouts/admin-layout";
@@ -43,6 +42,7 @@ function fullDoctorName(
 
 export default function AdminBestFitDoctorPage() {
 	const params = useParams<{ id: string }>();
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const doctorId = Number(params.id);
 
@@ -70,14 +70,14 @@ export default function AdminBestFitDoctorPage() {
 		Number.isFinite(doctorId) ? rangeParams : null,
 	);
 
-	// Preserve filters when navigating back to the main page.
+	// Fallback when there is no in-app history (e.g. opened in a new tab).
 	const backHref = useMemo(() => {
 		const p = new URLSearchParams();
 		const specialityId = searchParams.get("specialityId");
 		const cityId = searchParams.get("cityId");
 		const lat = searchParams.get("lat");
 		const long = searchParams.get("long");
-		const day = searchParams.get("from");
+		const day = searchParams.get("day");
 		const view = searchParams.get("view");
 		if (specialityId) p.set("specialityId", specialityId);
 		if (cityId) p.set("cityId", cityId);
@@ -89,15 +89,22 @@ export default function AdminBestFitDoctorPage() {
 		return `/admin/best-fit${qs ? `?${qs}` : ""}`;
 	}, [searchParams]);
 
+	function handleBack() {
+		const idx = (window.history.state as { idx?: number } | null)?.idx;
+		if (typeof idx === "number" && idx > 0) {
+			router.back();
+			return;
+		}
+		router.push(backHref);
+	}
+
 	return (
 		<AdminLayout
 			title={
 				<div className="flex items-center gap-3">
-					<Button variant="quiet" size="sm" asChild>
-						<Link href={backHref}>
-							<ArrowLeft className="w-4 h-4" />
-							Back
-						</Link>
+					<Button variant="quiet" size="sm" onClick={handleBack}>
+						<ArrowLeft className="w-4 h-4" />
+						Back
 					</Button>
 					<span>Doctor availability</span>
 				</div>

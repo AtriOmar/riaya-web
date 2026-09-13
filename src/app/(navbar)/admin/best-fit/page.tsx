@@ -202,6 +202,8 @@ export default function AdminBestFitPage() {
 		if (filters.cityId) params.set("cityId", String(filters.cityId));
 		if (filters.lat != null) params.set("lat", String(filters.lat));
 		if (filters.long != null) params.set("long", String(filters.long));
+		// Preserve day-view only when already on a day (not week calendar).
+		if (urlDay) params.set("day", urlDay);
 		if (viewMode === "map") params.set("view", "map");
 		router.push(`/admin/best-fit/doctor/${doctorId}?${params.toString()}`);
 	}
