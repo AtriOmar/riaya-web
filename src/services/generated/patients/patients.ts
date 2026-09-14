@@ -5,12 +5,12 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-
-import type { Arguments, Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
-import type { SWRMutationConfiguration } from "swr/mutation";
+import type { Arguments, Key, SWRConfiguration } from "swr";
+
 import useSWRMutation from "swr/mutation";
-import { customInstance } from "../../api";
+import type { SWRMutationConfiguration } from "swr/mutation";
+
 import type {
 	DeleteApiPatientsIdMedicalFiles200,
 	DeleteApiPatientsIdMedicalFilesParams,
@@ -28,6 +28,8 @@ import type {
 	PutApiPatientsIdMedicalFiles200,
 	PutApiPatientsIdMedicalFilesBody,
 } from "../api.schemas";
+
+import { customInstance } from "../../api";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 

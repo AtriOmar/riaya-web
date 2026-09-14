@@ -1,0 +1,1 @@
+ALTER TABLE "person" ADD COLUMN "preferred_language" varchar(8) DEFAULT 'ar' NOT NULL;

@@ -13,8 +13,13 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+	let phoneHint: string | undefined;
 	try {
 		const body = await req.json();
+		if (body && typeof body === "object" && "phoneNumber" in body) {
+			phoneHint =
+				typeof body.phoneNumber === "string" ? body.phoneNumber : undefined;
+		}
 		const parsed = createSchema.safeParse(body);
 
 		if (!parsed.success) return validationError(parsed.error.issues);
@@ -28,6 +33,7 @@ export async function POST(req: NextRequest) {
 		return json(row, 201);
 	} catch (e) {
 		if (e instanceof Response) return e;
+		console.error("[api/persons POST]", { phoneNumber: phoneHint }, e);
 		return apiError("INTERNAL_ERROR");
 	}
 }

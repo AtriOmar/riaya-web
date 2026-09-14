@@ -174,6 +174,8 @@ This document is a compact project guide for AI assistants working on this repo.
 | `POST /api/calls` | Internal secret | Create call row (socket) |
 | `GET /api/doctors/best-fit` | Public | Slots for AI `find_available_slots` |
 | `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
+| `POST /api/internal/caller/ai-appointments/list` | Internal secret | List AI appointments for caller phone (voice) |
+| `POST /api/internal/caller/ai-appointments/cancel` | Internal secret | Cancel pending AI appointment for caller phone (voice) |
 
 ## Environment Notes
 
@@ -243,9 +245,12 @@ Use these as examples before changing related code.
 
 - `get_specialities`, `get_cities` — static lists in socket constants.
 - `find_available_slots`, `find_doctor_slots` — Next doctor/slot APIs.
-- `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; call after collecting name/details.
-- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` (digits only) server-side.
-- `end_call` — schedules Twilio hangup after closing message.
+- `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; name, language preference, etc.
+- `list_my_ai_appointments` / `cancel_appointment` — internal caller routes; **phone from Twilio only** (`callerAppointmentsApi` + `requireInternal`). Cancel **pending** AI bookings only.
+- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side.
+- `end_call` — fixed goodbye then hangup.
+
+Query helper: `web/src/lib/caller-ai-appointments.ts`.
 
 ### Conversation style (prompt)
 

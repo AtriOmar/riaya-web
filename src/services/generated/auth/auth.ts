@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Key } from "swr";
-import type { SWRMutationConfiguration } from "swr/mutation";
+
 import useSWRMutation from "swr/mutation";
-import { customInstance } from "../../api";
+import type { SWRMutationConfiguration } from "swr/mutation";
+
 import type {
 	PostApiRegisterRequestOtp200,
 	PostApiRegisterRequestOtpBody,
@@ -17,6 +18,8 @@ import type {
 	PostApiRegisterVerifyOtp200,
 	PostApiRegisterVerifyOtpBody,
 } from "../api.schemas";
+
+import { customInstance } from "../../api";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 

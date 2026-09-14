@@ -108,6 +108,10 @@ export const person = pgTable(
 		dateOfBirth: timestamp("date_of_birth"),
 		gender: varchar("gender", { length: 50 }),
 		address: text("address"),
+		/** Voice/UI language: en, fr, or ar (Tunisian Derja). Default Arabic. */
+		preferredLanguage: varchar("preferred_language", { length: 8 })
+			.notNull()
+			.default("ar"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},

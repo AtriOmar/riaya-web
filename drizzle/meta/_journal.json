@@ -36,6 +36,13 @@
       "when": 1789362048762,
       "tag": "0004_plan_limits_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789380712372,
+      "tag": "0005_add_person_preferred_language",
+      "breakpoints": true
     }
   ]
 }

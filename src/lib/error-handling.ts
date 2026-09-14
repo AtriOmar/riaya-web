@@ -53,6 +53,9 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"Monthly AI booking limit reached for this practice. It resets next calendar month, or upgrade to Pro for unlimited bookings.",
 	WHATSAPP_LIMIT_REACHED:
 		"Monthly WhatsApp send limit reached. It resets next calendar month, or upgrade to Pro for unlimited sends.",
+	APPOINTMENT_NOT_CANCELLABLE:
+		"This appointment cannot be cancelled by phone. Contact the doctor's office if it is already confirmed.",
+	CALLER_PHONE_REQUIRED: "Caller phone number is required for this action.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

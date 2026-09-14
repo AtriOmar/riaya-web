@@ -5,11 +5,12 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-
-import type { Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
-import { customInstance } from "../../api";
+import type { Key, SWRConfiguration } from "swr";
+
 import type { GetApiDashboardStats200 } from "../api.schemas";
+
+import { customInstance } from "../../api";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
