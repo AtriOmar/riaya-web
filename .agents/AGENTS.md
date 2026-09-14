@@ -57,7 +57,7 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - Use **pnpm** for this repo (not npm or yarn): installs, adds, and scripts should go through `pnpm`.
 - Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from `web/` or `socket/` as needed.
-- Schema changes: `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate` from `web/` (Drizzle migration files; do not use `db:push`). Always pass `--name` so migrations are readable (e.g. `create_invoices`), never leave the random Marvel-style default names.
+- Schema changes: from `web/`, run `pnpm db:generate --name <descriptive_snake_name>` (Drizzle migration files; do not use `db:push`). Always pass `--name` so migrations are readable (e.g. `create_invoices`), never leave the random Marvel-style default names. **Do not run `pnpm db:migrate` until the user explicitly approves** (see [Practical AI Instructions](#practical-ai-instructions)).
 
 ## Working Conventions (Important)
 
@@ -146,7 +146,7 @@ This document is a compact project guide for AI assistants working on this repo.
 ## Database Notes
 
 - Drizzle schema lives in `web/src/db/schema.ts`.
-- Apply schema to DB: `pnpm db:generate` then `pnpm db:migrate` from `web/` (never `db:push`).
+- Create migrations with `pnpm db:generate --name <descriptive_snake_name>` from `web/` (never `db:push`). Apply with `pnpm db:migrate` **only after user approval** — the AI must not migrate automatically.
 
 ### Person vs patient (identity model)
 
@@ -255,8 +255,8 @@ Use these as examples before changing related code.
 ## Practical AI Instructions
 
 - **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
+- **Database migrations rule**: For schema changes in `web/`, the AI may run `pnpm db:generate --name <descriptive_snake_name>` to produce migration files. The AI must **not** run `pnpm db:migrate` (or otherwise apply migrations to a database) until the user has **explicitly approved**. After generate, summarize or point to the new migration SQL and ask before migrating. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not Drizzle’s random defaults.
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
-- For schema changes in `web/`: run `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate`. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not the random defaults.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
 - When creating pages in `dashboard` or `admin`: keep `page.tsx` thin and wrap content in layout primitives (e.g. `<DashboardLayout title="...">` or `<AdminLayout title="...">`) as seen in `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx`.
 - When adding or changing frontend data access:
