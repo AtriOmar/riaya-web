@@ -16,6 +16,7 @@ import { buildInvoicePdf } from "@/lib/invoice-pdf";
 import { registry } from "@/lib/openapi";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { uploadBufferToR2 } from "@/lib/r2";
+import { getRealtimeHttpUrl } from "@/lib/realtime";
 
 const paramsSchema = z.object({ id: z.string() });
 
@@ -105,16 +106,11 @@ export async function POST(
 		const patientFirst = record.patient.firstName || "there";
 		const caption = `Hello ${patientFirst},\n\nPlease find attached your invoice ${record.number} from Dr. ${doctorLast}.`;
 
-		const realtimeUrl =
-			process.env.SOCKET_INTERNAL_URL?.trim() ||
-			process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
-		if (!realtimeUrl) {
-			console.error(
-				"SOCKET_INTERNAL_URL / NEXT_PUBLIC_REALTIME_URL is not set",
-			);
+		const httpUrl = getRealtimeHttpUrl();
+		if (!httpUrl) {
+			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 			return apiError("INTERNAL_ERROR");
 		}
-		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {
 			await assertAndRecordWhatsappSend(profile.id);

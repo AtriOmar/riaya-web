@@ -11,6 +11,7 @@ import {
 	requireSession,
 } from "@/lib/api-utils";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
+import { getRealtimeHttpUrl } from "@/lib/realtime";
 
 // ─── POST /api/patients/[id]/medical-files/[fileId]/send ──────────────────────
 
@@ -69,12 +70,11 @@ export async function POST(
 
 		if (!foundFile) return apiError("MEDICAL_FILE_NOT_FOUND");
 
-		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
-		if (!realtimeUrl) {
+		const httpUrl = getRealtimeHttpUrl();
+		if (!httpUrl) {
 			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 			return apiError("INTERNAL_ERROR");
 		}
-		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {
 			const docUrls =
