@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { appointment, doctorProfile, patient, person } from "@/db/schema";
+import { appointment, patient, person } from "@/db/schema";
 import { apiError } from "@/lib/api-utils";
 import {
 	DEFAULT_PHONE_COUNTRY,

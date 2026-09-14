@@ -6,18 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Key } from "swr";
-
-import useSWRMutation from "swr/mutation";
 import type { SWRMutationConfiguration } from "swr/mutation";
-
+import useSWRMutation from "swr/mutation";
+import { customInstance } from "../../api";
 import type {
 	PostApiInternalCallerAiAppointmentsCancel200,
 	PostApiInternalCallerAiAppointmentsCancelBody,
 	PostApiInternalCallerAiAppointmentsList200,
 	PostApiInternalCallerAiAppointmentsListBody,
 } from "../api.schemas";
-
-import { customInstance } from "../../api";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
