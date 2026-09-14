@@ -11,6 +11,7 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { upsertPersonByPhone } from "@/lib/person";
+import { normalizePhoneForStorage } from "@/lib/phone";
 
 const updateSchema = z.object({
 	cin: z.string().min(1),
@@ -91,19 +92,19 @@ export async function PATCH(
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const phone = parsed.data.phoneNumber.trim();
+		const phone = normalizePhoneForStorage(parsed.data.phoneNumber.trim());
 
 		// Upsert the person by phone so personId stays current
-		let personId = existing.personId;
+		let linkedPersonId = existing.personId;
 		if (phone) {
 			const personRow = await upsertPersonByPhone(phone, "doctor");
-			if (personRow) personId = personRow.id;
+			if (personRow) linkedPersonId = personRow.id;
 		}
 
 		await db
 			.update(patient)
 			.set({
-				personId,
+				personId: linkedPersonId,
 				cin: parsed.data.cin,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,
@@ -113,10 +114,12 @@ export async function PATCH(
 				phoneNumber: phone || null,
 				updatedAt: new Date(),
 			})
-			.where(and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)));
+			.where(
+				and(eq(patient.id, existing.id), eq(patient.doctorId, profile.id)),
+			);
 
 		const record = await db.query.patient.findFirst({
-			where: and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)),
+			where: and(eq(patient.id, existing.id), eq(patient.doctorId, profile.id)),
 			with: {
 				medicalFiles: {
 					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],

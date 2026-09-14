@@ -2,12 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneNumberInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber, normalizePhoneForStorage } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { usePostApiPatients } from "@/services/generated/patients/patients";
 
@@ -18,7 +20,10 @@ const schema = z.object({
 	dateOfBirth: z.string().min(1, "Date of birth is required"),
 	gender: z.string().min(1, "Gender is required"),
 	address: z.string(),
-	phoneNumber: z.string(),
+	phoneNumber: z
+		.string()
+		.min(1, "Phone number is required")
+		.refine((v) => isValidPhoneNumber(v), "Enter a valid phone number"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -33,6 +38,7 @@ export default function NewPatientForm() {
 		handleSubmit,
 		setValue,
 		watch,
+		control,
 		formState: { errors, isSubmitting },
 	} = useForm<FormValues>({
 		resolver: zodResolver(schema),
@@ -50,8 +56,15 @@ export default function NewPatientForm() {
 	const gender = watch("gender");
 
 	async function onSubmit(values: FormValues) {
+		const phone = normalizePhoneForStorage(values.phoneNumber);
+		if (!phone) {
+			toast.error("Enter a valid phone number");
+			return;
+		}
+
 		const payload = {
 			...values,
+			phoneNumber: phone,
 			dateOfBirth: new Date(values.dateOfBirth).toISOString(),
 		};
 
@@ -158,13 +171,28 @@ export default function NewPatientForm() {
 				)}
 			</div>
 			<div>
-				<Label htmlFor="phoneNumber">Phone Number</Label>
-				<Input
-					id="phoneNumber"
-					className="mt-0.5"
-					placeholder="+216 22 222 222"
-					{...register("phoneNumber")}
+				<Label htmlFor="phoneNumber">
+					Phone Number <span className="text-destructive">*</span>
+				</Label>
+				<Controller
+					name="phoneNumber"
+					control={control}
+					render={({ field }) => (
+						<PhoneNumberInput
+							id="phoneNumber"
+							className="mt-0.5"
+							value={field.value}
+							onChange={field.onChange}
+							onBlur={field.onBlur}
+							aria-invalid={!!errors.phoneNumber}
+						/>
+					)}
 				/>
+				{errors.phoneNumber && (
+					<p className="mt-1 text-destructive text-sm">
+						{errors.phoneNumber.message}
+					</p>
+				)}
 			</div>
 			<div>
 				<Label htmlFor="address">Address</Label>

@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
 import { upsertPersonByPhone } from "@/lib/person";
+import { normalizePhoneForStorage } from "@/lib/phone";
 import { assertAiBookingAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
@@ -16,7 +17,7 @@ type Availability = Record<number, AvailabilitySlot[]>;
 const externalSchema = z.object({
 	doctorId: z.coerce.number().int().positive(),
 	name: z.string().min(1),
-	phoneNumber: z.string().min(8).regex(/^\d+$/, "Invalid phone number"),
+	phoneNumber: z.string().min(1, "Phone number is required"),
 	start: z.iso.datetime(),
 	end: z.iso.datetime(),
 	illness: z.string(),
@@ -29,7 +30,13 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const data = parsed.data;
+		const normalizedPhone = normalizePhoneForStorage(parsed.data.phoneNumber);
+		if (!normalizedPhone)
+			return validationError([
+				{ message: "Invalid phone number", path: ["phoneNumber"] },
+			]);
+
+		const data = { ...parsed.data, phoneNumber: normalizedPhone };
 
 		// Find the doctor
 		const [doctor] = await db

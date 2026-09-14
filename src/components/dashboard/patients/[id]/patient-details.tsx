@@ -3,12 +3,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneNumberInput } from "@/components/ui/phone-input";
+import {
+	formatPhoneDisplay,
+	isValidPhoneNumber,
+	normalizePhoneForStorage,
+} from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import type { GetApiPatientsId200 } from "@/services/generated/api.schemas";
 import { usePatchApiPatientsId } from "@/services/generated/patients/patients";
@@ -20,7 +26,10 @@ const schema = z.object({
 	dateOfBirth: z.string().min(1, "Date of birth is required"),
 	gender: z.string().min(1, "Gender is required"),
 	address: z.string(),
-	phoneNumber: z.string(),
+	phoneNumber: z
+		.string()
+		.min(1, "Phone number is required")
+		.refine((v) => isValidPhoneNumber(v), "Enter a valid phone number"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -75,6 +84,7 @@ export function PatientDetails({
 		setValue,
 		watch,
 		reset,
+		control,
 		formState: { errors, isSubmitting },
 	} = useForm<FormValues>({
 		resolver: zodResolver(schema),
@@ -88,9 +98,15 @@ export function PatientDetails({
 	}, [patient]);
 
 	async function onSubmit(values: FormValues) {
+		const phone = normalizePhoneForStorage(values.phoneNumber);
+		if (!phone) {
+			toast.error("Enter a valid phone number");
+			return;
+		}
 		try {
 			await updatePatient({
 				...values,
+				phoneNumber: phone,
 				dateOfBirth: new Date(values.dateOfBirth).toISOString(),
 			});
 			toast.success("Patient updated");
@@ -211,11 +227,25 @@ export function PatientDetails({
 				</div>
 				<div>
 					<Label htmlFor="edit-phone">Phone</Label>
-					<Input
-						id="edit-phone"
-						className="mt-0.5"
-						{...register("phoneNumber")}
+					<Controller
+						name="phoneNumber"
+						control={control}
+						render={({ field }) => (
+							<PhoneNumberInput
+								id="edit-phone"
+								className="mt-0.5"
+								value={field.value}
+								onChange={field.onChange}
+								onBlur={field.onBlur}
+								aria-invalid={!!errors.phoneNumber}
+							/>
+						)}
 					/>
+					{errors.phoneNumber && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.phoneNumber.message}
+						</p>
+					)}
 				</div>
 				<div>
 					<Label htmlFor="edit-address">Address</Label>
@@ -268,7 +298,9 @@ export function PatientDetails({
 				</div>
 				<div>
 					<p className="text-muted-foreground text-sm">Phone</p>
-					<p className="font-medium">{patient.phoneNumber ?? "—"}</p>
+					<p className="font-medium tabular-nums">
+						{formatPhoneDisplay(patient.phoneNumber)}
+					</p>
 				</div>
 				<div className="sm:col-span-2">
 					<p className="text-muted-foreground text-sm">Address</p>

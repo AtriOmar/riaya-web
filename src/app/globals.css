@@ -462,6 +462,69 @@ html {
 
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
+/* ─── Phone input (react-phone-number-input) ───────────────────────────────── */
+
+.phone-input-root .PhoneInput {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	min-height: 2rem;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--input);
+	background: transparent;
+	padding: 0 0.625rem;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.dark .phone-input-root .PhoneInput {
+	background: color-mix(in oklab, var(--input) 30%, transparent);
+}
+
+.phone-input-root .PhoneInput:focus-within {
+	border-color: var(--ring);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--ring) 50%, transparent);
+}
+
+.phone-input-root--invalid .PhoneInput {
+	border-color: var(--destructive);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--destructive) 20%, transparent);
+}
+
+.phone-input-root .PhoneInputCountry {
+	margin-right: 0.125rem;
+}
+
+.phone-input-root .PhoneInputCountrySelect {
+	font-size: 0;
+}
+
+.phone-input-root .PhoneInputCountryIcon {
+	width: 1.25rem;
+	height: auto;
+	border-radius: 2px;
+	overflow: hidden;
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--border) 80%, transparent);
+}
+
+.phone-input-root .PhoneInputInput {
+	flex: 1;
+	min-width: 0;
+	border: none;
+	background: transparent;
+	padding: 0.25rem 0;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	outline: none;
+	color: var(--foreground);
+}
+
+.phone-input-root .PhoneInputInput::placeholder {
+	color: var(--muted-foreground);
+}
+
 /* ─── Animations ───────────────────────────────────────────────────────────── */
 
 @keyframes fade-in-up {
