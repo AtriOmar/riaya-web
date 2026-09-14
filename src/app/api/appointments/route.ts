@@ -13,10 +13,7 @@ import {
 } from "@/lib/api-utils";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
-
-// Internal socket service URL — used to fire-and-forget WhatsApp messages
-const SOCKET_INTERNAL_URL =
-	process.env.SOCKET_INTERNAL_URL ?? "http://localhost:8080";
+import { getRealtimeHttpUrl } from "@/lib/realtime";
 
 function buildConfirmationMessage(params: {
 	patientName: string;
@@ -180,13 +177,18 @@ export async function PUT(req: NextRequest) {
 							start: full?.start,
 						});
 						try {
-							await assertAndRecordWhatsappSend(profile.id);
-							await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
-								userId: full?.doctor?.userId,
-								phone,
-								message,
-								quotaConsumed: true,
-							});
+							const httpUrl = getRealtimeHttpUrl();
+							if (!httpUrl) {
+								console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+							} else {
+								await assertAndRecordWhatsappSend(profile.id);
+								await axios.post(`${httpUrl}/send-whatsapp`, {
+									userId: full?.doctor?.userId,
+									phone,
+									message,
+									quotaConsumed: true,
+								});
+							}
 						} catch (waErr) {
 							if (waErr instanceof Response) {
 								const body = await waErr.json().catch(() => null);
