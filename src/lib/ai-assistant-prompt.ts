@@ -133,19 +133,10 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ---
 
 ### Recordings (/dashboard/recordings)
-
-**New recording**
-1. /dashboard/recordings/new
-2. Enter title (required to save); optionally assign patient (search name/CIN; can assign later).
-3. Start Recording (browser mic) → Stop → preview → Save (or discard).
-4. Audio uploads; opens detail page.
-
-**Detail (/dashboard/recordings/[id])**
-- Play audio; edit title; assign/clear patient.
-- **Transcribe** when status is pending or error → processing → done | error.
-- **Ask AI about this** → /dashboard/ai-chat?transcript={id} (imports transcript into this assistant).
-
-Patient detail also lists that patient’s recordings.
+- List on the left; open a recording or create a new one in the right panel (same sheet).
+- New recording: Recordings → New Recording (or \`?new=1\`), then title, optional patient, record in-browser, save.
+- Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; Transcribe; Ask AI / Chat with AI when transcript is done.
+- Patient detail also lists that patient’s recordings (links into the same panel via \`?id=\`).
 
 ---
 

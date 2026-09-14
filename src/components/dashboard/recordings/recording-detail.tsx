@@ -136,8 +136,11 @@ function PatientCombobox({
 
 export default function RecordingDetail({
 	recordingId,
+	onClose,
 }: {
 	recordingId: number;
+	/** When set (panel mode), replaces the back-to-list navigation. */
+	onClose?: () => void;
 }) {
 	const router = useRouter();
 	const {
@@ -159,6 +162,11 @@ export default function RecordingDetail({
 		useState<GetApiPatients200Item | null>(null);
 	const [transcriptExpanded, setTranscriptExpanded] = useState(true);
 
+	const goBack = () => {
+		if (onClose) onClose();
+		else router.push("/dashboard/recordings");
+	};
+
 	if (isLoading) {
 		return (
 			<div className="flex justify-center py-16">
@@ -172,8 +180,8 @@ export default function RecordingDetail({
 			<div className="flex flex-col items-center gap-3 py-16 text-center">
 				<XCircle className="size-12 text-muted-foreground" />
 				<p className="text-muted-foreground">Recording not found.</p>
-				<Button asChild variant="outline">
-					<Link href="/dashboard/recordings">Back to recordings</Link>
+				<Button variant="outline" onClick={goBack}>
+					Back to recordings
 				</Button>
 			</div>
 		);
@@ -222,18 +230,20 @@ export default function RecordingDetail({
 	};
 
 	return (
-		<div className="mx-auto max-w-2xl space-y-6">
-			<Button
-				variant="ghost"
-				className="-ml-2 gap-1.5 text-muted-foreground"
-				onClick={() => router.push("/dashboard/recordings")}
-			>
-				<ChevronLeft className="size-4" />
-				Back to recordings
-			</Button>
+		<div className="space-y-6 px-4 pb-6 sm:px-6">
+			{!onClose && (
+				<Button
+					variant="ghost"
+					className="-ml-2 gap-1.5 text-muted-foreground"
+					onClick={goBack}
+				>
+					<ChevronLeft className="size-4" />
+					Back to recordings
+				</Button>
+			)}
 
 			{/* Header card */}
-			<div className="rounded-xl border bg-card p-6 space-y-4">
+			<div className="space-y-4 rounded-xl border bg-card p-6">
 				{/* Title */}
 				<div>
 					{isEditingTitle ? (

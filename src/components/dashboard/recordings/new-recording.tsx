@@ -134,7 +134,15 @@ function PatientCombobox({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function NewRecording() {
+export default function NewRecording({
+	onCancel,
+	onSaved,
+}: {
+	/** Panel mode: close without navigating. */
+	onCancel?: () => void;
+	/** Panel mode: open the saved recording instead of navigating. */
+	onSaved?: (recordingId: number) => void;
+}) {
 	const router = useRouter();
 
 	// Form state
@@ -245,7 +253,14 @@ export default function NewRecording() {
 			});
 
 			toast.success("Recording saved");
-			router.push(`/dashboard/recordings/${recording?.id ?? ""}`);
+			const id = recording?.id;
+			if (id && onSaved) {
+				onSaved(id);
+			} else if (id) {
+				router.push(`/dashboard/recordings?id=${id}`);
+			} else {
+				router.push("/dashboard/recordings");
+			}
 		} catch (err) {
 			toast.error(getErrorMessage(err, "Failed to save recording"));
 			setRecordingState("stopped");
@@ -257,20 +272,37 @@ export default function NewRecording() {
 		selectedPatient,
 		createRecording,
 		router,
+		onSaved,
 	]);
 
 	const isFormComplete = title.trim().length > 0;
 
+	const goBack = () => {
+		if (onCancel) onCancel();
+		else router.push("/dashboard/recordings");
+	};
+
 	return (
-		<div className="mx-auto max-w-xl">
-			<Button
-				variant="ghost"
-				className="mb-6 -ml-2 gap-1.5 text-muted-foreground"
-				onClick={() => router.push("/dashboard/recordings")}
-			>
-				<ChevronLeft className="size-4" />
-				Back to recordings
-			</Button>
+		<div className={onCancel ? "px-4 pb-6 sm:px-6" : "mx-auto max-w-xl"}>
+			{!onCancel && (
+				<Button
+					variant="ghost"
+					className="mb-6 -ml-2 gap-1.5 text-muted-foreground"
+					onClick={goBack}
+				>
+					<ChevronLeft className="size-4" />
+					Back to recordings
+				</Button>
+			)}
+
+			{onCancel && (
+				<div className="mb-4">
+					<h2 className="font-semibold text-lg">New Recording</h2>
+					<p className="text-muted-foreground text-sm">
+						Record a consultation and save it to your library
+					</p>
+				</div>
+			)}
 
 			<div className="space-y-6 rounded-xl border bg-card p-6">
 				{/* Title */}

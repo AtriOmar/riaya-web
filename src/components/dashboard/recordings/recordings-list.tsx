@@ -10,17 +10,23 @@ import {
 	User,
 	XCircle,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import NewRecording from "@/components/dashboard/recordings/new-recording";
+import RecordingDetail from "@/components/dashboard/recordings/recording-detail";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { getErrorMessage } from "@/lib/error-handling";
+import { cn } from "@/lib/utils";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
 import {
 	useGetApiRecordings,
 	usePostApiRecordingsIdTranscribe,
 } from "@/services/generated/recordings/recordings";
+
+type Panel = { type: "detail"; id: number } | { type: "new" } | null;
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
@@ -77,12 +83,15 @@ function TranscriptStatusBadge({
 
 function RecordingRow({
 	recording,
+	selected,
+	onSelect,
 	onTranscribed,
 }: {
 	recording: GetApiRecordings200Item;
+	selected: boolean;
+	onSelect: () => void;
 	onTranscribed: () => void;
 }) {
-	const router = useRouter();
 	const { trigger: transcribe, isMutating: isTranscribing } =
 		usePostApiRecordingsIdTranscribe(recording.id.toString());
 
@@ -109,9 +118,13 @@ function RecordingRow({
 	return (
 		<button
 			type="button"
-			className="flex w-full cursor-pointer items-start justify-between gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/40"
-			onClick={() => router.push(`/dashboard/recordings/${recording.id}`)}
+			className={cn(
+				"flex w-full cursor-pointer items-start justify-between gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/40",
+				selected && "border-primary/40 bg-accent/50 ring-1 ring-primary/20",
+			)}
+			onClick={onSelect}
 			aria-label={`Open recording: ${recording.title}`}
+			aria-pressed={selected}
 		>
 			<div className="flex min-w-0 flex-1 items-start gap-3">
 				<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -128,7 +141,7 @@ function RecordingRow({
 								{patientName}
 							</span>
 						)}
-						{recording.durationSeconds && (
+						{recording.durationSeconds != null && (
 							<span className="flex items-center gap-1">
 								<Clock className="size-3" />
 								{Math.floor(recording.durationSeconds / 60)}m{" "}
@@ -168,24 +181,81 @@ function RecordingRow({
 	);
 }
 
-// ─── Main list ────────────────────────────────────────────────────────────────
+// ─── Main list + panel ────────────────────────────────────────────────────────
 
 export default function RecordingsList() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { data: recordings, isLoading, mutate } = useGetApiRecordings();
+
+	const [panel, setPanel] = useState<Panel>(null);
+	const [detailsOpen, setDetailsOpen] = useState(false);
+
+	const syncUrl = useCallback(
+		(next: Panel) => {
+			if (next?.type === "detail") {
+				router.replace(`/dashboard/recordings?id=${next.id}`, {
+					scroll: false,
+				});
+			} else if (next?.type === "new") {
+				router.replace("/dashboard/recordings?new=1", { scroll: false });
+			} else {
+				router.replace("/dashboard/recordings", { scroll: false });
+			}
+		},
+		[router],
+	);
+
+	const openPanel = useCallback(
+		(next: Panel) => {
+			setPanel(next);
+			setDetailsOpen(Boolean(next));
+			syncUrl(next);
+		},
+		[syncUrl],
+	);
+
+	const closePanel = useCallback(() => {
+		setDetailsOpen(false);
+		setPanel(null);
+		syncUrl(null);
+	}, [syncUrl]);
+
+	// Open from deep-link query on mount / when params change
+	useEffect(() => {
+		const idParam = searchParams.get("id");
+		const isNew = searchParams.get("new") === "1";
+		if (isNew) {
+			setPanel({ type: "new" });
+			setDetailsOpen(true);
+			return;
+		}
+		if (idParam) {
+			const id = Number(idParam);
+			if (!Number.isNaN(id)) {
+				setPanel({ type: "detail", id });
+				setDetailsOpen(true);
+				return;
+			}
+		}
+	}, [searchParams]);
+
+	const selectedId = panel?.type === "detail" ? panel.id : null;
 
 	return (
 		<div>
-			<div className="mb-6 flex items-center justify-between">
+			<div className="mb-2 flex items-center justify-between gap-4">
 				<p className="text-muted-foreground text-sm">
 					{recordings?.length
 						? `${recordings.length} recording${recordings.length !== 1 ? "s" : ""}`
 						: ""}
 				</p>
-				<Button asChild className="md:-mt-12">
-					<Link href="/dashboard/recordings/new">
-						<Plus className="size-4" />
-						New Recording
-					</Link>
+				<Button
+					className="md:-mt-12"
+					onClick={() => openPanel({ type: "new" })}
+				>
+					<Plus className="size-4" />
+					New Recording
 				</Button>
 			</div>
 
@@ -206,26 +276,68 @@ export default function RecordingsList() {
 							Record a patient conversation and get an AI transcript
 						</p>
 					</div>
-					<Button asChild>
-						<Link href="/dashboard/recordings/new">
-							<Plus className="size-4" />
-							New Recording
-						</Link>
+					<Button onClick={() => openPanel({ type: "new" })}>
+						<Plus className="size-4" />
+						New Recording
 					</Button>
 				</div>
 			)}
 
 			{!isLoading && recordings && recordings.length > 0 && (
-				<div className="space-y-3">
-					{recordings.map((recording) => (
-						<RecordingRow
-							key={recording.id}
-							recording={recording}
-							onTranscribed={() => mutate()}
-						/>
-					))}
+				<div className="w-full max-w-full lg:max-w-[500px]">
+					<aside className="flex min-h-[min(72vh,640px)] flex-col gap-2 overflow-y-auto lg:min-h-[calc(100dvh-9rem)]">
+						{recordings.map((recording) => (
+							<RecordingRow
+								key={recording.id}
+								recording={recording}
+								selected={selectedId === recording.id}
+								onSelect={() => openPanel({ type: "detail", id: recording.id })}
+								onTranscribed={() => mutate()}
+							/>
+						))}
+					</aside>
 				</div>
 			)}
+
+			<Sheet
+				modal={false}
+				open={detailsOpen && Boolean(panel)}
+				onOpenChange={(open) => {
+					if (!open) closePanel();
+					else setDetailsOpen(true);
+				}}
+			>
+				<SheetContent
+					side="right"
+					showCloseButton
+					className="overflow-visible gap-0 border-l border-border p-0 !w-[min(100vw,600px)] !max-w-[min(100vw,600px)]"
+					onPointerDownOutside={(e) => e.preventDefault()}
+					onFocusOutside={(e) => e.preventDefault()}
+				>
+					<SheetTitle className="sr-only">
+						{panel?.type === "new" ? "New recording" : "Recording details"}
+					</SheetTitle>
+					{panel ? (
+						<div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto pt-12">
+							{panel.type === "new" ? (
+								<NewRecording
+									onCancel={closePanel}
+									onSaved={(id) => {
+										void mutate();
+										openPanel({ type: "detail", id });
+									}}
+								/>
+							) : (
+								<RecordingDetail
+									key={panel.id}
+									recordingId={panel.id}
+									onClose={closePanel}
+								/>
+							)}
+						</div>
+					) : null}
+				</SheetContent>
+			</Sheet>
 		</div>
 	);
 }

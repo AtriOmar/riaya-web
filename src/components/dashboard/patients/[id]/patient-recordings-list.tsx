@@ -108,7 +108,7 @@ function RecordingCard({
 					</div>
 					<div className="min-w-0">
 						<Link
-							href={`/dashboard/recordings/${recording.id}`}
+							href={`/dashboard/recordings?id=${recording.id}`}
 							className="truncate font-medium hover:underline"
 						>
 							{recording.title ?? "Untitled"}
@@ -211,7 +211,7 @@ export function PatientRecordingsList({ patientId }: { patientId: number }) {
 			<div className="flex items-center justify-between">
 				<h4 className="font-semibold text-lg">Recordings</h4>
 				<Button asChild size="sm" variant="outline" className="gap-1.5">
-					<Link href={`/dashboard/recordings/new`}>
+					<Link href="/dashboard/recordings?new=1">
 						<Plus className="size-3.5" />
 						New
 					</Link>

@@ -1,5 +1,4 @@
-import RecordingDetail from "@/components/dashboard/recordings/recording-detail";
-import DashboardLayout from "@/components/layouts/dashboard-layout";
+import { redirect } from "next/navigation";
 
 export default async function RecordingDetailPage({
 	params,
@@ -7,9 +6,5 @@ export default async function RecordingDetailPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-	return (
-		<DashboardLayout title="Recording">
-			<RecordingDetail recordingId={Number(id)} />
-		</DashboardLayout>
-	);
+	redirect(`/dashboard/recordings?id=${id}`);
 }
