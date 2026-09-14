@@ -8,6 +8,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { account, session, user } from "./auth-schema";
@@ -166,6 +167,8 @@ export const appointment = pgTable(
 		start: timestamp("start"),
 		end: timestamp("end"),
 		status: varchar("status", { length: 50 }), // pending | confirmed | cancelled
+		// ai = phone AI booking; dashboard = doctor dashboard
+		source: varchar("source", { length: 50 }).notNull().default("dashboard"),
 		name: varchar("name", { length: 255 }),
 		description: text("description"),
 		// Flattened newPatient sub-document
@@ -179,6 +182,7 @@ export const appointment = pgTable(
 		index("appointment_patient_id_idx").on(table.patientId),
 		index("appointment_status_idx").on(table.status),
 		index("appointment_start_idx").on(table.start),
+		index("appointment_source_idx").on(table.source),
 	],
 );
 
@@ -418,6 +422,97 @@ export const doctorUnavailability = pgTable(
 // the `verification` table in auth-schema.ts. Configure `requireEmailVerification: true`
 // in your auth instance to block login until the email is verified.
 
+// ─── Subscription ─────────────────────────────────────────────────────────────
+// One row per doctor. Created with plan = "free" on first access.
+// Managed manually (Konnect has no native subscriptions). Status drives feature gating.
+
+export const subscription = pgTable(
+	"subscription",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.unique()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		planId: varchar("plan_id", { length: 50 }).notNull().default("free"),
+		// active | canceled | past_due
+		status: varchar("status", { length: 50 }).notNull().default("active"),
+		currentPeriodStart: timestamp("current_period_start"),
+		currentPeriodEnd: timestamp("current_period_end"),
+		cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("subscription_doctor_id_idx").on(table.doctorId),
+		index("subscription_plan_id_idx").on(table.planId),
+		index("subscription_status_idx").on(table.status),
+		index("subscription_period_end_idx").on(table.currentPeriodEnd),
+	],
+);
+
+// ─── Billing Invoice ──────────────────────────────────────────────────────────
+// One row per billing cycle invoice issued to a doctor (distinct from patient `invoice`).
+// Payment is handled via Konnect.network.
+
+export const billingInvoice = pgTable(
+	"billing_invoice",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		subscriptionId: integer("subscription_id").references(
+			() => subscription.id,
+			{ onDelete: "set null" },
+		),
+		// Sequential invoice number e.g. "INV-2026-001"
+		number: varchar("number", { length: 100 }).notNull().unique(),
+		// open | paid | cancelled
+		status: varchar("status", { length: 50 }).notNull().default("open"),
+		// Amount in millimes (1 TND = 1000 millimes)
+		amountMillimes: integer("amount_millimes").notNull(),
+		// Konnect payment reference returned by initiate-payment
+		konnectPaymentRef: varchar("konnect_payment_ref", { length: 255 }).unique(),
+		// Direct payment URL for the doctor
+		konnectPayUrl: varchar("konnect_pay_url", { length: 1024 }),
+		periodStart: timestamp("period_start"),
+		periodEnd: timestamp("period_end"),
+		dueDate: timestamp("due_date"),
+		paidAt: timestamp("paid_at"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("billing_invoice_doctor_id_idx").on(table.doctorId),
+		index("billing_invoice_status_idx").on(table.status),
+		index("billing_invoice_konnect_ref_idx").on(table.konnectPaymentRef),
+	],
+);
+
+// ─── WhatsApp usage (monthly counter) ─────────────────────────────────────────
+
+export const whatsappUsage = pgTable(
+	"whatsapp_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		/** Calendar month key, e.g. "2026-09" (UTC) */
+		periodYyyyMm: varchar("period_yyyy_mm", { length: 7 }).notNull(),
+		sendCount: integer("send_count").notNull().default(0),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("whatsapp_usage_doctor_period_uidx").on(
+			table.doctorId,
+			table.periodYyyyMm,
+		),
+		index("whatsapp_usage_doctor_id_idx").on(table.doctorId),
+	],
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 // Centralised here so every table is in scope (avoids circular imports with auth-schema.ts).
 
@@ -470,8 +565,43 @@ export const doctorProfileRelations = relations(
 		invoices: many(invoice),
 		unavailabilities: many(doctorUnavailability),
 		reviews: many(review),
+		subscription: one(subscription, {
+			fields: [doctorProfile.id],
+			references: [subscription.doctorId],
+		}),
+		billingInvoices: many(billingInvoice),
+		whatsappUsage: many(whatsappUsage),
 	}),
 );
+
+export const subscriptionRelations = relations(
+	subscription,
+	({ one, many }) => ({
+		doctor: one(doctorProfile, {
+			fields: [subscription.doctorId],
+			references: [doctorProfile.id],
+		}),
+		billingInvoices: many(billingInvoice),
+	}),
+);
+
+export const billingInvoiceRelations = relations(billingInvoice, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [billingInvoice.doctorId],
+		references: [doctorProfile.id],
+	}),
+	subscription: one(subscription, {
+		fields: [billingInvoice.subscriptionId],
+		references: [subscription.id],
+	}),
+}));
+
+export const whatsappUsageRelations = relations(whatsappUsage, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [whatsappUsage.doctorId],
+		references: [doctorProfile.id],
+	}),
+}));
 
 export const personRelations = relations(person, ({ many }) => ({
 	patients: many(patient),

@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
 import { upsertPersonByPhone } from "@/lib/person";
+import { assertAiBookingAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
 // Public endpoint — allows non-authenticated users to book an appointment
@@ -83,6 +84,8 @@ export async function POST(req: NextRequest) {
 
 		if (overlapping.length > 0) return apiError("APPOINTMENT_CONFLICT");
 
+		await assertAiBookingAllowed(doctor.id, data.phoneNumber);
+
 		// Upsert person by phone (fire-and-forget — we don't store personId on appointment yet)
 		void upsertPersonByPhone(data.phoneNumber, "call");
 
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
 				newPatientName: data.name,
 				newPatientPhoneNumber: data.phoneNumber,
 				status: "pending",
+				source: "ai",
 				name: "Consultation",
 				description: data.illness,
 			})

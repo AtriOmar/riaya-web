@@ -44,6 +44,13 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"This patient has no phone number. Add one before sending on WhatsApp.",
 	WHATSAPP_SEND_FAILED:
 		"Failed to send WhatsApp message. Check your WhatsApp connection.",
+	BILLING_INVOICE_NOT_FOUND: "Billing invoice not found.",
+	BILLING_INVOICE_CANCELLED: "This invoice has been cancelled.",
+	SUBSCRIPTION_NOT_FOUND: "Subscription not found.",
+	AI_BOOKING_LIMIT_REACHED:
+		"Monthly AI booking limit reached for this practice. It resets next calendar month, or upgrade to Pro for unlimited bookings.",
+	WHATSAPP_LIMIT_REACHED:
+		"Monthly WhatsApp send limit reached. It resets next calendar month, or upgrade to Pro for unlimited sends.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

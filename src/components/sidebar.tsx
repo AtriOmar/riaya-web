@@ -3,16 +3,17 @@
 import {
 	Calendar,
 	CalendarDays,
+	CreditCard,
 	Home,
 	MessageSquare,
 	PanelLeftClose,
 	PanelLeftOpen,
 	Receipt,
-	Settings,
 	Stethoscope,
 	User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { useAppContext } from "@/components/contexts/app-provider";
 import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
@@ -70,9 +71,9 @@ const items2: SidebarItemData[] = [
 		path: "/dashboard/whatsapp-config",
 	},
 	{
-		name: "Settings",
-		icon: <Settings className="size-5" />,
-		path: "/dashboard/settings",
+		name: "Subscription",
+		icon: <CreditCard className="size-5" />,
+		path: "/dashboard/subscription",
 	},
 ];
 
@@ -80,10 +81,19 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 	const { user } = useAuth();
 	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
 	const isVerified = me?.doctorProfile?.status === "verified";
+	const { data: billing } = useSWR<{
+		effectivePlanId?: string;
+		isPro?: boolean;
+	}>(isVerified ? "/api/billing/subscription" : null, (url: string) =>
+		fetch(url).then((r) => r.json()),
+	);
+
+	const planBadge =
+		billing?.isPro || billing?.effectivePlanId === "pro" ? "Pro" : null;
 
 	return (
 		<>
-			<SidebarUserInfo collapsed={collapsed} />
+			<SidebarUserInfo collapsed={collapsed} planBadge={planBadge} />
 			<ul className={cn("font-medium text-sm", collapsed ? "px-1" : "px-2")}>
 				{items1.map((item) => (
 					<li key={item.path}>
@@ -105,6 +115,10 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 							item={{
 								...item,
 								disabled: !isVerified && item.path !== "/dashboard/profile",
+								badge:
+									item.path === "/dashboard/subscription" && planBadge
+										? planBadge
+										: undefined,
 							}}
 							collapsed={collapsed}
 						/>

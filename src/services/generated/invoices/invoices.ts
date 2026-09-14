@@ -309,62 +309,6 @@ export const useDeleteApiInvoicesId = <TError = unknown>(
 	};
 };
 /**
- * @summary Generate invoice PDF and send via WhatsApp
- */
-export const postApiInvoicesIdSend = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiInvoicesIdSend200>(
-		{ url: `/api/invoices/${id}/send`, method: "POST" },
-		options,
-	);
-};
-
-export const getPostApiInvoicesIdSendMutationFetcher = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, __: { arg: Arguments }) => {
-		return postApiInvoicesIdSend(id, options);
-	};
-};
-export const getPostApiInvoicesIdSendMutationKey = (id: string) =>
-	[`/api/invoices/${id}/send`] as const;
-
-export type PostApiInvoicesIdSendMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInvoicesIdSend>>
->;
-
-/**
- * @summary Generate invoice PDF and send via WhatsApp
- */
-export const usePostApiInvoicesIdSend = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRMutationConfiguration<
-			Awaited<ReturnType<typeof postApiInvoicesIdSend>>,
-			TError,
-			Key,
-			Arguments,
-			Awaited<ReturnType<typeof postApiInvoicesIdSend>>
-		> & { swrKey?: string };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesIdSendMutationKey(id);
-	const swrFn = getPostApiInvoicesIdSendMutationFetcher(id, requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Add a payment to an invoice
  */
 export const postApiInvoicesIdPayments = (
@@ -488,6 +432,62 @@ export const useDeleteApiInvoicesIdPayments = <TError = unknown>(
 		params,
 		requestOptions,
 	);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Generate invoice PDF and send via WhatsApp
+ */
+export const postApiInvoicesIdSend = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInvoicesIdSend200>(
+		{ url: `/api/invoices/${id}/send`, method: "POST" },
+		options,
+	);
+};
+
+export const getPostApiInvoicesIdSendMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return postApiInvoicesIdSend(id, options);
+	};
+};
+export const getPostApiInvoicesIdSendMutationKey = (id: string) =>
+	[`/api/invoices/${id}/send`] as const;
+
+export type PostApiInvoicesIdSendMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInvoicesIdSend>>
+>;
+
+/**
+ * @summary Generate invoice PDF and send via WhatsApp
+ */
+export const usePostApiInvoicesIdSend = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiInvoicesIdSend>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof postApiInvoicesIdSend>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPostApiInvoicesIdSendMutationKey(id);
+	const swrFn = getPostApiInvoicesIdSendMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

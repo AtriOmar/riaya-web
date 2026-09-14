@@ -10,6 +10,7 @@ import {
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
+import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 
 // ─── POST /api/patients/[id]/medical-files/[fileId]/send ──────────────────────
 
@@ -68,15 +69,22 @@ export async function POST(
 
 		if (!foundFile) return apiError("MEDICAL_FILE_NOT_FOUND");
 
-		const realtimeUrl =
-			process.env.NEXT_PUBLIC_REALTIME_URL ?? "ws://localhost:8080";
+		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+		if (!realtimeUrl) {
+			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+			return apiError("INTERNAL_ERROR");
+		}
 		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {
-			if (foundFile.documents && foundFile.documents.length > 0) {
-				for (let i = 0; i < foundFile.documents.length; i++) {
-					const documentUrl = foundFile.documents[i];
-					if (!documentUrl) continue;
+			const docUrls =
+				foundFile.documents?.filter((u): u is string => !!u) ?? [];
+			const sendCount = docUrls.length > 0 ? docUrls.length : 1;
+			await assertAndRecordWhatsappSend(profile.id, sendCount);
+
+			if (docUrls.length > 0) {
+				for (let i = 0; i < docUrls.length; i++) {
+					const documentUrl = docUrls[i];
 
 					// Extract extension from URL, e.g. .jpg, .png, .pdf
 					const pathOnly = documentUrl.split("?")[0].split("#")[0];
@@ -94,7 +102,7 @@ export async function POST(
 							: undefined;
 
 					const baseName = foundFile.title
-						? `${foundFile.title}${foundFile.documents.length > 1 ? ` - ${i + 1}` : ""}`
+						? `${foundFile.title}${docUrls.length > 1 ? ` - ${i + 1}` : ""}`
 						: `Document ${i + 1}`;
 					const fileName = `${baseName}.${ext}`;
 
@@ -105,6 +113,7 @@ export async function POST(
 						fileName: fileName,
 						message: caption,
 						mimetype: mimetype,
+						quotaConsumed: true,
 					});
 				}
 			} else {
@@ -117,23 +126,17 @@ export async function POST(
 					userId: session.user.id,
 					phone: foundPatient.phoneNumber,
 					message: textMessage,
+					quotaConsumed: true,
 				});
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
+			if (err instanceof Response) return err;
+			const ax = err as { response?: { data?: unknown }; message?: string };
 			console.error(
 				"Failed to send WhatsApp document:",
-				err?.response?.data || err?.message,
+				ax?.response?.data || ax?.message,
 			);
-			return new Response(
-				JSON.stringify({
-					error:
-						"Failed to send WhatsApp message. Please check your WhatsApp connection.",
-				}),
-				{
-					status: 500,
-					headers: { "Content-Type": "application/json" },
-				},
-			);
+			return apiError("WHATSAPP_SEND_FAILED");
 		}
 
 		// Update DB to mark as sent

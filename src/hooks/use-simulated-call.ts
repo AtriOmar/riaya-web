@@ -258,8 +258,11 @@ export function useSimulatedCall(): SimulatedCallState {
 	// ─── Dashboard WS (transcripts) ───────────────────────────────────────────
 
 	const connectDashboard = useCallback((sid: string) => {
-		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL;
-		if (!realtimeUrl) return;
+		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+		if (!realtimeUrl) {
+			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+			return;
+		}
 
 		const dashWs = new WebSocket(`${realtimeUrl}/dashboard`);
 		dashWsRef.current = dashWs;
@@ -326,6 +329,14 @@ export function useSimulatedCall(): SimulatedCallState {
 			const trimmedPhone = phoneNumber.trim();
 			if (!trimmedPhone) return;
 
+			const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+			if (!realtimeUrl) {
+				console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+				setError("NEXT_PUBLIC_REALTIME_URL is not set");
+				setStatus("error");
+				return;
+			}
+
 			setError(null);
 			setTranscript([]);
 
@@ -357,8 +368,6 @@ export function useSimulatedCall(): SimulatedCallState {
 
 			// 2. Open WebSocket to /media-stream
 			setStatus("connecting");
-			const realtimeUrl =
-				process.env.NEXT_PUBLIC_REALTIME_URL ?? "ws://localhost:8080";
 			const wsUrl = `${realtimeUrl}/media-stream`;
 
 			const ws = new WebSocket(wsUrl);

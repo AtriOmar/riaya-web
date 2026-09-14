@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { ProPlanBadge } from "@/components/dashboard/subscription/pro-plan-badge";
 import {
 	Tooltip,
 	TooltipContent,
@@ -16,6 +17,7 @@ type SidebarItemData = {
 	path: string;
 	strict?: boolean;
 	disabled?: boolean;
+	badge?: string;
 };
 
 export default function SidebarItem({
@@ -41,16 +43,38 @@ export default function SidebarItem({
 		item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
 	);
 
+	const isProBadge = item.badge?.toLowerCase() === "pro";
+
 	const content = (
 		<>
 			{item.icon}
-			{!collapsed && <span>{item.name}</span>}
+			{!collapsed && (
+				<span className="flex items-center justify-between gap-2 min-w-0">
+					<span className="truncate">{item.name}</span>
+					{isProBadge ? (
+						<ProPlanBadge compact />
+					) : item.badge ? (
+						<span
+							className={cn(
+								"shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+								isActive && !item.disabled
+									? "bg-primary-foreground/20 text-primary-foreground"
+									: "bg-primary/10 text-primary",
+							)}
+						>
+							{item.badge}
+						</span>
+					) : null}
+				</span>
+			)}
 		</>
 	);
 
 	const tooltipLabel = item.disabled
 		? "Verify your profile to access this page"
-		: item.name;
+		: item.badge
+			? `${item.name} (${item.badge})`
+			: item.name;
 
 	if (item.disabled || collapsed) {
 		const trigger = item.disabled ? (

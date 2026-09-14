@@ -14,6 +14,7 @@ import {
 } from "@/lib/api-utils";
 import { buildInvoicePdf } from "@/lib/invoice-pdf";
 import { registry } from "@/lib/openapi";
+import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { uploadBufferToR2 } from "@/lib/r2";
 
 const paramsSchema = z.object({ id: z.string() });
@@ -105,12 +106,18 @@ export async function POST(
 		const caption = `Hello ${patientFirst},\n\nPlease find attached your invoice ${record.number} from Dr. ${doctorLast}.`;
 
 		const realtimeUrl =
-			process.env.SOCKET_INTERNAL_URL ??
-			process.env.NEXT_PUBLIC_REALTIME_URL ??
-			"ws://localhost:8080";
+			process.env.SOCKET_INTERNAL_URL?.trim() ||
+			process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+		if (!realtimeUrl) {
+			console.error(
+				"SOCKET_INTERNAL_URL / NEXT_PUBLIC_REALTIME_URL is not set",
+			);
+			return apiError("INTERNAL_ERROR");
+		}
 		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {
+			await assertAndRecordWhatsappSend(profile.id);
 			await axios.post(`${httpUrl}/send-whatsapp`, {
 				userId: session.user.id,
 				phone: record.patient.phoneNumber,
@@ -118,8 +125,10 @@ export async function POST(
 				fileName: `${record.number}.pdf`,
 				message: caption,
 				mimetype: "application/pdf",
+				quotaConsumed: true,
 			});
 		} catch (err: unknown) {
+			if (err instanceof Response) return err;
 			const ax = err as { response?: { data?: unknown }; message?: string };
 			console.error(
 				"Failed to send invoice WhatsApp:",

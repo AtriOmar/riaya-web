@@ -11,6 +11,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 
 // Internal socket service URL — used to fire-and-forget WhatsApp messages
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
 				start: new Date(parsed.data.start),
 				end: new Date(parsed.data.end),
 				status: "confirmed",
+				source: "dashboard",
 				name: parsed.data.name,
 				description: parsed.data.description,
 			})
@@ -177,11 +179,25 @@ export async function PUT(req: NextRequest) {
 							doctorLastName: full?.doctor?.lastName,
 							start: full?.start,
 						});
-						await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
-							phone,
-							message,
-							doctorId: full?.doctor?.userId,
-						});
+						try {
+							await assertAndRecordWhatsappSend(profile.id);
+							await axios.post(`${SOCKET_INTERNAL_URL}/send-whatsapp`, {
+								userId: full?.doctor?.userId,
+								phone,
+								message,
+								quotaConsumed: true,
+							});
+						} catch (waErr) {
+							if (waErr instanceof Response) {
+								const body = await waErr.json().catch(() => null);
+								console.error(
+									"WhatsApp confirmation skipped (limit or error):",
+									body ?? waErr.status,
+								);
+							} else {
+								throw waErr;
+							}
+						}
 					}
 
 					// Schedule a review request 2 hours after the appointment ends
