@@ -37,7 +37,7 @@ export const PLANS: Record<PlanId, Plan> = {
 			"Availability & calendar",
 			"Invoices & PDF download",
 			"Medical files",
-			"AI phone booking for up to 5 patients",
+			"AI phone booking for up to 5 patients / month",
 			"50 WhatsApp sends / month",
 		],
 	},

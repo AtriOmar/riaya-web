@@ -1,8 +1,5 @@
 import { notFound } from "next/navigation";
-import {
-	getDevPayment,
-	isBillingDevBypass,
-} from "@/lib/konnect-dev";
+import { getDevPayment, isBillingDevBypass } from "@/lib/konnect-dev";
 import { DevPayClient } from "./dev-pay-client";
 
 export default async function DevPayPage({

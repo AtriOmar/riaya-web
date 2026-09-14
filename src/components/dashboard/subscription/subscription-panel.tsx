@@ -7,14 +7,26 @@ import useSWR from "swr";
 import BillingInvoicesList from "@/components/dashboard/subscription/billing-invoices-list";
 import { PlansGrid } from "@/components/plans/plans-grid";
 import { getErrorMessage } from "@/lib/error-handling";
-import { PLAN_IDS, type Plan, type PlanId } from "@/lib/plans";
+import { PLAN_IDS, type Plan, type PlanId, type PlanLimits } from "@/lib/plans";
 
-type Subscription = {
+type SubscriptionResponse = {
 	id: number;
 	planId: string;
+	effectivePlanId?: PlanId;
+	isPro?: boolean;
 	status: "active" | "canceled" | "past_due";
 	currentPeriodEnd: string | null;
 	cancelAtPeriodEnd: boolean;
+	limits?: PlanLimits;
+	usage?: {
+		aiBookingPatients: number;
+		whatsappSendsThisMonth: number;
+	};
+	usagePeriod?: {
+		start: string;
+		end: string;
+		yyyyMm: string;
+	};
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -24,16 +36,27 @@ export default function SubscriptionPanel() {
 		data: subscription,
 		isLoading,
 		mutate,
-	} = useSWR<Subscription>("/api/billing/subscription", fetcher);
+	} = useSWR<SubscriptionResponse>("/api/billing/subscription", fetcher);
 	const [upgrading, setUpgrading] = useState(false);
 
 	const currentPlanId: PlanId =
-		subscription && PLAN_IDS.includes(subscription.planId as PlanId)
-			? (subscription.planId as PlanId)
-			: "free";
+		subscription?.effectivePlanId &&
+		PLAN_IDS.includes(subscription.effectivePlanId)
+			? subscription.effectivePlanId
+			: subscription && PLAN_IDS.includes(subscription.planId as PlanId)
+				? (subscription.planId as PlanId)
+				: "free";
 
 	const renewalDate = subscription?.currentPeriodEnd
 		? new Date(subscription.currentPeriodEnd).toLocaleDateString("en-GB", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			})
+		: null;
+
+	const resetsOn = subscription?.usagePeriod?.end
+		? new Date(subscription.usagePeriod.end).toLocaleDateString("en-GB", {
 				day: "numeric",
 				month: "long",
 				year: "numeric",
@@ -84,6 +107,11 @@ export default function SubscriptionPanel() {
 		}
 	}
 
+	const aiLimit = subscription?.limits?.aiBookingPatients;
+	const waLimit = subscription?.limits?.whatsappSendsPerMonth;
+	const aiUsed = subscription?.usage?.aiBookingPatients ?? 0;
+	const waUsed = subscription?.usage?.whatsappSendsThisMonth ?? 0;
+
 	return (
 		<div className="space-y-10">
 			<section className="space-y-4">
@@ -133,6 +161,45 @@ export default function SubscriptionPanel() {
 					/>
 				)}
 			</section>
+
+			{!isLoading && subscription && (
+				<section className="space-y-3">
+					<div>
+						<h2 className="text-lg font-semibold">Usage this month</h2>
+						<p className="text-sm text-muted-foreground">
+							Calendar month (UTC)
+							{resetsOn && (
+								<>
+									{" "}
+									— resets on{" "}
+									<span className="font-medium text-foreground">
+										{resetsOn}
+									</span>
+								</>
+							)}
+							.
+						</p>
+					</div>
+					<div className="rounded-xl border divide-y">
+						<div className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+							<span>AI phone booking patients</span>
+							<span className="font-medium tabular-nums">
+								{aiLimit == null
+									? `${aiUsed} (unlimited)`
+									: `${aiUsed} / ${aiLimit}`}
+							</span>
+						</div>
+						<div className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+							<span>WhatsApp sends</span>
+							<span className="font-medium tabular-nums">
+								{waLimit == null
+									? `${waUsed} (unlimited)`
+									: `${waUsed} / ${waLimit}`}
+							</span>
+						</div>
+					</div>
+				</section>
+			)}
 
 			<section className="space-y-4">
 				<div>

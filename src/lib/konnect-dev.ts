@@ -74,8 +74,7 @@ export function getDevPaymentDetails(paymentRef: string): PaymentDetails {
 		id: payment.paymentRef,
 		status: payment.status === "completed" ? "completed" : "pending",
 		amountDue: payment.amountMillimes,
-		reachedAmount:
-			payment.status === "completed" ? payment.amountMillimes : 0,
+		reachedAmount: payment.status === "completed" ? payment.amountMillimes : 0,
 		amount: payment.amountMillimes,
 		token: "TND",
 		orderId: payment.orderId,

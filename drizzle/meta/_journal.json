@@ -29,6 +29,13 @@
       "when": 1789357339529,
       "tag": "0003_add_subscription_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789362048762,
+      "tag": "0004_plan_limits_usage",
+      "breakpoints": true
     }
   ]
 }

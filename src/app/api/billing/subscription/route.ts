@@ -1,10 +1,12 @@
-// GET /api/billing/subscription — get (or lazily create) the doctor's subscription record
+// GET /api/billing/subscription — get (or lazily create) the doctor's subscription
+// plus effective plan limits and calendar-month usage.
 
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { subscription } from "@/db/schema";
 import { getDoctorProfile, json, requireSession } from "@/lib/api-utils";
 import { apiError } from "@/lib/errors";
+import { getPlanUsage } from "@/lib/plan-limits";
 
 export async function GET() {
 	try {
@@ -25,7 +27,16 @@ export async function GET() {
 				.returning();
 		}
 
-		return json(sub);
+		const usageInfo = await getPlanUsage(profile.id);
+
+		return json({
+			...sub,
+			effectivePlanId: usageInfo.planId,
+			isPro: usageInfo.isPro,
+			limits: usageInfo.limits,
+			usage: usageInfo.usage,
+			usagePeriod: usageInfo.usagePeriod,
+		});
 	} catch (err) {
 		if (err instanceof Response) return err;
 		console.error("[billing/subscription GET]", err);

@@ -8,6 +8,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { account, session, user } from "./auth-schema";
@@ -166,6 +167,8 @@ export const appointment = pgTable(
 		start: timestamp("start"),
 		end: timestamp("end"),
 		status: varchar("status", { length: 50 }), // pending | confirmed | cancelled
+		// ai = phone AI booking; dashboard = doctor dashboard
+		source: varchar("source", { length: 50 }).notNull().default("dashboard"),
 		name: varchar("name", { length: 255 }),
 		description: text("description"),
 		// Flattened newPatient sub-document
@@ -179,6 +182,7 @@ export const appointment = pgTable(
 		index("appointment_patient_id_idx").on(table.patientId),
 		index("appointment_status_idx").on(table.status),
 		index("appointment_start_idx").on(table.start),
+		index("appointment_source_idx").on(table.source),
 	],
 );
 
@@ -486,6 +490,29 @@ export const billingInvoice = pgTable(
 	],
 );
 
+// ─── WhatsApp usage (monthly counter) ─────────────────────────────────────────
+
+export const whatsappUsage = pgTable(
+	"whatsapp_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		/** Calendar month key, e.g. "2026-09" (UTC) */
+		periodYyyyMm: varchar("period_yyyy_mm", { length: 7 }).notNull(),
+		sendCount: integer("send_count").notNull().default(0),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("whatsapp_usage_doctor_period_uidx").on(
+			table.doctorId,
+			table.periodYyyyMm,
+		),
+		index("whatsapp_usage_doctor_id_idx").on(table.doctorId),
+	],
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 // Centralised here so every table is in scope (avoids circular imports with auth-schema.ts).
 
@@ -543,6 +570,7 @@ export const doctorProfileRelations = relations(
 			references: [subscription.doctorId],
 		}),
 		billingInvoices: many(billingInvoice),
+		whatsappUsage: many(whatsappUsage),
 	}),
 );
 
@@ -565,6 +593,13 @@ export const billingInvoiceRelations = relations(billingInvoice, ({ one }) => ({
 	subscription: one(subscription, {
 		fields: [billingInvoice.subscriptionId],
 		references: [subscription.id],
+	}),
+}));
+
+export const whatsappUsageRelations = relations(whatsappUsage, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [whatsappUsage.doctorId],
+		references: [doctorProfile.id],
 	}),
 }));
 
