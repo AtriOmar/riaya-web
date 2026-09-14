@@ -260,20 +260,18 @@ export function PatientDetails({
 	}
 
 	return (
-		<div className="space-y-3">
-			<div className="flex max-w-xl items-start justify-between gap-4">
-				<h2 className="font-semibold text-lg">Patient details</h2>
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={() => setEditing(true)}
-				>
-					<Pencil className="mr-1.5 size-4" />
-					Edit
-				</Button>
-			</div>
-			<div className="gap-4 grid max-w-xl grid-cols-1 rounded-xl border bg-card p-4 sm:grid-cols-3">
+		<div className="relative max-w-xl rounded-xl border bg-card p-4 pr-12">
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className="absolute top-2 right-2"
+				aria-label="Edit patient"
+				onClick={() => setEditing(true)}
+			>
+				<Pencil className="size-4" />
+			</Button>
+			<div className="gap-4 grid grid-cols-1 sm:grid-cols-3">
 				<div>
 					<p className="text-muted-foreground text-sm">CIN</p>
 					<p className="font-medium">{patient.cin ?? "—"}</p>
