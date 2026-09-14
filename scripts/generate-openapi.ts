@@ -31,6 +31,8 @@ async function main() {
 	fs.writeFileSync(outputPath, JSON.stringify(document, null, 2), "utf-8");
 
 	console.log(`Successfully generated ${outputPath}`);
+	// Route imports open Redis/pg handles that keep the event loop alive.
+	process.exit(0);
 }
 
 main().catch((err) => {

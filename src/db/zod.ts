@@ -104,6 +104,71 @@ export const statsResponseSchema = z.object({
 	banned: z.number(),
 });
 
+export const doctorDashboardStatsResponseSchema = z.object({
+	counts: z.object({
+		patients: z.number(),
+		appointmentsToday: z.number(),
+		appointmentsThisWeek: z.number(),
+		upcomingAppointments: z.number(),
+		pendingAppointments: z.number(),
+		unpaidInvoices: z.number(),
+	}),
+	revenue: z.object({
+		collectedThisMonth: z.number(),
+		outstanding: z.number(),
+	}),
+	plan: z.object({
+		planId: z.enum(["free", "pro"]),
+		isPro: z.boolean(),
+		limits: z.object({
+			aiBookingPatients: z.number().nullable(),
+			whatsappSendsPerMonth: z.number().nullable(),
+		}),
+		usage: z.object({
+			aiBookingPatients: z.number(),
+			whatsappSendsThisMonth: z.number(),
+		}),
+		usagePeriod: z.object({
+			start: z.string(),
+			end: z.string(),
+			yyyyMm: z.string(),
+		}),
+	}),
+	charts: z.object({
+		appointmentsByDay: z.array(
+			z.object({
+				date: z.string(),
+				total: z.number(),
+				ai: z.number(),
+				dashboard: z.number(),
+			}),
+		),
+		appointmentsByStatus: z.array(
+			z.object({
+				status: z.string(),
+				count: z.number(),
+			}),
+		),
+		appointmentsBySource: z.array(
+			z.object({
+				source: z.string(),
+				count: z.number(),
+			}),
+		),
+	}),
+	upcoming: z.array(
+		z.object({
+			id: z.number(),
+			start: z.string().nullable(),
+			end: z.string().nullable(),
+			status: z.string().nullable(),
+			source: z.string(),
+			name: z.string().nullable(),
+			patientName: z.string(),
+		}),
+	),
+});
+
 export const signedUrlResponseSchema = z.object({
 	signedUrl: z.string(),
 	key: z.string(),

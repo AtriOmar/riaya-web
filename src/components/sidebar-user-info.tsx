@@ -47,9 +47,7 @@ export default function SidebarUserInfo({
 						<span className="font-medium text-xs">Admin</span>
 					</div>
 				)}
-				{badgeEl && (
-					<div className="absolute top-2 right-2">{badgeEl}</div>
-				)}
+				{badgeEl && <div className="absolute top-2 right-2">{badgeEl}</div>}
 				<div className="bottom-0 left-1/2 absolute -translate-x-1/2 translate-y-1/3">
 					<Avatar className="w-[72px] h-[72px] border-[3px] border-background">
 						<AvatarImage

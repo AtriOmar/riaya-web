@@ -472,52 +472,6 @@ export const usePutApiUsersId = <TError = unknown>(
 	};
 };
 /**
- * @summary Get current user profile
- */
-export const getApiUsersMe = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiUsersMe200>(
-		{ url: `/api/users/me`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
-
-export type GetApiUsersMeQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiUsersMe>>
->;
-
-/**
- * @summary Get current user profile
- */
-export const useGetApiUsersMe = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
-		swrKey?: Key;
-		enabled?: boolean;
-	};
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
-	const swrFn = () => getApiUsersMe(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Update profile picture
  */
 export const postApiUsersPicture = (
@@ -568,6 +522,52 @@ export const usePostApiUsersPicture = <TError = unknown>(options?: {
 	const swrFn = getPostApiUsersPictureMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get current user profile
+ */
+export const getApiUsersMe = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiUsersMe200>(
+		{ url: `/api/users/me`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
+
+export type GetApiUsersMeQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiUsersMe>>
+>;
+
+/**
+ * @summary Get current user profile
+ */
+export const useGetApiUsersMe = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
+		swrKey?: Key;
+		enabled?: boolean;
+	};
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
+	const swrFn = () => getApiUsersMe(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

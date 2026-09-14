@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/contexts/auth-provider";
+import DoctorDashboardHome from "@/components/dashboard/home/doctor-dashboard-home";
+import DashboardLayout from "@/components/layouts/dashboard-layout";
 import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 export default function DashboardHome() {
@@ -26,9 +28,8 @@ export default function DashboardHome() {
 	}
 
 	return (
-		<div className="pr-2 md:pr-10 pb-20 pl-2">
-			<h3 className="font-bold text-2xl">Dashboard</h3>
-			{/* Dashboard content will go here when verified */}
-		</div>
+		<DashboardLayout title="Dashboard">
+			<DoctorDashboardHome />
+		</DashboardLayout>
 	);
 }

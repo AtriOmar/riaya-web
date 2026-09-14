@@ -75,6 +75,10 @@
                         "nullable": true,
                         "maxLength": 50
                       },
+                      "source": {
+                        "type": "string",
+                        "maxLength": 50
+                      },
                       "name": {
                         "type": "string",
                         "nullable": true,
@@ -193,6 +197,7 @@
                       "start",
                       "end",
                       "status",
+                      "source",
                       "name",
                       "description",
                       "newPatientName",
@@ -290,6 +295,10 @@
                       "nullable": true,
                       "maxLength": 50
                     },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
                     "name": {
                       "type": "string",
                       "nullable": true,
@@ -327,6 +336,7 @@
                     "start",
                     "end",
                     "status",
+                    "source",
                     "name",
                     "description",
                     "newPatientName",
@@ -426,6 +436,10 @@
                       "nullable": true,
                       "maxLength": 50
                     },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
                     "name": {
                       "type": "string",
                       "nullable": true,
@@ -463,6 +477,7 @@
                     "start",
                     "end",
                     "status",
+                    "source",
                     "name",
                     "description",
                     "newPatientName",
@@ -2844,83 +2859,6 @@
         }
       }
     },
-    "/api/subscriptions": {
-      "get": {
-        "tags": [
-          "Subscriptions"
-        ],
-        "summary": "Get current doctor subscription",
-        "responses": {
-          "200": {
-            "description": "Subscription row (or synthetic free-tier object)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "stripeCustomerId": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "stripeSubscriptionId": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "planId": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "currentPeriodStart": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "currentPeriodEnd": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "cancelAtPeriodEnd": {
-                      "type": "boolean",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "planId"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/users": {
       "get": {
         "tags": [
@@ -3232,6 +3170,152 @@
                     "email",
                     "accessId",
                     "active"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/external": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book external appointment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 8,
+                    "pattern": "^\\d+$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "illness": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "doctorId",
+                  "name",
+                  "phoneNumber",
+                  "start",
+                  "end",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booked appointment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "newPatientName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "newPatientPhoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "start",
+                    "end",
+                    "status",
+                    "source",
+                    "name",
+                    "description",
+                    "newPatientName",
+                    "newPatientPhoneNumber",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -3638,6 +3722,268 @@
                     "recordingUrl",
                     "createdAt",
                     "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get doctor dashboard statistics",
+        "responses": {
+          "200": {
+            "description": "Doctor dashboard statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "patients": {
+                          "type": "number"
+                        },
+                        "appointmentsToday": {
+                          "type": "number"
+                        },
+                        "appointmentsThisWeek": {
+                          "type": "number"
+                        },
+                        "upcomingAppointments": {
+                          "type": "number"
+                        },
+                        "pendingAppointments": {
+                          "type": "number"
+                        },
+                        "unpaidInvoices": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "patients",
+                        "appointmentsToday",
+                        "appointmentsThisWeek",
+                        "upcomingAppointments",
+                        "pendingAppointments",
+                        "unpaidInvoices"
+                      ]
+                    },
+                    "revenue": {
+                      "type": "object",
+                      "properties": {
+                        "collectedThisMonth": {
+                          "type": "number"
+                        },
+                        "outstanding": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "collectedThisMonth",
+                        "outstanding"
+                      ]
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "planId": {
+                          "type": "string",
+                          "enum": [
+                            "free",
+                            "pro"
+                          ]
+                        },
+                        "isPro": {
+                          "type": "boolean"
+                        },
+                        "limits": {
+                          "type": "object",
+                          "properties": {
+                            "aiBookingPatients": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "whatsappSendsPerMonth": {
+                              "type": "number",
+                              "nullable": true
+                            }
+                          },
+                          "required": [
+                            "aiBookingPatients",
+                            "whatsappSendsPerMonth"
+                          ]
+                        },
+                        "usage": {
+                          "type": "object",
+                          "properties": {
+                            "aiBookingPatients": {
+                              "type": "number"
+                            },
+                            "whatsappSendsThisMonth": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "aiBookingPatients",
+                            "whatsappSendsThisMonth"
+                          ]
+                        },
+                        "usagePeriod": {
+                          "type": "object",
+                          "properties": {
+                            "start": {
+                              "type": "string"
+                            },
+                            "end": {
+                              "type": "string"
+                            },
+                            "yyyyMm": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "start",
+                            "end",
+                            "yyyyMm"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "planId",
+                        "isPro",
+                        "limits",
+                        "usage",
+                        "usagePeriod"
+                      ]
+                    },
+                    "charts": {
+                      "type": "object",
+                      "properties": {
+                        "appointmentsByDay": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": "string"
+                              },
+                              "total": {
+                                "type": "number"
+                              },
+                              "ai": {
+                                "type": "number"
+                              },
+                              "dashboard": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "total",
+                              "ai",
+                              "dashboard"
+                            ]
+                          }
+                        },
+                        "appointmentsByStatus": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "status",
+                              "count"
+                            ]
+                          }
+                        },
+                        "appointmentsBySource": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "source": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "source",
+                              "count"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "appointmentsByDay",
+                        "appointmentsByStatus",
+                        "appointmentsBySource"
+                      ]
+                    },
+                    "upcoming": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "start": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "end": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "patientName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "start",
+                          "end",
+                          "status",
+                          "source",
+                          "name",
+                          "patientName"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "counts",
+                    "revenue",
+                    "plan",
+                    "charts",
+                    "upcoming"
                   ]
                 }
               }
@@ -4230,147 +4576,6 @@
                     "speciality",
                     "cabinetCity",
                     "user"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/appointments/external": {
-      "post": {
-        "tags": [
-          "Appointments"
-        ],
-        "summary": "Book external appointment",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "^\\d+$"
-                  },
-                  "start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "end": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "illness": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "doctorId",
-                  "name",
-                  "phoneNumber",
-                  "start",
-                  "end",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Booked appointment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "start": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "end": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "name": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "newPatientName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "newPatientPhoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "start",
-                    "end",
-                    "status",
-                    "name",
-                    "description",
-                    "newPatientName",
-                    "newPatientPhoneNumber",
-                    "createdAt",
-                    "updatedAt"
                   ]
                 }
               }
@@ -5845,6 +6050,916 @@
         }
       }
     },
+    "/api/persons/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get person by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "phoneNumber",
+                    "source",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update person by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "address": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated person",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "dateOfBirth": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "address": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "phoneNumber",
+                    "source",
+                    "firstName",
+                    "lastName",
+                    "dateOfBirth",
+                    "gender",
+                    "address",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/register/resend-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend registration OTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP resent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending signup"
+          },
+          "429": {
+            "description": "Resend cooldown active"
+          }
+        }
+      }
+    },
+    "/api/register/verify-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verify registration OTP and create account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "pattern": "^\\d+$"
+                  }
+                },
+                "required": [
+                  "email",
+                  "otp"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          },
+          "404": {
+            "description": "No pending signup"
+          }
+        }
+      }
+    },
+    "/api/register/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Request registration OTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "pattern": "(?=.*[a-zA-Z])(?=.*[0-9])"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        }
+      }
+    },
+    "/api/upload/signed-url": {
+      "post": {
+        "tags": [
+          "Miscellaneous"
+        ],
+        "summary": "Generate R2 signed upload URL",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filename": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "folder": {
+                    "type": "string",
+                    "enum": [
+                      "profile-pictures",
+                      "doctor-applications",
+                      "medical-files"
+                    ]
+                  }
+                },
+                "required": [
+                  "filename",
+                  "contentType",
+                  "folder"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signedUrl": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "cdnUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "signedUrl",
+                    "key",
+                    "cdnUrl"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reviews/submit": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Submit a review via magic link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "waitTime": {
+                    "type": "string",
+                    "enum": [
+                      "short",
+                      "medium",
+                      "long"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "rating",
+                  "waitTime"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "emailVerified": {
+                      "type": "boolean"
+                    },
+                    "image": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "accessId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "active": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "hasDoctorProfile": {
+                      "type": "boolean"
+                    },
+                    "doctorProfile": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "tin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "status": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 50
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cabinetName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cabinetCityId": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "cabinetLongitude": {
+                          "type": "number",
+                          "nullable": true,
+                          "minimum": -140737488355328,
+                          "maximum": 140737488355327
+                        },
+                        "cabinetLatitude": {
+                          "type": "number",
+                          "nullable": true,
+                          "minimum": -140737488355328,
+                          "maximum": 140737488355327
+                        },
+                        "specialityId": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "availability": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "nullable": true
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {
+                                "nullable": true
+                              }
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "nullable": true
+                              }
+                            }
+                          ]
+                        },
+                        "cinRecto": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cinVerso": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "medicalCouncilNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "medicalCouncilCertificate": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "speciality": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "enName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "frName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "arName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "slug": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "enName",
+                            "frName",
+                            "arName",
+                            "slug"
+                          ]
+                        },
+                        "cabinetCity": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "postalCode": {
+                              "type": "integer",
+                              "nullable": true,
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "latitude": {
+                              "type": "number",
+                              "nullable": true,
+                              "minimum": -140737488355328,
+                              "maximum": 140737488355327
+                            },
+                            "longitude": {
+                              "type": "number",
+                              "nullable": true,
+                              "minimum": -140737488355328,
+                              "maximum": 140737488355327
+                            },
+                            "enName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "frName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "arName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "slug": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "postalCode",
+                            "latitude",
+                            "longitude",
+                            "enName",
+                            "frName",
+                            "arName",
+                            "slug"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "tin",
+                        "status",
+                        "address",
+                        "cabinetName",
+                        "cabinetCityId",
+                        "cabinetLongitude",
+                        "cabinetLatitude",
+                        "specialityId",
+                        "availability",
+                        "cinRecto",
+                        "cinVerso",
+                        "medicalCouncilNumber",
+                        "medicalCouncilCertificate",
+                        "createdAt",
+                        "updatedAt",
+                        "speciality",
+                        "cabinetCity"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "emailVerified",
+                    "image",
+                    "displayName",
+                    "username",
+                    "accessId",
+                    "active",
+                    "type",
+                    "createdAt",
+                    "updatedAt",
+                    "hasDoctorProfile",
+                    "doctorProfile"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "accessId": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}": {
       "get": {
         "tags": [
@@ -6645,381 +7760,104 @@
         }
       }
     },
-    "/api/persons/{id}": {
-      "get": {
+    "/api/users/picture": {
+      "post": {
         "tags": [
           "Users"
         ],
-        "summary": "Get person by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
+        "summary": "Update profile picture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pictureUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "pictureUrl"
+                ]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "Person details",
+            "description": "Updated user",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
+                      "type": "string"
                     },
-                    "phoneNumber": {
-                      "type": "string",
-                      "maxLength": 50
+                    "name": {
+                      "type": "string"
                     },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "phoneNumber",
-                    "source",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update person by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "dateOfBirth": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "gender": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated person",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "phoneNumber": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "firstName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "lastName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "dateOfBirth": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "address": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "phoneNumber",
-                    "source",
-                    "firstName",
-                    "lastName",
-                    "dateOfBirth",
-                    "gender",
-                    "address",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/register/request-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Request registration OTP",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "(?=.*[a-zA-Z])(?=.*[0-9])"
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OTP sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
                     "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Email already registered"
-          }
-        }
-      }
-    },
-    "/api/register/resend-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Resend registration OTP",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                },
-                "required": [
-                  "email"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OTP resent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No pending signup"
-          },
-          "429": {
-            "description": "Resend cooldown active"
-          }
-        }
-      }
-    },
-    "/api/reviews/submit": {
-      "post": {
-        "tags": [
-          "Reviews"
-        ],
-        "summary": "Submit a review via magic link",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "token": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "rating": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 5
-                  },
-                  "waitTime": {
-                    "type": "string",
-                    "enum": [
-                      "short",
-                      "medium",
-                      "long"
-                    ]
-                  },
-                  "comment": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "token",
-                  "rating",
-                  "waitTime"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Review submitted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
+                      "type": "string"
+                    },
+                    "emailVerified": {
                       "type": "boolean"
+                    },
+                    "image": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "accessId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "active": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "name",
+                    "email",
+                    "emailVerified",
+                    "image",
+                    "displayName",
+                    "username",
+                    "accessId",
+                    "active",
+                    "type",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -7028,25 +7866,15 @@
         }
       }
     },
-    "/api/users/{id}": {
+    "/api/users/me": {
       "get": {
         "tags": [
           "Users"
         ],
-        "summary": "Get user by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+        "summary": "Get current user profile",
         "responses": {
           "200": {
-            "description": "User profile",
+            "description": "Current user profile",
             "content": {
               "application/json": {
                 "schema": {
@@ -7380,225 +8208,6 @@
             }
           }
         }
-      },
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update user by ID",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string"
-                  },
-                  "accessId": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "nullable": true
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/picture": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update profile picture",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "pictureUrl": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": [
-                  "pictureUrl"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "displayName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "username": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "accessId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "active": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "emailVerified",
-                    "image",
-                    "displayName",
-                    "username",
-                    "accessId",
-                    "active",
-                    "type",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/upload/signed-url": {
-      "post": {
-        "tags": [
-          "Miscellaneous"
-        ],
-        "summary": "Generate R2 signed upload URL",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "filename": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "contentType": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "folder": {
-                    "type": "string",
-                    "enum": [
-                      "profile-pictures",
-                      "doctor-applications",
-                      "medical-files"
-                    ]
-                  }
-                },
-                "required": [
-                  "filename",
-                  "contentType",
-                  "folder"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Signed URL details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "signedUrl": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "cdnUrl": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "signedUrl",
-                    "key",
-                    "cdnUrl"
-                  ]
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/calls/{id}/events": {
@@ -7771,57 +8380,6 @@
                     "functionStatus",
                     "timestamp"
                   ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/reviews/process-job": {
-      "post": {
-        "tags": [
-          "Internal"
-        ],
-        "summary": "Process a delayed review job (Internal)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "patientId": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                },
-                "required": [
-                  "appointmentId",
-                  "doctorId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Job processed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "nullable": true
                 }
               }
             }
@@ -8047,6 +8605,57 @@
                       "doctors"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/reviews/process-job": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Process a delayed review job (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "patientId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "appointmentId",
+                  "doctorId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
                 }
               }
             }
@@ -9070,410 +9679,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/users/me": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Get current user profile",
-        "responses": {
-          "200": {
-            "description": "Current user profile",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "displayName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "username": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "accessId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "active": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "hasDoctorProfile": {
-                      "type": "boolean"
-                    },
-                    "doctorProfile": {
-                      "type": "object",
-                      "nullable": true,
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cin": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "tin": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "status": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 50
-                        },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "cabinetName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cabinetCityId": {
-                          "type": "integer",
-                          "nullable": true,
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "cabinetLongitude": {
-                          "type": "number",
-                          "nullable": true,
-                          "minimum": -140737488355328,
-                          "maximum": 140737488355327
-                        },
-                        "cabinetLatitude": {
-                          "type": "number",
-                          "nullable": true,
-                          "minimum": -140737488355328,
-                          "maximum": 140737488355327
-                        },
-                        "specialityId": {
-                          "type": "integer",
-                          "nullable": true,
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "availability": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "nullable": true
-                            },
-                            {
-                              "type": "object",
-                              "additionalProperties": {
-                                "nullable": true
-                              }
-                            },
-                            {
-                              "type": "array",
-                              "items": {
-                                "nullable": true
-                              }
-                            }
-                          ]
-                        },
-                        "cinRecto": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cinVerso": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "medicalCouncilNumber": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "medicalCouncilCertificate": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
-                        },
-                        "speciality": {
-                          "type": "object",
-                          "nullable": true,
-                          "properties": {
-                            "id": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "enName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "frName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "arName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "slug": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "enName",
-                            "frName",
-                            "arName",
-                            "slug"
-                          ]
-                        },
-                        "cabinetCity": {
-                          "type": "object",
-                          "nullable": true,
-                          "properties": {
-                            "id": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "postalCode": {
-                              "type": "integer",
-                              "nullable": true,
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "latitude": {
-                              "type": "number",
-                              "nullable": true,
-                              "minimum": -140737488355328,
-                              "maximum": 140737488355327
-                            },
-                            "longitude": {
-                              "type": "number",
-                              "nullable": true,
-                              "minimum": -140737488355328,
-                              "maximum": 140737488355327
-                            },
-                            "enName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "frName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "arName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "slug": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "postalCode",
-                            "latitude",
-                            "longitude",
-                            "enName",
-                            "frName",
-                            "arName",
-                            "slug"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "userId",
-                        "firstName",
-                        "lastName",
-                        "cin",
-                        "tin",
-                        "status",
-                        "address",
-                        "cabinetName",
-                        "cabinetCityId",
-                        "cabinetLongitude",
-                        "cabinetLatitude",
-                        "specialityId",
-                        "availability",
-                        "cinRecto",
-                        "cinVerso",
-                        "medicalCouncilNumber",
-                        "medicalCouncilCertificate",
-                        "createdAt",
-                        "updatedAt",
-                        "speciality",
-                        "cabinetCity"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "emailVerified",
-                    "image",
-                    "displayName",
-                    "username",
-                    "accessId",
-                    "active",
-                    "type",
-                    "createdAt",
-                    "updatedAt",
-                    "hasDoctorProfile",
-                    "doctorProfile"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/register/verify-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Verify registration OTP and create account",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "otp": {
-                    "type": "string",
-                    "minLength": 6,
-                    "maxLength": 6,
-                    "pattern": "^\\d+$"
-                  }
-                },
-                "required": [
-                  "email",
-                  "otp"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Account created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or expired OTP"
-          },
-          "404": {
-            "description": "No pending signup"
           }
         }
       }
