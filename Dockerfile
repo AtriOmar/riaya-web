@@ -26,8 +26,7 @@ COPY . .
 # Next.js telemetry can be disabled during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build the Next.js application (Provide a dummy auth URL to suppress better-auth build warnings)
-ENV BETTER_AUTH_URL=http://localhost:3000
+# CI writes PRODUCTION_ENV_FILE to .env before docker build so NEXT_PUBLIC_* is inlined.
 RUN pnpm run build
 
 # Production image, copy all the files and run next
