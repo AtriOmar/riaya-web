@@ -494,6 +494,81 @@ export const billingInvoice = pgTable(
 	],
 );
 
+// ─── Consultation Recording ───────────────────────────────────────────────────
+// Recordings made by the doctor during or after a patient consultation.
+// Linked optionally to a patient. Transcript is generated via Azure AI.
+
+export const consultationRecording = pgTable(
+	"consultation_recording",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		patientId: integer("patient_id").references(() => patient.id, {
+			onDelete: "set null",
+		}),
+		title: varchar("title", { length: 255 }),
+		audioUrl: varchar("audio_url", { length: 1024 }).notNull(),
+		durationSeconds: integer("duration_seconds"),
+		transcript: text("transcript"),
+		// pending | processing | done | error
+		transcriptStatus: varchar("transcript_status", { length: 50 })
+			.notNull()
+			.default("pending"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("consultation_recording_doctor_id_idx").on(table.doctorId),
+		index("consultation_recording_patient_id_idx").on(table.patientId),
+		index("consultation_recording_created_at_idx").on(table.createdAt),
+	],
+);
+
+// ─── AI Chat Conversation ─────────────────────────────────────────────────────
+// Persisted doctor ↔ AI assistant conversations (optionally linked to a recording).
+
+export const aiChatConversation = pgTable(
+	"ai_chat_conversation",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		title: varchar("title", { length: 255 }),
+		recordingId: integer("recording_id").references(
+			() => consultationRecording.id,
+			{ onDelete: "set null" },
+		),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		index("ai_chat_conversation_doctor_id_idx").on(table.doctorId),
+		index("ai_chat_conversation_recording_id_idx").on(table.recordingId),
+		index("ai_chat_conversation_updated_at_idx").on(table.updatedAt),
+	],
+);
+
+export const aiChatMessage = pgTable(
+	"ai_chat_message",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		conversationId: integer("conversation_id")
+			.notNull()
+			.references(() => aiChatConversation.id, { onDelete: "cascade" }),
+		// user | assistant
+		role: varchar("role", { length: 20 }).notNull(),
+		content: text("content").notNull(),
+		createdAt: timestamp("created_at").defaultNow(),
+	},
+	(table) => [
+		index("ai_chat_message_conversation_id_idx").on(table.conversationId),
+		index("ai_chat_message_created_at_idx").on(table.createdAt),
+	],
+);
+
 // ─── WhatsApp usage (monthly counter) ─────────────────────────────────────────
 
 export const whatsappUsage = pgTable(
@@ -575,6 +650,8 @@ export const doctorProfileRelations = relations(
 		}),
 		billingInvoices: many(billingInvoice),
 		whatsappUsage: many(whatsappUsage),
+		consultationRecordings: many(consultationRecording),
+		aiChatConversations: many(aiChatConversation),
 	}),
 );
 
@@ -625,6 +702,7 @@ export const patientRelations = relations(patient, ({ one, many }) => ({
 	consultations: many(consultation),
 	invoices: many(invoice),
 	reviews: many(review),
+	consultationRecordings: many(consultationRecording),
 }));
 
 export const patientMedicalFileRelations = relations(
@@ -734,6 +812,43 @@ export const doctorUnavailabilityRelations = relations(
 		}),
 	}),
 );
+
+export const consultationRecordingRelations = relations(
+	consultationRecording,
+	({ one, many }) => ({
+		doctor: one(doctorProfile, {
+			fields: [consultationRecording.doctorId],
+			references: [doctorProfile.id],
+		}),
+		patient: one(patient, {
+			fields: [consultationRecording.patientId],
+			references: [patient.id],
+		}),
+		aiChatConversations: many(aiChatConversation),
+	}),
+);
+
+export const aiChatConversationRelations = relations(
+	aiChatConversation,
+	({ one, many }) => ({
+		doctor: one(doctorProfile, {
+			fields: [aiChatConversation.doctorId],
+			references: [doctorProfile.id],
+		}),
+		recording: one(consultationRecording, {
+			fields: [aiChatConversation.recordingId],
+			references: [consultationRecording.id],
+		}),
+		messages: many(aiChatMessage),
+	}),
+);
+
+export const aiChatMessageRelations = relations(aiChatMessage, ({ one }) => ({
+	conversation: one(aiChatConversation, {
+		fields: [aiChatMessage.conversationId],
+		references: [aiChatConversation.id],
+	}),
+}));
 
 export const reviewRelations = relations(review, ({ one }) => ({
 	appointment: one(appointment, {

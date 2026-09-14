@@ -1,11 +1,13 @@
 "use client";
 
 import {
+	Bot,
 	Calendar,
 	CalendarDays,
 	CreditCard,
 	Home,
 	MessageSquare,
+	Mic,
 	PanelLeftClose,
 	PanelLeftOpen,
 	Receipt,
@@ -51,6 +53,16 @@ const items1: SidebarItemData[] = [
 		name: "Invoices",
 		icon: <Receipt className="size-5" />,
 		path: "/dashboard/invoices",
+	},
+	{
+		name: "Recordings",
+		icon: <Mic className="size-5" />,
+		path: "/dashboard/recordings",
+	},
+	{
+		name: "AI Assistant",
+		icon: <Bot className="size-5" />,
+		path: "/dashboard/ai-chat",
 	},
 	{
 		name: "Availability",

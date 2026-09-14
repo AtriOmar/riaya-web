@@ -56,6 +56,10 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	APPOINTMENT_NOT_CANCELLABLE:
 		"This appointment cannot be cancelled by phone. Contact the doctor's office if it is already confirmed.",
 	CALLER_PHONE_REQUIRED: "Caller phone number is required for this action.",
+	RECORDING_NOT_FOUND: "Recording not found.",
+	TRANSCRIPT_ALREADY_DONE: "This recording has already been transcribed.",
+	TRANSCRIPTION_FAILED: "Failed to generate transcript. Please try again.",
+	CONVERSATION_NOT_FOUND: "Conversation not found.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 
