@@ -1,13 +1,18 @@
 "use client";
 
 import { Loader2, Mic, MicOff, Phone, PhoneCall, PhoneOff } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PhoneNumberInput } from "@/components/ui/phone-input";
 import {
 	type SimulatedCallStatus,
 	useSimulatedCall,
 } from "@/hooks/use-simulated-call";
+import {
+	formatPhoneDisplay,
+	isValidPhoneNumber,
+	normalizePhoneForStorage,
+} from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 // ─── Status helpers ────────────────────────────────────────────────────────────
@@ -89,6 +94,29 @@ function Bubble({
 	);
 }
 
+const TEST_CALL_PHONE_STORAGE_KEY = "riaya:test-call-phone";
+
+function readPersistedTestCallPhone(): string {
+	if (typeof window === "undefined") return "";
+	try {
+		const raw = localStorage.getItem(TEST_CALL_PHONE_STORAGE_KEY);
+		if (!raw?.trim()) return "";
+		const normalized = normalizePhoneForStorage(raw);
+		if (!normalized || !isValidPhoneNumber(normalized)) return "";
+		return normalized;
+	} catch {
+		return "";
+	}
+}
+
+function persistTestCallPhone(phone: string) {
+	try {
+		localStorage.setItem(TEST_CALL_PHONE_STORAGE_KEY, phone);
+	} catch {
+		// quota / private mode
+	}
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TestCallPhone() {
@@ -98,20 +126,34 @@ export default function TestCallPhone() {
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 
+	useEffect(() => {
+		const persisted = readPersistedTestCallPhone();
+		if (persisted) setPhone(persisted);
+	}, []);
+
+	useEffect(() => {
+		const normalized = normalizePhoneForStorage(phone);
+		if (!normalized || !isValidPhoneNumber(normalized)) return;
+		persistTestCallPhone(normalized);
+	}, [phone]);
+
 	const isActive = status === "in-call";
 	const isBusy =
 		status === "requesting-mic" ||
 		status === "connecting" ||
 		status === "in-call";
 	const canCall = status === "idle" || status === "ended" || status === "error";
+	const phoneValid = isValidPhoneNumber(phone);
 
 	const handleCall = () => {
 		if (!canCall) return;
-		void startCall(phone);
+		const stored = normalizePhoneForStorage(phone);
+		if (!stored || !isValidPhoneNumber(stored)) return;
+		void startCall(stored);
 	};
 
 	const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && canCall && phone.trim()) {
+		if (e.key === "Enter" && canCall && phoneValid) {
 			handleCall();
 		}
 	};
@@ -152,7 +194,11 @@ export default function TestCallPhone() {
 
 						<div className="min-w-0 flex-1">
 							<p className="font-semibold text-sm">
-								{isActive ? phone || "Simulated Call" : "Test Call Simulator"}
+								{isActive
+									? phone
+										? formatPhoneDisplay(phone)
+										: "Simulated Call"
+									: "Test Call Simulator"}
 							</p>
 							<p className={cn("text-xs", statusColor(status))}>
 								{error ? error : statusLabel(status)}
@@ -217,14 +263,13 @@ export default function TestCallPhone() {
 					{/* Controls */}
 					<div className="border-t p-4">
 						<div className="flex gap-2">
-							<Input
-								type="tel"
-								placeholder="+216XXXXXXXX"
+							<PhoneNumberInput
+								id="test-call-phone"
 								value={phone}
-								onChange={(e) => setPhone(e.target.value)}
+								onChange={setPhone}
 								onKeyDown={handleKey}
 								disabled={isBusy}
-								className="flex-1 font-mono"
+								className="min-w-0 flex-1"
 							/>
 
 							{isBusy || isActive ? (
@@ -243,7 +288,7 @@ export default function TestCallPhone() {
 								<Button
 									size="icon"
 									onClick={handleCall}
-									disabled={!phone.trim()}
+									disabled={!phoneValid}
 									title="Call"
 									className="bg-green-600 hover:bg-green-700"
 								>

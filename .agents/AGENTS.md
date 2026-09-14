@@ -97,7 +97,10 @@ This document is a compact project guide for AI assistants working on this repo.
 ### 5) Tailwind + shadcn UI style
 
 - Styling is utility-class driven with Tailwind.
-- Prefer existing UI primitives from `web/src/components/ui/*`.
+- **Always build interactive UI with shadcn/Radix primitives** from `web/src/components/ui/*` (Button, Input, Dialog, Popover, Command, Combobox, Select, etc.). Do **not** ship raw native controls (`<select>`, unstyled `<input type="date">`, etc.) when a shadcn pattern exists.
+- **Pickers & lists**: use the shadcn **combobox** pattern — `@/components/ui/combobox` (Base UI) or **Popover + Command** (searchable list with icons/checkmarks). Even a single option should open the same popover/combobox UI (not a disabled native select).
+- Reuse feature-level wrappers when they exist (e.g. `PhoneNumberInput`, `SpecialitySelect`) before inventing one-off markup.
+- **Phone entry**: any editable phone field (patient forms, test call simulator, etc.) must use `@/components/ui/phone-input` (`PhoneNumberInput`), not a raw `<Input type="tel">`. Normalize with `normalizePhoneForStorage` before API/socket calls; validate with `isValidPhoneNumber` when enabling submit.
 - Theme tokens and custom utilities live in `web/src/app/globals.css`.
 
 ### 6) API route style in Next
@@ -222,6 +225,8 @@ Use these as examples before changing related code.
 - `web/src/lib/error-handling.ts` (`getErrorMessage` / `getApiErrorCode` for client-side API errors)
 - `web/src/lib/upload.ts` + `web/src/services/upload.ts` (R2 presigned upload + `cdnUrl` return)
 - `web/src/components/dashboard/profile/image-cropper.tsx` (crop → blob → `uploadBlobToR2` → save URL)
+- `web/src/components/ui/phone-input.tsx` + `phone-country-combobox.tsx` (InputGroup + Popover/Command country combobox)
+- `web/src/components/dashboard/profile/doctor-application/speciality-select.tsx` (Base UI Combobox for searchable selects)
 - `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx` (dashboard/admin page layout wrapper pattern)
 
 ### Backend/realtime references

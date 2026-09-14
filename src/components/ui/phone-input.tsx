@@ -1,65 +1,99 @@
 "use client";
 
-import PhoneInput, { type Country, type Value } from "react-phone-number-input";
-import flags from "react-phone-number-input/flags";
-import en from "react-phone-number-input/locale/en";
-import { DEFAULT_PHONE_COUNTRY, phoneInputValueFromStorage } from "@/lib/phone";
+import type { CountryCode } from "libphonenumber-js";
+import type { KeyboardEventHandler } from "react";
+import { useEffect, useId, useState } from "react";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
+import { PhoneCountryCombobox } from "@/components/ui/phone-country-combobox";
+import {
+	phoneCountryFromValue,
+	phoneNationalInputDisplay,
+	phoneValueFromNationalInput,
+} from "@/lib/phone";
 import { cn } from "@/lib/utils";
-
-import "react-phone-number-input/style.css";
 
 type Props = {
 	/** Stored form value (digits with country code, any legacy shape). */
 	value: string;
 	onChange: (value: string) => void;
 	onBlur?: () => void;
+	onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
 	id?: string;
 	disabled?: boolean;
 	className?: string;
+	placeholder?: string;
 	"aria-invalid"?: boolean;
 };
 
 /**
- * Tunisia-only phone field with country flag. Emits E.164 (`+216…`) via onChange
- * for live formatting; normalize with `normalizePhoneForStorage` before API calls.
+ * Phone field with shadcn country combobox (flag + calling code) and national
+ * number input. Emits E.164 (`+216…`) via onChange; normalize with
+ * `normalizePhoneForStorage` before API calls.
  */
 export function PhoneNumberInput({
 	value,
 	onChange,
 	onBlur,
+	onKeyDown,
 	id,
 	disabled,
 	className,
+	placeholder = "Phone number",
 	"aria-invalid": ariaInvalid,
 }: Props) {
-	const inputValue = phoneInputValueFromStorage(value) as Value | undefined;
+	const countryFieldId = useId();
+	const [country, setCountry] = useState<CountryCode>(() =>
+		phoneCountryFromValue(value),
+	);
+
+	useEffect(() => {
+		setCountry(phoneCountryFromValue(value));
+	}, [value]);
+
+	const nationalDisplay = phoneNationalInputDisplay(value, country);
+
+	const handleCountryChange = (nextCountry: CountryCode) => {
+		setCountry(nextCountry);
+		if (!value.trim()) return;
+		const digits = phoneNationalInputDisplay(value, country).replace(/\D/g, "");
+		if (!digits) return;
+		onChange(phoneValueFromNationalInput(digits, nextCountry));
+	};
+
+	const handleNationalChange = (nextNational: string) => {
+		onChange(phoneValueFromNationalInput(nextNational, country));
+	};
 
 	return (
-		<div
-			className={cn(
-				"phone-input-root",
-				ariaInvalid && "phone-input-root--invalid",
-				className,
-			)}
+		<InputGroup
+			className={cn("w-full", className)}
+			data-disabled={disabled ? true : undefined}
 		>
-			<PhoneInput
+			<InputGroupAddon align="inline-start" className="pl-1.5">
+				<PhoneCountryCombobox
+					id={countryFieldId}
+					value={country}
+					onChange={handleCountryChange}
+					disabled={disabled}
+				/>
+			</InputGroupAddon>
+			<InputGroupInput
 				id={id}
-				international
-				defaultCountry={DEFAULT_PHONE_COUNTRY}
-				countries={[DEFAULT_PHONE_COUNTRY] as Country[]}
-				countryCallingCodeEditable={false}
-				countrySelectProps={{ disabled: true, tabIndex: -1 }}
-				flags={flags}
-				labels={en}
-				value={inputValue}
-				onChange={(next) => onChange(next ?? "")}
-				onBlur={onBlur}
+				type="tel"
+				inputMode="tel"
+				autoComplete="tel-national"
 				disabled={disabled}
-				numberInputProps={{
-					className: "PhoneInputInput",
-					"aria-invalid": ariaInvalid,
-				}}
+				aria-invalid={ariaInvalid}
+				placeholder={placeholder}
+				value={nationalDisplay}
+				onChange={(e) => handleNationalChange(e.target.value)}
+				onBlur={onBlur}
+				onKeyDown={onKeyDown}
 			/>
-		</div>
+		</InputGroup>
 	);
 }

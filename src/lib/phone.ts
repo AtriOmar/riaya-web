@@ -1,10 +1,75 @@
 import {
+	AsYouType,
 	type CountryCode,
+	getCountryCallingCode,
 	parsePhoneNumberFromString,
 } from "libphonenumber-js";
 
 /** Default country for doctor dashboard & Tunisia-first product. */
 export const DEFAULT_PHONE_COUNTRY: CountryCode = "TN";
+
+export type PhoneCountryOption = {
+	code: CountryCode;
+	label: string;
+};
+
+/** Supported countries in dashboard phone fields (extend when product expands). */
+export const PHONE_COUNTRY_OPTIONS: PhoneCountryOption[] = [
+	{ code: "TN", label: "Tunisia" },
+];
+
+export function phoneCountryFromValue(
+	stored: string | null | undefined,
+	fallback: CountryCode = DEFAULT_PHONE_COUNTRY,
+): CountryCode {
+	if (stored == null || !stored.trim()) return fallback;
+	const parsed = parsePhoneNumberFromString(stored.trim(), fallback);
+	return parsed?.country ?? fallback;
+}
+
+function nationalDigitsFromStored(
+	stored: string,
+	country: CountryCode,
+): string {
+	const trimmed = stored.trim();
+	if (!trimmed) return "";
+	const code = getCountryCallingCode(country);
+
+	if (trimmed.startsWith("+")) {
+		const international = trimmed.slice(1).replace(/\D/g, "");
+		if (international.startsWith(code)) {
+			return international.slice(code.length);
+		}
+		return international;
+	}
+
+	const digits = trimmed.replace(/\D/g, "");
+	if (digits.startsWith(code)) return digits.slice(code.length);
+	return digits;
+}
+
+/** National-format string for the number input (formats live via AsYouType). */
+export function phoneNationalInputDisplay(
+	stored: string | null | undefined,
+	country: CountryCode = DEFAULT_PHONE_COUNTRY,
+): string {
+	if (stored == null || !stored.trim()) return "";
+	const nationalDigits = nationalDigitsFromStored(stored.trim(), country);
+	if (!nationalDigits) return "";
+	return new AsYouType(country).input(nationalDigits);
+}
+
+/** E.164-ish value while the user types in the national number field. */
+export function phoneValueFromNationalInput(
+	nationalInput: string,
+	country: CountryCode = DEFAULT_PHONE_COUNTRY,
+): string {
+	const formatter = new AsYouType(country);
+	const formattedNational = formatter.input(nationalInput);
+	const nationalDigits = formattedNational.replace(/\D/g, "");
+	if (!nationalDigits) return "";
+	return `+${getCountryCallingCode(country)}${nationalDigits}`;
+}
 
 function parsePhone(
 	input: string,
@@ -75,7 +140,7 @@ export function formatPhoneDisplay(
 	return input.trim();
 }
 
-/** Value for `react-phone-number-input` (`+216…`). */
+/** Value for phone inputs (`+216…`). */
 export function phoneInputValueFromStorage(
 	stored: string | null | undefined,
 ): string | undefined {
