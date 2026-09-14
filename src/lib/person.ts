@@ -2,6 +2,11 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { person } from "@/db/schema";
 import {
+	DEFAULT_PERSON_PREFERRED_LANGUAGE,
+	isPersonPreferredLanguage,
+	type PersonPreferredLanguage,
+} from "@/lib/person-language";
+import {
 	DEFAULT_PHONE_COUNTRY,
 	normalizePhoneForStorage,
 	phoneStorageVariants,
@@ -17,6 +22,27 @@ async function findPersonByPhoneRaw(raw: string) {
 	return db.query.person.findFirst({
 		where: inArray(person.phoneNumber, phoneStorageVariants(normalized)),
 	});
+}
+
+export async function findPersonByPhone(phoneNumber: string) {
+	return findPersonByPhoneRaw(phoneNumber);
+}
+
+/** Saved person language, or lookup by phone. Defaults to Arabic. */
+export async function resolvePreferredLanguage(input: {
+	preferredLanguage?: string | null;
+	phone?: string | null;
+}): Promise<PersonPreferredLanguage> {
+	if (isPersonPreferredLanguage(input.preferredLanguage)) {
+		return input.preferredLanguage;
+	}
+	if (input.phone) {
+		const row = await findPersonByPhone(input.phone);
+		if (isPersonPreferredLanguage(row?.preferredLanguage)) {
+			return row.preferredLanguage;
+		}
+	}
+	return DEFAULT_PERSON_PREFERRED_LANGUAGE;
 }
 
 /** Upsert by phone. `source` is set only on insert; existing rows keep their source. */

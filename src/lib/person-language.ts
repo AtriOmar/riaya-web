@@ -8,3 +8,11 @@ export function isPersonPreferredLanguage(
 ): value is PersonPreferredLanguage {
 	return value === "en" || value === "fr" || value === "ar";
 }
+
+export function normalizePersonPreferredLanguage(
+	value: unknown,
+): PersonPreferredLanguage {
+	return isPersonPreferredLanguage(value)
+		? value
+		: DEFAULT_PERSON_PREFERRED_LANGUAGE;
+}

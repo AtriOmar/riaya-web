@@ -12,31 +12,11 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { resolvePatientIdForConfirm } from "@/lib/appointment-patient-link";
+import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
-
-function buildConfirmationMessage(params: {
-	patientName: string;
-	doctorFirstName: string | null | undefined;
-	doctorLastName: string | null | undefined;
-	start: Date | null | undefined;
-}): string {
-	const doctorName =
-		[params.doctorFirstName, params.doctorLastName].filter(Boolean).join(" ") ||
-		"الطبيب";
-	const date = params.start
-		? params.start.toLocaleString("ar-MA", {
-				weekday: "long",
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-				hour: "2-digit",
-				minute: "2-digit",
-			})
-		: "";
-	return `مرحباً ${params.patientName}، تم تأكيد موعدك مع الدكتور ${doctorName}${date ? ` بتاريخ ${date}` : ""}. شكراً لك.`;
-}
+import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
 // Returns appointments for the authenticated doctor
@@ -197,7 +177,10 @@ export async function PUT(req: NextRequest) {
 				try {
 					const full = await db.query.appointment.findFirst({
 						where: eq(appointment.id, id),
-						with: { patient: true, doctor: true },
+						with: {
+							patient: { with: { person: true } },
+							doctor: true,
+						},
 					});
 
 					const phone =
@@ -207,7 +190,12 @@ export async function PUT(req: NextRequest) {
 						: (full?.newPatientName ?? "");
 
 					if (phone && patientName) {
-						const message = buildConfirmationMessage({
+						const language = await resolvePreferredLanguage({
+							preferredLanguage: full?.patient?.person?.preferredLanguage,
+							phone,
+						});
+						const message = buildAppointmentConfirmationMessage({
+							language,
 							patientName,
 							doctorFirstName: full?.doctor?.firstName,
 							doctorLastName: full?.doctor?.lastName,

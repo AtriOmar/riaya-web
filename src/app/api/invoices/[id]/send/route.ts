@@ -14,9 +14,11 @@ import {
 } from "@/lib/api-utils";
 import { buildInvoicePdf } from "@/lib/invoice-pdf";
 import { registry } from "@/lib/openapi";
+import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { uploadBufferToR2 } from "@/lib/r2";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { buildInvoiceWhatsappCaption } from "@/lib/whatsapp-messages";
 
 const paramsSchema = z.object({ id: z.string() });
 
@@ -42,7 +44,7 @@ export async function POST(
 				payments: {
 					orderBy: (p, { asc }) => [asc(p.paidAt), asc(p.id)],
 				},
-				patient: true,
+				patient: { with: { person: true } },
 				doctor: {
 					with: {
 						speciality: true,
@@ -97,14 +99,17 @@ export async function POST(
 		const key = `invoices/${randomUUID()}.pdf`;
 		const pdfUrl = await uploadBufferToR2(key, pdf, "application/pdf");
 
-		const doctorLast =
-			record.doctor?.lastName ||
-			[record.doctor?.firstName, record.doctor?.lastName]
-				.filter(Boolean)
-				.join(" ") ||
-			"votre médecin";
-		const patientFirst = record.patient.firstName || "there";
-		const caption = `Hello ${patientFirst},\n\nPlease find attached your invoice ${record.number} from Dr. ${doctorLast}.`;
+		const language = await resolvePreferredLanguage({
+			preferredLanguage: record.patient.person?.preferredLanguage,
+			phone: record.patient.phoneNumber,
+		});
+		const caption = buildInvoiceWhatsappCaption({
+			language,
+			patientFirstName: record.patient.firstName,
+			invoiceNumber: record.number,
+			doctorFirstName: record.doctor?.firstName,
+			doctorLastName: record.doctor?.lastName,
+		});
 
 		const httpUrl = getRealtimeHttpUrl();
 		if (!httpUrl) {
