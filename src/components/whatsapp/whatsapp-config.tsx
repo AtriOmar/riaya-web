@@ -15,8 +15,12 @@ import {
 
 // NEXT_PUBLIC_REALTIME_URL is a ws:// or wss:// URL.
 // We derive the HTTP base by swapping the protocol so we can call GET /whatsapp-status.
-function getSocketHttpBase(): string {
-	const wsUrl = process.env.NEXT_PUBLIC_REALTIME_URL ?? "ws://localhost:8080";
+function getSocketHttpBase(): string | null {
+	const wsUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+	if (!wsUrl) {
+		console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+		return null;
+	}
 	return wsUrl
 		.replace(/^wss:\/\//i, "https://")
 		.replace(/^ws:\/\//i, "http://");
@@ -46,6 +50,7 @@ export default function WhatsappConfig({ userId }: Props) {
 			// 1. HTTP GET for initial state — avoids blank screen while WS connects
 			try {
 				const base = getSocketHttpBase();
+				if (!base) return;
 				const res = await fetch(
 					`${base}/whatsapp-status?userId=${encodeURIComponent(userId)}`,
 				);
@@ -69,8 +74,11 @@ export default function WhatsappConfig({ userId }: Props) {
 			if (cancelled) return;
 
 			// 2. Open WS for live QR and connection events
-			const wsBase =
-				process.env.NEXT_PUBLIC_REALTIME_URL ?? "ws://localhost:8080";
+			const wsBase = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+			if (!wsBase) {
+				console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+				return;
+			}
 			const wsUrl = `${wsBase}/whatsapp?userId=${encodeURIComponent(userId)}`;
 			ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
@@ -119,6 +127,10 @@ export default function WhatsappConfig({ userId }: Props) {
 		// Fallback if the WS is not open
 		try {
 			const base = getSocketHttpBase();
+			if (!base) {
+				setLoggingOut(false);
+				return;
+			}
 			const res = await fetch(`${base}/whatsapp-logout`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },

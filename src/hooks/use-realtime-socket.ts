@@ -428,10 +428,13 @@ export default function useRealtimeSocket() {
 	}, []);
 
 	const connect = useCallback(() => {
-		const url = process.env.NEXT_PUBLIC_REALTIME_URL;
+		const url = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
 		console.log("-------------------- url --------------------");
 		console.log(url);
-		if (!url) return;
+		if (!url) {
+			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+			return;
+		}
 
 		try {
 			const ws = new WebSocket(`${url}/dashboard`);

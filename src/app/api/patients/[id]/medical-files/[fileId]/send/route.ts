@@ -69,8 +69,11 @@ export async function POST(
 
 		if (!foundFile) return apiError("MEDICAL_FILE_NOT_FOUND");
 
-		const realtimeUrl =
-			process.env.NEXT_PUBLIC_REALTIME_URL ?? "ws://localhost:8080";
+		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+		if (!realtimeUrl) {
+			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+			return apiError("INTERNAL_ERROR");
+		}
 		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {

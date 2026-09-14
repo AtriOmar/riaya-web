@@ -106,9 +106,14 @@ export async function POST(
 		const caption = `Hello ${patientFirst},\n\nPlease find attached your invoice ${record.number} from Dr. ${doctorLast}.`;
 
 		const realtimeUrl =
-			process.env.SOCKET_INTERNAL_URL ??
-			process.env.NEXT_PUBLIC_REALTIME_URL ??
-			"ws://localhost:8080";
+			process.env.SOCKET_INTERNAL_URL?.trim() ||
+			process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+		if (!realtimeUrl) {
+			console.error(
+				"SOCKET_INTERNAL_URL / NEXT_PUBLIC_REALTIME_URL is not set",
+			);
+			return apiError("INTERNAL_ERROR");
+		}
 		const httpUrl = realtimeUrl.replace(/^ws/, "http").replace(/\/$/, "");
 
 		try {
