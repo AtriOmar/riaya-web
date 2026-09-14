@@ -3,6 +3,7 @@
 import {
 	Calendar,
 	CalendarDays,
+	CreditCard,
 	Home,
 	MessageSquare,
 	PanelLeftClose,
@@ -68,6 +69,11 @@ const items2: SidebarItemData[] = [
 		name: "WhatsApp",
 		icon: <MessageSquare className="size-5" />,
 		path: "/dashboard/whatsapp-config",
+	},
+	{
+		name: "Subscription",
+		icon: <CreditCard className="size-5" />,
+		path: "/dashboard/subscription",
 	},
 	{
 		name: "Settings",

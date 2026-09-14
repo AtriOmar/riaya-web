@@ -22,6 +22,13 @@
       "when": 1789301842687,
       "tag": "0002_invoice_whatsapp_pdf",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789357339529,
+      "tag": "0003_add_subscription_billing",
+      "breakpoints": true
     }
   ]
 }

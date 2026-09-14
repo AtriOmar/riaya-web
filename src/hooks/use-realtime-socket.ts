@@ -429,6 +429,8 @@ export default function useRealtimeSocket() {
 
 	const connect = useCallback(() => {
 		const url = process.env.NEXT_PUBLIC_REALTIME_URL;
+		console.log("-------------------- url --------------------");
+		console.log(url);
 		if (!url) return;
 
 		try {
