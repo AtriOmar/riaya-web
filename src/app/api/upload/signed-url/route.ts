@@ -15,7 +15,12 @@ import { generateSignedUploadUrl } from "@/lib/r2";
 const schema = z.object({
 	filename: z.string().min(1),
 	contentType: z.string().min(1),
-	folder: z.enum(["profile-pictures", "doctor-applications", "medical-files"]),
+	folder: z.enum([
+		"profile-pictures",
+		"doctor-applications",
+		"medical-files",
+		"recordings",
+	]),
 });
 
 export async function POST(req: NextRequest) {

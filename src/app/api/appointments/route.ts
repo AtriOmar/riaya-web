@@ -11,31 +11,12 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { resolvePatientIdForConfirm } from "@/lib/appointment-patient-link";
+import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
-
-function buildConfirmationMessage(params: {
-	patientName: string;
-	doctorFirstName: string | null | undefined;
-	doctorLastName: string | null | undefined;
-	start: Date | null | undefined;
-}): string {
-	const doctorName =
-		[params.doctorFirstName, params.doctorLastName].filter(Boolean).join(" ") ||
-		"الطبيب";
-	const date = params.start
-		? params.start.toLocaleString("ar-MA", {
-				weekday: "long",
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-				hour: "2-digit",
-				minute: "2-digit",
-			})
-		: "";
-	return `مرحباً ${params.patientName}، تم تأكيد موعدك مع الدكتور ${doctorName}${date ? ` بتاريخ ${date}` : ""}. شكراً لك.`;
-}
+import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
 // Returns appointments for the authenticated doctor
@@ -126,6 +107,10 @@ const updateSchema = z.object({
 	start: z.string().datetime().optional(),
 	end: z.string().datetime().optional(),
 	status: z.enum(["pending", "confirmed", "cancelled"]).optional(),
+	patientId: z.coerce.number().int().positive().optional(),
+	createPatient: z.boolean().optional(),
+	patientFirstName: z.string().min(1).optional(),
+	patientLastName: z.string().optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -137,7 +122,21 @@ export async function PUT(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const { id, ...fields } = parsed.data;
+		const {
+			id,
+			patientId: inputPatientId,
+			createPatient,
+			patientFirstName,
+			patientLastName,
+			...fields
+		} = parsed.data;
+
+		const existing = await db.query.appointment.findFirst({
+			where: and(eq(appointment.id, id), eq(appointment.doctorId, profile.id)),
+		});
+
+		if (!existing) return apiError("APPOINTMENT_NOT_FOUND");
+
 		const updateData: Record<string, unknown> = {};
 		if (fields.name !== undefined) updateData.name = fields.name;
 		if (fields.description !== undefined)
@@ -145,6 +144,24 @@ export async function PUT(req: NextRequest) {
 		if (fields.start !== undefined) updateData.start = new Date(fields.start);
 		if (fields.end !== undefined) updateData.end = new Date(fields.end);
 		if (fields.status !== undefined) updateData.status = fields.status;
+
+		if (fields.status === "confirmed" && !existing.patientId) {
+			const resolvedPatientId = await resolvePatientIdForConfirm(
+				profile.id,
+				existing,
+				{
+					patientId: inputPatientId,
+					createPatient,
+					patientFirstName,
+					patientLastName,
+				},
+			);
+			if (resolvedPatientId != null) {
+				updateData.patientId = resolvedPatientId;
+				updateData.newPatientName = null;
+				updateData.newPatientPhoneNumber = null;
+			}
+		}
 
 		const [updated] = await db
 			.update(appointment)
@@ -160,7 +177,10 @@ export async function PUT(req: NextRequest) {
 				try {
 					const full = await db.query.appointment.findFirst({
 						where: eq(appointment.id, id),
-						with: { patient: true, doctor: true },
+						with: {
+							patient: { with: { person: true } },
+							doctor: true,
+						},
 					});
 
 					const phone =
@@ -170,7 +190,12 @@ export async function PUT(req: NextRequest) {
 						: (full?.newPatientName ?? "");
 
 					if (phone && patientName) {
-						const message = buildConfirmationMessage({
+						const language = await resolvePreferredLanguage({
+							preferredLanguage: full?.patient?.person?.preferredLanguage,
+							phone,
+						});
+						const message = buildAppointmentConfirmationMessage({
+							language,
 							patientName,
 							doctorFirstName: full?.doctor?.firstName,
 							doctorLastName: full?.doctor?.lastName,

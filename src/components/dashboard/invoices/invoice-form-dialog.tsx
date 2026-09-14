@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handling";
 import { formatTnd, millimesToTnd, tndToMillimes } from "@/lib/money";
@@ -21,6 +29,7 @@ import {
 	usePatchApiInvoicesId,
 	usePostApiInvoices,
 } from "@/services/generated/invoices/invoices";
+import { useGetApiPatients } from "@/services/generated/patients/patients";
 
 type LineDraft = {
 	key: string;
@@ -53,10 +62,20 @@ function linesFromInvoice(
 type InvoiceFormDialogProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	patientId: number;
+	patientId?: number;
 	invoice?: GetApiPatientsId200InvoicesItem | null;
 	onSaved: () => void;
 };
+
+function patientLabel(patient: {
+	firstName: string | null;
+	lastName: string | null;
+	cin?: string | null;
+}): string {
+	const name = `${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim();
+	const label = name || "Unnamed patient";
+	return patient.cin ? `${label} (${patient.cin})` : label;
+}
 
 export function InvoiceFormDialog({
 	open,
@@ -66,23 +85,34 @@ export function InvoiceFormDialog({
 	onSaved,
 }: InvoiceFormDialogProps) {
 	const isEdit = !!invoice;
+	const pickPatient = !isEdit && patientId == null;
 	const [lines, setLines] = useState<LineDraft[]>(() =>
 		linesFromInvoice(invoice),
 	);
 	const [notes, setNotes] = useState(invoice?.notes ?? "");
+	const [selectedPatientId, setSelectedPatientId] = useState(
+		patientId != null ? String(patientId) : "",
+	);
 
+	const { data: patients, isLoading: patientsLoading } = useGetApiPatients(
+		undefined,
+		{ swr: { enabled: open && pickPatient } },
+	);
 	const { trigger: createInvoice, isMutating: isCreating } =
 		usePostApiInvoices();
 	const { trigger: updateInvoice, isMutating: isUpdating } =
 		usePatchApiInvoicesId(invoice?.id?.toString() ?? "0");
 
+	const patientList = patients ?? [];
+	const hasPatients = patientList.length > 0;
 	const isSubmitting = isCreating || isUpdating;
 
 	useEffect(() => {
 		if (!open) return;
 		setLines(linesFromInvoice(invoice));
 		setNotes(invoice?.notes ?? "");
-	}, [open, invoice]);
+		setSelectedPatientId(patientId != null ? String(patientId) : "");
+	}, [open, invoice, patientId]);
 
 	const totalCentimes = useMemo(() => {
 		return lines.reduce((sum, line) => {
@@ -141,6 +171,15 @@ export function InvoiceFormDialog({
 			});
 		}
 
+		const resolvedPatientId = patientId ?? Number(selectedPatientId);
+		if (
+			!isEdit &&
+			(!Number.isFinite(resolvedPatientId) || resolvedPatientId < 1)
+		) {
+			toast.error("Select a patient");
+			return;
+		}
+
 		try {
 			if (isEdit && invoice) {
 				await updateInvoice({
@@ -150,7 +189,7 @@ export function InvoiceFormDialog({
 				toast.success("Invoice updated");
 			} else {
 				await createInvoice({
-					patientId,
+					patientId: resolvedPatientId,
 					notes: notes.trim() || undefined,
 					items,
 				});
@@ -171,6 +210,49 @@ export function InvoiceFormDialog({
 				</DialogHeader>
 
 				<div className="space-y-4">
+					{pickPatient && (
+						<div className="space-y-1">
+							<Label>
+								Patient <span className="text-destructive">*</span>
+							</Label>
+							<Select
+								value={selectedPatientId}
+								onValueChange={setSelectedPatientId}
+								disabled={patientsLoading || !hasPatients}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue
+										placeholder={
+											patientsLoading
+												? "Loading patients…"
+												: hasPatients
+													? "Select patient"
+													: "No patients yet"
+										}
+									/>
+								</SelectTrigger>
+								<SelectContent>
+									{patientList.map((patient) => (
+										<SelectItem key={patient.id} value={String(patient.id)}>
+											{patientLabel(patient)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{!patientsLoading && !hasPatients && (
+								<p className="text-muted-foreground text-sm">
+									Add a patient first, then create the invoice.{" "}
+									<Link
+										href="/dashboard/patients/new"
+										className="text-primary hover:underline"
+									>
+										New patient
+									</Link>
+								</p>
+							)}
+						</div>
+					)}
+
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
 							<Label>Line items</Label>
@@ -261,7 +343,13 @@ export function InvoiceFormDialog({
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						Cancel
 					</Button>
-					<Button onClick={onSubmit} disabled={isSubmitting}>
+					<Button
+						onClick={onSubmit}
+						disabled={
+							isSubmitting ||
+							(pickPatient && (!hasPatients || !selectedPatientId))
+						}
+					>
 						{isSubmitting ? "Saving…" : isEdit ? "Save changes" : "Create"}
 					</Button>
 				</DialogFooter>

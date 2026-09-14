@@ -1,10 +1,13 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import {
+	aiChatConversation,
+	aiChatMessage,
 	appointment,
 	call,
 	callEvent,
 	cities,
+	consultationRecording,
 	doctorApplication,
 	doctorProfile,
 	invoice,
@@ -168,6 +171,41 @@ export const doctorDashboardStatsResponseSchema = z.object({
 		}),
 	),
 });
+
+export const selectConsultationRecordingSchema = createSelectSchema(
+	consultationRecording,
+);
+
+export const selectConsultationRecordingWithPatientSchema =
+	selectConsultationRecordingSchema.merge(
+		z.object({
+			patient: selectPatientSchema
+				.pick({ id: true, firstName: true, lastName: true })
+				.nullable(),
+		}),
+	);
+
+export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage);
+export const selectAiChatConversationSchema =
+	createSelectSchema(aiChatConversation);
+
+export const selectAiChatConversationListItemSchema =
+	selectAiChatConversationSchema.merge(
+		z.object({
+			messageCount: z.number(),
+			preview: z.string().nullable(),
+		}),
+	);
+
+export const selectAiChatConversationWithMessagesSchema =
+	selectAiChatConversationSchema.merge(
+		z.object({
+			messages: z.array(selectAiChatMessageSchema),
+			recording: selectConsultationRecordingSchema
+				.pick({ id: true, title: true, transcript: true })
+				.nullable(),
+		}),
+	);
 
 export const signedUrlResponseSchema = z.object({
 	signedUrl: z.string(),

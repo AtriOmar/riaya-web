@@ -6,6 +6,7 @@ import { AddMedicalFile } from "./add-medical-file";
 import { PatientDetails } from "./patient-details";
 import { PatientInvoices } from "./patient-invoices";
 import { PatientMedicalFilesList } from "./patient-medical-files-list";
+import { PatientRecordingsList } from "./patient-recordings-list";
 
 export default function Patient({ patientId }: { patientId: number }) {
 	const {
@@ -36,6 +37,7 @@ export default function Patient({ patientId }: { patientId: number }) {
 				/>
 				<AddMedicalFile patientId={patientId} onFileAdded={() => mutate()} />
 			</div>
+			<PatientRecordingsList patientId={patientId} />
 			<PatientInvoices
 				patientId={patientId}
 				invoices={patient.invoices ?? []}

@@ -24,30 +24,44 @@ function PricingCard({
 	action,
 	badge,
 	animate = true,
+	isCurrent = false,
 }: {
 	plan: Plan;
 	index: number;
 	action: PricingCardAction;
 	badge?: string;
 	animate?: boolean;
+	isCurrent?: boolean;
 }) {
 	return (
 		<div
+			className="h-full"
 			{...(animate
 				? { "data-aos": "fade-up", "data-aos-delay": index * 100 }
 				: {})}
 		>
 			<div
 				className={cn(
-					"relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2 size-full",
+					"relative flex h-full flex-col rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2",
 					plan.popular
 						? "bg-linear-to-br from-primary to-primary-700 text-primary-foreground shadow-glow"
-						: "bg-card border border-border shadow-soft",
+						: "border border-primary/15 bg-linear-to-br from-primary-50 to-background shadow-soft",
+					isCurrent &&
+						(plan.popular
+							? "ring-2 ring-primary-foreground/80"
+							: "ring-2 ring-primary shadow-medium"),
 				)}
 			>
-				{(badge || plan.popular) && (
-					<div className="-top-4 left-1/2 absolute px-4 py-1 rounded-full bg-accent font-semibold text-secondary-foreground text-sm -translate-x-1/2">
-						{badge ?? "Most Popular"}
+				{(isCurrent || badge || plan.popular) && (
+					<div
+						className={cn(
+							"-top-4 left-1/2 absolute px-4 py-1 rounded-full font-semibold text-sm -translate-x-1/2",
+							isCurrent
+								? "bg-amber-400 text-amber-950"
+								: "bg-accent text-secondary-foreground",
+						)}
+					>
+						{badge ?? (isCurrent ? "Current plan" : "Most Popular")}
 					</div>
 				)}
 
@@ -98,7 +112,7 @@ function PricingCard({
 					</div>
 				</div>
 
-				<ul className="space-y-4 mb-8">
+				<ul className="mb-8 flex-1 space-y-4">
 					{plan.features.map((feature) => (
 						<li key={feature} className="flex items-start gap-3">
 							<div
@@ -118,8 +132,8 @@ function PricingCard({
 								className={cn(
 									"text-sm",
 									plan.popular
-										? "text-primary-foreground/90"
-										: "text-muted-foreground",
+										? "text-primary-foreground"
+										: "text-foreground/80",
 								)}
 							>
 								{feature}
@@ -128,40 +142,59 @@ function PricingCard({
 					))}
 				</ul>
 
-				{action.type === "link" && (
-					<Button
-						variant={plan.popular ? "hero-outline" : "hero"}
-						className="w-full"
-						size="lg"
-						asChild
-					>
-						<Link href={action.href}>{action.label}</Link>
-					</Button>
-				)}
+				<div className="mt-auto">
+					{action.type === "link" && (
+						<Button
+							variant={plan.popular ? "hero-outline" : "hero"}
+							className="w-full"
+							size="lg"
+							asChild
+						>
+							<Link href={action.href}>{action.label}</Link>
+						</Button>
+					)}
 
-				{action.type === "button" && (
-					<Button
-						variant={plan.popular ? "hero-outline" : "hero"}
-						className="w-full"
-						size="lg"
-						onClick={action.onClick}
-						disabled={action.disabled || action.loading}
-					>
-						{action.loading && <Loader2 className="size-4 animate-spin mr-2" />}
-						{action.label}
-					</Button>
-				)}
+					{action.type === "button" && (
+						<Button
+							variant={plan.popular ? "hero-outline" : "hero"}
+							className="w-full"
+							size="lg"
+							onClick={action.onClick}
+							disabled={action.disabled || action.loading}
+						>
+							{action.loading && (
+								<Loader2 className="size-4 animate-spin mr-2" />
+							)}
+							{action.label}
+						</Button>
+					)}
 
-				{action.type === "static" && (
-					<Button
-						variant={plan.popular ? "hero-outline" : "outline"}
-						className="w-full"
-						size="lg"
-						disabled
-					>
-						{action.label}
-					</Button>
-				)}
+					{action.type === "static" && (
+						<Button
+							variant={
+								isCurrent && !plan.popular
+									? "hero"
+									: plan.popular
+										? "hero-outline"
+										: "secondary"
+							}
+							className={cn(
+								"w-full cursor-default disabled:opacity-100",
+								isCurrent &&
+									plan.popular &&
+									"border-primary-foreground bg-primary-foreground text-primary hover:bg-primary-foreground hover:text-primary",
+								!isCurrent &&
+									!plan.popular &&
+									"border-0 bg-primary-100 text-primary hover:bg-primary-100 hover:text-primary",
+							)}
+							size="lg"
+							disabled
+						>
+							{isCurrent && <Check aria-hidden />}
+							{action.label}
+						</Button>
+					)}
+				</div>
 			</div>
 		</div>
 	);
@@ -172,11 +205,13 @@ export function PlansGrid({
 	getBadge,
 	animate = true,
 	header,
+	currentPlanId,
 }: {
 	getAction: (plan: Plan) => PricingCardAction;
 	getBadge?: (plan: Plan) => string | undefined;
 	animate?: boolean;
 	header?: ReactNode;
+	currentPlanId?: PlanId;
 }) {
 	return (
 		<div className="space-y-8">
@@ -190,6 +225,7 @@ export function PlansGrid({
 						action={getAction(plan)}
 						badge={getBadge?.(plan)}
 						animate={animate}
+						isCurrent={plan.id === currentPlanId}
 					/>
 				))}
 			</div>

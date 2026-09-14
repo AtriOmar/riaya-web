@@ -10,13 +10,18 @@ import {
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
+import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
+import {
+	buildMedicalFileWhatsappCaption,
+	buildMedicalFileWhatsappText,
+} from "@/lib/whatsapp-messages";
 
 // ─── POST /api/patients/[id]/medical-files/[fileId]/send ──────────────────────
 
 export async function POST(
-	req: NextRequest,
+	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string; fileId: string }> },
 ) {
 	try {
@@ -30,14 +35,10 @@ export async function POST(
 			return apiError("INVALID_ID");
 
 		// Verify patient belongs to this doctor
-		const [foundPatient] = await db
-			.select({
-				id: patient.id,
-				phoneNumber: patient.phoneNumber,
-				firstName: patient.firstName,
-			})
-			.from(patient)
-			.where(and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)));
+		const foundPatient = await db.query.patient.findFirst({
+			where: and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)),
+			with: { person: true },
+		});
 
 		if (!foundPatient) return apiError("PATIENT_NOT_FOUND");
 		if (!foundPatient.phoneNumber) {
@@ -79,10 +80,28 @@ export async function POST(
 		try {
 			const docUrls =
 				foundFile.documents?.filter((u): u is string => !!u) ?? [];
-			const sendCount = docUrls.length > 0 ? docUrls.length : 1;
+			const sendCount = docUrls.length > 0 ? docUrls.length + 1 : 1;
 			await assertAndRecordWhatsappSend(profile.id, sendCount);
 
+			const language = await resolvePreferredLanguage({
+				preferredLanguage: foundPatient.person?.preferredLanguage,
+				phone: foundPatient.phoneNumber,
+			});
+
 			if (docUrls.length > 0) {
+				await axios.post(`${httpUrl}/send-whatsapp`, {
+					userId: session.user.id,
+					phone: foundPatient.phoneNumber,
+					message: buildMedicalFileWhatsappCaption({
+						language,
+						patientFirstName: foundPatient.firstName,
+						doctorFirstName: profile.firstName,
+						doctorLastName: profile.lastName,
+						title: foundFile.title,
+					}),
+					quotaConsumed: true,
+				});
+
 				for (let i = 0; i < docUrls.length; i++) {
 					const documentUrl = docUrls[i];
 
@@ -95,12 +114,6 @@ export async function POST(
 					else if (ext === "png") mimetype = "image/png";
 					else if (ext === "webp") mimetype = "image/webp";
 
-					// Only attach caption to the first document if multiple
-					const caption =
-						i === 0
-							? `Hello ${foundPatient.firstName || "there"},\n\nHere is your document from Dr. ${profile.lastName}: ${foundFile.title || "Medical File"}`
-							: undefined;
-
 					const baseName = foundFile.title
 						? `${foundFile.title}${docUrls.length > 1 ? ` - ${i + 1}` : ""}`
 						: `Document ${i + 1}`;
@@ -111,17 +124,20 @@ export async function POST(
 						phone: foundPatient.phoneNumber,
 						documentUrl: documentUrl,
 						fileName: fileName,
-						message: caption,
 						mimetype: mimetype,
 						quotaConsumed: true,
 					});
 				}
 			} else {
 				// Send text-only message
-				let textMessage = `Hello ${foundPatient.firstName || "there"},\n\nHere is an update from Dr. ${profile.lastName}:\n\n*${foundFile.title || "Medical Update"}*`;
-				if (foundFile.description) {
-					textMessage += `\n\nNotes: ${foundFile.description}`;
-				}
+				const textMessage = buildMedicalFileWhatsappText({
+					language,
+					patientFirstName: foundPatient.firstName,
+					doctorFirstName: profile.firstName,
+					doctorLastName: profile.lastName,
+					title: foundFile.title,
+					description: foundFile.description,
+				});
 				await axios.post(`${httpUrl}/send-whatsapp`, {
 					userId: session.user.id,
 					phone: foundPatient.phoneNumber,

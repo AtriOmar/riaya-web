@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { person } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
+import { personPreferredLanguages } from "@/lib/person-language";
 
 // ─── PATCH /api/persons/[id] ─────────────────────────────────────────────────
 // Public endpoint — updates a person's info.
@@ -15,15 +16,40 @@ const updateSchema = z.object({
 	dateOfBirth: z.string().datetime().optional(),
 	gender: z.string().min(1).optional(),
 	address: z.string().optional(),
+	preferredLanguage: z.enum(personPreferredLanguages).optional(),
 });
+
+export async function GET(
+	_req: NextRequest,
+	{ params }: { params: Promise<{ id: string }> },
+) {
+	let personId: number | undefined;
+	try {
+		const { id } = await params;
+		personId = Number(id);
+		if (Number.isNaN(personId)) return apiError("INVALID_ID");
+
+		const row = await db.query.person.findFirst({
+			where: eq(person.id, personId),
+		});
+		if (!row) return apiError("PERSON_NOT_FOUND");
+
+		return json(row);
+	} catch (e) {
+		if (e instanceof Response) return e;
+		console.error("[api/persons GET]", { personId }, e);
+		return apiError("INTERNAL_ERROR");
+	}
+}
 
 export async function PATCH(
 	req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	let personId: number | undefined;
 	try {
 		const { id } = await params;
-		const personId = Number(id);
+		personId = Number(id);
 		if (Number.isNaN(personId)) return apiError("INVALID_ID");
 
 		const existing = await db.query.person.findFirst({
@@ -53,6 +79,7 @@ export async function PATCH(
 		return json(updated);
 	} catch (e) {
 		if (e instanceof Response) return e;
+		console.error("[api/persons PATCH]", { personId }, e);
 		return apiError("INTERNAL_ERROR");
 	}
 }

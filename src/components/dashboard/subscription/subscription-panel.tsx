@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import BillingInvoicesList from "@/components/dashboard/subscription/billing-invoices-list";
+import { UsageMeter } from "@/components/dashboard/subscription/usage-meter";
 import { PlansGrid } from "@/components/plans/plans-grid";
 import { getErrorMessage } from "@/lib/error-handling";
 import { PLAN_IDS, type Plan, type PlanId, type PlanLimits } from "@/lib/plans";
@@ -138,6 +139,7 @@ export default function SubscriptionPanel() {
 				) : (
 					<PlansGrid
 						animate={false}
+						currentPlanId={currentPlanId}
 						getBadge={(plan) =>
 							plan.id === currentPlanId ? "Current plan" : undefined
 						}
@@ -180,23 +182,17 @@ export default function SubscriptionPanel() {
 							.
 						</p>
 					</div>
-					<div className="rounded-xl border divide-y">
-						<div className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-							<span>AI phone booking patients</span>
-							<span className="font-medium tabular-nums">
-								{aiLimit == null
-									? `${aiUsed} (unlimited)`
-									: `${aiUsed} / ${aiLimit}`}
-							</span>
-						</div>
-						<div className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-							<span>WhatsApp sends</span>
-							<span className="font-medium tabular-nums">
-								{waLimit == null
-									? `${waUsed} (unlimited)`
-									: `${waUsed} / ${waLimit}`}
-							</span>
-						</div>
+					<div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+						<UsageMeter
+							label="AI phone booking patients"
+							used={aiUsed}
+							limit={aiLimit ?? null}
+						/>
+						<UsageMeter
+							label="WhatsApp sends"
+							used={waUsed}
+							limit={waLimit ?? null}
+						/>
 					</div>
 				</section>
 			)}

@@ -57,7 +57,7 @@ This document is a compact project guide for AI assistants working on this repo.
 
 - Use **pnpm** for this repo (not npm or yarn): installs, adds, and scripts should go through `pnpm`.
 - Examples: `pnpm install`, `pnpm add <pkg>`, `pnpm run <script>` from `web/` or `socket/` as needed.
-- Schema changes: `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate` from `web/` (Drizzle migration files; do not use `db:push`). Always pass `--name` so migrations are readable (e.g. `create_invoices`), never leave the random Marvel-style default names.
+- Schema changes: from `web/`, run `pnpm db:generate --name <descriptive_snake_name>` (Drizzle migration files; do not use `db:push`). Always pass `--name` so migrations are readable (e.g. `create_invoices`), never leave the random Marvel-style default names. **Do not run `pnpm db:migrate` until the user explicitly approves** (see [Practical AI Instructions](#practical-ai-instructions)).
 
 ## Working Conventions (Important)
 
@@ -97,7 +97,10 @@ This document is a compact project guide for AI assistants working on this repo.
 ### 5) Tailwind + shadcn UI style
 
 - Styling is utility-class driven with Tailwind.
-- Prefer existing UI primitives from `web/src/components/ui/*`.
+- **Always build interactive UI with shadcn/Radix primitives** from `web/src/components/ui/*` (Button, Input, Dialog, Popover, Command, Combobox, Select, etc.). Do **not** ship raw native controls (`<select>`, unstyled `<input type="date">`, etc.) when a shadcn pattern exists.
+- **Pickers & lists**: use the shadcn **combobox** pattern — `@/components/ui/combobox` (Base UI) or **Popover + Command** (searchable list with icons/checkmarks). Even a single option should open the same popover/combobox UI (not a disabled native select).
+- Reuse feature-level wrappers when they exist (e.g. `PhoneNumberInput`, `SpecialitySelect`) before inventing one-off markup.
+- **Phone entry**: any editable phone field (patient forms, test call simulator, etc.) must use `@/components/ui/phone-input` (`PhoneNumberInput`), not a raw `<Input type="tel">`. Normalize with `normalizePhoneForStorage` before API/socket calls; validate with `isValidPhoneNumber` when enabling submit.
 - Theme tokens and custom utilities live in `web/src/app/globals.css`.
 
 ### 6) API route style in Next
@@ -146,7 +149,7 @@ This document is a compact project guide for AI assistants working on this repo.
 ## Database Notes
 
 - Drizzle schema lives in `web/src/db/schema.ts`.
-- Apply schema to DB: `pnpm db:generate` then `pnpm db:migrate` from `web/` (never `db:push`).
+- Create migrations with `pnpm db:generate --name <descriptive_snake_name>` from `web/` (never `db:push`). Apply with `pnpm db:migrate` **only after user approval** — the AI must not migrate automatically.
 
 ### Person vs patient (identity model)
 
@@ -174,6 +177,8 @@ This document is a compact project guide for AI assistants working on this repo.
 | `POST /api/calls` | Internal secret | Create call row (socket) |
 | `GET /api/doctors/best-fit` | Public | Slots for AI `find_available_slots` |
 | `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
+| `POST /api/internal/caller/ai-appointments/list` | Internal secret | List AI appointments for caller phone (voice) |
+| `POST /api/internal/caller/ai-appointments/cancel` | Internal secret | Cancel pending AI appointment for caller phone (voice) |
 
 ## Environment Notes
 
@@ -220,6 +225,8 @@ Use these as examples before changing related code.
 - `web/src/lib/error-handling.ts` (`getErrorMessage` / `getApiErrorCode` for client-side API errors)
 - `web/src/lib/upload.ts` + `web/src/services/upload.ts` (R2 presigned upload + `cdnUrl` return)
 - `web/src/components/dashboard/profile/image-cropper.tsx` (crop → blob → `uploadBlobToR2` → save URL)
+- `web/src/components/ui/phone-input.tsx` + `phone-country-combobox.tsx` (InputGroup + Popover/Command country combobox)
+- `web/src/components/dashboard/profile/doctor-application/speciality-select.tsx` (Base UI Combobox for searchable selects)
 - `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx` (dashboard/admin page layout wrapper pattern)
 
 ### Backend/realtime references
@@ -243,9 +250,12 @@ Use these as examples before changing related code.
 
 - `get_specialities`, `get_cities` — static lists in socket constants.
 - `find_available_slots`, `find_doctor_slots` — Next doctor/slot APIs.
-- `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; call after collecting name/details.
-- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` (digits only) server-side.
-- `end_call` — schedules Twilio hangup after closing message.
+- `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; name, language preference, etc.
+- `list_my_ai_appointments` / `cancel_appointment` — internal caller routes; **phone from Twilio only** (`callerAppointmentsApi` + `requireInternal`). Cancel **pending** AI bookings only.
+- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side.
+- `end_call` — fixed goodbye then hangup.
+
+Query helper: `web/src/lib/caller-ai-appointments.ts`.
 
 ### Conversation style (prompt)
 
@@ -255,8 +265,8 @@ Use these as examples before changing related code.
 ## Practical AI Instructions
 
 - **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
+- **Database migrations rule**: For schema changes in `web/`, the AI may run `pnpm db:generate --name <descriptive_snake_name>` to produce migration files. The AI must **not** run `pnpm db:migrate` (or otherwise apply migrations to a database) until the user has **explicitly approved**. After generate, summarize or point to the new migration SQL and ask before migrating. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not Drizzle’s random defaults.
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
-- For schema changes in `web/`: run `pnpm db:generate --name <descriptive_snake_name>` then `pnpm db:migrate`. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not the random defaults.
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
 - When creating pages in `dashboard` or `admin`: keep `page.tsx` thin and wrap content in layout primitives (e.g. `<DashboardLayout title="...">` or `<AdminLayout title="...">`) as seen in `web/src/app/(navbar)/dashboard/(verified)/patients/page.tsx`.
 - When adding or changing frontend data access:

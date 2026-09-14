@@ -11,6 +11,8 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
+import { resolvePreferredLanguage } from "@/lib/person";
+import { buildReviewWhatsappMessage } from "@/lib/whatsapp-messages";
 
 const processJobSchema = z.object({
 	appointmentId: z.number().int().positive(),
@@ -49,9 +51,10 @@ export async function POST(req: NextRequest) {
 			return json({ success: false, reason: "review_already_exists" });
 		}
 
-		// 3. Get patient phone and doctor info
+		// 3. Get patient phone, language, and doctor info
 		let phone: string | null = null;
 		let patientName = "";
+		let preferredLanguage: string | null = null;
 
 		if (patientId) {
 			const pat = await db.query.patient.findFirst({
@@ -60,6 +63,7 @@ export async function POST(req: NextRequest) {
 			});
 			phone = pat?.phoneNumber ?? pat?.person?.phoneNumber ?? null;
 			patientName = `${pat?.firstName ?? ""} ${pat?.lastName ?? ""}`.trim();
+			preferredLanguage = pat?.person?.preferredLanguage ?? null;
 		} else {
 			phone = appt.newPatientPhoneNumber ?? null;
 			patientName = appt.newPatientName ?? "";
@@ -74,6 +78,11 @@ export async function POST(req: NextRequest) {
 			return json({ success: false, reason: "no_phone_number" });
 		}
 
+		const language = await resolvePreferredLanguage({
+			preferredLanguage,
+			phone,
+		});
+
 		// 4. Create review row
 		const token = crypto.randomUUID();
 		await db.insert(review).values({
@@ -85,6 +94,16 @@ export async function POST(req: NextRequest) {
 		});
 
 		const doctorName = doc?.lastName ? `Dr. ${doc.lastName}` : "your doctor";
+		const appUrl =
+			process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+			"http://localhost:3000";
+		const message = buildReviewWhatsappMessage({
+			language,
+			patientName,
+			doctorFirstName: doc?.firstName,
+			doctorLastName: doc?.lastName,
+			link: `${appUrl}/review/${token}`,
+		});
 
 		return json({
 			success: true,
@@ -93,6 +112,8 @@ export async function POST(req: NextRequest) {
 			patientName,
 			doctorName,
 			adminId: doc?.userId,
+			message,
+			preferredLanguage: language,
 		});
 	} catch (e) {
 		if (e instanceof Response) return e;

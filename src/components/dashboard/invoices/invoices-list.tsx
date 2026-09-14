@@ -1,9 +1,16 @@
 "use client";
 
-import { Inbox, MessageSquare } from "lucide-react";
+import {
+	ChevronDown,
+	Inbox,
+	ListFilter,
+	MessageSquare,
+	Plus,
+} from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { InvoiceFormDialog } from "@/components/dashboard/invoices/invoice-form-dialog";
 import { InvoicePaymentDialog } from "@/components/dashboard/invoices/invoice-payment-dialog";
 import {
 	InvoiceStatusBadge,
@@ -13,12 +20,12 @@ import DataTable, { type Column } from "@/components/data-table";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/error-handling";
 import type { InvoiceStatus, PaymentMethod } from "@/lib/invoice";
 import { INVOICE_STATUSES } from "@/lib/invoice";
@@ -33,6 +40,14 @@ import {
 } from "@/services/generated/invoices/invoices";
 import { INVOICE_STATUS_LABELS } from "./invoice-status";
 
+const STATUS_FILTER_DOT: Record<string, string> = {
+	all: "bg-muted-foreground/40",
+	unpaid: "bg-yellow-500",
+	partially_paid: "bg-slate-400",
+	paid: "bg-green-500",
+	cancelled: "bg-muted-foreground/30",
+};
+
 function patientName(row: GetApiInvoices200Item): string {
 	const first = row.patient?.firstName ?? "";
 	const last = row.patient?.lastName ?? "";
@@ -42,6 +57,7 @@ function patientName(row: GetApiInvoices200Item): string {
 
 export default function InvoicesList() {
 	const [statusFilter, setStatusFilter] = useState<string>("all");
+	const [createOpen, setCreateOpen] = useState(false);
 	const [paying, setPaying] = useState<GetApiInvoices200Item | null>(null);
 	const [sendingId, setSendingId] = useState<number | null>(null);
 
@@ -168,20 +184,49 @@ export default function InvoicesList() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex justify-end">
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
-					<SelectTrigger className="w-[180px] md:-mt-12">
-						<SelectValue placeholder="Status" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All statuses</SelectItem>
-						{INVOICE_STATUSES.map((status) => (
-							<SelectItem key={status} value={status}>
-								{INVOICE_STATUS_LABELS[status]}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+			<div className="flex flex-wrap items-center justify-end gap-2 md:-mt-12">
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="quiet"
+							className="min-w-[11.5rem] justify-between hover:bg-muted/50 hover:border-muted-foreground/40 hover:text-muted-foreground"
+							aria-label="Filter by status"
+						>
+							<span className="flex items-center gap-2">
+								<ListFilter className="size-4" />
+								{statusFilter === "all"
+									? "All statuses"
+									: INVOICE_STATUS_LABELS[statusFilter as InvoiceStatus]}
+							</span>
+							<ChevronDown className="size-4 opacity-70" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end">
+						<DropdownMenuRadioGroup
+							value={statusFilter}
+							onValueChange={setStatusFilter}
+						>
+							<DropdownMenuRadioItem value="all">
+								<span
+									className={`size-2 rounded-full ${STATUS_FILTER_DOT.all}`}
+								/>
+								All statuses
+							</DropdownMenuRadioItem>
+							{INVOICE_STATUSES.map((status) => (
+								<DropdownMenuRadioItem key={status} value={status}>
+									<span
+										className={`size-2 rounded-full ${STATUS_FILTER_DOT[status]}`}
+									/>
+									{INVOICE_STATUS_LABELS[status]}
+								</DropdownMenuRadioItem>
+							))}
+						</DropdownMenuRadioGroup>
+					</DropdownMenuContent>
+				</DropdownMenu>
+				<Button onClick={() => setCreateOpen(true)}>
+					<Plus className="size-4" />
+					New invoice
+				</Button>
 			</div>
 
 			<DataTable
@@ -194,12 +239,25 @@ export default function InvoicesList() {
 						<Inbox className="mb-4 w-12 h-12 opacity-50" />
 						<span className="font-semibold text-foreground">No invoices</span>
 						<span className="mt-1 text-sm">
-							Create invoices from a patient page
+							Create an invoice for a patient
 						</span>
+						<Button
+							className="mt-4"
+							size="sm"
+							onClick={() => setCreateOpen(true)}
+						>
+							<Plus className="size-4" />
+							New invoice
+						</Button>
 					</div>
 				}
 			/>
 
+			<InvoiceFormDialog
+				open={createOpen}
+				onOpenChange={setCreateOpen}
+				onSaved={() => mutate()}
+			/>
 			<InvoicePaymentDialog
 				open={!!paying}
 				onOpenChange={(open) => !open && setPaying(null)}

@@ -42,6 +42,8 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	PAYMENT_NOT_FOUND: "Payment not found.",
 	PATIENT_PHONE_REQUIRED:
 		"This patient has no phone number. Add one before sending on WhatsApp.",
+	PATIENT_ASSIGNMENT_REQUIRED:
+		"Choose an existing patient or enable creating a new patient before accepting.",
 	WHATSAPP_SEND_FAILED:
 		"Failed to send WhatsApp message. Check your WhatsApp connection.",
 	BILLING_INVOICE_NOT_FOUND: "Billing invoice not found.",
@@ -51,6 +53,13 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"Monthly AI booking limit reached for this practice. It resets next calendar month, or upgrade to Pro for unlimited bookings.",
 	WHATSAPP_LIMIT_REACHED:
 		"Monthly WhatsApp send limit reached. It resets next calendar month, or upgrade to Pro for unlimited sends.",
+	APPOINTMENT_NOT_CANCELLABLE:
+		"This appointment cannot be cancelled by phone. Contact the doctor's office if it is already confirmed.",
+	CALLER_PHONE_REQUIRED: "Caller phone number is required for this action.",
+	RECORDING_NOT_FOUND: "Recording not found.",
+	TRANSCRIPT_ALREADY_DONE: "This recording has already been transcribed.",
+	TRANSCRIPTION_FAILED: "Failed to generate transcript. Please try again.",
+	CONVERSATION_NOT_FOUND: "Conversation not found.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

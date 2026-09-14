@@ -11,6 +11,7 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { upsertPersonByPhone } from "@/lib/person";
+import { normalizePhoneForStorage } from "@/lib/phone";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 // Returns patients for the authenticated doctor (with optional search)
@@ -92,10 +93,13 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const personRow = await upsertPersonByPhone(
-			parsed.data.phoneNumber,
-			"doctor",
-		);
+		const phone = normalizePhoneForStorage(parsed.data.phoneNumber);
+		if (!phone)
+			return validationError([
+				{ message: "Invalid phone number", path: ["phoneNumber"] },
+			]);
+
+		const personRow = await upsertPersonByPhone(phone, "doctor");
 		if (!personRow) return apiError("VALIDATION_ERROR");
 
 		const [created] = await db
@@ -109,7 +113,7 @@ export async function POST(req: NextRequest) {
 				dateOfBirth: new Date(parsed.data.dateOfBirth),
 				gender: parsed.data.gender,
 				address: parsed.data.address,
-				phoneNumber: parsed.data.phoneNumber,
+				phoneNumber: phone,
 			})
 			.returning();
 
