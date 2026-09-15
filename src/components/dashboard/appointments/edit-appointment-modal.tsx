@@ -67,6 +67,7 @@ export type CalendarEvent = {
 	} | null;
 	newPatientName?: string | null;
 	newPatientPhoneNumber?: string | null;
+	urgent?: boolean;
 };
 
 type Props = {
@@ -113,6 +114,7 @@ export default function EditAppointmentModal({
 	});
 
 	const isPending = event?.status === "pending";
+	const isUrgent = event?.urgent === true;
 	const callerPhoneRaw = event?.newPatientPhoneNumber?.trim() ?? "";
 	const callerPhoneStored = normalizePhoneForStorage(callerPhoneRaw);
 	const callerPhoneDigits =
@@ -263,7 +265,11 @@ export default function EditAppointmentModal({
 				<DialogHeader>
 					<div className="flex items-center gap-2">
 						<DialogTitle>
-							{isPending ? "Pending appointment" : "Edit Appointment"}
+							{isPending
+								? isUrgent
+									? "Urgent appointment request"
+									: "Pending appointment"
+								: "Edit Appointment"}
 						</DialogTitle>
 						{!isPending && (
 							<Button

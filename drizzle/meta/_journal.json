@@ -57,6 +57,13 @@
       "when": 1789397713810,
       "tag": "0007_add_ai_chat_conversations",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789410000000,
+      "tag": "0008_appointment_urgent_emergency",
+      "breakpoints": true
     }
   ]
 }

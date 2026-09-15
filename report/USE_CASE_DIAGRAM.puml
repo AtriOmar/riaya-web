@@ -1,0 +1,83 @@
+@startuml Riaya_Use_Case_Overview
+left to right direction
+title Riaya — Use Case Diagram (Overview)
+
+skinparam shadowing false
+
+' ============================================================================
+' ACTORS
+' ============================================================================
+
+actor "Patient"       as Patient
+actor "Doctor"        as Doctor
+actor "Administrator" as Admin
+
+' ============================================================================
+' SYSTEM
+' ============================================================================
+
+rectangle "Riaya" {
+
+  ' --- Patient Use Cases ---
+  usecase "Book and manage\nappointments by phone" as UC_P_Book
+  usecase "Rate visit via platform" as UC_P_Rate
+
+  ' --- Doctor Use Cases ---
+  usecase "Register and apply\nfor verification" as UC_D_Register
+  usecase "Manage practice profile" as UC_D_Profile
+  usecase "Manage patients" as UC_D_Patients
+  usecase "Manage appointments" as UC_D_Appointments
+  usecase "Manage medical files" as UC_D_Invoices
+  usecase "Manage invoices" as UC_D_MedFiles
+  usecase "Record consultations\nand use AI assistant" as UC_D_RecordAI
+  usecase "Manage subscription\nand connect WhatsApp" as UC_D_SubWA
+
+  ' --- Admin Use Cases ---
+  usecase "Review and verify doctors" as UC_A_Verify
+  usecase "Monitor live AI calls\nand booking" as UC_A_Monitor
+  usecase "Platform overview\nand configuration" as UC_A_Platform
+
+  ' --- Authentication ---
+  usecase "Authenticate\n[sign in]" as UC_Auth
+  usecase "Verify email OTP" as UC_OTP
+}
+
+' ============================================================================
+' ACTOR → USE CASE
+' ============================================================================
+
+Patient -- UC_P_Book
+Patient -- UC_P_Rate
+
+Doctor -- UC_D_Register
+Doctor -- UC_D_Profile
+Doctor -- UC_D_Patients
+Doctor -- UC_D_Appointments
+Doctor -- UC_D_MedFiles
+Doctor -- UC_D_Invoices
+Doctor -- UC_D_RecordAI
+Doctor -- UC_D_SubWA
+
+Admin -- UC_A_Verify
+Admin -- UC_A_Monitor
+Admin -- UC_A_Platform
+
+' ============================================================================
+' INCLUDE → AUTHENTICATION
+' ============================================================================
+
+UC_D_Register ..> UC_OTP : <<include>>
+
+UC_D_Profile      ..> UC_Auth : <<include>>
+UC_D_Patients     ..> UC_Auth : <<include>>
+UC_D_Appointments ..> UC_Auth : <<include>>
+UC_D_MedFiles     ..> UC_Auth : <<include>>
+UC_D_Invoices     ..> UC_Auth : <<include>>
+UC_D_RecordAI     ..> UC_Auth : <<include>>
+UC_D_SubWA        ..> UC_Auth : <<include>>
+
+UC_A_Verify   ..> UC_Auth : <<include>>
+UC_A_Monitor  ..> UC_Auth : <<include>>
+UC_A_Platform ..> UC_Auth : <<include>>
+
+@enduml

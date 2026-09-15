@@ -6,6 +6,8 @@ export type PlanId = (typeof PLAN_IDS)[number];
 export type PlanLimits = {
 	aiBookingPatients: number | null;
 	whatsappSendsPerMonth: number | null;
+	recordingsPerMonth: number | null;
+	aiMessagesPerMonth: number | null;
 };
 
 export type Plan = {
@@ -31,6 +33,8 @@ export const PLANS: Record<PlanId, Plan> = {
 		limits: {
 			aiBookingPatients: 5,
 			whatsappSendsPerMonth: 50,
+			recordingsPerMonth: 5,
+			aiMessagesPerMonth: 20,
 		},
 		features: [
 			"Patient records & appointments",
@@ -39,6 +43,8 @@ export const PLANS: Record<PlanId, Plan> = {
 			"Medical files",
 			"AI phone booking for up to 5 patients / month",
 			"50 WhatsApp sends / month",
+			"5 conversation recordings / month",
+			"20 AI assistant messages / month",
 		],
 	},
 	pro: {
@@ -51,11 +57,15 @@ export const PLANS: Record<PlanId, Plan> = {
 		limits: {
 			aiBookingPatients: null,
 			whatsappSendsPerMonth: null,
+			recordingsPerMonth: null,
+			aiMessagesPerMonth: null,
 		},
 		features: [
 			"Everything in Free",
 			"Unlimited AI phone booking",
 			"Unlimited WhatsApp sends",
+			"Unlimited conversation recordings",
+			"Unlimited AI assistant messages",
 			"Priority support",
 		],
 	},

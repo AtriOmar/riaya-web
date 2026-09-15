@@ -95,6 +95,10 @@ export const selectBestFitDoctorSchema = selectDoctorProfileSchema
 		z.object({
 			distance: z.number(),
 			nextSlot: z.object({ start: z.string(), end: z.string() }),
+			/** Additional forward slots around desiredTime for AI alternatives. */
+			nearbySlots: z
+				.array(z.object({ start: z.string(), end: z.string() }))
+				.optional(),
 		}),
 	);
 
@@ -126,10 +130,14 @@ export const doctorDashboardStatsResponseSchema = z.object({
 		limits: z.object({
 			aiBookingPatients: z.number().nullable(),
 			whatsappSendsPerMonth: z.number().nullable(),
+			recordingsPerMonth: z.number().nullable(),
+			aiMessagesPerMonth: z.number().nullable(),
 		}),
 		usage: z.object({
 			aiBookingPatients: z.number(),
 			whatsappSendsThisMonth: z.number(),
+			recordingsThisMonth: z.number(),
+			aiMessagesThisMonth: z.number(),
 		}),
 		usagePeriod: z.object({
 			start: z.string(),

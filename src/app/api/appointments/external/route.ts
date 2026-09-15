@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
+import { schedulePendingAppointmentTimeout } from "@/lib/pending-appointment-timeout";
 import { upsertPersonByPhone } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 import { assertAiBookingAllowed } from "@/lib/plan-limits";
@@ -110,6 +111,12 @@ export async function POST(req: NextRequest) {
 				description: data.illness,
 			})
 			.returning();
+
+		void schedulePendingAppointmentTimeout({
+			appointmentId: created.id,
+		}).catch((err) =>
+			console.error("[appointments/external] schedule pending timeout", err),
+		);
 
 		return json(created, 201);
 	} catch (e) {

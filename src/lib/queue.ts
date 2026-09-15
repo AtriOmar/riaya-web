@@ -16,6 +16,11 @@ const connection = new Redis(
 
 export const reviewQueue = new Queue("review-queue", { connection });
 
+/** Delayed jobs that auto-cancel unanswered AI pending appointments. */
+export const pendingTimeoutQueue = new Queue("pending-timeout-queue", {
+	connection,
+});
+
 // ─── Subscription queue ───────────────────────────────────────────────────────
 // Processed by voice/src/workers/subscriptionWorker.ts
 // A single repeatable job fires daily to check for subscriptions expiring soon.

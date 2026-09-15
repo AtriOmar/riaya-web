@@ -114,6 +114,12 @@ export type GetApiAppointments200Item = {
 	 * @nullable
 	 */
 	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -178,6 +184,12 @@ export type PostApiAppointments201 = {
 	 * @nullable
 	 */
 	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -255,6 +267,12 @@ export type PutApiAppointments200 = {
 	 * @nullable
 	 */
 	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -1859,6 +1877,12 @@ export type PostApiAppointmentsExternal201 = {
 	 * @nullable
 	 */
 	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -2363,11 +2387,17 @@ export type GetApiDashboardStats200PlanLimits = {
 	aiBookingPatients: number | null;
 	/** @nullable */
 	whatsappSendsPerMonth: number | null;
+	/** @nullable */
+	recordingsPerMonth: number | null;
+	/** @nullable */
+	aiMessagesPerMonth: number | null;
 };
 
 export type GetApiDashboardStats200PlanUsage = {
 	aiBookingPatients: number;
 	whatsappSendsThisMonth: number;
+	recordingsThisMonth: number;
+	aiMessagesThisMonth: number;
 };
 
 export type GetApiDashboardStats200PlanUsagePeriod = {

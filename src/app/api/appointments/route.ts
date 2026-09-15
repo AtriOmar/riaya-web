@@ -12,6 +12,11 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { resolvePatientIdForConfirm } from "@/lib/appointment-patient-link";
+import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
+import {
+	cancelEmergencyPendingTimeoutJob,
+	cancelPendingAppointmentTimeoutJob,
+} from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
@@ -137,7 +142,18 @@ export async function PUT(req: NextRequest) {
 
 		if (!existing) return apiError("APPOINTMENT_NOT_FOUND");
 
-		const updateData: Record<string, unknown> = {};
+		// Another doctor already took this emergency fan-out (siblings cancelled).
+		if (
+			fields.status === "confirmed" &&
+			existing.urgent &&
+			existing.status === "cancelled"
+		) {
+			return apiError("APPOINTMENT_NOT_FOUND");
+		}
+
+		const updateData: Record<string, unknown> = {
+			updatedAt: new Date(),
+		};
 		if (fields.name !== undefined) updateData.name = fields.name;
 		if (fields.description !== undefined)
 			updateData.description = fields.description;
@@ -163,13 +179,57 @@ export async function PUT(req: NextRequest) {
 			}
 		}
 
+		// First-accept wins for emergency fan-outs: only confirm while still pending.
+		const confirmWhere =
+			fields.status === "confirmed" && existing.status === "pending"
+				? and(
+						eq(appointment.id, id),
+						eq(appointment.doctorId, profile.id),
+						eq(appointment.status, "pending"),
+					)
+				: and(eq(appointment.id, id), eq(appointment.doctorId, profile.id));
+
 		const [updated] = await db
 			.update(appointment)
 			.set(updateData)
-			.where(and(eq(appointment.id, id), eq(appointment.doctorId, profile.id)))
+			.where(confirmWhere)
 			.returning();
 
-		if (!updated) return apiError("APPOINTMENT_NOT_FOUND");
+		if (!updated) {
+			// Lost the race against another doctor accepting the same emergency group,
+			// or the row was cancelled meanwhile.
+			return apiError("APPOINTMENT_NOT_FOUND");
+		}
+
+		// Cancel sibling urgent requests so only one doctor keeps the patient.
+		if (
+			fields.status === "confirmed" &&
+			updated.urgent &&
+			updated.emergencyGroupId
+		) {
+			await cancelEmergencySiblingAppointments({
+				emergencyGroupId: updated.emergencyGroupId,
+				exceptAppointmentId: updated.id,
+			});
+			void cancelEmergencyPendingTimeoutJob(updated.emergencyGroupId);
+		} else if (
+			(fields.status === "confirmed" || fields.status === "cancelled") &&
+			updated.source === "ai"
+		) {
+			void cancelPendingAppointmentTimeoutJob(updated.id);
+			if (updated.emergencyGroupId) {
+				// Last pending in a group may have been refused — drop timeout if none left pending.
+				const stillPending = await db.query.appointment.findFirst({
+					where: and(
+						eq(appointment.emergencyGroupId, updated.emergencyGroupId),
+						eq(appointment.status, "pending"),
+					),
+				});
+				if (!stillPending) {
+					void cancelEmergencyPendingTimeoutJob(updated.emergencyGroupId);
+				}
+			}
+		}
 
 		// Fire-and-forget: send WhatsApp confirmation when status becomes "confirmed"
 		if (fields.status === "confirmed") {

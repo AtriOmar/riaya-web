@@ -10,6 +10,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { assertRecordingAllowed } from "@/lib/plan-limits";
 
 // ─── GET /api/recordings ──────────────────────────────────────────────────────
 // Returns recordings for the authenticated doctor, optionally filtered by patient.
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 		if (!parsed.success) return validationError(parsed.error.issues);
+
+		await assertRecordingAllowed(profile.id);
 
 		// If patientId is provided, verify it belongs to this doctor
 		if (parsed.data.patientId) {

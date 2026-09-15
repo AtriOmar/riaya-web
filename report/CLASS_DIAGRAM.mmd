@@ -1,0 +1,367 @@
+---
+config:
+  layout: elk
+  theme: neutral
+---
+classDiagram
+  direction TB
+
+  class user {
+    string name
+    string email
+    boolean email_verified
+    string image
+    string display_name
+    string username
+    int access_id
+    int active
+    int type
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class session {
+    timestamp expires_at
+    string token
+    timestamp created_at
+    timestamp updated_at
+    string ip_address
+    string user_agent
+    string user_id
+  }
+
+  class account {
+    string account_id
+    string provider_id
+    string user_id
+    string access_token
+    string refresh_token
+    string id_token
+    timestamp access_token_expires_at
+    timestamp refresh_token_expires_at
+    string scope
+    string password
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class verification {
+    string identifier
+    string value
+    timestamp expires_at
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class speciality {
+    string en_name
+    string fr_name
+    string ar_name
+    string slug
+  }
+
+  class cities {
+    int postal_code
+    float latitude
+    float longitude
+    string en_name
+    string fr_name
+    string ar_name
+    string slug
+  }
+
+  class doctor_profile {
+    string user_id
+    string first_name
+    string last_name
+    string cin
+    string tin
+    string status
+    string address
+    string cabinet_name
+    int cabinet_city_id
+    float cabinet_longitude
+    float cabinet_latitude
+    int speciality_id
+    jsonb availability
+    string cin_recto
+    string cin_verso
+    string medical_council_number
+    string medical_council_certificate
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class doctor_application {
+    string user_id
+    string first_name
+    string last_name
+    string cin_recto
+    string cin_verso
+    string cabinet_name
+    int cabinet_city_id
+    float cabinet_longitude
+    float cabinet_latitude
+    string status
+    string tin
+    string rejection_reasons
+    int speciality_id
+    string medical_council_number
+    string medical_council_certificate
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class doctor_unavailability {
+    int doctor_id
+    timestamp start
+    timestamp end
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class person {
+    string phone_number
+    string source
+    string first_name
+    string last_name
+    timestamp date_of_birth
+    string gender
+    string address
+    string preferred_language
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class patient {
+    int person_id
+    int doctor_id
+    string cin
+    string first_name
+    string last_name
+    timestamp date_of_birth
+    string gender
+    string address
+    string phone_number
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class patient_medical_file {
+    int patient_id
+    string type
+    timestamp date
+    string title
+    string description
+    string documents
+    boolean sent_via_whatsapp
+    timestamp created_at
+  }
+
+  class appointment {
+    int doctor_id
+    int patient_id
+    timestamp start
+    timestamp end
+    string status
+    string source
+    string name
+    string description
+    string new_patient_name
+    string new_patient_phone_number
+    boolean urgent
+    string emergency_group_id
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class review {
+    int appointment_id
+    int doctor_id
+    int patient_id
+    string token
+    int rating
+    string wait_time
+    string comment
+    string status
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class consultation {
+    int patient_id
+    int doctor_id
+    timestamp date
+    string title
+    string description
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class invoice {
+    int doctor_id
+    int patient_id
+    int appointment_id
+    string number
+    string status
+    string currency
+    int total_centimes
+    int amount_paid_centimes
+    string payment_method
+    string notes
+    string pdf_url
+    boolean sent_via_whatsapp
+    timestamp issued_at
+    timestamp paid_at
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class invoice_item {
+    int invoice_id
+    string description
+    int quantity
+    int unit_price_centimes
+    timestamp created_at
+  }
+
+  class invoice_payment {
+    int invoice_id
+    int amount_centimes
+    string payment_method
+    timestamp paid_at
+    string notes
+    timestamp created_at
+  }
+
+  class `call` {
+    string call_sid
+    string from
+    string to
+    string direction
+    string status
+    string caller_name
+    timestamp started_at
+    timestamp ended_at
+    int duration
+    int appointment_id
+    string recording_sid
+    string recording_key
+    string recording_url
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class call_event {
+    int call_id
+    string type
+    string content
+    string function_name
+    jsonb function_args
+    jsonb function_result
+    string function_status
+    timestamp timestamp
+  }
+
+  class subscription {
+    int doctor_id
+    string plan_id
+    string status
+    timestamp current_period_start
+    timestamp current_period_end
+    boolean cancel_at_period_end
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class billing_invoice {
+    int doctor_id
+    int subscription_id
+    string number
+    string status
+    int amount_millimes
+    string konnect_payment_ref
+    string konnect_pay_url
+    timestamp period_start
+    timestamp period_end
+    timestamp due_date
+    timestamp paid_at
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class whatsapp_usage {
+    int doctor_id
+    string period_yyyy_mm
+    int send_count
+    timestamp updated_at
+  }
+
+  class consultation_recording {
+    int doctor_id
+    int patient_id
+    string title
+    string audio_url
+    int duration_seconds
+    string transcript
+    string transcript_status
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class ai_chat_conversation {
+    int doctor_id
+    string title
+    int recording_id
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  class ai_chat_message {
+    int conversation_id
+    string role
+    string content
+    timestamp created_at
+  }
+
+  user "1" --> "*" session : has
+  user "1" --> "*" account : has
+  user "1" --> "0..1" doctor_profile : has
+  user "1" --> "*" doctor_application : submits
+
+  doctor_profile "*" --> "0..1" speciality : practices
+  doctor_profile "*" --> "0..1" cities : cabinet_city
+  doctor_application "*" --> "0..1" speciality : applies_with
+  doctor_application "*" --> "0..1" cities : cabinet_city
+  doctor_profile "1" --> "*" doctor_unavailability : blocks
+
+  person "1" --> "*" patient : linked_as
+  doctor_profile "1" --> "*" patient : treats
+  patient "1" --> "*" patient_medical_file : has
+
+  doctor_profile "1" --> "*" appointment : schedules
+  patient "0..1" --> "*" appointment : attends
+  appointment "1" --> "*" `call` : may_produce
+  `call` "1" --> "*" call_event : logs
+  appointment "1" --> "*" review : may_have
+  doctor_profile "1" --> "*" review : receives
+  patient "0..1" --> "*" review : writes
+
+  doctor_profile "1" --> "*" consultation : documents
+  patient "1" --> "*" consultation : receives
+
+  doctor_profile "1" --> "*" invoice : issues
+  patient "1" --> "*" invoice : billed_on
+  appointment "0..1" --> "*" invoice : optional
+  invoice "1" --> "*" invoice_item : lines
+  invoice "1" --> "*" invoice_payment : payments
+
+  doctor_profile "1" --> "0..1" subscription : plan
+  subscription "1" --> "*" billing_invoice : generates
+  doctor_profile "1" --> "*" whatsapp_usage : monthly_quota
+
+  doctor_profile "1" --> "*" consultation_recording : records
+  patient "0..1" --> "*" consultation_recording : of
+  doctor_profile "1" --> "*" ai_chat_conversation : chats
+  consultation_recording "0..1" --> "*" ai_chat_conversation : context
+  ai_chat_conversation "1" --> "*" ai_chat_message : contains

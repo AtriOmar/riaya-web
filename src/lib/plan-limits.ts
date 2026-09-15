@@ -1,6 +1,13 @@
 import { and, eq, gte, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { appointment, subscription, whatsappUsage } from "@/db/schema";
+import {
+	appointment,
+	aiChatConversation,
+	aiChatMessage,
+	consultationRecording,
+	subscription,
+	whatsappUsage,
+} from "@/db/schema";
 import { throwApiError } from "@/lib/errors";
 import { getPlan, PLAN_IDS, type Plan, type PlanId } from "@/lib/plans";
 
@@ -202,12 +209,87 @@ export async function assertAndRecordWhatsappSend(
 	}
 }
 
+export async function countRecordingsThisMonth(
+	doctorId: number,
+	period = getUtcCalendarMonthPeriod(),
+): Promise<number> {
+	const [row] = await db
+		.select({
+			count: sql<number>`count(*)`,
+		})
+		.from(consultationRecording)
+		.where(
+			and(
+				eq(consultationRecording.doctorId, doctorId),
+				gte(consultationRecording.createdAt, period.start),
+				lt(consultationRecording.createdAt, period.end),
+			),
+		);
+
+	return Number(row?.count ?? 0);
+}
+
+export async function assertRecordingAllowed(doctorId: number): Promise<void> {
+	const { plan } = await getEffectivePlan(doctorId);
+	const limit = plan.limits.recordingsPerMonth;
+	if (limit == null) return;
+
+	const used = await countRecordingsThisMonth(doctorId);
+	if (used >= limit) {
+		throwApiError("RECORDING_LIMIT_REACHED");
+	}
+}
+
+/** User messages sent to the AI assistant in the current UTC calendar month. */
+export async function countAiMessagesThisMonth(
+	doctorId: number,
+	period = getUtcCalendarMonthPeriod(),
+): Promise<number> {
+	const [row] = await db
+		.select({
+			count: sql<number>`count(*)`,
+		})
+		.from(aiChatMessage)
+		.innerJoin(
+			aiChatConversation,
+			eq(aiChatMessage.conversationId, aiChatConversation.id),
+		)
+		.where(
+			and(
+				eq(aiChatConversation.doctorId, doctorId),
+				eq(aiChatMessage.role, "user"),
+				gte(aiChatMessage.createdAt, period.start),
+				lt(aiChatMessage.createdAt, period.end),
+			),
+		);
+
+	return Number(row?.count ?? 0);
+}
+
+export async function assertAiMessageAllowed(doctorId: number): Promise<void> {
+	const { plan } = await getEffectivePlan(doctorId);
+	const limit = plan.limits.aiMessagesPerMonth;
+	if (limit == null) return;
+
+	const used = await countAiMessagesThisMonth(doctorId);
+	if (used >= limit) {
+		throwApiError("AI_MESSAGE_LIMIT_REACHED");
+	}
+}
+
 export async function getPlanUsage(doctorId: number) {
 	const period = getUtcCalendarMonthPeriod();
 	const { plan, planId, isPro } = await getEffectivePlan(doctorId);
-	const [aiBookingPatients, whatsappSendsThisMonth] = await Promise.all([
+	const [
+		aiBookingPatients,
+		whatsappSendsThisMonth,
+		recordingsThisMonth,
+		aiMessagesThisMonth,
+	] = await Promise.all([
 		countAiBookingPatientsThisMonth(doctorId, period),
 		getWhatsappSendsThisMonth(doctorId, period),
+		countRecordingsThisMonth(doctorId, period),
+		countAiMessagesThisMonth(doctorId, period),
 	]);
 
 	return {
@@ -218,6 +300,8 @@ export async function getPlanUsage(doctorId: number) {
 		usage: {
 			aiBookingPatients,
 			whatsappSendsThisMonth,
+			recordingsThisMonth,
+			aiMessagesThisMonth,
 		},
 		usagePeriod: {
 			start: period.start.toISOString(),

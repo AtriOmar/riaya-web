@@ -90,6 +90,9 @@ function parsePhone(
 /**
  * Canonical value for DB/API storage: E.164 international, no spaces.
  * Example: `+21671234567`
+ *
+ * Dashboard flows default to Tunisia when the number has no country code.
+ * Prefer `normalizePhoneForAiStorage` for Twilio / AI caller phones.
  */
 export function normalizePhoneForStorage(
 	input: string | null | undefined,
@@ -107,6 +110,28 @@ export function normalizePhoneForStorage(
 
 	const reparsed = parsePhoneNumberFromString(`+${digits}`, defaultCountry);
 	if (reparsed?.isValid()) return reparsed.number;
+
+	return `+${digits}`;
+}
+
+/**
+ * Normalize a phone from an AI / Twilio call.
+ * Always treats the value as international (keeps non-Tunisian callers intact).
+ * Does not force the Tunisia default country used by the doctor dashboard.
+ */
+export function normalizePhoneForAiStorage(
+	input: string | null | undefined,
+): string | null {
+	if (input == null) return null;
+	const trimmed = input.trim();
+	if (!trimmed) return null;
+
+	const digits = trimmed.replace(/\D/g, "");
+	if (digits.length < 8) return null;
+
+	const withPlus = trimmed.startsWith("+") ? trimmed : `+${digits}`;
+	const parsed = parsePhoneNumberFromString(withPlus);
+	if (parsed?.isValid()) return parsed.number;
 
 	return `+${digits}`;
 }
