@@ -223,6 +223,77 @@ export function buildReviewWhatsappMessage(params: {
 	return `مرحباً ${name}، شكراً لزيارتك ${doctor}. الرجاء تخصيص 30 ثانية للإجابة على 3 أسئلة سريعة حول زيارتك:\n\n${params.link}`;
 }
 
+/** WhatsApp / voice copy when an AI pending request timed out unanswered. */
+export function buildPendingTimeoutWhatsappMessage(params: {
+	language?: string | null;
+	patientName: string;
+	riayaPhone?: string | null;
+}): string {
+	const language = lang(params.language);
+	const name = params.patientName.trim() || (language === "ar" ? "مرحباً" : "");
+	const phone = params.riayaPhone?.trim();
+
+	if (language === "fr") {
+		const hello = name ? `Bonjour ${name}` : "Bonjour";
+		const callLine = phone
+			? ` Merci de rappeler Riaya au ${phone} pour choisir un autre médecin.`
+			: " Merci de rappeler Riaya pour choisir un autre médecin.";
+		return `${hello}, votre demande de rendez-vous n'a pas été confirmée à temps et a été annulée.${callLine}`;
+	}
+	if (language === "en") {
+		const hello = name ? `Hello ${name}` : "Hello";
+		const callLine = phone
+			? ` Please call Riaya at ${phone} to book with another doctor.`
+			: " Please call Riaya to book with another doctor.";
+		return `${hello}, your appointment request was not confirmed in time and has been cancelled.${callLine}`;
+	}
+	const hello = name ? `مرحباً ${name}` : "مرحباً";
+	const callLine = phone
+		? ` الرجاء الاتصال برعاية على ${phone} لحجز موعد مع طبيب آخر.`
+		: " الرجاء الاتصال برعاية لحجز موعد مع طبيب آخر.";
+	return `${hello}، لم يتم تأكيد طلب موعدك في الوقت المحدد وتم إلغاؤه.${callLine}`;
+}
+
+/** Short Twilio <Say> script (same intent as the WhatsApp message). */
+export function buildPendingTimeoutVoiceScript(params: {
+	language?: string | null;
+	patientName: string;
+	riayaPhone?: string | null;
+}): { text: string; twilioLanguage: string } {
+	const language = lang(params.language);
+	const name = params.patientName.trim();
+	const phone = params.riayaPhone?.trim();
+
+	if (language === "fr") {
+		const hello = name ? `Bonjour ${name}.` : "Bonjour.";
+		const callLine = phone
+			? ` Merci de rappeler Riaya au ${phone} pour choisir un autre médecin.`
+			: " Merci de rappeler Riaya pour choisir un autre médecin.";
+		return {
+			text: `${hello} Votre demande de rendez-vous n'a pas été confirmée à temps et a été annulée.${callLine}`,
+			twilioLanguage: "fr-FR",
+		};
+	}
+	if (language === "en") {
+		const hello = name ? `Hello ${name}.` : "Hello.";
+		const callLine = phone
+			? ` Please call Riaya at ${phone} to book with another doctor.`
+			: " Please call Riaya to book with another doctor.";
+		return {
+			text: `${hello} Your appointment request was not confirmed in time and has been cancelled.${callLine}`,
+			twilioLanguage: "en-US",
+		};
+	}
+	const hello = name ? `مرحباً ${name}.` : "مرحباً.";
+	const callLine = phone
+		? ` الرجاء الاتصال برعاية على الرقم ${phone} لحجز موعد مع طبيب آخر.`
+		: " الرجاء الاتصال برعاية لحجز موعد مع طبيب آخر.";
+	return {
+		text: `${hello} لم يتم تأكيد طلب موعدك في الوقت المحدد وتم إلغاؤه.${callLine}`,
+		twilioLanguage: "ar-XA",
+	};
+}
+
 function fallbackMedicalTitle(language: PersonPreferredLanguage): string {
 	if (language === "fr") return "Dossier médical";
 	if (language === "en") return "Medical File";

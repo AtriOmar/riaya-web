@@ -95,6 +95,10 @@ export const selectBestFitDoctorSchema = selectDoctorProfileSchema
 		z.object({
 			distance: z.number(),
 			nextSlot: z.object({ start: z.string(), end: z.string() }),
+			/** Additional forward slots around desiredTime for AI alternatives. */
+			nearbySlots: z
+				.array(z.object({ start: z.string(), end: z.string() }))
+				.optional(),
 		}),
 	);
 

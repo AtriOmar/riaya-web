@@ -178,6 +178,10 @@ export const appointment = pgTable(
 		// Flattened newPatient sub-document
 		newPatientName: varchar("new_patient_name", { length: 255 }),
 		newPatientPhoneNumber: varchar("new_patient_phone_number", { length: 50 }),
+		/** AI emergency fan-out: pending requests shown with an urgent badge. */
+		urgent: boolean("urgent").notNull().default(false),
+		/** Shared id across the top-N pending emergency requests for one call. */
+		emergencyGroupId: varchar("emergency_group_id", { length: 64 }),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -187,6 +191,7 @@ export const appointment = pgTable(
 		index("appointment_status_idx").on(table.status),
 		index("appointment_start_idx").on(table.start),
 		index("appointment_source_idx").on(table.source),
+		index("appointment_emergency_group_id_idx").on(table.emergencyGroupId),
 	],
 );
 

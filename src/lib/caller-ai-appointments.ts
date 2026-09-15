@@ -2,6 +2,11 @@ import { and, asc, desc, eq, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { appointment, patient, person } from "@/db/schema";
 import { apiError } from "@/lib/api-utils";
+import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
+import {
+	cancelEmergencyPendingTimeoutJob,
+	cancelPendingAppointmentTimeoutJob,
+} from "@/lib/pending-appointment-timeout";
 import {
 	DEFAULT_PHONE_COUNTRY,
 	normalizePhoneForStorage,
@@ -18,6 +23,7 @@ export type CallerAiAppointmentItem = {
 	doctorName: string;
 	cabinetName: string | null;
 	address: string | null;
+	urgent: boolean;
 };
 
 const RECENT_PAST_DAYS = 30;
@@ -58,6 +64,7 @@ function mapRow(row: {
 	end: Date | null;
 	name: string | null;
 	description: string | null;
+	urgent: boolean;
 	doctor: {
 		firstName: string | null;
 		lastName: string | null;
@@ -79,6 +86,7 @@ function mapRow(row: {
 		doctorName: doctorName || "Doctor",
 		cabinetName: doctor?.cabinetName ?? null,
 		address: doctor?.address ?? null,
+		urgent: row.urgent,
 	};
 }
 
@@ -186,11 +194,25 @@ export async function cancelPendingAiAppointmentForCaller(
 		throw apiError("APPOINTMENT_NOT_CANCELLABLE");
 	}
 
+	// Cancelling one urgent fan-out request cancels the whole emergency group.
+	if (row.urgent && row.emergencyGroupId) {
+		await cancelEmergencySiblingAppointments({
+			emergencyGroupId: row.emergencyGroupId,
+		});
+		void cancelEmergencyPendingTimeoutJob(row.emergencyGroupId);
+		const refreshed = await db.query.appointment.findFirst({
+			where: eq(appointment.id, appointmentId),
+		});
+		return refreshed ?? row;
+	}
+
 	const [updated] = await db
 		.update(appointment)
 		.set({ status: "cancelled", updatedAt: new Date() })
 		.where(eq(appointment.id, appointmentId))
 		.returning();
+
+	void cancelPendingAppointmentTimeoutJob(appointmentId);
 
 	return updated;
 }

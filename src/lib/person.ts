@@ -8,6 +8,7 @@ import {
 } from "@/lib/person-language";
 import {
 	DEFAULT_PHONE_COUNTRY,
+	normalizePhoneForAiStorage,
 	normalizePhoneForStorage,
 	phoneStorageVariants,
 } from "@/lib/phone";
@@ -16,7 +17,9 @@ export const personSources = ["call", "doctor"] as const;
 export type PersonSource = (typeof personSources)[number];
 
 async function findPersonByPhoneRaw(raw: string) {
-	const normalized = normalizePhoneForStorage(raw, DEFAULT_PHONE_COUNTRY);
+	const normalized =
+		normalizePhoneForAiStorage(raw) ??
+		normalizePhoneForStorage(raw, DEFAULT_PHONE_COUNTRY);
 	if (!normalized) return null;
 
 	return db.query.person.findFirst({
@@ -50,10 +53,10 @@ export async function upsertPersonByPhone(
 	phoneNumber: string,
 	source: PersonSource,
 ) {
-	const normalized = normalizePhoneForStorage(
-		phoneNumber,
-		DEFAULT_PHONE_COUNTRY,
-	);
+	const normalized =
+		source === "call"
+			? normalizePhoneForAiStorage(phoneNumber)
+			: normalizePhoneForStorage(phoneNumber, DEFAULT_PHONE_COUNTRY);
 	if (!normalized) return null;
 
 	const existing = await findPersonByPhoneRaw(normalized);

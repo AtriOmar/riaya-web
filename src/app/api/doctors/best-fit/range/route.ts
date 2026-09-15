@@ -1,15 +1,18 @@
-import { and, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
+import { BEST_FIT_MAX_RADIUS_KM, calculateHaversineKm } from "@/lib/best-fit";
 import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit/range ─────────────────────────────────────────
 // Admin tool endpoint — returns best-fit doctors grouped by day for a date range.
 // Used by the admin "Best Fit Finder" tool to render a month-view calendar heatmap
 // where each day shows which doctors are available on that day.
+
+const MAX_RADIUS_KM = BEST_FIT_MAX_RADIUS_KM;
 
 const schema = z.object({
 	speciality: z.string().min(1),
@@ -20,23 +23,6 @@ const schema = z.object({
 });
 
 const MAX_RANGE_DAYS = 62; // ~2 months
-
-function calculateDistance(
-	lat1: number,
-	lon1: number,
-	lat2: number,
-	lon2: number,
-): number {
-	const toRad = (angle: number) => (Math.PI / 180) * angle;
-	const R = 6371;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	return R * c;
-}
 
 function toDateOnly(d: Date): string {
 	const y = d.getFullYear();
@@ -94,7 +80,7 @@ export async function GET(req: NextRequest) {
 		if (!specialityData) return apiError("SPECIALITY_NOT_FOUND");
 
 		// Fetch verified doctors with this speciality
-		const doctors = await db
+		const allDoctors = await db
 			.select()
 			.from(doctorProfile)
 			.where(
@@ -102,6 +88,19 @@ export async function GET(req: NextRequest) {
 					eq(doctorProfile.status, "verified"),
 					eq(doctorProfile.specialityId, specialityData.id),
 				),
+			);
+
+		// Pre-filter by radius — mirrors the AI /best-fit cap.
+		const doctors = allDoctors
+			.filter((d) => d.cabinetLatitude != null && d.cabinetLongitude != null)
+			.filter(
+				(d) =>
+					calculateHaversineKm(
+						lat,
+						long,
+						d.cabinetLatitude as number,
+						d.cabinetLongitude as number,
+					) <= MAX_RADIUS_KM,
 			);
 
 		// Build list of dates in range (inclusive)
@@ -132,68 +131,80 @@ export async function GET(req: NextRequest) {
 		const dayMap = new Map<string, DoctorDayResult[]>();
 		for (const d of days) dayMap.set(toDateOnly(d), []);
 
-		await Promise.all(
-			doctors.map(async (doctor) => {
-				if (!doctor.cabinetLatitude || !doctor.cabinetLongitude) return;
+		if (doctors.length === 0) {
+			return json([]);
+		}
 
-				const distance = calculateDistance(
-					lat,
-					long,
-					doctor.cabinetLatitude,
-					doctor.cabinetLongitude,
+		// Batch-load all appointments for nearby doctors in a single query.
+		const doctorIds = doctors.map((d) => d.id);
+		const allAppointments = await db
+			.select({
+				doctorId: appointment.doctorId,
+				start: appointment.start,
+				end: appointment.end,
+			})
+			.from(appointment)
+			.where(
+				and(
+					inArray(appointment.doctorId, doctorIds),
+					gte(appointment.start, from),
+					lt(appointment.start, new Date(to.getTime() + 1)),
+					or(isNull(appointment.status), ne(appointment.status, "cancelled")),
+				),
+			);
+
+		// Group by doctorId for O(1) lookup per doctor.
+		const apptsByDoctor = new Map<
+			number,
+			{ start: Date | null; end: Date | null }[]
+		>();
+		for (const appt of allAppointments) {
+			if (appt.doctorId == null) continue;
+			const list = apptsByDoctor.get(appt.doctorId) ?? [];
+			list.push({ start: appt.start, end: appt.end });
+			apptsByDoctor.set(appt.doctorId, list);
+		}
+
+		for (const doctor of doctors) {
+			const distance = calculateHaversineKm(
+				lat,
+				long,
+				doctor.cabinetLatitude as number,
+				doctor.cabinetLongitude as number,
+			);
+			const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
+			const availability = (doctor.availability as Availability) ?? {};
+
+			for (const day of days) {
+				const slots = listSlotsForDay(
+					availability,
+					doctorAppts,
+					currentTime,
+					day,
 				);
+				if (slots.length === 0) continue;
 
-				const appointments = await db
-					.select({
-						start: appointment.start,
-						end: appointment.end,
-					})
-					.from(appointment)
-					.where(
-						and(
-							eq(appointment.doctorId, doctor.id),
-							gte(appointment.start, from),
-							lt(appointment.start, new Date(to.getTime() + 1)),
-							or(
-								isNull(appointment.status),
-								ne(appointment.status, "cancelled"),
-							),
-						),
-					);
-
-				const availability = (doctor.availability as Availability) ?? {};
-
-				for (const day of days) {
-					const slots = listSlotsForDay(
-						availability,
-						appointments,
-						currentTime,
-						day,
-					);
-					if (slots.length === 0) continue;
-
-					const key = toDateOnly(day);
-					const entry: DoctorDayResult = {
-						id: doctor.id,
-						userId: doctor.userId,
-						firstName: doctor.firstName,
-						lastName: doctor.lastName,
-						cabinetName: doctor.cabinetName,
-						cabinetCityId: doctor.cabinetCityId,
-						cabinetLatitude: doctor.cabinetLatitude,
-						cabinetLongitude: doctor.cabinetLongitude,
-						specialityId: doctor.specialityId,
-						address: doctor.address ?? null,
-						distance,
-						slots: slots.map((s) => ({
-							start: s.start.toISOString(),
-							end: s.end.toISOString(),
-						})),
-					};
-					dayMap.get(key)?.push(entry);
-				}
-			}),
-		);
+				const key = toDateOnly(day);
+				const entry: DoctorDayResult = {
+					id: doctor.id,
+					userId: doctor.userId,
+					firstName: doctor.firstName,
+					lastName: doctor.lastName,
+					cabinetName: doctor.cabinetName,
+					cabinetCityId: doctor.cabinetCityId,
+					cabinetLatitude: doctor.cabinetLatitude,
+					cabinetLongitude: doctor.cabinetLongitude,
+					specialityId: doctor.specialityId,
+					address: doctor.address ?? null,
+					distance,
+					slots: slots.map((s) => ({
+						start: s.start.toISOString(),
+						end: s.end.toISOString(),
+					})),
+				};
+				dayMap.get(key)?.push(entry);
+			}
+		}
 
 		// Score = distance + minutesUntilFirstSlot / weight (mirror /best-fit)
 		const weight = 10;

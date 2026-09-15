@@ -12,6 +12,7 @@ type AppointmentBookedMessage = {
 	data?: {
 		doctorId?: unknown;
 		newPatientName?: string | null;
+		urgent?: boolean;
 	};
 };
 
@@ -95,8 +96,15 @@ export default function DoctorAppointmentSocketListener({
 					const rawName = msg.data?.newPatientName?.trim();
 					const patientLabel =
 						rawName && rawName.length > 0 ? rawName : "A patient";
+					const urgent = msg.data?.urgent === true;
 
-					toast.success(`New appointment request from ${patientLabel}`);
+					if (urgent) {
+						toast.error(`Urgent appointment request from ${patientLabel}`, {
+							duration: 8000,
+						});
+					} else {
+						toast.success(`New appointment request from ${patientLabel}`);
+					}
 					void mutate("appointments");
 				} catch {
 					/* ignore malformed payloads */

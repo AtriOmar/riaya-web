@@ -1,10 +1,9 @@
-import { and, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { appointment, doctorProfile, speciality } from "@/db/schema";
+import { selectBestFitDoctorSchema } from "@/db/zod";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import { type Availability, findNextAvailableSlot } from "@/lib/doctor-slots";
+import { findBestFitDoctors, resolveSpeciality } from "@/lib/best-fit";
+import { registry } from "@/lib/openapi";
 
 // ─── GET /api/doctors/best-fit ────────────────────────────────────────────────
 // Public endpoint — finds best-fit doctors based on speciality, location, and time
@@ -15,23 +14,6 @@ const schema = z.object({
 	lat: z.coerce.number(),
 	time: z.string().optional(),
 });
-
-function calculateDistance(
-	lat1: number,
-	lon1: number,
-	lat2: number,
-	lon2: number,
-): number {
-	const toRad = (angle: number) => (Math.PI / 180) * angle;
-	const R = 6371;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	return R * c;
-}
 
 export async function GET(req: NextRequest) {
 	try {
@@ -57,106 +39,38 @@ export async function GET(req: NextRequest) {
 			desiredTime = currentTime;
 		}
 
-		const nextWeek = new Date(desiredTime.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-		// Find speciality by slug or translated names
-		const specialities = await db
-			.select()
-			.from(speciality)
-			.where(
-				or(
-					eq(speciality.slug, specialitySearchTerm),
-					eq(speciality.enName, specialitySearchTerm),
-					eq(speciality.frName, specialitySearchTerm),
-					eq(speciality.arName, specialitySearchTerm),
-				),
-			);
-
-		// Fallback: try case-insensitive match
-		const specialityData = specialities[0];
+		const specialityData = await resolveSpeciality(specialitySearchTerm);
 		if (!specialityData) return apiError("SPECIALITY_NOT_FOUND");
 
-		// Fetch verified doctors with this speciality
-		const doctors = await db
-			.select()
-			.from(doctorProfile)
-			.where(
-				and(
-					eq(doctorProfile.status, "verified"),
-					eq(doctorProfile.specialityId, specialityData.id),
-				),
-			);
-
-		const processedDoctors = (
-			await Promise.all(
-				doctors.map(async (doctor) => {
-					if (!doctor.cabinetLatitude || !doctor.cabinetLongitude) return null;
-
-					const distance = calculateDistance(
-						lat,
-						long,
-						doctor.cabinetLatitude,
-						doctor.cabinetLongitude,
-					);
-
-					const appointments = await db
-						.select({
-							start: appointment.start,
-							end: appointment.end,
-						})
-						.from(appointment)
-						.where(
-							and(
-								eq(appointment.doctorId, doctor.id),
-								gte(appointment.start, currentTime),
-								lt(appointment.start, nextWeek),
-								or(
-									isNull(appointment.status),
-									ne(appointment.status, "cancelled"),
-								),
-							),
-						);
-
-					const availability = (doctor.availability as Availability) ?? {};
-					const nextSlot = findNextAvailableSlot(
-						availability,
-						appointments,
-						currentTime,
-						desiredTime,
-					);
-
-					if (!nextSlot) return null;
-
-					const { availability: _avail, ...rest } = doctor;
-					return {
-						...rest,
-						address: rest.address ?? null,
-						distance,
-						nextSlot,
-					};
-				}),
-			)
-		).filter(Boolean);
-
-		const weight = 10;
-		processedDoctors.sort((a, b) => {
-			const now = new Date();
-			const timeDiffA =
-				(a?.nextSlot
-					? new Date(a.nextSlot.start).getTime() - now.getTime()
-					: 0) /
-				(1000 * 60);
-			const timeDiffB =
-				(b?.nextSlot
-					? new Date(b.nextSlot.start).getTime() - now.getTime()
-					: 0) /
-				(1000 * 60);
-
-			const distanceA = a?.distance ?? 0;
-			const distanceB = b?.distance ?? 0;
-
-			return distanceA + timeDiffA / weight - (distanceB + timeDiffB / weight);
+		const ranked = await findBestFitDoctors({
+			specialityId: specialityData.id,
+			lat,
+			long,
+			desiredTime,
+			currentTime,
 		});
+
+		const processedDoctors = ranked.map((doc) => ({
+			id: doc.id,
+			userId: doc.userId,
+			firstName: doc.firstName,
+			lastName: doc.lastName,
+			cabinetName: doc.cabinetName,
+			cabinetCityId: doc.cabinetCityId,
+			cabinetLatitude: doc.cabinetLatitude,
+			cabinetLongitude: doc.cabinetLongitude,
+			specialityId: doc.specialityId,
+			address: doc.address,
+			distance: doc.distance,
+			nextSlot: {
+				start: doc.nextSlot.start.toISOString(),
+				end: doc.nextSlot.end.toISOString(),
+			},
+			nearbySlots: doc.nearbySlots.map((s) => ({
+				start: s.start.toISOString(),
+				end: s.end.toISOString(),
+			})),
+		}));
 
 		return json(processedDoctors);
 	} catch (e) {
@@ -164,9 +78,6 @@ export async function GET(req: NextRequest) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
-
-import { selectBestFitDoctorSchema } from "@/db/zod";
-import { registry } from "@/lib/openapi";
 
 registry.registerPath({
 	method: "get",

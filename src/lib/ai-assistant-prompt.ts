@@ -39,6 +39,7 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - The **same phone** booking again in the same month does **not** consume another slot.
 - Dashboard-created appointments do **not** count toward this limit.
 - When the limit is hit, new AI bookings are rejected until next UTC month or upgrade to Pro.
+- **Exception:** urgent / emergency fan-out bookings still reach Free doctors even if the monthly AI booking limit is already used.
 
 **How WhatsApp limit is counted (Free):**
 - Each successful send increments monthly usage (period \`YYYY-MM\` UTC).
@@ -109,8 +110,9 @@ Unverified doctors can only use **Profile** until status is \`verified\`. Other 
 Also: drag to move (conflict check); click to edit. Unavailable slots (from weekly availability) cannot be selected. If no availability is set, slots are treated as selectable.
 
 **AI pending bookings**
-- Accept → confirmed. If no linked patient: match by caller phone, create patient, or pick existing. May send WhatsApp confirmation (1 quota). Schedules a review WhatsApp ~2 hours after end.
-- Refuse → cancelled.
+- Accept → confirmed. If no linked patient: match by caller phone, create patient, or pick existing. May send WhatsApp confirmation (1 quota). Schedules a review WhatsApp ~2 hours after end. **Urgent** AI requests show a red badge; accepting one cancels the other pending requests in the same emergency group.
+- Refuse → cancelled (for urgent fan-outs, siblings stay pending for other doctors).
+- **Timeout:** AI pending (or unanswered urgent group) auto-cancels after **10 minutes**. Patient is called back via Twilio if configured, otherwise WhatsApp asks them to call Riaya again.
 - Non-pending: edit name/description; delete permanently; cancel sets \`cancelled\`.
 
 ---
@@ -176,7 +178,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ---
 
 ### Phone AI booking (patients call Riaya — not a sidebar page)
-**Patients can:** book appointments (speciality → location → time → slot); list their AI appointments; cancel only if still \`pending\`; use Tunisian Derja (default), French, or English. Emergencies → SAMU **190**. No clinical advice by phone.
+**Patients can:** book appointments (speciality → location → time → slot); list their AI appointments; cancel only if still \`pending\`; use Tunisian Derja (default), French, or English. Urgent cases → emergency fan-out to nearby doctors (first accept wins; **bypasses Free AI booking limits**). No clinical advice by phone.
 
 **Doctors see:** pending AI bookings on Appointments calendar; accept/refuse as above; usage on Dashboard / Subscription.
 

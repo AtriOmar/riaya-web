@@ -226,6 +226,7 @@ export default function AppointmentsCalendar() {
 							: null,
 						newPatientName: a.newPatientName,
 						newPatientPhoneNumber: a.newPatientPhoneNumber,
+						urgent: a.urgent === true,
 					};
 				}),
 		[appts],
@@ -662,6 +663,7 @@ export default function AppointmentsCalendar() {
 													SLOT_H * 0.6,
 												);
 												const isPending = ev.status === "pending";
+												const isUrgent = ev.urgent === true;
 												const w = `calc((100% - 8px) / ${totalCols})`;
 												const l = `calc(4px + ${col} * (100% - 8px) / ${totalCols})`;
 
@@ -676,9 +678,11 @@ export default function AppointmentsCalendar() {
 															className={cn(
 																"absolute z-10 rounded-md px-2 py-1 overflow-hidden",
 																"transition-opacity duration-100",
-																isPending
-																	? "bg-yellow-500/90 text-white border border-yellow-600/20 shadow-sm hover:bg-yellow-500"
-																	: "bg-primary/90 text-primary-foreground border border-primary/10 shadow-sm hover:bg-primary",
+																isUrgent && isPending
+																	? "bg-red-600/90 text-white border border-red-700/30 shadow-sm hover:bg-red-600"
+																	: isPending
+																		? "bg-yellow-500/90 text-white border border-yellow-600/20 shadow-sm hover:bg-yellow-500"
+																		: "bg-primary/90 text-primary-foreground border border-primary/10 shadow-sm hover:bg-primary",
 																isDragged
 																	? "opacity-30 cursor-grabbing"
 																	: cn(
@@ -721,6 +725,7 @@ export default function AppointmentsCalendar() {
 															}}
 														>
 															<p className="text-[11px] font-semibold leading-tight truncate">
+																{isUrgent && isPending ? "Urgent · " : ""}
 																{typeof ev.title === "string"
 																	? ev.title
 																	: ev.name}

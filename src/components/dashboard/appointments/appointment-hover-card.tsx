@@ -93,6 +93,7 @@ export default function AppointmentHoverCard({
 	const cin = event.patient?.cin?.trim() || null;
 	const description = event.description?.trim() || null;
 	const isPending = event.status === "pending";
+	const isUrgent = event.urgent === true;
 	const isNewPatient = !patientId && !!event.newPatientName;
 
 	function clearCloseTimer() {
@@ -135,15 +136,24 @@ export default function AppointmentHoverCard({
 	);
 
 	const statusBadge = (
-		<span
-			className={cn(
-				"rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none capitalize",
-				isPending
-					? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
-					: "bg-primary/15 text-primary",
+		<span className="inline-flex flex-wrap items-center gap-1">
+			{isUrgent && isPending && (
+				<span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none bg-red-600/15 text-red-700 dark:text-red-400">
+					Urgent
+				</span>
 			)}
-		>
-			{event.status}
+			<span
+				className={cn(
+					"rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none capitalize",
+					isUrgent && isPending
+						? "bg-red-600/15 text-red-700 dark:text-red-400"
+						: isPending
+							? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+							: "bg-primary/15 text-primary",
+				)}
+			>
+				{event.status}
+			</span>
 		</span>
 	);
 
