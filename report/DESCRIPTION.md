@@ -27,7 +27,11 @@ Doctors can create accounts and provide their **first name, last name, CIN pictu
 
 After registration, doctors can only access their **profile page** where they complete and submit this information.
 
-Their account must then be **reviewed and approved by an administrator**. Until the account is verified, all other pages and features of the dashboard remain locked.
+Their account must then be **reviewed by an administrator**:
+
+- **Approved** — the doctor gains access to the full dashboard.
+- **Rejected** — the administrator can attach rejection reasons. The doctor stays limited to the profile page, can correct their information, and **reapply**.
+- Until the account is verified, all other pages and features of the dashboard remain locked.
 
 ### Doctor Dashboard
 
@@ -181,7 +185,7 @@ Administrators have a dedicated dashboard for managing doctors and monitoring th
 - **Doctor visualization and search**
   - Administrators can browse and search registered doctors, and run the **best-fit** search on a map and calendar to see which doctors match a speciality, location, and time.
 - **Doctor verification**
-  - Administrators can review newly registered doctors and approve their accounts, which unlocks access to the rest of the platform.
+  - Administrators can review newly registered doctors and **approve** or **reject** their applications (with rejection reasons). Approval unlocks the rest of the platform; rejection lets the doctor fix their profile and reapply.
 - **Live call monitoring**
   - Administrators can monitor ongoing calls between the AI agent and patients in real time, including the live conversation transcript.
 

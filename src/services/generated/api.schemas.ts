@@ -2387,11 +2387,17 @@ export type GetApiDashboardStats200PlanLimits = {
 	aiBookingPatients: number | null;
 	/** @nullable */
 	whatsappSendsPerMonth: number | null;
+	/** @nullable */
+	recordingsPerMonth: number | null;
+	/** @nullable */
+	aiMessagesPerMonth: number | null;
 };
 
 export type GetApiDashboardStats200PlanUsage = {
 	aiBookingPatients: number;
 	whatsappSendsThisMonth: number;
+	recordingsThisMonth: number;
+	aiMessagesThisMonth: number;
 };
 
 export type GetApiDashboardStats200PlanUsagePeriod = {

@@ -239,6 +239,24 @@ export default function NewRecording({
 
 		setRecordingState("saving");
 		try {
+			// Preflight plan limit before uploading (server still enforces on create)
+			const subRes = await fetch("/api/billing/subscription");
+			if (subRes.ok) {
+				const sub = (await subRes.json()) as {
+					limits?: { recordingsPerMonth?: number | null };
+					usage?: { recordingsThisMonth?: number };
+				};
+				const limit = sub.limits?.recordingsPerMonth;
+				const used = sub.usage?.recordingsThisMonth ?? 0;
+				if (limit != null && used >= limit) {
+					toast.error(
+						"Monthly conversation recording limit reached. It resets next calendar month, or upgrade to Pro for unlimited recordings.",
+					);
+					setRecordingState("stopped");
+					return;
+				}
+			}
+
 			// 1. Upload audio to R2
 			const ext = audioBlob.type.includes("ogg") ? "ogg" : "webm";
 			const filename = `recording-${Date.now()}.${ext}`;

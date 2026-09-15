@@ -384,6 +384,16 @@ export default function DoctorDashboardHome() {
 							used={data.plan.usage.whatsappSendsThisMonth}
 							limit={data.plan.limits.whatsappSendsPerMonth}
 						/>
+						<UsageBar
+							label="Conversation recordings"
+							used={data.plan.usage.recordingsThisMonth}
+							limit={data.plan.limits.recordingsPerMonth}
+						/>
+						<UsageBar
+							label="AI assistant messages"
+							used={data.plan.usage.aiMessagesThisMonth}
+							limit={data.plan.limits.aiMessagesPerMonth}
+						/>
 						{!data.plan.isPro && (
 							<Button asChild variant="outline" size="sm" className="w-full">
 								<Link href="/dashboard/subscription">Upgrade to Pro</Link>

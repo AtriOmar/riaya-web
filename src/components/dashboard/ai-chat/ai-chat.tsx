@@ -567,7 +567,9 @@ export default function AiChat() {
 
 			if (!res.ok) {
 				const errData = await res.json().catch(() => ({}));
-				throw new Error(errData?.error ?? "Request failed");
+				throw Object.assign(new Error("Request failed"), {
+					error: errData?.error,
+				});
 			}
 
 			const newConversationId = res.headers.get("X-Conversation-Id");
@@ -603,8 +605,12 @@ export default function AiChat() {
 			mutateConversationList();
 		} catch (err: unknown) {
 			if (err instanceof Error && err.name === "AbortError") return;
-			toast.error("Failed to get response from AI");
-			setMessages((prev) => prev.filter((m) => m.id !== assistantMessage.id));
+			toast.error(getErrorMessage(err, "Failed to get response from AI"));
+			setMessages((prev) =>
+				prev.filter(
+					(m) => m.id !== assistantMessage.id && m.id !== userMessage.id,
+				),
+			);
 		} finally {
 			setIsStreaming(false);
 			abortRef.current = null;

@@ -14,6 +14,7 @@ import {
 	requireSession,
 } from "@/lib/api-utils";
 import { streamChatText } from "@/lib/azure-ai";
+import { assertAiMessageAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────
 // Streams a chat completion from Azure OpenAI and persists the turn.
@@ -72,6 +73,8 @@ export async function POST(req: NextRequest) {
 				{ status: 400 },
 			);
 		}
+
+		await assertAiMessageAllowed(profile.id);
 
 		// Resolve / create conversation
 		if (conversationId) {

@@ -22,6 +22,8 @@ type SubscriptionResponse = {
 	usage?: {
 		aiBookingPatients: number;
 		whatsappSendsThisMonth: number;
+		recordingsThisMonth: number;
+		aiMessagesThisMonth: number;
 	};
 	usagePeriod?: {
 		start: string;
@@ -110,8 +112,12 @@ export default function SubscriptionPanel() {
 
 	const aiLimit = subscription?.limits?.aiBookingPatients;
 	const waLimit = subscription?.limits?.whatsappSendsPerMonth;
+	const recordingsLimit = subscription?.limits?.recordingsPerMonth;
+	const aiMessagesLimit = subscription?.limits?.aiMessagesPerMonth;
 	const aiUsed = subscription?.usage?.aiBookingPatients ?? 0;
 	const waUsed = subscription?.usage?.whatsappSendsThisMonth ?? 0;
+	const recordingsUsed = subscription?.usage?.recordingsThisMonth ?? 0;
+	const aiMessagesUsed = subscription?.usage?.aiMessagesThisMonth ?? 0;
 
 	return (
 		<div className="space-y-10">
@@ -192,6 +198,16 @@ export default function SubscriptionPanel() {
 							label="WhatsApp sends"
 							used={waUsed}
 							limit={waLimit ?? null}
+						/>
+						<UsageMeter
+							label="Conversation recordings"
+							used={recordingsUsed}
+							limit={recordingsLimit ?? null}
+						/>
+						<UsageMeter
+							label="AI assistant messages"
+							used={aiMessagesUsed}
+							limit={aiMessagesLimit ?? null}
 						/>
 					</div>
 				</section>

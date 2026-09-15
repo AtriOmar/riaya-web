@@ -29,10 +29,12 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 | Price | ${FREE.priceTnd} TND / month | ${PRO.priceTnd} TND / month |
 | AI phone booking | ${formatLimit(FREE.limits.aiBookingPatients, "distinct patient phones / UTC calendar month")} | ${formatLimit(PRO.limits.aiBookingPatients, "AI phone bookings")} |
 | WhatsApp sends | ${formatLimit(FREE.limits.whatsappSendsPerMonth, "sends / UTC calendar month")} | ${formatLimit(PRO.limits.whatsappSendsPerMonth, "WhatsApp sends")} |
+| Conversation recordings | ${formatLimit(FREE.limits.recordingsPerMonth, "recordings / UTC calendar month")} | ${formatLimit(PRO.limits.recordingsPerMonth, "conversation recordings")} |
+| AI assistant messages | ${formatLimit(FREE.limits.aiMessagesPerMonth, "user messages / UTC calendar month")} | ${formatLimit(PRO.limits.aiMessagesPerMonth, "AI assistant messages")} |
 
-**Free includes:** patient records & appointments; availability & calendar; invoices; medical files; AI phone booking up to ${FREE.limits.aiBookingPatients} patients/month; ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month.
+**Free includes:** patient records & appointments; availability & calendar; invoices; medical files; AI phone booking up to ${FREE.limits.aiBookingPatients} patients/month; ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month; ${FREE.limits.recordingsPerMonth} conversation recordings/month; ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month.
 
-**Pro includes:** everything in Free + unlimited AI phone booking + unlimited WhatsApp sends + priority support.
+**Pro includes:** everything in Free + unlimited AI phone booking + unlimited WhatsApp sends + unlimited conversation recordings + unlimited AI assistant messages + priority support.
 
 **How AI booking limit is counted (Free):**
 - Counts **distinct phone numbers** that booked via AI (\`source = ai\`) in the **current UTC calendar month**.
@@ -47,6 +49,16 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - Medical file text-only / invoice PDF send: **1** send each.
 - Appointment confirmation WhatsApp also counts as **1** send (confirm still succeeds if WhatsApp fails/limit).
 - Usage resets at the UTC month boundary. Check remaining usage on **Subscription** or the home Dashboard meters.
+
+**How conversation recording limit is counted (Free):**
+- Each **saved** consultation recording counts as **1** toward the current UTC calendar month.
+- When the limit is hit, saving a new recording is rejected until next UTC month or upgrade to Pro.
+- Transcribing an existing recording does **not** consume another recording slot.
+
+**How AI assistant message limit is counted (Free):**
+- Each **user** message sent in the AI assistant counts as **1** toward the current UTC calendar month (across all conversations).
+- Assistant replies do **not** count toward the limit.
+- When the limit is hit, new messages are rejected until next UTC month or upgrade to Pro.
 
 **Effective plan:** Past-due / expired Pro behaves as Free limits until payment renews Pro.
 
@@ -137,6 +149,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ### Recordings (/dashboard/recordings)
 - List on the left; open a recording or create a new one in the right panel (same sheet).
 - New recording: Recordings → New Recording (or \`?new=1\`), then title, optional patient, record in-browser, save.
+- Free plan: up to ${FREE.limits.recordingsPerMonth} saved recordings per UTC calendar month (enforced on save).
 - Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; Transcribe; Ask AI / Chat with AI when transcript is done.
 - Patient detail also lists that patient’s recordings (links into the same panel via \`?id=\`).
 
@@ -146,6 +159,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 - Medical Q&A and consultation review with optional imported transcripts.
 - Import only recordings that already have a **completed** transcript.
 - Conversations persist; browse past chats; start new chat. Saved automatically.
+- Free plan: up to ${FREE.limits.aiMessagesPerMonth} user messages per UTC calendar month (enforced on send).
 
 ---
 
@@ -219,7 +233,7 @@ export function buildAssistantInstructions(transcriptContext?: string): string {
 
 ## Product / dashboard help
 - You know the Riaya doctor dashboard guide below. When doctors ask "can I…?", "how do I…?", or about plans/limits, answer from that guide with **exact steps**, menu names, paths, and **exact numbers** (do not round or invent limits).
-- Quote Free vs Pro limits accurately: Free = ${FREE.limits.aiBookingPatients} AI booking phones/month and ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month (UTC); Pro = unlimited for both at ${PRO.priceTnd} TND/month.
+- Quote Free vs Pro limits accurately: Free = ${FREE.limits.aiBookingPatients} AI booking phones/month, ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month, ${FREE.limits.recordingsPerMonth} conversation recordings/month, and ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month (UTC); Pro = unlimited for all four at ${PRO.priceTnd} TND/month.
 - If they ask about something Riaya cannot do, say so clearly and suggest the closest available workflow.
 
 ${buildDashboardFeaturesGuide()}

@@ -2,11 +2,16 @@ import { isAxiosError } from "axios";
 import type { ErrorCode } from "@/lib/errors";
 import { errors } from "@/lib/errors";
 
-/** Extract the API error code from an axios error response. */
+/** Extract the API error code from an axios / fetch-style error payload. */
 export function getApiErrorCode(error: unknown): ErrorCode | null {
 	if (isAxiosError(error)) {
 		const code = error.response?.data?.error;
 		if (code && code in errors) return code as ErrorCode;
+		return null;
+	}
+	if (error && typeof error === "object" && "error" in error) {
+		const code = (error as { error?: unknown }).error;
+		if (typeof code === "string" && code in errors) return code as ErrorCode;
 	}
 	return null;
 }
@@ -53,6 +58,10 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"Monthly AI booking limit reached for this practice. It resets next calendar month, or upgrade to Pro for unlimited bookings.",
 	WHATSAPP_LIMIT_REACHED:
 		"Monthly WhatsApp send limit reached. It resets next calendar month, or upgrade to Pro for unlimited sends.",
+	RECORDING_LIMIT_REACHED:
+		"Monthly conversation recording limit reached. It resets next calendar month, or upgrade to Pro for unlimited recordings.",
+	AI_MESSAGE_LIMIT_REACHED:
+		"Monthly AI assistant message limit reached. It resets next calendar month, or upgrade to Pro for unlimited messages.",
 	APPOINTMENT_NOT_CANCELLABLE:
 		"This appointment cannot be cancelled by phone. Contact the doctor's office if it is already confirmed.",
 	CALLER_PHONE_REQUIRED: "Caller phone number is required for this action.",
