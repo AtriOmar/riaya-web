@@ -170,29 +170,38 @@ function RecordingCard({
 			<audio src={recording.audioUrl} controls className="w-full h-8" />
 
 			{/* Transcript preview */}
-			{recording.transcriptStatus === "done" && recording.transcript && (
-				<div className="space-y-2">
-					<button
-						type="button"
-						className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
-						onClick={() => setTranscriptExpanded((v) => !v)}
-					>
-						{transcriptExpanded ? (
-							<ChevronUp className="size-3" />
-						) : (
-							<ChevronDown className="size-3" />
+			{recording.transcriptStatus === "done" &&
+				Boolean(recording.transcript) && (
+					<div className="space-y-2">
+						<button
+							type="button"
+							className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
+							onClick={() => setTranscriptExpanded((v) => !v)}
+						>
+							{transcriptExpanded ? (
+								<ChevronUp className="size-3" />
+							) : (
+								<ChevronDown className="size-3" />
+							)}
+							{transcriptExpanded ? "Hide transcript" : "Show transcript"}
+						</button>
+						{transcriptExpanded && (
+							<div className="rounded-lg bg-muted/50 p-3">
+								<p className="whitespace-pre-wrap text-sm leading-relaxed">
+									{typeof recording.transcript === "string"
+										? recording.transcript
+										: (recording.transcript as any)?.segments
+											? (recording.transcript as any).segments
+													.map(
+														(s: any) => `${s.speaker || "Speaker"}: ${s.text}`,
+													)
+													.join("\n")
+											: JSON.stringify(recording.transcript, null, 2)}
+								</p>
+							</div>
 						)}
-						{transcriptExpanded ? "Hide transcript" : "Show transcript"}
-					</button>
-					{transcriptExpanded && (
-						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="whitespace-pre-wrap text-sm leading-relaxed">
-								{recording.transcript}
-							</p>
-						</div>
-					)}
-				</div>
-			)}
+					</div>
+				)}
 		</div>
 	);
 }

@@ -186,7 +186,7 @@ export const useGetApiAiChatConversationsId = <TError = unknown>(
 	};
 };
 /**
- * @summary Rename AI chat conversation
+ * @summary Update AI chat conversation (title and/or recording link)
  */
 export const patchApiAiChatConversationsId = (
 	id: string,
@@ -223,7 +223,7 @@ export type PatchApiAiChatConversationsIdMutationResult = NonNullable<
 >;
 
 /**
- * @summary Rename AI chat conversation
+ * @summary Update AI chat conversation (title and/or recording link)
  */
 export const usePatchApiAiChatConversationsId = <TError = unknown>(
 	id: string,

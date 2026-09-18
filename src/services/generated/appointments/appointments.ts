@@ -20,6 +20,8 @@ import type {
 	PostApiAppointmentsBody,
 	PostApiAppointmentsExternal201,
 	PostApiAppointmentsExternalBody,
+	PostApiAppointmentsExternalEmergency201,
+	PostApiAppointmentsExternalEmergencyBody,
 	PutApiAppointments200,
 	PutApiAppointmentsBody,
 } from "../api.schemas";
@@ -303,6 +305,70 @@ export const usePostApiAppointmentsExternal = <TError = unknown>(options?: {
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiAppointmentsExternalMutationKey();
 	const swrFn = getPostApiAppointmentsExternalMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Book urgent emergency appointments (fan-out to top doctors)
+ */
+export const postApiAppointmentsExternalEmergency = (
+	postApiAppointmentsExternalEmergencyBody?: PostApiAppointmentsExternalEmergencyBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiAppointmentsExternalEmergency201>(
+		{
+			url: `/api/appointments/external/emergency`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiAppointmentsExternalEmergencyBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiAppointmentsExternalEmergencyMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiAppointmentsExternalEmergencyBody | undefined },
+	) => {
+		return postApiAppointmentsExternalEmergency(arg, options);
+	};
+};
+export const getPostApiAppointmentsExternalEmergencyMutationKey = () =>
+	[`/api/appointments/external/emergency`] as const;
+
+export type PostApiAppointmentsExternalEmergencyMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiAppointmentsExternalEmergency>>
+>;
+
+/**
+ * @summary Book urgent emergency appointments (fan-out to top doctors)
+ */
+export const usePostApiAppointmentsExternalEmergency = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiAppointmentsExternalEmergency>>,
+		TError,
+		Key,
+		PostApiAppointmentsExternalEmergencyBody | undefined,
+		Awaited<ReturnType<typeof postApiAppointmentsExternalEmergency>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiAppointmentsExternalEmergencyMutationKey();
+	const swrFn =
+		getPostApiAppointmentsExternalEmergencyMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

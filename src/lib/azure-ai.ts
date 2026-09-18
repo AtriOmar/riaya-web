@@ -12,16 +12,16 @@
  *   AZURE_TRANSCRIBE_ENDPOINT, AZURE_TRANSCRIBE_API_KEY, AZURE_TRANSCRIBE_DEPLOYMENT
  */
 
-import OpenAI, { AzureOpenAI } from "openai";
+import OpenAI from "openai";
 
 export const CHAT_DEPLOYMENT =
 	process.env.AZURE_OPENAI_CHAT_DEPLOYMENT ?? "gpt-5-mini";
 
-const TRANSCRIBE_DEPLOYMENT =
-	process.env.AZURE_TRANSCRIBE_DEPLOYMENT ?? "gpt-transcribe";
+// const TRANSCRIBE_DEPLOYMENT =
+// 	process.env.AZURE_TRANSCRIBE_DEPLOYMENT ?? "gpt-transcribe";
 
-const TRANSCRIBE_API_VERSION =
-	process.env.AZURE_TRANSCRIBE_API_VERSION ?? "2025-03-01-preview";
+// const TRANSCRIBE_API_VERSION =
+// 	process.env.AZURE_TRANSCRIBE_API_VERSION ?? "2025-03-01-preview";
 
 /**
  * Foundry / OpenAI v1 base URL for the Responses API.
@@ -93,43 +93,51 @@ export async function* streamChatText(options: {
 	}
 }
 
-function createAzureTranscribeClient(): AzureOpenAI {
-	const endpoint = process.env.AZURE_TRANSCRIBE_ENDPOINT;
-	const apiKey = process.env.AZURE_TRANSCRIBE_API_KEY;
-
-	if (!endpoint || !apiKey) {
-		throw new Error(
-			"Missing Azure transcription configuration. Set AZURE_TRANSCRIBE_ENDPOINT and AZURE_TRANSCRIBE_API_KEY.",
-		);
-	}
-
-	return new AzureOpenAI({
-		endpoint,
-		apiKey,
-		apiVersion: TRANSCRIBE_API_VERSION,
-	});
-}
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/audio/transcriptions";
 
 /**
- * Transcribe a consultation recording with Azure OpenAI gpt-transcribe.
+ * Transcribe a consultation recording with OpenRouter microsoft/mai-transcribe-2.
  * Routes call only this — swap the implementation here if you change models.
  */
 export async function transcribeAudio(
 	audio: Blob,
 	filename: string,
-): Promise<string> {
-	const client = createAzureTranscribeClient();
-	const file = new File([audio], filename, {
-		type: audio.type || "audio/webm",
+): Promise<any> {
+	const apiKey = process.env.OPENROUTER_API_KEY;
+	if (!apiKey) {
+		throw new Error("Missing OPENROUTER_API_KEY in environment variables.");
+	}
+
+	const formData = new FormData();
+	formData.append(
+		"file",
+		new File([audio], filename, { type: audio.type || "audio/webm" }),
+	);
+	formData.append("model", "microsoft/mai-transcribe-2");
+	formData.append("response_format", "verbose_json");
+
+	// Add custom provider options for diarization
+	const providerOptions = {
+		azure: {
+			diarization: { enabled: true },
+		},
+	};
+	formData.append("provider", JSON.stringify(providerOptions));
+
+	const response = await fetch(OPENROUTER_ENDPOINT, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+		},
+		body: formData,
 	});
 
-	const result = (await client.audio.transcriptions.create({
-		model: TRANSCRIBE_DEPLOYMENT,
-		file,
-		response_format: "text",
-	})) as unknown;
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(
+			`OpenRouter transcription failed: ${response.status} ${errorText}`,
+		);
+	}
 
-	return typeof result === "string"
-		? result
-		: (result as { text: string }).text;
+	return response.json();
 }

@@ -249,7 +249,7 @@ export const usePatchApiRecordingsId = <TError = unknown>(
 	};
 };
 /**
- * @summary Transcribe recording with Azure Whisper
+ * @summary Transcribe recording
  */
 export const postApiRecordingsIdTranscribe = (
 	id: string,
@@ -277,7 +277,7 @@ export type PostApiRecordingsIdTranscribeMutationResult = NonNullable<
 >;
 
 /**
- * @summary Transcribe recording with Azure Whisper
+ * @summary Transcribe recording
  */
 export const usePostApiRecordingsIdTranscribe = <TError = unknown>(
 	id: string,

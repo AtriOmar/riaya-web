@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 "use client";
 
 import {
@@ -64,7 +66,7 @@ function PatientCombobox({
 					variant="outline"
 					role="combobox"
 					aria-expanded={open}
-					className="w-full justify-between"
+					className="justify-between w-full"
 				>
 					<span className="flex items-center gap-2">
 						<User className="size-4 text-muted-foreground" />
@@ -75,20 +77,20 @@ function PatientCombobox({
 					</span>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-72 p-0" align="start">
-				<div className="border-b p-2">
+			<PopoverContent className="p-0 w-72" align="start">
+				<div className="p-2 border-b">
 					<Input
 						placeholder="Search by name or CIN…"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="h-8 border-0 shadow-none focus-visible:ring-0"
+						className="shadow-none border-0 focus-visible:ring-0 h-8"
 					/>
 				</div>
-				<div className="max-h-56 overflow-y-auto py-1">
+				<div className="py-1 max-h-56 overflow-y-auto">
 					{selected && (
 						<button
 							type="button"
-							className="flex w-full items-center gap-2 px-3 py-2 text-muted-foreground text-sm hover:bg-accent"
+							className="flex items-center gap-2 hover:bg-accent px-3 py-2 w-full text-muted-foreground text-sm"
 							onClick={() => {
 								onSelect(null);
 								setOpen(false);
@@ -98,7 +100,7 @@ function PatientCombobox({
 						</button>
 					)}
 					{filtered.length === 0 && (
-						<p className="px-3 py-4 text-center text-muted-foreground text-sm">
+						<p className="px-3 py-4 text-muted-foreground text-sm text-center">
 							No patients found
 						</p>
 					)}
@@ -109,7 +111,7 @@ function PatientCombobox({
 							<button
 								key={p.id}
 								type="button"
-								className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+								className="flex items-center gap-2 hover:bg-accent px-3 py-2 w-full text-sm"
 								onClick={() => {
 									onSelect(p);
 									setOpen(false);
@@ -117,9 +119,9 @@ function PatientCombobox({
 								}}
 							>
 								{selected?.id === p.id && (
-									<Check className="size-4 shrink-0 text-primary" />
+									<Check className="size-4 text-primary shrink-0" />
 								)}
-								<span className="ml-auto flex-1 text-left">{name}</span>
+								<span className="flex-1 ml-auto text-left">{name}</span>
 								{p.cin && (
 									<span className="text-muted-foreground text-xs">{p.cin}</span>
 								)}
@@ -170,7 +172,7 @@ export default function RecordingDetail({
 	if (isLoading) {
 		return (
 			<div className="flex justify-center py-16">
-				<Loader2 className="size-8 animate-spin text-muted-foreground" />
+				<Loader2 className="size-8 text-muted-foreground animate-spin" />
 			</div>
 		);
 	}
@@ -230,11 +232,11 @@ export default function RecordingDetail({
 	};
 
 	return (
-		<div className="space-y-6 px-4 pb-6 sm:px-6">
+		<div className="space-y-6 px-4 sm:px-6 pb-6">
 			{!onClose && (
 				<Button
 					variant="ghost"
-					className="-ml-2 gap-1.5 text-muted-foreground"
+					className="gap-1.5 -ml-2 text-muted-foreground"
 					onClick={goBack}
 				>
 					<ChevronLeft className="size-4" />
@@ -243,7 +245,7 @@ export default function RecordingDetail({
 			)}
 
 			{/* Header card */}
-			<div className="space-y-4 rounded-xl border bg-card p-6">
+			<div className="space-y-4 bg-card p-6 border rounded-xl">
 				{/* Title */}
 				<div>
 					{isEditingTitle ? (
@@ -280,7 +282,7 @@ export default function RecordingDetail({
 							</h2>
 							<button
 								type="button"
-								className="mt-1 opacity-0 transition-opacity group-hover:opacity-100"
+								className="opacity-0 group-hover:opacity-100 mt-1 transition-opacity"
 								onClick={() => {
 									setTitleDraft(recording.title ?? "");
 									setIsEditingTitle(true);
@@ -376,15 +378,15 @@ export default function RecordingDetail({
 			</div>
 
 			{/* Audio player */}
-			<div className="rounded-xl border bg-card p-6 space-y-3">
+			<div className="space-y-3 bg-card p-6 border rounded-xl">
 				<h3 className="font-medium">Audio</h3>
 				{/* biome-ignore lint/a11y/useMediaCaption: doctor-recorded audio */}
 				<audio src={recording.audioUrl} controls className="w-full" />
 			</div>
 
 			{/* Transcript */}
-			<div className="rounded-xl border bg-card p-6 space-y-4">
-				<div className="flex items-center justify-between">
+			<div className="space-y-4 bg-card p-6 border rounded-xl">
+				<div className="flex justify-between items-center">
 					<h3 className="font-medium">Transcript</h3>
 					<div className="flex items-center gap-2">
 						{recording.transcriptStatus === "done" && (
@@ -427,29 +429,77 @@ export default function RecordingDetail({
 				)}
 
 				{recording.transcriptStatus === "error" && (
-					<p className="text-red-600 text-sm dark:text-red-400">
+					<p className="text-red-600 dark:text-red-400 text-sm">
 						Transcription failed. Please try again.
 					</p>
 				)}
 
-				{recording.transcriptStatus === "done" && recording.transcript && (
-					<div className="space-y-2">
-						<button
-							type="button"
-							className="text-muted-foreground text-xs hover:text-foreground"
-							onClick={() => setTranscriptExpanded((v) => !v)}
-						>
-							{transcriptExpanded ? "Collapse" : "Expand"}
-						</button>
-						{transcriptExpanded && (
-							<Textarea
-								readOnly
-								value={recording.transcript}
-								className="min-h-[200px] resize-y font-mono text-sm leading-relaxed"
-							/>
-						)}
-					</div>
-				)}
+				{recording.transcriptStatus === "done" &&
+					Boolean(recording.transcript) && (
+						<div className="space-y-2">
+							<button
+								type="button"
+								className="text-muted-foreground hover:text-foreground text-xs"
+								onClick={() => setTranscriptExpanded((v) => !v)}
+							>
+								{transcriptExpanded ? "Collapse" : "Expand"}
+							</button>
+							{transcriptExpanded &&
+								(() => {
+									const data = recording.transcript as any;
+									const isStructured =
+										data &&
+										typeof data === "object" &&
+										Array.isArray(data.segments);
+									if (isStructured) {
+										return (
+											<div className="space-y-4 bg-muted/30 p-4 pr-2 border rounded-md max-h-[400px] overflow-y-auto">
+												{data.segments.map((segment: any, idx: number) => (
+													<div key={idx} className="group flex gap-4">
+														<button
+															type="button"
+															onClick={() => {
+																const audioEl = document.querySelector("audio");
+																if (audioEl) {
+																	audioEl.currentTime = segment.start;
+																	audioEl.play();
+																}
+															}}
+															className="mt-1 font-mono text-primary text-xs hover:underline shrink-0"
+														>
+															{Math.floor(segment.start / 60)}:
+															{Math.floor(segment.start % 60)
+																.toString()
+																.padStart(2, "0")}
+														</button>
+														<div>
+															<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+																{segment.speaker || "Speaker"}
+															</span>
+															<p className="mt-0.5 text-sm leading-relaxed">
+																{segment.text}
+															</p>
+														</div>
+													</div>
+												))}
+											</div>
+										);
+									}
+									// Legacy or plain text
+									const textValue =
+										typeof data === "string"
+											? data
+											: JSON.stringify(data, null, 2);
+									return (
+										<Textarea
+											readOnly
+											value={textValue}
+											className="min-h-[200px] font-mono text-sm leading-relaxed resize-y"
+										/>
+									);
+								})()}
+						</div>
+					)}
 			</div>
 		</div>
 	);

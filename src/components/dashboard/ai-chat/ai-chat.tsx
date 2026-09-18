@@ -105,7 +105,10 @@ function ImportTranscriptDialog({
 										onImport({
 											recordingId: r.id,
 											title: r.title ?? "Untitled",
-											text: r.transcript ?? "",
+											text:
+												typeof r.transcript === "string"
+													? r.transcript
+													: JSON.stringify(r.transcript, null, 2),
 										});
 										setOpen(false);
 									}}
@@ -119,9 +122,11 @@ function ImportTranscriptDialog({
 											</span>
 										)}
 									</div>
-									{r.transcript && (
+									{Boolean(r.transcript) && (
 										<p className="mt-1.5 line-clamp-2 text-muted-foreground text-xs">
-											{r.transcript}
+											{typeof r.transcript === "string"
+												? r.transcript
+												: JSON.stringify(r.transcript)}
 										</p>
 									)}
 								</button>
@@ -185,7 +190,9 @@ function ContextCard({
 			{expanded && (
 				<div className="mt-2 max-h-40 overflow-y-auto rounded bg-white/60 p-2 dark:bg-blue-950/30">
 					<p className="whitespace-pre-wrap text-xs leading-relaxed">
-						{context.text}
+						{typeof context.text === "string"
+							? context.text
+							: JSON.stringify(context.text, null, 2)}
 					</p>
 				</div>
 			)}
@@ -424,7 +431,10 @@ export default function AiChat() {
 			setTranscriptContext({
 				recordingId: found.id,
 				title: found.title ?? "Untitled",
-				text: found.transcript ?? "",
+				text:
+					typeof found.transcript === "string"
+						? found.transcript
+						: JSON.stringify(found.transcript, null, 2),
 			});
 		}
 	}, [preloadRecordingId, recordings, conversationId]);
@@ -456,7 +466,10 @@ export default function AiChat() {
 			setTranscriptContext({
 				recordingId: conversationDetail.recording.id,
 				title: conversationDetail.recording.title ?? "Untitled",
-				text: conversationDetail.recording.transcript,
+				text:
+					typeof conversationDetail.recording.transcript === "string"
+						? conversationDetail.recording.transcript
+						: JSON.stringify(conversationDetail.recording.transcript, null, 2),
 			});
 		} else {
 			setTranscriptContext(null);

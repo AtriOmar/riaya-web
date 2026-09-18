@@ -246,12 +246,19 @@ ${buildDashboardFeaturesGuide()}
 `,
 	];
 
-	if (transcriptContext?.trim()) {
-		parts.push(`## Imported consultation transcript
+	if (transcriptContext) {
+		const formattedContext =
+			typeof transcriptContext === "string"
+				? transcriptContext.trim()
+				: JSON.stringify(transcriptContext, null, 2);
+
+		if (formattedContext) {
+			parts.push(`## Imported consultation transcript
 The doctor imported the following transcript as context for this conversation. Treat it as the primary source for patient-specific questions:
 
-${transcriptContext.trim()}
+${formattedContext}
 `);
+		}
 	}
 
 	return parts.join("\n").trim();
