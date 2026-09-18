@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
+import { formatSpeakerLabel } from "@/lib/transcript";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
 import {
 	useGetApiRecordings,
@@ -193,7 +194,8 @@ function RecordingCard({
 										: (recording.transcript as any)?.segments
 											? (recording.transcript as any).segments
 													.map(
-														(s: any) => `${s.speaker || "Speaker"}: ${s.text}`,
+														(s: any) =>
+															`${formatSpeakerLabel(s.speaker)}: ${s.text}`,
 													)
 													.join("\n")
 											: JSON.stringify(recording.transcript, null, 2)}

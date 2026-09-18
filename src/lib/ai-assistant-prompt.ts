@@ -156,8 +156,8 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ---
 
 ### AI Assistant (/dashboard/ai-chat) — this chat
-- Medical Q&A and consultation review with optional imported transcripts.
-- Import only recordings that already have a **completed** transcript.
+- Medical Q&A and consultation review with optional attached transcripts.
+- Attach only recordings that already have a **completed** transcript.
 - Conversations persist; browse past chats; start new chat. Saved automatically.
 - Free plan: up to ${FREE.limits.aiMessagesPerMonth} user messages per UTC calendar month (enforced on send).
 
@@ -253,8 +253,8 @@ ${buildDashboardFeaturesGuide()}
 				: JSON.stringify(transcriptContext, null, 2);
 
 		if (formattedContext) {
-			parts.push(`## Imported consultation transcript
-The doctor imported the following transcript as context for this conversation. Treat it as the primary source for patient-specific questions:
+			parts.push(`## Attached consultation transcript
+The doctor attached the following transcript as context for this conversation. Treat it as the primary source for patient-specific questions:
 
 ${formattedContext}
 `);

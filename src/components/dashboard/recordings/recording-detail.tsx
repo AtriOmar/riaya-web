@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handling";
+import { formatSpeakerLabel } from "@/lib/transcript";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
 import {
@@ -194,9 +195,7 @@ export default function RecordingDetail({
 			? `${recording.patient.firstName ?? ""} ${recording.patient.lastName ?? ""}`.trim()
 			: null;
 
-	const canTranscribe =
-		recording.transcriptStatus === "pending" ||
-		recording.transcriptStatus === "error";
+	const canTranscribe = recording.transcriptStatus !== "processing";
 
 	const handleTranscribe = async () => {
 		try {
@@ -409,7 +408,11 @@ export default function RecordingDetail({
 								) : (
 									<RefreshCw className="size-3.5" />
 								)}
-								{isTranscribing ? "Transcribing…" : "Generate Transcript"}
+								{isTranscribing
+									? "Transcribing…"
+									: recording.transcriptStatus === "done"
+										? "Regenerate"
+										: "Generate Transcript"}
 							</Button>
 						)}
 					</div>
@@ -453,54 +456,38 @@ export default function RecordingDetail({
 										Array.isArray(data.segments);
 									if (isStructured) {
 										return (
-											<div className="space-y-4 bg-muted/30 p-4 pr-2 border rounded-md max-h-[400px] overflow-y-auto">
+											<div className="space-y-1 bg-muted/30 p-4 pr-2 border rounded-md max-h-[400px] overflow-y-auto">
 												{data.segments.map((segment: any, idx: number) => (
-													<div key={idx} className="group flex gap-4">
-														<button
-															type="button"
-															onClick={() => {
-																const audioEl = document.querySelector("audio");
-																if (audioEl) {
-																	audioEl.currentTime = segment.start;
-																	audioEl.play();
-																}
-															}}
-															className="mt-1 font-mono text-primary text-xs hover:underline shrink-0"
-														>
+													<button
+														key={idx}
+														type="button"
+														onClick={() => {
+															const audioEl = document.querySelector("audio");
+															if (audioEl) {
+																audioEl.currentTime = segment.start;
+																audioEl.play();
+															}
+														}}
+														className="group flex gap-4 hover:bg-muted -mx-2 px-2 py-2 rounded-md w-full text-left transition-colors cursor-pointer"
+													>
+														<span className="mt-1 font-mono text-primary text-xs shrink-0">
 															{Math.floor(segment.start / 60)}:
 															{Math.floor(segment.start % 60)
 																.toString()
 																.padStart(2, "0")}
-														</button>
+														</span>
 														<div>
 															<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-																{segment.speaker || "Speaker"}
+																{formatSpeakerLabel(segment.speaker)}
 															</span>
 															<p className="mt-0.5 text-sm leading-relaxed">
-																{segment.words
-																	? segment.words.map(
-																			(w: any, wIdx: number) => (
-																				// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-																				<span
-																					key={wIdx}
-																					className="hover:bg-primary/20 px-0.5 rounded transition-colors cursor-pointer"
-																					onClick={() => {
-																						const audioEl =
-																							document.querySelector("audio");
-																						if (audioEl) {
-																							audioEl.currentTime = w.start;
-																							audioEl.play();
-																						}
-																					}}
-																				>
-																					{w.word}{" "}
-																				</span>
-																			),
-																		)
-																	: segment.text}
+																{segment.text ||
+																	segment.words
+																		?.map((w: any) => w.word)
+																		.join(" ")}
 															</p>
 														</div>
-													</div>
+													</button>
 												))}
 											</div>
 										);

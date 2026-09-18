@@ -37,8 +37,6 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 			);
 
 		if (!recording) return apiError("RECORDING_NOT_FOUND");
-		if (recording.transcriptStatus === "done")
-			return apiError("TRANSCRIPT_ALREADY_DONE");
 
 		// Mark as processing
 		await db
