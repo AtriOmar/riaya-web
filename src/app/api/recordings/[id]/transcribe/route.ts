@@ -56,8 +56,15 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 			return apiError("TRANSCRIPTION_FAILED");
 		}
 
-		const audioBlob = await audioResponse.blob();
-		const filename = `recording-${recordingId}.webm`;
+		const arrayBuffer = await audioResponse.arrayBuffer();
+		// Use arrayBuffer directly to avoid Node.js nested-Blob serialization issues
+		const contentType = audioResponse.headers.get("content-type") ?? "";
+		const audioMime = contentType.startsWith("audio/")
+			? contentType
+			: "audio/webm";
+		const audioBlob = new Blob([arrayBuffer], { type: audioMime });
+		const ext = recording.audioUrl.split(".").pop() ?? "webm";
+		const filename = `recording-${recordingId}.${ext}`;
 
 		let transcript: any;
 		try {

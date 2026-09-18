@@ -477,7 +477,27 @@ export default function RecordingDetail({
 																{segment.speaker || "Speaker"}
 															</span>
 															<p className="mt-0.5 text-sm leading-relaxed">
-																{segment.text}
+																{segment.words
+																	? segment.words.map(
+																			(w: any, wIdx: number) => (
+																				// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+																				<span
+																					key={wIdx}
+																					className="hover:bg-primary/20 px-0.5 rounded transition-colors cursor-pointer"
+																					onClick={() => {
+																						const audioEl =
+																							document.querySelector("audio");
+																						if (audioEl) {
+																							audioEl.currentTime = w.start;
+																							audioEl.play();
+																						}
+																					}}
+																				>
+																					{w.word}{" "}
+																				</span>
+																			),
+																		)
+																	: segment.text}
 															</p>
 														</div>
 													</div>
