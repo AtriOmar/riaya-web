@@ -87,13 +87,13 @@ const TRANSCRIPT_SUGGESTIONS = [
 	},
 ] as const;
 
-// ─── Transcript import dialog ─────────────────────────────────────────────────
+// ─── Attach transcript dialog ─────────────────────────────────────────────────
 
-function ImportTranscriptDialog({
-	onImport,
+function AttachTranscriptDialog({
+	onAttach,
 	children,
 }: {
-	onImport: (ctx: TranscriptContext) => void;
+	onAttach: (ctx: TranscriptContext) => void;
 	children: React.ReactNode;
 }) {
 	const [open, setOpen] = useState(false);
@@ -121,7 +121,7 @@ function ImportTranscriptDialog({
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="gap-0 p-0 sm:max-w-lg">
 				<DialogHeader className="border-b px-5 py-4">
-					<DialogTitle>Import a transcript</DialogTitle>
+					<DialogTitle>Attach a transcript</DialogTitle>
 					<DialogDescription>
 						Attach a transcribed recording as context for this conversation.
 					</DialogDescription>
@@ -165,7 +165,7 @@ function ImportTranscriptDialog({
 										type="button"
 										className="w-full rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-primary/30 hover:bg-accent/60"
 										onClick={() => {
-											onImport(transcriptContextFromRecording(r));
+											onAttach(transcriptContextFromRecording(r));
 											setOpen(false);
 											setSearch("");
 										}}
@@ -596,7 +596,7 @@ export default function AiChat() {
 		}
 	}, [messages]);
 
-	const importTranscript = useCallback((ctx: TranscriptContext) => {
+	const attachTranscript = useCallback((ctx: TranscriptContext) => {
 		userDismissedContextRef.current = false;
 		setTranscriptContext(ctx);
 		textareaRef.current?.focus();
@@ -920,7 +920,7 @@ export default function AiChat() {
 								rows={1}
 							/>
 							<div className="flex items-center justify-between gap-2 px-2 pb-2">
-								<ImportTranscriptDialog onImport={importTranscript}>
+								<AttachTranscriptDialog onAttach={attachTranscript}>
 									<Button
 										type="button"
 										variant="ghost"
@@ -933,16 +933,16 @@ export default function AiChat() {
 										disabled={isStreaming}
 										aria-label={
 											transcriptContext
-												? "Replace transcript"
-												: "Import transcript"
+												? "Replace attached transcript"
+												: "Attach transcript"
 										}
 									>
 										<Paperclip className="size-4" />
 										<span className="hidden sm:inline">
-											{transcriptContext ? "Replace" : "Import"}
+											{transcriptContext ? "Replace" : "Attach"}
 										</span>
 									</Button>
-								</ImportTranscriptDialog>
+								</AttachTranscriptDialog>
 
 								<Button
 									type="button"
