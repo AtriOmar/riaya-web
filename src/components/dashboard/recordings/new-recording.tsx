@@ -1,5 +1,7 @@
 "use client";
 
+import { MediaRecorder, register } from "extendable-media-recorder";
+import { connect } from "extendable-media-recorder-wav-encoder";
 import {
 	Check,
 	ChevronLeft,
@@ -28,6 +30,7 @@ import { useGetApiPatients } from "@/services/generated/patients/patients";
 import { usePostApiRecordings } from "@/services/generated/recordings/recordings";
 
 type RecordingState = "idle" | "recording" | "stopped" | "saving";
+let isWavEncoderRegistered = false;
 
 function formatDuration(seconds: number) {
 	const m = Math.floor(seconds / 60);
@@ -159,7 +162,7 @@ export default function NewRecording({
 	// Mic permission
 	const [micError, setMicError] = useState<string | null>(null);
 
-	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const mediaRecorderRef = useRef<any>(null);
 	const chunksRef = useRef<Blob[]>([]);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -177,10 +180,12 @@ export default function NewRecording({
 	const startRecording = useCallback(async () => {
 		setMicError(null);
 		try {
+			if (!isWavEncoderRegistered) {
+				await register(await connect());
+				isWavEncoderRegistered = true;
+			}
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-			const mimeType = MediaRecorder.isTypeSupported("audio/webm")
-				? "audio/webm"
-				: "audio/ogg";
+			const mimeType = "audio/wav";
 			const recorder = new MediaRecorder(stream, { mimeType });
 
 			chunksRef.current = [];
@@ -258,7 +263,7 @@ export default function NewRecording({
 			}
 
 			// 1. Upload audio to R2
-			const ext = audioBlob.type.includes("ogg") ? "ogg" : "webm";
+			const ext = "wav";
 			const filename = `recording-${Date.now()}.${ext}`;
 			const cdnUrl = await uploadBlobToR2(audioBlob, filename, "recordings");
 

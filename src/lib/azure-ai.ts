@@ -17,12 +17,6 @@ import OpenAI from "openai";
 export const CHAT_DEPLOYMENT =
 	process.env.AZURE_OPENAI_CHAT_DEPLOYMENT ?? "gpt-5-mini";
 
-// const TRANSCRIBE_DEPLOYMENT =
-// 	process.env.AZURE_TRANSCRIBE_DEPLOYMENT ?? "gpt-transcribe";
-
-// const TRANSCRIBE_API_VERSION =
-// 	process.env.AZURE_TRANSCRIBE_API_VERSION ?? "2025-03-01-preview";
-
 /**
  * Foundry / OpenAI v1 base URL for the Responses API.
  * Accepts a project root or a full …/responses URL and normalizes to …/openai/v1.
@@ -95,6 +89,26 @@ export async function* streamChatText(options: {
 
 const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/audio/transcriptions";
 
+export type TranscriptSegment = {
+	id: number;
+	start: number;
+	end: number;
+	text: string;
+	speaker?: string;
+	words?: {
+		word: string;
+		start: number;
+		end: number;
+	}[];
+};
+
+export type TranscriptResponse = {
+	text: string;
+	language?: string;
+	duration?: number;
+	segments: TranscriptSegment[];
+};
+
 /**
  * Transcribe a consultation recording with OpenRouter microsoft/mai-transcribe-2.
  * Routes call only this — swap the implementation here if you change models.
@@ -102,34 +116,35 @@ const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/audio/transcriptions";
 export async function transcribeAudio(
 	audio: Blob,
 	filename: string,
-): Promise<any> {
+): Promise<TranscriptResponse> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
 		throw new Error("Missing OPENROUTER_API_KEY in environment variables.");
 	}
 
-	const formData = new FormData();
-	formData.append(
-		"file",
-		new File([audio], filename, { type: audio.type || "audio/webm" }),
-	);
-	formData.append("model", "microsoft/mai-transcribe-2");
-	formData.append("response_format", "verbose_json");
+	// Determine audio format from filename or MIME type
+	const ext = filename.split(".").pop()?.toLowerCase() ?? "webm";
 
-	// Add custom provider options for diarization
-	const providerOptions = {
-		azure: {
-			diarization: { enabled: true },
-		},
-	};
-	formData.append("provider", JSON.stringify(providerOptions));
+	// OpenRouter expects JSON with base64-encoded audio
+	const arrayBuffer = await audio.arrayBuffer();
+	const base64Audio = Buffer.from(arrayBuffer).toString("base64");
 
 	const response = await fetch(OPENROUTER_ENDPOINT, {
 		method: "POST",
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
+			"Content-Type": "application/json",
 		},
-		body: formData,
+		body: JSON.stringify({
+			model: "microsoft/mai-transcribe-2",
+			input_audio: {
+				data: base64Audio,
+				format: ext,
+			},
+			response_format: "verbose_json",
+			timestamp_granularities: ["segment", "word"],
+			diarization: true,
+		}),
 	});
 
 	if (!response.ok) {
