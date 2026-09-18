@@ -1,54 +1,40 @@
 /**
  * AI helpers for the doctor recordings + chat features.
  *
- * Chat (Foundry / Azure OpenAI v1 Responses API):
- *   AZURE_OPENAI_ENDPOINT — e.g.
- *     https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1
- *     or https://<resource>.openai.azure.com/openai/v1
- *   AZURE_OPENAI_API_KEY
- *   AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-5-mini
+ * Chat (OpenRouter chat completions):
+ *   OPENROUTER_API_KEY
+ *   OPENROUTER_CHAT_MODEL=deepseek/deepseek-v4-flash-0731 (optional)
  *
- * Transcription (classic Azure OpenAI deployments API):
- *   AZURE_TRANSCRIBE_ENDPOINT, AZURE_TRANSCRIBE_API_KEY, AZURE_TRANSCRIBE_DEPLOYMENT
+ * Transcription (OpenRouter):
+ *   OPENROUTER_API_KEY
  */
 
 import OpenAI from "openai";
 
-export const CHAT_DEPLOYMENT =
-	process.env.AZURE_OPENAI_CHAT_DEPLOYMENT ?? "gpt-5-mini";
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const OPENROUTER_TRANSCRIBE_ENDPOINT = `${OPENROUTER_BASE_URL}/audio/transcriptions`;
 
-/**
- * Foundry / OpenAI v1 base URL for the Responses API.
- * Accepts a project root or a full …/responses URL and normalizes to …/openai/v1.
- */
-function chatBaseURL(raw: string): string {
-	let url = raw.trim().replace(/\/$/, "");
-	url = url.replace(/\/responses$/i, "");
-	if (!url.includes("/openai/v1")) {
-		url = `${url}/openai/v1`;
+export const CHAT_MODEL =
+	process.env.OPENROUTER_CHAT_MODEL ?? "deepseek/deepseek-v4-flash-0731";
+
+function requireOpenRouterApiKey(): string {
+	const apiKey = process.env.OPENROUTER_API_KEY;
+	if (!apiKey) {
+		throw new Error("Missing OPENROUTER_API_KEY in environment variables.");
 	}
-	return url;
+	return apiKey;
 }
 
 /**
- * OpenAI-compatible client pointed at Foundry / Azure OpenAI v1.
- * Uses the Responses API (not chat.completions).
+ * OpenAI-compatible client pointed at OpenRouter.
  */
 export function createChatClient(): OpenAI {
-	const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-	const apiKey = process.env.AZURE_OPENAI_API_KEY;
-
-	if (!endpoint || !apiKey) {
-		throw new Error(
-			"Missing Azure OpenAI chat configuration. Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.",
-		);
-	}
-
 	return new OpenAI({
-		apiKey,
-		baseURL: chatBaseURL(endpoint),
+		apiKey: requireOpenRouterApiKey(),
+		baseURL: OPENROUTER_BASE_URL,
 		defaultHeaders: {
-			"api-key": apiKey,
+			"HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "https://riaya.app",
+			"X-Title": "Riaya",
 		},
 	});
 }
@@ -59,7 +45,7 @@ export function createAzureOpenAI(): OpenAI {
 }
 
 /**
- * Stream assistant text via the Responses API.
+ * Stream assistant text via OpenRouter chat completions.
  * Yields plain text deltas.
  */
 export async function* streamChatText(options: {
@@ -69,25 +55,21 @@ export async function* streamChatText(options: {
 }): AsyncGenerator<string> {
 	const client = createChatClient();
 
-	const stream = await client.responses.create({
-		model: CHAT_DEPLOYMENT,
-		instructions: options.instructions,
-		input: options.messages.map((m) => ({
-			role: m.role,
-			content: m.content,
-		})),
+	const stream = await client.chat.completions.create({
+		model: CHAT_MODEL,
+		messages: [
+			{ role: "system", content: options.instructions },
+			...options.messages,
+		],
 		stream: true,
-		max_output_tokens: options.maxOutputTokens ?? 2048,
+		max_tokens: options.maxOutputTokens ?? 2048,
 	});
 
-	for await (const event of stream) {
-		if (event.type === "response.output_text.delta" && event.delta) {
-			yield event.delta;
-		}
+	for await (const chunk of stream) {
+		const delta = chunk.choices[0]?.delta?.content;
+		if (delta) yield delta;
 	}
 }
-
-const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/audio/transcriptions";
 
 export type TranscriptSegment = {
 	id: number;
@@ -117,10 +99,7 @@ export async function transcribeAudio(
 	audio: Blob,
 	filename: string,
 ): Promise<TranscriptResponse> {
-	const apiKey = process.env.OPENROUTER_API_KEY;
-	if (!apiKey) {
-		throw new Error("Missing OPENROUTER_API_KEY in environment variables.");
-	}
+	const apiKey = requireOpenRouterApiKey();
 
 	// Determine audio format from filename or MIME type
 	const ext = filename.split(".").pop()?.toLowerCase() ?? "webm";
@@ -129,7 +108,7 @@ export async function transcribeAudio(
 	const arrayBuffer = await audio.arrayBuffer();
 	const base64Audio = Buffer.from(arrayBuffer).toString("base64");
 
-	const response = await fetch(OPENROUTER_ENDPOINT, {
+	const response = await fetch(OPENROUTER_TRANSCRIBE_ENDPOINT, {
 		method: "POST",
 		headers: {
 			Authorization: `Bearer ${apiKey}`,

@@ -17,7 +17,7 @@ import { streamChatText } from "@/lib/azure-ai";
 import { assertAiMessageAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────
-// Streams a chat completion from Azure OpenAI and persists the turn.
+// Streams a chat completion from OpenRouter (DeepSeek) and persists the turn.
 //
 // Body:
 //   messages: ChatMessage[]          — full history including the new user message
