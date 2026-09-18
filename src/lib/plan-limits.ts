@@ -1,9 +1,9 @@
 import { and, eq, gte, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
-	appointment,
 	aiChatConversation,
 	aiChatMessage,
+	appointment,
 	consultationRecording,
 	subscription,
 	whatsappUsage,

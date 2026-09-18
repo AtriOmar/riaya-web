@@ -9,10 +9,86 @@ import type { Key } from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
-import type { PostApiInternalReviewsProcessJobBody } from "../api.schemas";
+import type {
+	PostApiInternalAppointmentsProcessPendingTimeoutBody,
+	PostApiInternalReviewsProcessJobBody,
+} from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Auto-cancel unanswered AI pending appointments (Internal)
+ */
+export const postApiInternalAppointmentsProcessPendingTimeout = (
+	postApiInternalAppointmentsProcessPendingTimeoutBody?: PostApiInternalAppointmentsProcessPendingTimeoutBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<unknown | null>(
+		{
+			url: `/api/internal/appointments/process-pending-timeout`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalAppointmentsProcessPendingTimeoutBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalAppointmentsProcessPendingTimeoutMutationFetcher =
+	(options?: SecondParameter<typeof customInstance>) => {
+		return (
+			_: Key,
+			{
+				arg,
+			}: {
+				arg: PostApiInternalAppointmentsProcessPendingTimeoutBody | undefined;
+			},
+		) => {
+			return postApiInternalAppointmentsProcessPendingTimeout(arg, options);
+		};
+	};
+export const getPostApiInternalAppointmentsProcessPendingTimeoutMutationKey =
+	() => [`/api/internal/appointments/process-pending-timeout`] as const;
+
+export type PostApiInternalAppointmentsProcessPendingTimeoutMutationResult =
+	NonNullable<
+		Awaited<ReturnType<typeof postApiInternalAppointmentsProcessPendingTimeout>>
+	>;
+
+/**
+ * @summary Auto-cancel unanswered AI pending appointments (Internal)
+ */
+export const usePostApiInternalAppointmentsProcessPendingTimeout = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<
+			ReturnType<typeof postApiInternalAppointmentsProcessPendingTimeout>
+		>,
+		TError,
+		Key,
+		PostApiInternalAppointmentsProcessPendingTimeoutBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalAppointmentsProcessPendingTimeout>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ??
+		getPostApiInternalAppointmentsProcessPendingTimeoutMutationKey();
+	const swrFn =
+		getPostApiInternalAppointmentsProcessPendingTimeoutMutationFetcher(
+			requestOptions,
+		);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Process a delayed review job (Internal)
  */

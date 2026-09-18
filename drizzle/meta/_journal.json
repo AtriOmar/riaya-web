@@ -64,6 +64,13 @@
       "when": 1789410000000,
       "tag": "0008_appointment_urgent_emergency",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789715296943,
+      "tag": "0009_convert_transcript_to_jsonb",
+      "breakpoints": true
     }
   ]
 }

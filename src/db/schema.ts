@@ -516,7 +516,7 @@ export const consultationRecording = pgTable(
 		title: varchar("title", { length: 255 }),
 		audioUrl: varchar("audio_url", { length: 1024 }).notNull(),
 		durationSeconds: integer("duration_seconds"),
-		transcript: text("transcript"),
+		transcript: jsonb("transcript"),
 		// pending | processing | done | error
 		transcriptStatus: varchar("transcript_status", { length: 50 })
 			.notNull()

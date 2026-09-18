@@ -59,7 +59,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 		const audioBlob = await audioResponse.blob();
 		const filename = `recording-${recordingId}.webm`;
 
-		let transcript: string;
+		let transcript: any;
 		try {
 			transcript = await transcribeAudio(audioBlob, filename);
 		} catch (err) {

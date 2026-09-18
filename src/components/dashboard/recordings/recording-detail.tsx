@@ -432,24 +432,72 @@ export default function RecordingDetail({
 					</p>
 				)}
 
-				{recording.transcriptStatus === "done" && recording.transcript && (
-					<div className="space-y-2">
-						<button
-							type="button"
-							className="text-muted-foreground text-xs hover:text-foreground"
-							onClick={() => setTranscriptExpanded((v) => !v)}
-						>
-							{transcriptExpanded ? "Collapse" : "Expand"}
-						</button>
-						{transcriptExpanded && (
-							<Textarea
-								readOnly
-								value={recording.transcript}
-								className="min-h-[200px] resize-y font-mono text-sm leading-relaxed"
-							/>
-						)}
-					</div>
-				)}
+				{recording.transcriptStatus === "done" &&
+					Boolean(recording.transcript) && (
+						<div className="space-y-2">
+							<button
+								type="button"
+								className="text-muted-foreground text-xs hover:text-foreground"
+								onClick={() => setTranscriptExpanded((v) => !v)}
+							>
+								{transcriptExpanded ? "Collapse" : "Expand"}
+							</button>
+							{transcriptExpanded &&
+								(() => {
+									const data = recording.transcript as any;
+									const isStructured =
+										data &&
+										typeof data === "object" &&
+										Array.isArray(data.segments);
+									if (isStructured) {
+										return (
+											<div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-muted/30">
+												{data.segments.map((segment: any, idx: number) => (
+													<div key={idx} className="flex gap-4 group">
+														<button
+															type="button"
+															onClick={() => {
+																const audioEl = document.querySelector("audio");
+																if (audioEl) {
+																	audioEl.currentTime = segment.start;
+																	audioEl.play();
+																}
+															}}
+															className="text-primary hover:underline font-mono text-xs shrink-0 mt-1"
+														>
+															{Math.floor(segment.start / 60)}:
+															{Math.floor(segment.start % 60)
+																.toString()
+																.padStart(2, "0")}
+														</button>
+														<div>
+															<span className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+																{segment.speaker || "Speaker"}
+															</span>
+															<p className="text-sm mt-0.5 leading-relaxed">
+																{segment.text}
+															</p>
+														</div>
+													</div>
+												))}
+											</div>
+										);
+									}
+									// Legacy or plain text
+									const textValue =
+										typeof data === "string"
+											? data
+											: JSON.stringify(data, null, 2);
+									return (
+										<Textarea
+											readOnly
+											value={textValue}
+											className="min-h-[200px] resize-y font-mono text-sm leading-relaxed"
+										/>
+									);
+								})()}
+						</div>
+					)}
 			</div>
 		</div>
 	);
