@@ -21,6 +21,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { mutate as mutateSWR } from "swr";
 import ConfirmationDialog from "@/components/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ import { getErrorMessage } from "@/lib/error-handling";
 import { cn } from "@/lib/utils";
 import {
 	deleteApiAiChatConversationsId,
+	getGetApiAiChatConversationsIdKey,
 	useGetApiAiChatConversations,
 	useGetApiAiChatConversationsId,
 } from "@/services/generated/ai-chat/ai-chat";
@@ -483,6 +485,8 @@ export default function AiChat() {
 	const contextSyncedForConversationRef = useRef<number | null>(null);
 	/** User explicitly removed context — do not re-apply from URL or conversation.recording. */
 	const userDismissedContextRef = useRef(false);
+	/** Which conversation id local `messages` were last synced from the server for. */
+	const messagesSyncedForConversationRef = useRef<number | null>(null);
 
 	const { data: recordings = [] } = useGetApiRecordings();
 	const {
@@ -500,6 +504,12 @@ export default function AiChat() {
 		if (!el) return;
 		el.style.height = "0px";
 		el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+	}, []);
+
+	const focusComposer = useCallback(() => {
+		requestAnimationFrame(() => {
+			textareaRef.current?.focus();
+		});
 	}, []);
 
 	useEffect(() => {
@@ -540,13 +550,21 @@ export default function AiChat() {
 		if (!conversationDetail || !conversationId) return;
 		if (isStreaming) return;
 
-		setMessages(
-			(conversationDetail.messages ?? []).map((m) => ({
+		const serverMessages = conversationDetail.messages ?? [];
+		const switchedConversation =
+			messagesSyncedForConversationRef.current !== conversationId;
+
+		setMessages((prev) => {
+			if (!switchedConversation && serverMessages.length < prev.length) {
+				return prev;
+			}
+			return serverMessages.map((m) => ({
 				id: String(m.id),
 				role: m.role as Role,
 				content: m.content,
-			})),
-		);
+			}));
+		});
+		messagesSyncedForConversationRef.current = conversationId;
 
 		if (contextSyncedForConversationRef.current === conversationId) return;
 		contextSyncedForConversationRef.current = conversationId;
@@ -626,6 +644,7 @@ export default function AiChat() {
 		setIsStreaming(false);
 		setShowMobileList(false);
 		contextSyncedForConversationRef.current = null;
+		messagesSyncedForConversationRef.current = null;
 		// Keep context only while `?transcript=` is still present (user hasn't removed it).
 		if (!preloadRecordingId) {
 			didPreloadFromUrlRef.current = false;
@@ -639,6 +658,7 @@ export default function AiChat() {
 		setIsStreaming(false);
 		userDismissedContextRef.current = false;
 		contextSyncedForConversationRef.current = null;
+		messagesSyncedForConversationRef.current = null;
 		setConversationId(id);
 		setShowMobileList(false);
 	}, []);
@@ -665,10 +685,12 @@ export default function AiChat() {
 		setMessages((prev) => [...prev, userMessage, assistantMessage]);
 		setInput("");
 		setIsStreaming(true);
+		focusComposer();
 
 		const allMessages: Message[] = [...messages, userMessage];
 
 		abortRef.current = new AbortController();
+		let resolvedConversationId = conversationId;
 		try {
 			const res = await fetch("/api/ai-chat", {
 				method: "POST",
@@ -692,8 +714,11 @@ export default function AiChat() {
 			const newConversationId = res.headers.get("X-Conversation-Id");
 			if (newConversationId) {
 				const id = Number(newConversationId);
-				if (!Number.isNaN(id) && id !== conversationId) {
-					setConversationId(id);
+				if (!Number.isNaN(id)) {
+					resolvedConversationId = id;
+					if (id !== conversationId) {
+						setConversationId(id);
+					}
 				}
 			}
 
@@ -719,7 +744,12 @@ export default function AiChat() {
 				}
 			}
 
-			mutateConversationList();
+			await mutateConversationList();
+			if (resolvedConversationId) {
+				await mutateSWR(
+					getGetApiAiChatConversationsIdKey(String(resolvedConversationId)),
+				);
+			}
 		} catch (err: unknown) {
 			if (err instanceof Error && err.name === "AbortError") return;
 			toast.error(getErrorMessage(err, "Failed to get response from AI"));
@@ -731,6 +761,7 @@ export default function AiChat() {
 		} finally {
 			setIsStreaming(false);
 			abortRef.current = null;
+			focusComposer();
 		}
 	}, [
 		input,
@@ -739,6 +770,7 @@ export default function AiChat() {
 		transcriptContext,
 		conversationId,
 		mutateConversationList,
+		focusComposer,
 	]);
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -750,7 +782,7 @@ export default function AiChat() {
 
 	const applySuggestion = (prompt: string) => {
 		setInput(prompt);
-		requestAnimationFrame(() => textareaRef.current?.focus());
+		focusComposer();
 	};
 
 	const headerTitle =
@@ -892,7 +924,6 @@ export default function AiChat() {
 								onKeyDown={handleKeyDown}
 								placeholder="Ask anything, or attach a transcript…"
 								className="max-h-40 min-h-12 field-sizing-fixed resize-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:border-transparent focus-visible:ring-0 disabled:bg-transparent dark:bg-transparent dark:disabled:bg-transparent"
-								disabled={isStreaming}
 								rows={1}
 							/>
 							<div className="flex items-center justify-between gap-2 px-2 pb-2">
@@ -924,6 +955,7 @@ export default function AiChat() {
 									type="button"
 									size="icon"
 									className="size-9 rounded-full"
+									onMouseDown={(e) => e.preventDefault()}
 									onClick={isStreaming ? stopStreaming : sendMessage}
 									disabled={!isStreaming && !canSend}
 									aria-label={isStreaming ? "Stop generating" : "Send message"}
