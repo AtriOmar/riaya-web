@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handling";
+import { formatSpeakerLabel } from "@/lib/transcript";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
 import {
@@ -194,9 +195,7 @@ export default function RecordingDetail({
 			? `${recording.patient.firstName ?? ""} ${recording.patient.lastName ?? ""}`.trim()
 			: null;
 
-	const canTranscribe =
-		recording.transcriptStatus === "pending" ||
-		recording.transcriptStatus === "error";
+	const canTranscribe = recording.transcriptStatus !== "processing";
 
 	const handleTranscribe = async () => {
 		try {
@@ -409,7 +408,11 @@ export default function RecordingDetail({
 								) : (
 									<RefreshCw className="size-3.5" />
 								)}
-								{isTranscribing ? "Transcribing…" : "Generate Transcript"}
+								{isTranscribing
+									? "Transcribing…"
+									: recording.transcriptStatus === "done"
+										? "Regenerate"
+										: "Generate Transcript"}
 							</Button>
 						)}
 					</div>
@@ -475,7 +478,7 @@ export default function RecordingDetail({
 														</span>
 														<div>
 															<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-																{segment.speaker || "Speaker"}
+																{formatSpeakerLabel(segment.speaker)}
 															</span>
 															<p className="mt-0.5 text-sm leading-relaxed">
 																{segment.text ||

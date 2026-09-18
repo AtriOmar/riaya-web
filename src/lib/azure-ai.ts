@@ -10,6 +10,7 @@
  */
 
 import OpenAI from "openai";
+import { formatSpeakerLabel } from "@/lib/transcript";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 const OPENROUTER_TRANSCRIBE_ENDPOINT = `${OPENROUTER_BASE_URL}/audio/transcriptions`;
@@ -71,17 +72,20 @@ export async function* streamChatText(options: {
 	}
 }
 
+export type TranscriptWord = {
+	word: string;
+	start: number;
+	end: number;
+	speaker?: string | number;
+};
+
 export type TranscriptSegment = {
 	id: number;
 	start: number;
 	end: number;
 	text: string;
 	speaker?: string;
-	words?: {
-		word: string;
-		start: number;
-		end: number;
-	}[];
+	words?: TranscriptWord[];
 };
 
 export type TranscriptResponse = {
@@ -89,7 +93,48 @@ export type TranscriptResponse = {
 	language?: string;
 	duration?: number;
 	segments: TranscriptSegment[];
+	words?: TranscriptWord[];
 };
+
+function speakerForSegment(
+	segment: {
+		start?: number;
+		end?: number;
+		speaker?: unknown;
+		words?: TranscriptWord[];
+	},
+	topWords: TranscriptWord[],
+): unknown {
+	if (segment.speaker != null && segment.speaker !== "") {
+		return segment.speaker;
+	}
+	const nested = segment.words?.find((w) => w.speaker != null)?.speaker;
+	if (nested != null) return nested;
+	if (!topWords.length) return undefined;
+	const start = Number(segment.start);
+	const end = Number(segment.end);
+	if (!Number.isFinite(start) || !Number.isFinite(end)) return undefined;
+	const mid = (start + end) / 2;
+	return (
+		topWords.find(
+			(w) =>
+				w.speaker != null && Number(w.start) <= mid && mid <= Number(w.end),
+		)?.speaker ??
+		topWords.find(
+			(w) =>
+				w.speaker != null && Number(w.start) >= start && Number(w.start) < end,
+		)?.speaker
+	);
+}
+
+function normalizeTranscript(raw: TranscriptResponse): TranscriptResponse {
+	const topWords = Array.isArray(raw.words) ? raw.words : [];
+	const segments = (raw.segments ?? []).map((segment) => ({
+		...segment,
+		speaker: formatSpeakerLabel(speakerForSegment(segment, topWords)),
+	}));
+	return { ...raw, segments };
+}
 
 /**
  * Transcribe a consultation recording with OpenRouter microsoft/mai-transcribe-2.
@@ -122,7 +167,13 @@ export async function transcribeAudio(
 			},
 			response_format: "verbose_json",
 			timestamp_granularities: ["segment", "word"],
-			diarization: true,
+			provider: {
+				options: {
+					azure: {
+						diarization: { enabled: true },
+					},
+				},
+			},
 		}),
 	});
 
@@ -133,5 +184,5 @@ export async function transcribeAudio(
 		);
 	}
 
-	return response.json();
+	return normalizeTranscript(await response.json());
 }
