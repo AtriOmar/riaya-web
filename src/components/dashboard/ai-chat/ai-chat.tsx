@@ -361,8 +361,8 @@ function ConversationSidebar({
 	};
 
 	return (
-		<div className="flex h-full w-full flex-col bg-muted/30 md:w-72 md:shrink-0 md:border-r">
-			<div className="flex items-center justify-between gap-2 px-3 py-3">
+		<div className="flex h-full w-full flex-col">
+			<div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3.5">
 				<p className="font-semibold text-sm">Conversations</p>
 				<Button
 					size="sm"
@@ -375,7 +375,7 @@ function ConversationSidebar({
 				</Button>
 			</div>
 
-			<div className="flex-1 overflow-y-auto px-2 pb-3">
+			<div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
 				{isLoading && (
 					<div className="flex justify-center py-10">
 						<Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -395,8 +395,8 @@ function ConversationSidebar({
 							className={cn(
 								"group mb-1 flex items-start gap-0.5 rounded-xl transition-colors",
 								activeId === c.id
-									? "bg-background shadow-sm ring-1 ring-border"
-									: "hover:bg-background/70",
+									? "bg-accent/60 ring-1 ring-border"
+									: "hover:bg-accent/40",
 							)}
 						>
 							<button
@@ -794,15 +794,17 @@ export default function AiChat() {
 	const canSend = Boolean(input.trim()) && !isStreaming;
 
 	return (
-		<div className="flex h-[calc(100dvh-9rem)] overflow-hidden rounded-2xl border bg-card shadow-sm">
-			{/* Desktop sidebar */}
-			<div className="hidden md:flex">
-				<ConversationSidebar
-					activeId={conversationId}
-					onSelect={selectConversation}
-					onNew={startNewChat}
-				/>
-			</div>
+		<div className="flex h-[calc(100dvh-9rem)] gap-3 md:gap-4">
+			{/* Desktop: conversations in its own panel */}
+			<aside className="hidden h-full w-full max-w-xs shrink-0 md:flex md:max-w-[17rem] lg:max-w-xs">
+				<div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
+					<ConversationSidebar
+						activeId={conversationId}
+						onSelect={selectConversation}
+						onNew={startNewChat}
+					/>
+				</div>
+			</aside>
 
 			<Sheet open={showMobileList} onOpenChange={setShowMobileList}>
 				<SheetContent side="left" className="w-80 gap-0 p-0 sm:max-w-80">
@@ -815,8 +817,8 @@ export default function AiChat() {
 				</SheetContent>
 			</Sheet>
 
-			{/* Chat pane */}
-			<div className="relative flex min-w-0 flex-1 flex-col">
+			{/* Chat pane — separate panel */}
+			<div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
 				<header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3">
 					<div className="flex min-w-0 items-center gap-1">
 						<Button
