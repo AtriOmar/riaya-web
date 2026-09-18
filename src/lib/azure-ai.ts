@@ -17,11 +17,11 @@ import OpenAI from "openai";
 export const CHAT_DEPLOYMENT =
 	process.env.AZURE_OPENAI_CHAT_DEPLOYMENT ?? "gpt-5-mini";
 
-const TRANSCRIBE_DEPLOYMENT =
-	process.env.AZURE_TRANSCRIBE_DEPLOYMENT ?? "gpt-transcribe";
+// const TRANSCRIBE_DEPLOYMENT =
+// 	process.env.AZURE_TRANSCRIBE_DEPLOYMENT ?? "gpt-transcribe";
 
-const TRANSCRIBE_API_VERSION =
-	process.env.AZURE_TRANSCRIBE_API_VERSION ?? "2025-03-01-preview";
+// const TRANSCRIBE_API_VERSION =
+// 	process.env.AZURE_TRANSCRIBE_API_VERSION ?? "2025-03-01-preview";
 
 /**
  * Foundry / OpenAI v1 base URL for the Responses API.
