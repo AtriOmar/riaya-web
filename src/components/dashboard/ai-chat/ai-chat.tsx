@@ -36,6 +36,10 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handling";
+import {
+	formatTranscriptForAiContext,
+	transcriptContextFromRecording,
+} from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 import {
 	deleteApiAiChatConversationsId,
@@ -161,14 +165,7 @@ function ImportTranscriptDialog({
 										type="button"
 										className="w-full rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-primary/30 hover:bg-accent/60"
 										onClick={() => {
-											onImport({
-												recordingId: r.id,
-												title: r.title ?? "Untitled",
-												text:
-													typeof r.transcript === "string"
-														? r.transcript
-														: JSON.stringify(r.transcript, null, 2),
-											});
+											onImport(transcriptContextFromRecording(r));
 											setOpen(false);
 											setSearch("");
 										}}
@@ -193,9 +190,11 @@ function ImportTranscriptDialog({
 												</div>
 												{Boolean(r.transcript) && (
 													<p className="mt-1.5 line-clamp-2 text-muted-foreground text-xs leading-relaxed">
-														{typeof r.transcript === "string"
-															? r.transcript
-															: JSON.stringify(r.transcript)}
+														{formatTranscriptForAiContext(r.transcript, {
+															title: r.title,
+															recordedAt: r.createdAt,
+															patientName: patientName ?? undefined,
+														})}
 													</p>
 												)}
 											</div>
@@ -532,14 +531,7 @@ export default function AiChat() {
 		);
 		if (found) {
 			didPreloadFromUrlRef.current = true;
-			setTranscriptContext({
-				recordingId: found.id,
-				title: found.title ?? "Untitled",
-				text:
-					typeof found.transcript === "string"
-						? found.transcript
-						: JSON.stringify(found.transcript, null, 2),
-			});
+			setTranscriptContext(transcriptContextFromRecording(found));
 		}
 	}, [preloadRecordingId, recordings, conversationId]);
 
@@ -575,14 +567,13 @@ export default function AiChat() {
 		}
 
 		if (conversationDetail.recording?.transcript) {
-			setTranscriptContext({
-				recordingId: conversationDetail.recording.id,
-				title: conversationDetail.recording.title ?? "Untitled",
-				text:
-					typeof conversationDetail.recording.transcript === "string"
-						? conversationDetail.recording.transcript
-						: JSON.stringify(conversationDetail.recording.transcript, null, 2),
-			});
+			setTranscriptContext(
+				transcriptContextFromRecording({
+					id: conversationDetail.recording.id,
+					title: conversationDetail.recording.title,
+					transcript: conversationDetail.recording.transcript,
+				}),
+			);
 		} else {
 			setTranscriptContext(null);
 		}
