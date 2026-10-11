@@ -20,6 +20,7 @@ const schema = z.object({
 		"doctor-applications",
 		"medical-files",
 		"recordings",
+		"test-call-recordings",
 	]),
 });
 

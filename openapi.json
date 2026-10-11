@@ -575,84 +575,6 @@
         }
       }
     },
-    "/api/cities": {
-      "get": {
-        "tags": [
-          "Miscellaneous"
-        ],
-        "summary": "List cities",
-        "responses": {
-          "200": {
-            "description": "List of cities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "postalCode": {
-                        "type": "integer",
-                        "nullable": true,
-                        "minimum": -2147483648,
-                        "maximum": 2147483647
-                      },
-                      "latitude": {
-                        "type": "number",
-                        "nullable": true,
-                        "minimum": -140737488355328,
-                        "maximum": 140737488355327
-                      },
-                      "longitude": {
-                        "type": "number",
-                        "nullable": true,
-                        "minimum": -140737488355328,
-                        "maximum": 140737488355327
-                      },
-                      "enName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "frName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "arName": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      },
-                      "slug": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 255
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "postalCode",
-                      "latitude",
-                      "longitude",
-                      "enName",
-                      "frName",
-                      "arName",
-                      "slug"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/calls": {
       "get": {
         "tags": [
@@ -1025,6 +947,84 @@
                     "createdAt",
                     "updatedAt"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cities": {
+      "get": {
+        "tags": [
+          "Miscellaneous"
+        ],
+        "summary": "List cities",
+        "responses": {
+          "200": {
+            "description": "List of cities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "postalCode": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": -2147483648,
+                        "maximum": 2147483647
+                      },
+                      "latitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
+                      "enName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "frName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "arName": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "slug": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "postalCode",
+                      "latitude",
+                      "longitude",
+                      "enName",
+                      "frName",
+                      "arName",
+                      "slug"
+                    ]
+                  }
                 }
               }
             }
@@ -3679,6 +3679,161 @@
         }
       }
     },
+    "/api/appointments/external": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book external appointment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "illness": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "doctorId",
+                  "name",
+                  "phoneNumber",
+                  "start",
+                  "end",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booked appointment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "newPatientName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "newPatientPhoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "urgent": {
+                      "type": "boolean"
+                    },
+                    "emergencyGroupId": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 64
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "start",
+                    "end",
+                    "status",
+                    "source",
+                    "name",
+                    "description",
+                    "newPatientName",
+                    "newPatientPhoneNumber",
+                    "urgent",
+                    "emergencyGroupId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/calls/{id}": {
       "get": {
         "tags": [
@@ -4085,161 +4240,6 @@
         }
       }
     },
-    "/api/appointments/external": {
-      "post": {
-        "tags": [
-          "Appointments"
-        ],
-        "summary": "Book external appointment",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "end": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "illness": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "doctorId",
-                  "name",
-                  "phoneNumber",
-                  "start",
-                  "end",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Booked appointment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "start": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "end": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "name": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "newPatientName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "newPatientPhoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "urgent": {
-                      "type": "boolean"
-                    },
-                    "emergencyGroupId": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 64
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "start",
-                    "end",
-                    "status",
-                    "source",
-                    "name",
-                    "description",
-                    "newPatientName",
-                    "newPatientPhoneNumber",
-                    "urgent",
-                    "emergencyGroupId",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/dashboard/stats": {
       "get": {
         "tags": [
@@ -4520,22 +4520,12 @@
         }
       }
     },
-    "/api/doctor-applications/{id}": {
+    "/api/doctor-applications/me": {
       "get": {
         "tags": [
           "Doctors"
         ],
-        "summary": "Get application by ID (Admin)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+        "summary": "Get current user's application",
         "responses": {
           "200": {
             "description": "Application details",
@@ -4781,70 +4771,6 @@
                     "speciality",
                     "cabinetCity",
                     "user"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Doctors"
-        ],
-        "summary": "Update application status (Admin)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "verified",
-                      "rejected",
-                      "banned"
-                    ]
-                  },
-                  "rejectionReasons": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "required": [
-                  "status"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
                   ]
                 }
               }
@@ -5313,12 +5239,22 @@
         }
       }
     },
-    "/api/doctor-applications/me": {
+    "/api/doctor-applications/{id}": {
       "get": {
         "tags": [
           "Doctors"
         ],
-        "summary": "Get current user's application",
+        "summary": "Get application by ID (Admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Application details",
@@ -5564,6 +5500,70 @@
                     "speciality",
                     "cabinetCity",
                     "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Update application status (Admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "verified",
+                      "rejected",
+                      "banned"
+                    ]
+                  },
+                  "rejectionReasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
                   ]
                 }
               }
@@ -6596,64 +6596,6 @@
         }
       }
     },
-    "/api/livekit/test-call-token": {
-      "post": {
-        "tags": [
-          "TestCall"
-        ],
-        "summary": "Create a LiveKit test-call token (Admin)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "phoneNumber"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "LiveKit room token for a browser test call",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    },
-                    "callSid": {
-                      "type": "string"
-                    },
-                    "roomName": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "token",
-                    "url",
-                    "callSid",
-                    "roomName"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/patients/{id}": {
       "get": {
         "tags": [
@@ -7454,6 +7396,136 @@
         }
       }
     },
+    "/api/livekit/test-call-token": {
+      "post": {
+        "tags": [
+          "TestCall"
+        ],
+        "summary": "Create a LiveKit test-call token (Admin)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "phoneNumber"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "LiveKit room token for a browser test call",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "callSid": {
+                      "type": "string"
+                    },
+                    "roomName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "url",
+                    "callSid",
+                    "roomName"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/lookup-by-phone": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Find doctor patient by phone number",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "phone",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lookup result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                      "type": "string"
+                    },
+                    "matchedPatient": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "phoneNumber": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "phoneNumber"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "phone",
+                    "matchedPatient"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/persons/{id}": {
       "get": {
         "tags": [
@@ -8019,12 +8091,12 @@
         }
       }
     },
-    "/api/register/resend-otp": {
+    "/api/register/verify-otp": {
       "post": {
         "tags": [
           "Auth"
         ],
-        "summary": "Resend registration OTP",
+        "summary": "Verify registration OTP and create account",
         "requestBody": {
           "content": {
             "application/json": {
@@ -8034,10 +8106,17 @@
                   "email": {
                     "type": "string",
                     "format": "email"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "pattern": "^\\d+$"
                   }
                 },
                 "required": [
-                  "email"
+                  "email",
+                  "otp"
                 ]
               }
             }
@@ -8045,7 +8124,7 @@
         },
         "responses": {
           "200": {
-            "description": "OTP resent",
+            "description": "Account created",
             "content": {
               "application/json": {
                 "schema": {
@@ -8063,79 +8142,215 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid or expired OTP"
+          },
           "404": {
             "description": "No pending signup"
-          },
-          "429": {
-            "description": "Resend cooldown active"
           }
         }
       }
     },
-    "/api/patients/lookup-by-phone": {
-      "get": {
+    "/api/test-call/recording": {
+      "post": {
         "tags": [
-          "Patients"
+          "TestCall"
         ],
-        "summary": "Find doctor patient by phone number",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "phone",
-            "in": "query"
+        "summary": "Save the recording of a test call (Admin)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "callSid": {
+                    "type": "string"
+                  },
+                  "recordingUrl": {
+                    "type": "string",
+                    "maxLength": 1024,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "callSid",
+                  "recordingUrl"
+                ]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "Lookup result",
+            "description": "Updated call",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "phone": {
-                      "type": "string"
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
                     },
-                    "matchedPatient": {
-                      "type": "object",
+                    "callSid": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "from": {
+                      "type": "string",
                       "nullable": true,
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "cin": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "phoneNumber": {
-                          "type": "string",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "firstName",
-                        "lastName",
-                        "cin",
-                        "phoneNumber"
-                      ]
+                      "maxLength": 50
+                    },
+                    "to": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "direction": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "callerName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "endedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "appointmentId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "recordingSid": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "recordingKey": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 512
+                    },
+                    "recordingUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 1024
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "phone",
-                    "matchedPatient"
+                    "id",
+                    "callSid",
+                    "from",
+                    "to",
+                    "direction",
+                    "status",
+                    "callerName",
+                    "startedAt",
+                    "endedAt",
+                    "duration",
+                    "appointmentId",
+                    "recordingSid",
+                    "recordingKey",
+                    "recordingUrl",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reviews/submit": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Submit a review via magic link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "waitTime": {
+                    "type": "string",
+                    "enum": [
+                      "short",
+                      "medium",
+                      "long"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "rating",
+                  "waitTime"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
                   ]
                 }
               }
@@ -8170,7 +8385,8 @@
                       "profile-pictures",
                       "doctor-applications",
                       "medical-files",
-                      "recordings"
+                      "recordings",
+                      "test-call-recordings"
                     ]
                   }
                 },
@@ -8605,70 +8821,6 @@
               "application/json": {
                 "schema": {
                   "nullable": true
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/reviews/submit": {
-      "post": {
-        "tags": [
-          "Reviews"
-        ],
-        "summary": "Submit a review via magic link",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "token": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "rating": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 5
-                  },
-                  "waitTime": {
-                    "type": "string",
-                    "enum": [
-                      "short",
-                      "medium",
-                      "long"
-                    ]
-                  },
-                  "comment": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "token",
-                  "rating",
-                  "waitTime"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Review submitted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
                 }
               }
             }
@@ -9412,243 +9564,6 @@
         }
       }
     },
-    "/api/calls/{id}/events": {
-      "post": {
-        "tags": [
-          "Calls"
-        ],
-        "summary": "Create call event",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "patient_transcript",
-                      "ai_transcript",
-                      "function_call",
-                      "system",
-                      "error",
-                      "appointment_booked"
-                    ]
-                  },
-                  "content": {
-                    "type": "string"
-                  },
-                  "functionName": {
-                    "type": "string"
-                  },
-                  "functionArgs": {
-                    "nullable": true
-                  },
-                  "functionResult": {
-                    "nullable": true
-                  },
-                  "functionStatus": {
-                    "type": "string",
-                    "enum": [
-                      "calling",
-                      "success",
-                      "error"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "callId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "content": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "functionName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "functionArgs": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "nullable": true
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "nullable": true
-                          }
-                        }
-                      ]
-                    },
-                    "functionResult": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "nullable": true
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "nullable": true
-                          }
-                        }
-                      ]
-                    },
-                    "functionStatus": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "callId",
-                    "type",
-                    "content",
-                    "functionName",
-                    "functionArgs",
-                    "functionResult",
-                    "functionStatus",
-                    "timestamp"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/register/verify-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Verify registration OTP and create account",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "otp": {
-                    "type": "string",
-                    "minLength": 6,
-                    "maxLength": 6,
-                    "pattern": "^\\d+$"
-                  }
-                },
-                "required": [
-                  "email",
-                  "otp"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Account created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or expired OTP"
-          },
-          "404": {
-            "description": "No pending signup"
-          }
-        }
-      }
-    },
     "/api/appointments/external/emergency": {
       "post": {
         "tags": [
@@ -9823,6 +9738,183 @@
                   "required": [
                     "found",
                     "appointments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calls/{id}/events": {
+      "post": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Create call event",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "patient_transcript",
+                      "ai_transcript",
+                      "function_call",
+                      "system",
+                      "error",
+                      "appointment_booked"
+                    ]
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "functionName": {
+                    "type": "string"
+                  },
+                  "functionArgs": {
+                    "nullable": true
+                  },
+                  "functionResult": {
+                    "nullable": true
+                  },
+                  "functionStatus": {
+                    "type": "string",
+                    "enum": [
+                      "calling",
+                      "success",
+                      "error"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created event",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "callId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "content": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "functionName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "functionArgs": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "functionResult": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "functionStatus": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "callId",
+                    "type",
+                    "content",
+                    "functionName",
+                    "functionArgs",
+                    "functionResult",
+                    "functionStatus",
+                    "timestamp"
                   ]
                 }
               }
@@ -10074,56 +10166,38 @@
         }
       }
     },
-    "/api/internal/appointments/process-pending-timeout": {
+    "/api/internal/reviews/process-job": {
       "post": {
         "tags": [
           "Internal"
         ],
-        "summary": "Auto-cancel unanswered AI pending appointments (Internal)",
+        "summary": "Process a delayed review job (Internal)",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "appointment"
-                        ]
-                      },
-                      "appointmentId": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "appointmentId"
-                    ]
+                "type": "object",
+                "properties": {
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
                   },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "emergency"
-                        ]
-                      },
-                      "emergencyGroupId": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "emergencyGroupId"
-                    ]
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "patientId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
                   }
+                },
+                "required": [
+                  "appointmentId",
+                  "doctorId"
                 ]
               }
             }
@@ -10131,7 +10205,7 @@
         },
         "responses": {
           "200": {
-            "description": "Processed",
+            "description": "Job processed",
             "content": {
               "application/json": {
                 "schema": {
@@ -10139,6 +10213,59 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/register/resend-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend registration OTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP resent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending signup"
+          },
+          "429": {
+            "description": "Resend cooldown active"
           }
         }
       }
@@ -10869,6 +10996,256 @@
         }
       }
     },
+    "/api/recordings/{id}/transcribe": {
+      "post": {
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "Transcribe recording",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recording with transcript",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "audioUrl": {
+                      "type": "string",
+                      "maxLength": 1024
+                    },
+                    "durationSeconds": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "transcript": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "transcriptStatus": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "title",
+                    "audioUrl",
+                    "durationSeconds",
+                    "transcript",
+                    "transcriptStatus",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/appointments/process-pending-timeout": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Auto-cancel unanswered AI pending appointments (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "appointment"
+                        ]
+                      },
+                      "appointmentId": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "appointmentId"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "emergency"
+                        ]
+                      },
+                      "emergencyGroupId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "emergencyGroupId"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/caller/ai-appointments/cancel": {
+      "post": {
+        "tags": [
+          "Caller"
+        ],
+        "summary": "Cancel pending AI appointment for caller phone (voice service)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "phoneNumber",
+                  "appointmentId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "appointmentId": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "appointmentId",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}/medical-files": {
       "post": {
         "tags": [
@@ -11155,238 +11532,6 @@
                   },
                   "required": [
                     "message"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/reviews/process-job": {
-      "post": {
-        "tags": [
-          "Internal"
-        ],
-        "summary": "Process a delayed review job (Internal)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "patientId": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                },
-                "required": [
-                  "appointmentId",
-                  "doctorId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Job processed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "nullable": true
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/recordings/{id}/transcribe": {
-      "post": {
-        "tags": [
-          "Recordings"
-        ],
-        "summary": "Transcribe recording",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Recording with transcript",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "title": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "audioUrl": {
-                      "type": "string",
-                      "maxLength": 1024
-                    },
-                    "durationSeconds": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "transcript": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "nullable": true
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "nullable": true
-                          }
-                        }
-                      ]
-                    },
-                    "transcriptStatus": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "title",
-                    "audioUrl",
-                    "durationSeconds",
-                    "transcript",
-                    "transcriptStatus",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/caller/ai-appointments/cancel": {
-      "post": {
-        "tags": [
-          "Caller"
-        ],
-        "summary": "Cancel pending AI appointment for caller phone (voice service)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                },
-                "required": [
-                  "phoneNumber",
-                  "appointmentId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Appointment cancelled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "appointmentId": {
-                      "type": "integer"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "appointmentId",
-                    "status"
                   ]
                 }
               }

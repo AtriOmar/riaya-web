@@ -15,11 +15,12 @@ export async function uploadToR2(
 		folder,
 	});
 
-	await fetch(signedUrl, {
+	const res = await fetch(signedUrl, {
 		method: "PUT",
 		body: file,
 		headers: { "Content-Type": file.type },
 	});
+	if (!res.ok) throw new Error(`Upload failed (${res.status})`);
 
 	return cdnUrl;
 }

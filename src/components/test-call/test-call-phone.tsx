@@ -149,8 +149,17 @@ export default function TestCallPhone() {
 	// Both hooks stay mounted; the selected engine drives the UI.
 	const streamCall = useSimulatedCall();
 	const livekitCall = useLivekitCall();
-	const { status, callSid, error, transcript, startCall, hangUp } =
-		engine === "livekit" ? livekitCall : streamCall;
+	const {
+		status,
+		callSid,
+		error,
+		transcript,
+		recordingUrl,
+		recordingStatus,
+		retryRecordingSave,
+		startCall,
+		hangUp,
+	} = engine === "livekit" ? livekitCall : streamCall;
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	// Only auto-scroll new lines while the user is already at the bottom,
@@ -262,6 +271,14 @@ export default function TestCallPhone() {
 								</span>
 							</div>
 						)}
+						{isActive && recordingStatus === "recording" && (
+							<div className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1">
+								<span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+								<span className="font-mono text-[10px] font-medium text-red-600 dark:text-red-400">
+									REC
+								</span>
+							</div>
+						)}
 					</div>
 
 					{/* Transcript area */}
@@ -359,6 +376,37 @@ export default function TestCallPhone() {
 								</Button>
 							)}
 						</div>
+
+						{status === "ended" && recordingUrl && (
+							<div className="mt-3 space-y-1.5">
+								<p className="font-medium text-xs">Recording</p>
+								{/* biome-ignore lint/a11y/useMediaCaption: call audio, the transcript is shown above */}
+								<audio controls src={recordingUrl} className="h-10 w-full" />
+								<p
+									className={cn(
+										"text-xs",
+										recordingStatus === "error"
+											? "text-destructive"
+											: "text-muted-foreground",
+									)}
+								>
+									{recordingStatus === "saving" && "Saving recording…"}
+									{recordingStatus === "saved" && "Saved to the call log"}
+									{recordingStatus === "error" && (
+										<>
+											Couldn't save the recording.{" "}
+											<button
+												type="button"
+												className="underline"
+												onClick={retryRecordingSave}
+											>
+												Try again
+											</button>
+										</>
+									)}
+								</p>
+							</div>
+						)}
 
 						{status === "ended" && (
 							<p className="mt-2 text-center text-muted-foreground text-xs">

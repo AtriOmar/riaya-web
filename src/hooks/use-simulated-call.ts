@@ -23,6 +23,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+	type RecordingStatus,
+	useCallRecording,
+} from "@/hooks/use-call-recording";
+import {
 	type TranscriptLine,
 	useCallTranscript,
 } from "@/hooks/use-call-transcript";
@@ -45,6 +49,10 @@ export type SimulatedCallState = {
 	callSid: string | null;
 	error: string | null;
 	transcript: TranscriptLine[];
+	/** Local playable URL of the call recording, once the call has ended. */
+	recordingUrl: string | null;
+	recordingStatus: RecordingStatus;
+	retryRecordingSave: () => void;
 	startCall: (phoneNumber: string) => Promise<void>;
 	hangUp: () => void;
 };
@@ -70,6 +78,15 @@ export function useSimulatedCall(): SimulatedCallState {
 		disconnect: disconnectDashboard,
 		reset: resetTranscript,
 	} = useCallTranscript();
+	const {
+		recordingUrl,
+		recordingStatus,
+		start: startRecording,
+		addStream: addRecordingStream,
+		stop: stopRecording,
+		reset: resetRecording,
+		retrySave: retryRecordingSave,
+	} = useCallRecording();
 
 	// WebSocket to /media-stream
 	const wsRef = useRef<WebSocket | null>(null);
@@ -84,6 +101,10 @@ export function useSimulatedCall(): SimulatedCallState {
 	// Audio playback (AI voice)
 	const playCtxRef = useRef<AudioContext | null>(null);
 	const nextPlayTimeRef = useRef(0);
+	// Tap on the AI voice for the call recording, and the chunks still scheduled
+	// (so barge-in can cut them without closing the context the tap lives in).
+	const playDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+	const scheduledRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
 	// Outgoing media timestamp counter (ms)
 	const timestampRef = useRef(0);
@@ -116,6 +137,8 @@ export function useSimulatedCall(): SimulatedCallState {
 			playCtxRef.current?.close();
 		} catch {}
 		playCtxRef.current = null;
+		playDestRef.current = null;
+		scheduledRef.current.clear();
 		nextPlayTimeRef.current = 0;
 	}, []);
 
@@ -132,6 +155,8 @@ export function useSimulatedCall(): SimulatedCallState {
 		if (!playCtxRef.current || playCtxRef.current.state === "closed") {
 			const ctx = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
 			playCtxRef.current = ctx;
+			playDestRef.current = ctx.createMediaStreamDestination();
+			scheduledRef.current.clear();
 			nextPlayTimeRef.current = ctx.currentTime;
 		}
 		return playCtxRef.current;
@@ -154,6 +179,10 @@ export function useSimulatedCall(): SimulatedCallState {
 				const source = ctx.createBufferSource();
 				source.buffer = buffer;
 				source.connect(ctx.destination);
+				if (playDestRef.current) source.connect(playDestRef.current);
+				const scheduled = scheduledRef.current;
+				scheduled.add(source);
+				source.onended = () => scheduled.delete(source);
 				const now = ctx.currentTime;
 				if (nextPlayTimeRef.current < now) nextPlayTimeRef.current = now;
 				source.start(nextPlayTimeRef.current);
@@ -166,12 +195,15 @@ export function useSimulatedCall(): SimulatedCallState {
 	);
 
 	const flushPlaybackQueue = useCallback(() => {
-		// Close and recreate the AudioContext to abort all scheduled audio
-		try {
-			playCtxRef.current?.close();
-		} catch {}
-		playCtxRef.current = null;
-		nextPlayTimeRef.current = 0;
+		// Stop every scheduled chunk but keep the context alive: the recording
+		// tap is attached to it.
+		for (const source of scheduledRef.current) {
+			try {
+				source.stop();
+			} catch {}
+		}
+		scheduledRef.current.clear();
+		nextPlayTimeRef.current = playCtxRef.current?.currentTime ?? 0;
 	}, []);
 
 	// ─── Send helpers ──────────────────────────────────────────────────────────
@@ -276,6 +308,7 @@ export function useSimulatedCall(): SimulatedCallState {
 
 			setError(null);
 			resetTranscript();
+			resetRecording();
 
 			// 1. Request microphone
 			setStatus("requesting-mic");
@@ -349,6 +382,12 @@ export function useSimulatedCall(): SimulatedCallState {
 				// 4. Start mic capture and stream media frames
 				startCapture(stream, streamSid);
 
+				// Record the caller (mic) and the AI voice (playback tap) together.
+				ensurePlayContext();
+				startRecording();
+				addRecordingStream(stream);
+				if (playDestRef.current) addRecordingStream(playDestRef.current.stream);
+
 				// Also subscribe to the dashboard for transcripts
 				connectDashboard(sid);
 			};
@@ -402,6 +441,7 @@ export function useSimulatedCall(): SimulatedCallState {
 			};
 
 			ws.onclose = () => {
+				stopRecording(callSidRef.current);
 				stopCapture();
 				stopPlayback();
 				setStatus("ended");
@@ -412,6 +452,7 @@ export function useSimulatedCall(): SimulatedCallState {
 			ws.onerror = () => {
 				setError("WebSocket connection failed. Is the voice server running?");
 				setStatus("error");
+				resetRecording();
 				stopCapture();
 				stopPlayback();
 				for (const t of stream.getTracks()) t.stop();
@@ -420,6 +461,11 @@ export function useSimulatedCall(): SimulatedCallState {
 		[
 			status,
 			resetTranscript,
+			resetRecording,
+			startRecording,
+			addRecordingStream,
+			stopRecording,
+			ensurePlayContext,
 			startCapture,
 			connectDashboard,
 			disconnectDashboard,
@@ -451,12 +497,13 @@ export function useSimulatedCall(): SimulatedCallState {
 			ws.close();
 		}
 
+		stopRecording(callSidRef.current);
 		stopCapture();
 		stopPlayback();
 		disconnectDashboard();
 
 		setStatus("ended");
-	}, [stopCapture, stopPlayback, disconnectDashboard]);
+	}, [stopRecording, stopCapture, stopPlayback, disconnectDashboard]);
 
 	// ─── Cleanup on unmount ────────────────────────────────────────────────────
 
@@ -468,5 +515,15 @@ export function useSimulatedCall(): SimulatedCallState {
 		};
 	}, [stopCapture, stopPlayback, closeWs]);
 
-	return { status, callSid, error, transcript, startCall, hangUp };
+	return {
+		status,
+		callSid,
+		error,
+		transcript,
+		recordingUrl,
+		recordingStatus,
+		retryRecordingSave,
+		startCall,
+		hangUp,
+	};
 }

@@ -20,6 +20,7 @@ import {
 	Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallRecording } from "@/hooks/use-call-recording";
 import { useCallTranscript } from "@/hooks/use-call-transcript";
 import type {
 	SimulatedCallState,
@@ -68,6 +69,16 @@ export function useLivekitCall(): SimulatedCallState {
 		reset: resetTranscript,
 	} = useCallTranscript();
 	const { trigger: requestToken } = usePostApiLivekitTestCallToken();
+	const {
+		recordingUrl,
+		recordingStatus,
+		start: startRecording,
+		addStream: addRecordingStream,
+		stop: stopRecording,
+		reset: resetRecording,
+		retrySave: retryRecordingSave,
+	} = useCallRecording();
+	const callSidRef = useRef<string | null>(null);
 
 	const roomRef = useRef<Room | null>(null);
 	const audioElsRef = useRef<HTMLMediaElement[]>([]);
@@ -96,6 +107,7 @@ export function useLivekitCall(): SimulatedCallState {
 
 			setError(null);
 			resetTranscript();
+			resetRecording();
 			setStatus("connecting");
 
 			try {
@@ -107,6 +119,7 @@ export function useLivekitCall(): SimulatedCallState {
 					phoneNumber: trimmedPhone,
 				});
 				setCallSid(sid);
+				callSidRef.current = sid;
 				connectDashboard(sid);
 
 				const room = new Room({
@@ -120,6 +133,7 @@ export function useLivekitCall(): SimulatedCallState {
 
 				room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
 					if (track.kind !== Track.Kind.Audio) return;
+					addRecordingStream(new MediaStream([track.mediaStreamTrack]));
 					const el = track.attach();
 					el.style.display = "none";
 					document.body.appendChild(el);
@@ -130,13 +144,17 @@ export function useLivekitCall(): SimulatedCallState {
 				});
 				// The agent deletes the room after `end_call`; the user can also hang up.
 				room.on(RoomEvent.Disconnected, () => {
+					stopRecording(callSidRef.current);
 					teardown();
 					setStatus("ended");
 				});
 
 				await room.connect(url, token);
 				setStatus("requesting-mic");
-				await room.localParticipant.setMicrophoneEnabled(true);
+				const micPub = await room.localParticipant.setMicrophoneEnabled(true);
+				const micTrack = micPub?.track?.mediaStreamTrack;
+				if (micTrack) addRecordingStream(new MediaStream([micTrack]));
+				startRecording();
 				await room.startAudio();
 				// Stay in "connecting" until the agent is actually there, so the page
 				// never claims to be in a call with an empty room.
@@ -144,6 +162,7 @@ export function useLivekitCall(): SimulatedCallState {
 				await waitForAgent(room);
 				setStatus("in-call");
 			} catch (err) {
+				resetRecording();
 				teardown();
 				setError(
 					err instanceof Error && err.message.startsWith("The voice agent")
@@ -153,15 +172,36 @@ export function useLivekitCall(): SimulatedCallState {
 				setStatus("error");
 			}
 		},
-		[status, resetTranscript, requestToken, connectDashboard, teardown],
+		[
+			status,
+			resetTranscript,
+			resetRecording,
+			requestToken,
+			connectDashboard,
+			addRecordingStream,
+			startRecording,
+			stopRecording,
+			teardown,
+		],
 	);
 
 	const hangUp = useCallback(() => {
+		stopRecording(callSidRef.current);
 		teardown();
 		setStatus("ended");
-	}, [teardown]);
+	}, [stopRecording, teardown]);
 
 	useEffect(() => teardown, [teardown]);
 
-	return { status, callSid, error, transcript, startCall, hangUp };
+	return {
+		status,
+		callSid,
+		error,
+		transcript,
+		recordingUrl,
+		recordingStatus,
+		retryRecordingSave,
+		startCall,
+		hangUp,
+	};
 }
