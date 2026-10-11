@@ -2,6 +2,7 @@
 
 import { Loader2, Mic, MicOff, Phone, PhoneCall, PhoneOff } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -379,9 +380,10 @@ export default function TestCallPhone() {
 
 						{status === "ended" && recordingUrl && (
 							<div className="mt-3 space-y-1.5">
-								<p className="font-medium text-xs">Recording</p>
-								{/* biome-ignore lint/a11y/useMediaCaption: call audio, the transcript is shown above */}
-								<audio controls src={recordingUrl} className="h-10 w-full" />
+								<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+									Recording
+								</div>
+								<AudioWaveformPlayer src={recordingUrl} />
 								<p
 									className={cn(
 										"text-xs",

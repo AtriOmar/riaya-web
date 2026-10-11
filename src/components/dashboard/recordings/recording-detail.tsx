@@ -1,5 +1,5 @@
-/** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
-/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: explanation */
+/** biome-ignore-all lint/suspicious/noExplicitAny: explanation */
 "use client";
 
 import {
