@@ -22,7 +22,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	type TranscriptLine,
+	useCallTranscript,
+} from "@/hooks/use-call-transcript";
 import { decodeUlaw, encodeUlawToBase64 } from "@/lib/ulaw";
+
+export type { TranscriptLine };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,13 +39,6 @@ export type SimulatedCallStatus =
 	| "in-call"
 	| "ended"
 	| "error";
-
-export type TranscriptLine = {
-	id: string;
-	role: "patient" | "ai";
-	text: string;
-	isFinal: boolean;
-};
 
 export type SimulatedCallState = {
 	status: SimulatedCallStatus;
@@ -65,12 +64,15 @@ export function useSimulatedCall(): SimulatedCallState {
 	const [status, setStatus] = useState<SimulatedCallStatus>("idle");
 	const [callSid, setCallSid] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+	const {
+		transcript,
+		connect: connectDashboard,
+		disconnect: disconnectDashboard,
+		reset: resetTranscript,
+	} = useCallTranscript();
 
 	// WebSocket to /media-stream
 	const wsRef = useRef<WebSocket | null>(null);
-	// Dashboard WebSocket to /dashboard (for transcripts)
-	const dashWsRef = useRef<WebSocket | null>(null);
 	// Current callSid in a ref so closures can read it without stale state
 	const callSidRef = useRef<string | null>(null);
 
@@ -255,71 +257,6 @@ export function useSimulatedCall(): SimulatedCallState {
 		[sendMediaFrame],
 	);
 
-	// ─── Dashboard WS (transcripts) ───────────────────────────────────────────
-
-	const connectDashboard = useCallback((sid: string) => {
-		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
-		if (!realtimeUrl) {
-			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
-			return;
-		}
-
-		const dashWs = new WebSocket(`${realtimeUrl}/dashboard`);
-		dashWsRef.current = dashWs;
-
-		dashWs.onmessage = (evt) => {
-			try {
-				const msg = JSON.parse(evt.data as string) as Record<string, unknown>;
-				if (msg.callSid !== sid) return;
-
-				if (
-					msg.type === "patient_transcript" &&
-					msg.isFinal &&
-					typeof msg.text === "string"
-				) {
-					setTranscript((prev) => [
-						...prev.filter((l) => !(l.role === "patient" && !l.isFinal)),
-						{
-							id: `p-${Date.now()}`,
-							role: "patient",
-							text: msg.text as string,
-							isFinal: true,
-						},
-					]);
-				}
-
-				if (msg.type === "ai_transcript" && typeof msg.text === "string") {
-					const isFinal = Boolean(msg.isFinal);
-					setTranscript((prev) => {
-						// Update or append AI line
-						const existingIdx = prev.findLastIndex(
-							(l) => l.role === "ai" && !l.isFinal,
-						);
-						const entry: TranscriptLine = {
-							id: existingIdx >= 0 ? prev[existingIdx].id : `a-${Date.now()}`,
-							role: "ai",
-							text: msg.text as string,
-							isFinal,
-						};
-						if (existingIdx >= 0) {
-							const next = [...prev];
-							next[existingIdx] = entry;
-							return next;
-						}
-						return [...prev, entry];
-					});
-				}
-			} catch {
-				// ignore
-			}
-		};
-
-		dashWs.onerror = () => {};
-		dashWs.onclose = () => {
-			dashWsRef.current = null;
-		};
-	}, []);
-
 	// ─── Main connect / disconnect ─────────────────────────────────────────────
 
 	const startCall = useCallback(
@@ -338,7 +275,7 @@ export function useSimulatedCall(): SimulatedCallState {
 			}
 
 			setError(null);
-			setTranscript([]);
+			resetTranscript();
 
 			// 1. Request microphone
 			setStatus("requesting-mic");
@@ -469,7 +406,7 @@ export function useSimulatedCall(): SimulatedCallState {
 				stopPlayback();
 				setStatus("ended");
 				wsRef.current = null;
-				closeWs(dashWsRef.current);
+				disconnectDashboard();
 			};
 
 			ws.onerror = () => {
@@ -482,8 +419,10 @@ export function useSimulatedCall(): SimulatedCallState {
 		},
 		[
 			status,
+			resetTranscript,
 			startCapture,
 			connectDashboard,
+			disconnectDashboard,
 			playAiChunk,
 			flushPlaybackQueue,
 			stopCapture,
@@ -514,10 +453,10 @@ export function useSimulatedCall(): SimulatedCallState {
 
 		stopCapture();
 		stopPlayback();
-		closeWs(dashWsRef.current);
+		disconnectDashboard();
 
 		setStatus("ended");
-	}, [stopCapture, stopPlayback, closeWs]);
+	}, [stopCapture, stopPlayback, disconnectDashboard]);
 
 	// ─── Cleanup on unmount ────────────────────────────────────────────────────
 
@@ -526,7 +465,6 @@ export function useSimulatedCall(): SimulatedCallState {
 			stopCapture();
 			stopPlayback();
 			closeWs(wsRef.current);
-			closeWs(dashWsRef.current);
 		};
 	}, [stopCapture, stopPlayback, closeWs]);
 

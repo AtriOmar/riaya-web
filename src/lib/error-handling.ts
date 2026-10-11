@@ -69,6 +69,8 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	TRANSCRIPT_ALREADY_DONE: "This recording has already been transcribed.",
 	TRANSCRIPTION_FAILED: "Failed to generate transcript. Please try again.",
 	CONVERSATION_NOT_FOUND: "Conversation not found.",
+	LIVEKIT_NOT_CONFIGURED:
+		"LiveKit is not configured on the server (missing LIVEKIT_* env vars).",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 

@@ -24,10 +24,12 @@ function TranscriptBubble({
 	role,
 	text,
 	timestamp,
+	partial,
 }: {
 	role: "patient" | "ai";
 	text: string;
 	timestamp: number;
+	partial?: boolean;
 }) {
 	const isAI = role === "ai";
 	return (
@@ -51,7 +53,15 @@ function TranscriptBubble({
 						{formatTime(timestamp)}
 					</span>
 				</div>
-				<p className="leading-relaxed whitespace-pre-wrap">{text}</p>
+				<p className="leading-relaxed whitespace-pre-wrap">
+					{text}
+					{partial && (
+						<span
+							aria-hidden
+							className="ml-1 inline-block h-3 w-1 animate-pulse rounded-sm bg-current align-middle opacity-60"
+						/>
+					)}
+				</p>
 			</div>
 		</div>
 	);
@@ -205,6 +215,7 @@ export default function CallTranscript({
 								role={entry.role}
 								text={entry.text}
 								timestamp={entry.timestamp}
+								partial={entry.partial}
 							/>
 						);
 					case "function_call":

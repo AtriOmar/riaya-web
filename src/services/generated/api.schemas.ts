@@ -290,6 +290,52 @@ export type DeleteApiAppointments200 = {
 	message: string;
 };
 
+export type GetApiCities200Item = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	postalCode: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	latitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	longitude: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+};
+
 export type GetApiCalls200ItemEventsItemFunctionArgs =
 	| string
 	| number
@@ -486,52 +532,6 @@ export type PostApiCalls201 = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
-};
-
-export type GetApiCities200Item = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	postalCode: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	latitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	longitude: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
 };
 
 export type GetApiDoctorApplicationsParams = {
@@ -1835,76 +1835,6 @@ export type PostApiAiChatConversations201 = {
 	updatedAt: string | null;
 };
 
-export type PostApiAppointmentsExternalBody = {
-	/** @exclusiveMinimum 0 */
-	doctorId: number;
-	/** @minLength 1 */
-	name: string;
-	/** @minLength 1 */
-	phoneNumber: string;
-	start: string;
-	end: string;
-	illness: string;
-};
-
-export type PostApiAppointmentsExternal201 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	doctorId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/** @nullable */
-	start: string | null;
-	/** @nullable */
-	end: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/** @maxLength 50 */
-	source: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	name: string | null;
-	/** @nullable */
-	description: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	newPatientName: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	newPatientPhoneNumber: string | null;
-	urgent: boolean;
-	/**
-	 * @maxLength 64
-	 * @nullable
-	 */
-	emergencyGroupId: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
 export type GetApiCallsId200EventsItemFunctionArgs =
 	| string
 	| number
@@ -2114,6 +2044,76 @@ export type PutApiCallsId200 = {
 	 * @nullable
 	 */
 	recordingUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PostApiAppointmentsExternalBody = {
+	/** @exclusiveMinimum 0 */
+	doctorId: number;
+	/** @minLength 1 */
+	name: string;
+	/** @minLength 1 */
+	phoneNumber: string;
+	start: string;
+	end: string;
+	illness: string;
+};
+
+export type PostApiAppointmentsExternal201 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	doctorId: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/** @nullable */
+	start: string | null;
+	/** @nullable */
+	end: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/** @maxLength 50 */
+	source: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	name: string | null;
+	/** @nullable */
+	description: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	newPatientName: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -2421,6 +2421,262 @@ export type PutApiDoctorApplicationsId200 = {
 	message: string;
 };
 
+export type GetApiDoctorsIdParams = {
+	from?: string;
+	to?: string;
+};
+
+export type GetApiDoctorsId200DoctorAvailability =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type GetApiDoctorsId200DoctorSpeciality = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiDoctorsId200DoctorCabinetCity = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	postalCode: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	latitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	longitude: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+export type GetApiDoctorsId200Doctor = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	userId: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	tin: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/** @nullable */
+	address: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cabinetName: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	cabinetCityId: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLongitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLatitude: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	specialityId: number | null;
+	availability: GetApiDoctorsId200DoctorAvailability;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinRecto: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinVerso: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	medicalCouncilNumber: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	medicalCouncilCertificate: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	/** @nullable */
+	speciality: GetApiDoctorsId200DoctorSpeciality;
+	/** @nullable */
+	cabinetCity: GetApiDoctorsId200DoctorCabinetCity;
+};
+
+export type GetApiDoctorsId200AppointmentsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @nullable */
+	start: string | null;
+	/** @nullable */
+	end: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	name: string | null;
+	/** @nullable */
+	description: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	newPatientName: string | null;
+};
+
+export type GetApiDoctorsId200 = {
+	doctor: GetApiDoctorsId200Doctor;
+	appointments: GetApiDoctorsId200AppointmentsItem[];
+};
+
+export type GetApiDoctorsAvailabilityParams = {
+	/**
+	 * @exclusiveMinimum 0
+	 */
+	doctor_id: number;
+	time?: string;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	limit?: number;
+};
+
+export type GetApiDoctorsAvailability200Doctor = {
+	id: number;
+	firstName: string;
+	lastName: string;
+	/** @nullable */
+	cabinetName: string | null;
+	/** @nullable */
+	address: string | null;
+};
+
+export type GetApiDoctorsAvailability200SlotsItem = {
+	start: string;
+	end: string;
+};
+
+export type GetApiDoctorsAvailability200 = {
+	doctor: GetApiDoctorsAvailability200Doctor;
+	found: boolean;
+	slots: GetApiDoctorsAvailability200SlotsItem[];
+};
+
 /**
  * @nullable
  */
@@ -2605,40 +2861,6 @@ export type GetApiDoctorApplicationsMe200 = {
 	user: GetApiDoctorApplicationsMe200User;
 };
 
-export type GetApiDoctorsAvailabilityParams = {
-	/**
-	 * @exclusiveMinimum 0
-	 */
-	doctor_id: number;
-	time?: string;
-	/**
-	 * @minimum 1
-	 * @maximum 10
-	 */
-	limit?: number;
-};
-
-export type GetApiDoctorsAvailability200Doctor = {
-	id: number;
-	firstName: string;
-	lastName: string;
-	/** @nullable */
-	cabinetName: string | null;
-	/** @nullable */
-	address: string | null;
-};
-
-export type GetApiDoctorsAvailability200SlotsItem = {
-	start: string;
-	end: string;
-};
-
-export type GetApiDoctorsAvailability200 = {
-	doctor: GetApiDoctorsAvailability200Doctor;
-	found: boolean;
-	slots: GetApiDoctorsAvailability200SlotsItem[];
-};
-
 export type GetApiDoctorsBestFitParams = {
 	/**
 	 * @minLength 1
@@ -2755,458 +2977,6 @@ export type GetApiDoctorsBestFit200Item = {
 	distance: number;
 	nextSlot: GetApiDoctorsBestFit200ItemNextSlot;
 	nearbySlots?: GetApiDoctorsBestFit200ItemNearbySlotsItem[];
-};
-
-export type GetApiPatientsLookupByPhoneParams = {
-	/**
-	 * @minLength 1
-	 */
-	phone: string;
-};
-
-/**
- * @nullable
- */
-export type GetApiPatientsLookupByPhone200MatchedPatient = {
-	id: number;
-	/** @nullable */
-	firstName: string | null;
-	/** @nullable */
-	lastName: string | null;
-	/** @nullable */
-	cin: string | null;
-	/** @nullable */
-	phoneNumber: string | null;
-} | null;
-
-export type GetApiPatientsLookupByPhone200 = {
-	phone: string;
-	/** @nullable */
-	matchedPatient: GetApiPatientsLookupByPhone200MatchedPatient;
-};
-
-export type GetApiPatientsId200MedicalFilesItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	type: string | null;
-	/** @nullable */
-	date: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @nullable */
-	description: string | null;
-	/** @nullable */
-	documents: string[] | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type GetApiPatientsId200InvoicesItemItemsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	invoiceId: number;
-	/** @maxLength 255 */
-	description: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	quantity: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	unitPriceCentimes: number;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type GetApiPatientsId200InvoicesItemPaymentsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	invoiceId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountCentimes: number;
-	/** @maxLength 50 */
-	paymentMethod: string;
-	paidAt: string;
-	/** @nullable */
-	notes: string | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type GetApiPatientsId200InvoicesItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	patientId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/** @maxLength 50 */
-	number: string;
-	/** @maxLength 50 */
-	status: string;
-	/** @maxLength 10 */
-	currency: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	totalCentimes: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountPaidCentimes: number;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	paymentMethod: string | null;
-	/** @nullable */
-	notes: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	pdfUrl: string | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	issuedAt: string | null;
-	/** @nullable */
-	paidAt: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	items: GetApiPatientsId200InvoicesItemItemsItem[];
-	payments: GetApiPatientsId200InvoicesItemPaymentsItem[];
-};
-
-export type GetApiPatientsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	personId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	doctorId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	cin: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/** @nullable */
-	dateOfBirth: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	gender: string | null;
-	/** @nullable */
-	address: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	phoneNumber: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	medicalFiles: GetApiPatientsId200MedicalFilesItem[];
-	invoices: GetApiPatientsId200InvoicesItem[];
-};
-
-export type PatchApiPatientsIdBody = {
-	/** @minLength 1 */
-	cin: string;
-	/** @minLength 1 */
-	firstName: string;
-	/** @minLength 1 */
-	lastName: string;
-	dateOfBirth: string;
-	/** @minLength 1 */
-	gender: string;
-	address: string;
-	phoneNumber: string;
-};
-
-export type PatchApiPatientsId200MedicalFilesItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	type: string | null;
-	/** @nullable */
-	date: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @nullable */
-	description: string | null;
-	/** @nullable */
-	documents: string[] | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type PatchApiPatientsId200InvoicesItemItemsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	invoiceId: number;
-	/** @maxLength 255 */
-	description: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	quantity: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	unitPriceCentimes: number;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type PatchApiPatientsId200InvoicesItemPaymentsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	invoiceId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountCentimes: number;
-	/** @maxLength 50 */
-	paymentMethod: string;
-	paidAt: string;
-	/** @nullable */
-	notes: string | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type PatchApiPatientsId200InvoicesItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	patientId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/** @maxLength 50 */
-	number: string;
-	/** @maxLength 50 */
-	status: string;
-	/** @maxLength 10 */
-	currency: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	totalCentimes: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountPaidCentimes: number;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	paymentMethod: string | null;
-	/** @nullable */
-	notes: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	pdfUrl: string | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	issuedAt: string | null;
-	/** @nullable */
-	paidAt: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	items: PatchApiPatientsId200InvoicesItemItemsItem[];
-	payments: PatchApiPatientsId200InvoicesItemPaymentsItem[];
-};
-
-export type PatchApiPatientsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	personId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	doctorId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	cin: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/** @nullable */
-	dateOfBirth: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	gender: string | null;
-	/** @nullable */
-	address: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	phoneNumber: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	medicalFiles: PatchApiPatientsId200MedicalFilesItem[];
-	invoices: PatchApiPatientsId200InvoicesItem[];
 };
 
 export type GetApiInvoicesId200ItemsItem = {
@@ -3650,55 +3420,19 @@ export type DeleteApiInvoicesId200 = {
 	patient: DeleteApiInvoicesId200Patient;
 };
 
-export type GetApiDoctorsIdParams = {
-	from?: string;
-	to?: string;
+export type PostApiLivekitTestCallTokenBody = {
+	/** @minLength 1 */
+	phoneNumber: string;
 };
 
-export type GetApiDoctorsId200DoctorAvailability =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
+export type PostApiLivekitTestCallToken200 = {
+	token: string;
+	url: string;
+	callSid: string;
+	roomName: string;
+};
 
-/**
- * @nullable
- */
-export type GetApiDoctorsId200DoctorSpeciality = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiDoctorsId200DoctorCabinetCity = {
+export type GetApiPatientsId200MedicalFilesItem = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3709,48 +3443,168 @@ export type GetApiDoctorsId200DoctorCabinetCity = {
 	 * @maximum 2147483647
 	 * @nullable
 	 */
-	postalCode: number | null;
+	patientId: number | null;
 	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
+	 * @maxLength 100
 	 * @nullable
 	 */
-	latitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	longitude: number | null;
+	type: string | null;
+	/** @nullable */
+	date: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
+	title: string | null;
+	/** @nullable */
+	description: string | null;
+	/** @nullable */
+	documents: string[] | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	createdAt: string | null;
+};
 
-export type GetApiDoctorsId200Doctor = {
+export type GetApiPatientsId200InvoicesItemItemsItem = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
 	id: number;
-	userId: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	invoiceId: number;
+	/** @maxLength 255 */
+	description: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	quantity: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	unitPriceCentimes: number;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type GetApiPatientsId200InvoicesItemPaymentsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	invoiceId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountCentimes: number;
+	/** @maxLength 50 */
+	paymentMethod: string;
+	paidAt: string;
+	/** @nullable */
+	notes: string | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type GetApiPatientsId200InvoicesItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	patientId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/** @maxLength 50 */
+	number: string;
+	/** @maxLength 50 */
+	status: string;
+	/** @maxLength 10 */
+	currency: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	totalCentimes: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountPaidCentimes: number;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	paymentMethod: string | null;
+	/** @nullable */
+	notes: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	pdfUrl: string | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	issuedAt: string | null;
+	/** @nullable */
+	paidAt: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	items: GetApiPatientsId200InvoicesItemItemsItem[];
+	payments: GetApiPatientsId200InvoicesItemPaymentsItem[];
+};
+
+export type GetApiPatientsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	personId: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	doctorId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -3761,128 +3615,340 @@ export type GetApiDoctorsId200Doctor = {
 	 * @nullable
 	 */
 	lastName: string | null;
+	/** @nullable */
+	dateOfBirth: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	gender: string | null;
+	/** @nullable */
+	address: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	phoneNumber: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	medicalFiles: GetApiPatientsId200MedicalFilesItem[];
+	invoices: GetApiPatientsId200InvoicesItem[];
+};
+
+export type PatchApiPatientsIdBody = {
+	/** @minLength 1 */
+	cin: string;
+	/** @minLength 1 */
+	firstName: string;
+	/** @minLength 1 */
+	lastName: string;
+	dateOfBirth: string;
+	/** @minLength 1 */
+	gender: string;
+	address: string;
+	phoneNumber: string;
+};
+
+export type PatchApiPatientsId200MedicalFilesItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	type: string | null;
+	/** @nullable */
+	date: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @nullable */
+	description: string | null;
+	/** @nullable */
+	documents: string[] | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type PatchApiPatientsId200InvoicesItemItemsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	invoiceId: number;
+	/** @maxLength 255 */
+	description: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	quantity: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	unitPriceCentimes: number;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type PatchApiPatientsId200InvoicesItemPaymentsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	invoiceId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountCentimes: number;
+	/** @maxLength 50 */
+	paymentMethod: string;
+	paidAt: string;
+	/** @nullable */
+	notes: string | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type PatchApiPatientsId200InvoicesItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	patientId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/** @maxLength 50 */
+	number: string;
+	/** @maxLength 50 */
+	status: string;
+	/** @maxLength 10 */
+	currency: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	totalCentimes: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountPaidCentimes: number;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	paymentMethod: string | null;
+	/** @nullable */
+	notes: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	pdfUrl: string | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	issuedAt: string | null;
+	/** @nullable */
+	paidAt: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	items: PatchApiPatientsId200InvoicesItemItemsItem[];
+	payments: PatchApiPatientsId200InvoicesItemPaymentsItem[];
+};
+
+export type PatchApiPatientsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	personId: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	doctorId: number | null;
 	/**
 	 * @maxLength 100
 	 * @nullable
 	 */
 	cin: string | null;
 	/**
-	 * @maxLength 100
+	 * @maxLength 255
 	 * @nullable
 	 */
-	tin: string | null;
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+	/** @nullable */
+	dateOfBirth: string | null;
 	/**
 	 * @maxLength 50
 	 * @nullable
 	 */
-	status: string | null;
+	gender: string | null;
 	/** @nullable */
 	address: string | null;
 	/**
-	 * @maxLength 255
+	 * @maxLength 50
 	 * @nullable
 	 */
-	cabinetName: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	cabinetCityId: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLongitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLatitude: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	specialityId: number | null;
-	availability: GetApiDoctorsId200DoctorAvailability;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinRecto: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinVerso: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	medicalCouncilNumber: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	medicalCouncilCertificate: string | null;
+	phoneNumber: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
-	/** @nullable */
-	speciality: GetApiDoctorsId200DoctorSpeciality;
-	/** @nullable */
-	cabinetCity: GetApiDoctorsId200DoctorCabinetCity;
+	medicalFiles: PatchApiPatientsId200MedicalFilesItem[];
+	invoices: PatchApiPatientsId200InvoicesItem[];
 };
 
-export type GetApiDoctorsId200AppointmentsItem = {
+export type GetApiPersonsId200 = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
 	id: number;
+	/** @maxLength 50 */
+	phoneNumber: string;
+	/** @maxLength 50 */
+	source: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
 	/** @nullable */
-	start: string | null;
-	/** @nullable */
-	end: string | null;
+	dateOfBirth: string | null;
 	/**
 	 * @maxLength 50
 	 * @nullable
 	 */
-	status: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	name: string | null;
+	gender: string | null;
 	/** @nullable */
-	description: string | null;
+	address: string | null;
+	/** @maxLength 8 */
+	preferredLanguage: string;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PatchApiPersonsIdBodyPreferredLanguage =
+	(typeof PatchApiPersonsIdBodyPreferredLanguage)[keyof typeof PatchApiPersonsIdBodyPreferredLanguage];
+
+export const PatchApiPersonsIdBodyPreferredLanguage = {
+	en: "en",
+	fr: "fr",
+	ar: "ar",
+} as const;
+
+export type PatchApiPersonsIdBody = {
+	/** @minLength 1 */
+	firstName?: string;
+	/** @minLength 1 */
+	lastName?: string;
+	dateOfBirth?: string;
+	/** @minLength 1 */
+	gender?: string;
+	address?: string;
+	preferredLanguage?: PatchApiPersonsIdBodyPreferredLanguage;
+};
+
+export type PatchApiPersonsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @maxLength 50 */
+	phoneNumber: string;
+	/** @maxLength 50 */
+	source: string;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
-	newPatientName: string | null;
-};
-
-export type GetApiDoctorsId200 = {
-	doctor: GetApiDoctorsId200Doctor;
-	appointments: GetApiDoctorsId200AppointmentsItem[];
-};
-
-export type PostApiRegisterRequestOtpBody = {
-	email: string;
+	firstName: string | null;
 	/**
-	 * @minLength 8
-	 * @pattern (?=.*[a-zA-Z])(?=.*[0-9])
+	 * @maxLength 255
+	 * @nullable
 	 */
-	password: string;
-};
-
-export type PostApiRegisterRequestOtp200 = {
-	email: string;
+	lastName: string | null;
+	/** @nullable */
+	dateOfBirth: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	gender: string | null;
+	/** @nullable */
+	address: string | null;
+	/** @maxLength 8 */
+	preferredLanguage: string;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
 };
 
 export type GetApiRecordingsId200Transcript =
@@ -4017,112 +4083,16 @@ export type PatchApiRecordingsId200 = {
 	updatedAt: string | null;
 };
 
-export type GetApiPersonsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @maxLength 50 */
-	phoneNumber: string;
-	/** @maxLength 50 */
-	source: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/** @nullable */
-	dateOfBirth: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	gender: string | null;
-	/** @nullable */
-	address: string | null;
-	/** @maxLength 8 */
-	preferredLanguage: string;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type PatchApiPersonsIdBodyPreferredLanguage =
-	(typeof PatchApiPersonsIdBodyPreferredLanguage)[keyof typeof PatchApiPersonsIdBodyPreferredLanguage];
-
-export const PatchApiPersonsIdBodyPreferredLanguage = {
-	en: "en",
-	fr: "fr",
-	ar: "ar",
-} as const;
-
-export type PatchApiPersonsIdBody = {
-	/** @minLength 1 */
-	firstName?: string;
-	/** @minLength 1 */
-	lastName?: string;
-	dateOfBirth?: string;
-	/** @minLength 1 */
-	gender?: string;
-	address?: string;
-	preferredLanguage?: PatchApiPersonsIdBodyPreferredLanguage;
-};
-
-export type PatchApiPersonsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @maxLength 50 */
-	phoneNumber: string;
-	/** @maxLength 50 */
-	source: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/** @nullable */
-	dateOfBirth: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	gender: string | null;
-	/** @nullable */
-	address: string | null;
-	/** @maxLength 8 */
-	preferredLanguage: string;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type PostApiRegisterVerifyOtpBody = {
+export type PostApiRegisterRequestOtpBody = {
 	email: string;
 	/**
-	 * @minLength 6
-	 * @maxLength 6
-	 * @pattern ^\d+$
+	 * @minLength 8
+	 * @pattern (?=.*[a-zA-Z])(?=.*[0-9])
 	 */
-	otp: string;
+	password: string;
 };
 
-export type PostApiRegisterVerifyOtp200 = {
+export type PostApiRegisterRequestOtp200 = {
 	email: string;
 };
 
@@ -4134,28 +4104,32 @@ export type PostApiRegisterResendOtp200 = {
 	email: string;
 };
 
-export type PostApiReviewsSubmitBodyWaitTime =
-	(typeof PostApiReviewsSubmitBodyWaitTime)[keyof typeof PostApiReviewsSubmitBodyWaitTime];
-
-export const PostApiReviewsSubmitBodyWaitTime = {
-	short: "short",
-	medium: "medium",
-	long: "long",
-} as const;
-
-export type PostApiReviewsSubmitBody = {
-	token: string;
+export type GetApiPatientsLookupByPhoneParams = {
 	/**
-	 * @minimum 1
-	 * @maximum 5
+	 * @minLength 1
 	 */
-	rating: number;
-	waitTime: PostApiReviewsSubmitBodyWaitTime;
-	comment?: string;
+	phone: string;
 };
 
-export type PostApiReviewsSubmit200 = {
-	success: boolean;
+/**
+ * @nullable
+ */
+export type GetApiPatientsLookupByPhone200MatchedPatient = {
+	id: number;
+	/** @nullable */
+	firstName: string | null;
+	/** @nullable */
+	lastName: string | null;
+	/** @nullable */
+	cin: string | null;
+	/** @nullable */
+	phoneNumber: string | null;
+} | null;
+
+export type GetApiPatientsLookupByPhone200 = {
+	phone: string;
+	/** @nullable */
+	matchedPatient: GetApiPatientsLookupByPhone200MatchedPatient;
 };
 
 export type PostApiUploadSignedUrlBodyFolder =
@@ -4415,6 +4389,30 @@ export type PutApiUsersIdBody = {
 	accessId?: number;
 };
 
+export type PostApiReviewsSubmitBodyWaitTime =
+	(typeof PostApiReviewsSubmitBodyWaitTime)[keyof typeof PostApiReviewsSubmitBodyWaitTime];
+
+export const PostApiReviewsSubmitBodyWaitTime = {
+	short: "short",
+	medium: "medium",
+	long: "long",
+} as const;
+
+export type PostApiReviewsSubmitBody = {
+	token: string;
+	/**
+	 * @minimum 1
+	 * @maximum 5
+	 */
+	rating: number;
+	waitTime: PostApiReviewsSubmitBodyWaitTime;
+	comment?: string;
+};
+
+export type PostApiReviewsSubmit200 = {
+	success: boolean;
+};
+
 export type GetApiUsersMe200DoctorProfileAvailability =
 	| string
 	| number
@@ -4643,85 +4641,47 @@ export type GetApiUsersMe200 = {
 	doctorProfile: GetApiUsersMe200DoctorProfile;
 };
 
-export type PostApiAppointmentsExternalEmergencyBody = {
-	/** @minLength 1 */
-	speciality: string;
-	/** @nullable */
-	lat: number | null;
-	/** @nullable */
-	long: number | null;
-	/** @minLength 1 */
+export type PostApiUsersPictureBody = {
+	pictureUrl: string;
+};
+
+export type PostApiUsersPicture200 = {
+	id: string;
 	name: string;
-	/** @minLength 1 */
-	phoneNumber: string;
-	/** @minLength 1 */
-	illness: string;
-};
-
-export type PostApiAppointmentsExternalEmergency201AppointmentsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	doctorId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
+	email: string;
+	emailVerified: boolean;
 	/** @nullable */
-	start: string | null;
-	/** @nullable */
-	end: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/** @maxLength 50 */
-	source: string;
+	image: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
-	name: string | null;
-	/** @nullable */
-	description: string | null;
+	displayName: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
-	newPatientName: string | null;
+	username: string | null;
 	/**
-	 * @maxLength 50
+	 * @minimum -2147483648
+	 * @maximum 2147483647
 	 * @nullable
 	 */
-	newPatientPhoneNumber: string | null;
-	urgent: boolean;
+	accessId: number | null;
 	/**
-	 * @maxLength 64
+	 * @minimum -2147483648
+	 * @maximum 2147483647
 	 * @nullable
 	 */
-	emergencyGroupId: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type PostApiAppointmentsExternalEmergency201 = {
-	found: boolean;
-	emergencyGroupId?: string;
-	appointments: PostApiAppointmentsExternalEmergency201AppointmentsItem[];
-	doctors?: (unknown | null)[];
-	message?: string;
+	active: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	type: number | null;
+	createdAt: string;
+	updatedAt: string;
 };
 
 export type GetApiAiChatConversationsId200MessagesItem = {
@@ -4923,6 +4883,101 @@ export type PostApiCallsIdEvents201 = {
 	timestamp: string | null;
 };
 
+export type PostApiRegisterVerifyOtpBody = {
+	email: string;
+	/**
+	 * @minLength 6
+	 * @maxLength 6
+	 * @pattern ^\d+$
+	 */
+	otp: string;
+};
+
+export type PostApiRegisterVerifyOtp200 = {
+	email: string;
+};
+
+export type PostApiAppointmentsExternalEmergencyBody = {
+	/** @minLength 1 */
+	speciality: string;
+	/** @nullable */
+	lat: number | null;
+	/** @nullable */
+	long: number | null;
+	/** @minLength 1 */
+	name: string;
+	/** @minLength 1 */
+	phoneNumber: string;
+	/** @minLength 1 */
+	illness: string;
+};
+
+export type PostApiAppointmentsExternalEmergency201AppointmentsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	doctorId: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/** @nullable */
+	start: string | null;
+	/** @nullable */
+	end: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/** @maxLength 50 */
+	source: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	name: string | null;
+	/** @nullable */
+	description: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	newPatientName: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	newPatientPhoneNumber: string | null;
+	urgent: boolean;
+	/**
+	 * @maxLength 64
+	 * @nullable
+	 */
+	emergencyGroupId: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PostApiAppointmentsExternalEmergency201 = {
+	found: boolean;
+	emergencyGroupId?: string;
+	appointments: PostApiAppointmentsExternalEmergency201AppointmentsItem[];
+	doctors?: (unknown | null)[];
+	message?: string;
+};
+
 export type GetApiDoctorsBestFitRangeParams = {
 	/**
 	 * @minLength 1
@@ -5058,160 +5113,6 @@ export type PostApiInternalAppointmentsProcessPendingTimeoutBody =
 			/** @minLength 1 */
 			emergencyGroupId: string;
 	  };
-
-export type PostApiInternalReviewsProcessJobBody = {
-	/** @exclusiveMinimum 0 */
-	appointmentId: number;
-	/** @exclusiveMinimum 0 */
-	doctorId: number;
-	/**
-	 * @exclusiveMinimum 0
-	 * @nullable
-	 */
-	patientId?: number | null;
-};
-
-export type PostApiUsersPictureBody = {
-	pictureUrl: string;
-};
-
-export type PostApiUsersPicture200 = {
-	id: string;
-	name: string;
-	email: string;
-	emailVerified: boolean;
-	/** @nullable */
-	image: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	displayName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	username: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	accessId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	active: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	type: number | null;
-	createdAt: string;
-	updatedAt: string;
-};
-
-export type PostApiPatientsIdMedicalFilesBody = {
-	/** @minLength 1 */
-	type: string;
-	date: string;
-	/** @minLength 1 */
-	title: string;
-	description: string;
-	documents?: string[];
-};
-
-export type PostApiPatientsIdMedicalFiles201 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	type: string | null;
-	/** @nullable */
-	date: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @nullable */
-	description: string | null;
-	/** @nullable */
-	documents: string[] | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type PutApiPatientsIdMedicalFilesBody = {
-	/** @exclusiveMinimum 0 */
-	medicalFileId: number;
-	title?: string;
-	description?: string;
-	/** @minLength 1 */
-	type?: string;
-	date?: string;
-};
-
-export type PutApiPatientsIdMedicalFiles200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	type: string | null;
-	/** @nullable */
-	date: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @nullable */
-	description: string | null;
-	/** @nullable */
-	documents: string[] | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type DeleteApiPatientsIdMedicalFilesParams = {
-	/**
-	 * @exclusiveMinimum 0
-	 */
-	medicalFileId: number;
-};
-
-export type DeleteApiPatientsIdMedicalFiles200 = {
-	message: string;
-};
 
 export type PostApiInvoicesIdPaymentsBodyPaymentMethod =
 	(typeof PostApiInvoicesIdPaymentsBodyPaymentMethod)[keyof typeof PostApiInvoicesIdPaymentsBodyPaymentMethod];
@@ -5582,6 +5483,117 @@ export type PostApiInvoicesIdSend200 = {
 	updatedAt: string | null;
 	items: PostApiInvoicesIdSend200ItemsItem[];
 	payments: PostApiInvoicesIdSend200PaymentsItem[];
+};
+
+export type PostApiPatientsIdMedicalFilesBody = {
+	/** @minLength 1 */
+	type: string;
+	date: string;
+	/** @minLength 1 */
+	title: string;
+	description: string;
+	documents?: string[];
+};
+
+export type PostApiPatientsIdMedicalFiles201 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	type: string | null;
+	/** @nullable */
+	date: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @nullable */
+	description: string | null;
+	/** @nullable */
+	documents: string[] | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type PutApiPatientsIdMedicalFilesBody = {
+	/** @exclusiveMinimum 0 */
+	medicalFileId: number;
+	title?: string;
+	description?: string;
+	/** @minLength 1 */
+	type?: string;
+	date?: string;
+};
+
+export type PutApiPatientsIdMedicalFiles200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	type: string | null;
+	/** @nullable */
+	date: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @nullable */
+	description: string | null;
+	/** @nullable */
+	documents: string[] | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type DeleteApiPatientsIdMedicalFilesParams = {
+	/**
+	 * @exclusiveMinimum 0
+	 */
+	medicalFileId: number;
+};
+
+export type DeleteApiPatientsIdMedicalFiles200 = {
+	message: string;
+};
+
+export type PostApiInternalReviewsProcessJobBody = {
+	/** @exclusiveMinimum 0 */
+	appointmentId: number;
+	/** @exclusiveMinimum 0 */
+	doctorId: number;
+	/**
+	 * @exclusiveMinimum 0
+	 * @nullable
+	 */
+	patientId?: number | null;
 };
 
 export type PostApiRecordingsIdTranscribe200Transcript =

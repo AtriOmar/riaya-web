@@ -18,6 +18,8 @@ export type TimelineEntry =
 			role: "patient" | "ai";
 			text: string;
 			timestamp: number;
+			/** Live text still being spoken or generated; replaced by the final text. */
+			partial?: boolean;
 	  }
 	| {
 			id: string;
@@ -186,6 +188,34 @@ function appendTimeline(
 	return [...existing, next];
 }
 
+/**
+ * Live transcripts arrive as partial updates (`isFinal: false`, text so far)
+ * followed by one final message. Partials only live in the browser timeline:
+ * the voice server persists final messages only.
+ */
+function upsertTranscript(
+	existing: TimelineEntry[],
+	role: "patient" | "ai",
+	text: string,
+	isFinal: boolean,
+): TimelineEntry[] {
+	const idx = existing.findLastIndex(
+		(e) => e.kind === "transcript" && e.role === role && e.partial === true,
+	);
+	const entry: TimelineEntry = {
+		id: `live-${Date.now()}-${Math.random()}`,
+		kind: "transcript",
+		role,
+		text,
+		timestamp: Date.now(),
+		...(isFinal ? {} : { partial: true }),
+	};
+	if (idx < 0) return [...existing, entry];
+	const copy = existing.slice();
+	copy[idx] = entry;
+	return copy;
+}
+
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export default function useRealtimeSocket() {
@@ -285,6 +315,11 @@ export default function useRealtimeSocket() {
 								...call,
 								status: "ended",
 								endTime: msg.timestamp,
+								timeline: call.timeline.map((e) =>
+									e.kind === "transcript" && e.partial
+										? { ...e, partial: false }
+										: e,
+								),
 							});
 						}
 						return next;
@@ -300,42 +335,36 @@ export default function useRealtimeSocket() {
 					break;
 
 				case "patient_transcript":
-					if (!msg.isFinal) break;
 					setCalls((prev) => {
 						const next = new Map(prev);
 						const call = next.get(msg.callSid);
 						if (!call) return prev;
-						const entry: TimelineEntry = {
-							id: `live-${Date.now()}-${Math.random()}`,
-							kind: "transcript",
-							role: "patient",
-							text: msg.text,
-							timestamp: Date.now(),
-						};
 						next.set(msg.callSid, {
 							...call,
-							timeline: appendTimeline(call.timeline, entry),
+							timeline: upsertTranscript(
+								call.timeline,
+								"patient",
+								msg.text,
+								msg.isFinal,
+							),
 						});
 						return next;
 					});
 					break;
 
 				case "ai_transcript":
-					if (!msg.isFinal) break;
 					setCalls((prev) => {
 						const next = new Map(prev);
 						const call = next.get(msg.callSid);
 						if (!call) return prev;
-						const entry: TimelineEntry = {
-							id: `live-${Date.now()}-${Math.random()}`,
-							kind: "transcript",
-							role: "ai",
-							text: msg.text,
-							timestamp: Date.now(),
-						};
 						next.set(msg.callSid, {
 							...call,
-							timeline: appendTimeline(call.timeline, entry),
+							timeline: upsertTranscript(
+								call.timeline,
+								"ai",
+								msg.text,
+								msg.isFinal,
+							),
 						});
 						return next;
 					});

@@ -1,9 +1,11 @@
 "use client";
 
 import { Loader2, Mic, MicOff, Phone, PhoneCall, PhoneOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLivekitCall } from "@/hooks/use-livekit-call";
 import {
 	type SimulatedCallStatus,
 	useSimulatedCall,
@@ -95,6 +97,28 @@ function Bubble({
 }
 
 const TEST_CALL_PHONE_STORAGE_KEY = "riaya:test-call-phone";
+const TEST_CALL_ENGINE_STORAGE_KEY = "riaya:test-call-engine";
+
+/** `stream`: fake Twilio media stream → voice server (Gemini Live etc.). `livekit`: LiveKit agent over WebRTC. */
+type CallEngine = "stream" | "livekit";
+
+function readPersistedEngine(): CallEngine {
+	try {
+		return localStorage.getItem(TEST_CALL_ENGINE_STORAGE_KEY) === "livekit"
+			? "livekit"
+			: "stream";
+	} catch {
+		return "stream";
+	}
+}
+
+function persistEngine(engine: CallEngine) {
+	try {
+		localStorage.setItem(TEST_CALL_ENGINE_STORAGE_KEY, engine);
+	} catch {
+		// quota / private mode
+	}
+}
 
 function readPersistedTestCallPhone(): string {
 	if (typeof window === "undefined") return "";
@@ -121,15 +145,40 @@ function persistTestCallPhone(phone: string) {
 
 export default function TestCallPhone() {
 	const [phone, setPhone] = useState("");
+	const [engine, setEngine] = useState<CallEngine>("stream");
+	// Both hooks stay mounted; the selected engine drives the UI.
+	const streamCall = useSimulatedCall();
+	const livekitCall = useLivekitCall();
 	const { status, callSid, error, transcript, startCall, hangUp } =
-		useSimulatedCall();
+		engine === "livekit" ? livekitCall : streamCall;
 
 	const scrollRef = useRef<HTMLDivElement>(null);
+	// Only auto-scroll new lines while the user is already at the bottom,
+	// so reading older lines isn't interrupted.
+	const stickToBottomRef = useRef(true);
+
+	useLayoutEffect(() => {
+		const el = scrollRef.current;
+		if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+	}, [transcript]);
+
+	const handleTranscriptScroll = (e: React.UIEvent<HTMLDivElement>) => {
+		const el = e.currentTarget;
+		stickToBottomRef.current =
+			el.scrollHeight - el.scrollTop - el.clientHeight < 16;
+	};
 
 	useEffect(() => {
 		const persisted = readPersistedTestCallPhone();
 		if (persisted) setPhone(persisted);
+		setEngine(readPersistedEngine());
 	}, []);
+
+	const handleEngineChange = (value: string) => {
+		const next: CallEngine = value === "livekit" ? "livekit" : "stream";
+		setEngine(next);
+		persistEngine(next);
+	};
 
 	useEffect(() => {
 		const normalized = normalizePhoneForStorage(phone);
@@ -218,8 +267,8 @@ export default function TestCallPhone() {
 					{/* Transcript area */}
 					<div
 						ref={scrollRef}
+						onScroll={handleTranscriptScroll}
 						className="flex h-72 min-h-0 flex-col gap-3 overflow-y-auto p-4"
-						style={{ scrollBehavior: "smooth" }}
 					>
 						{transcript.length === 0 ? (
 							<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
@@ -262,6 +311,20 @@ export default function TestCallPhone() {
 
 					{/* Controls */}
 					<div className="border-t p-4">
+						<Tabs
+							value={engine}
+							onValueChange={handleEngineChange}
+							className="mb-3"
+						>
+							<TabsList className="w-full">
+								<TabsTrigger value="stream" disabled={isBusy}>
+									Phone stream
+								</TabsTrigger>
+								<TabsTrigger value="livekit" disabled={isBusy}>
+									LiveKit agent
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
 						<div className="flex gap-2">
 							<PhoneNumberInput
 								id="test-call-phone"
@@ -314,8 +377,11 @@ export default function TestCallPhone() {
 
 				{/* Info note */}
 				<p className="mt-4 text-center text-muted-foreground text-xs">
-					This page simulates a Twilio phone call for testing. Bookings made
-					here create real appointments. Use a dedicated test number.
+					{engine === "livekit"
+						? "LiveKit agent: talks to the LiveKit pipeline over WebRTC (admin login required)."
+						: "Phone stream: simulates a Twilio call to the voice server's current realtime model."}{" "}
+					Bookings made here create real appointments. Use a dedicated test
+					number.
 				</p>
 			</div>
 		</div>

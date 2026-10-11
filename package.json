@@ -46,6 +46,8 @@
 		"ioredis": "^6.0.0",
 		"leaflet": "^1.9.4",
 		"libphonenumber-js": "^1.13.13",
+		"livekit-client": "^2.22.3",
+		"livekit-server-sdk": "^2.19.1",
 		"lucide-react": "^0.577.0",
 		"moment": "^2.30.1",
 		"next": "16.1.6",
