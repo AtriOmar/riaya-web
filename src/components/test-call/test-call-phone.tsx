@@ -18,6 +18,7 @@ import {
 	formatPhoneDisplay,
 	isValidPhoneNumber,
 	normalizePhoneForStorage,
+	TEST_CALL_PHONE_COUNTRY_OPTIONS,
 } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
@@ -358,6 +359,7 @@ export default function TestCallPhone() {
 									onChange={setPhone}
 									onKeyDown={handleKey}
 									disabled={isBusy}
+									countries={TEST_CALL_PHONE_COUNTRY_OPTIONS}
 									className="min-w-0 flex-1"
 								/>
 
