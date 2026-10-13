@@ -9,7 +9,7 @@ import {
 	whatsappUsage,
 } from "@/db/schema";
 import { throwApiError } from "@/lib/errors";
-import { getPlan, PLAN_IDS, type Plan, type PlanId } from "@/lib/plans";
+import { getPlan, type Plan, type PlanId } from "@/lib/plans";
 
 export type UsagePeriod = {
 	/** Inclusive start of the UTC calendar month */
@@ -40,6 +40,26 @@ export type EffectivePlan = {
 };
 
 /**
+ * The plan a doctor is effectively on, from their subscription row.
+ * Missing / free / past_due / expired Pro → "free".
+ */
+export function resolvePlanId(
+	sub: Pick<
+		typeof subscription.$inferSelect,
+		"planId" | "status" | "currentPeriodEnd"
+	> | null,
+	now = new Date(),
+): PlanId {
+	const isPro =
+		!!sub &&
+		sub.planId === "pro" &&
+		sub.status === "active" &&
+		(!sub.currentPeriodEnd || sub.currentPeriodEnd > now);
+
+	return isPro ? "pro" : "free";
+}
+
+/**
  * Resolve the doctor's effective plan for feature gating.
  * Missing / free / past_due / expired Pro → Free limits.
  */
@@ -51,19 +71,9 @@ export async function getEffectivePlan(
 		.from(subscription)
 		.where(eq(subscription.doctorId, doctorId));
 
-	const now = new Date();
-	const isPro =
-		!!sub &&
-		sub.planId === "pro" &&
-		sub.status === "active" &&
-		(!sub.currentPeriodEnd || sub.currentPeriodEnd > now);
+	const planId = resolvePlanId(sub ?? null);
 
-	const planId: PlanId =
-		isPro && PLAN_IDS.includes(sub.planId as PlanId)
-			? (sub.planId as PlanId)
-			: "free";
-
-	return { plan: getPlan(planId), planId, isPro };
+	return { plan: getPlan(planId), planId, isPro: planId === "pro" };
 }
 
 /** Distinct AI-booked phones for this doctor in the current UTC calendar month. */

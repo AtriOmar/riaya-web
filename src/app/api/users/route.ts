@@ -3,13 +3,15 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
-import { doctorProfile } from "@/db/schema";
+import { doctorProfile, subscription } from "@/db/schema";
 import {
 	apiError,
 	json,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { resolvePlanId } from "@/lib/plan-limits";
+import { PLAN_IDS } from "@/lib/plans";
 
 // ─── GET /api/users ──────────────────────────────────────────────────────────
 // Admin: search all users
@@ -46,6 +48,7 @@ export async function GET(req: NextRequest) {
 				active: userTable.active,
 				type: userTable.type,
 				createdAt: userTable.createdAt,
+				subscription: subscription,
 				hasDoctorProfile:
 					sql<boolean>`CASE WHEN ${doctorProfile.id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
 						"hasDoctorProfile",
@@ -53,6 +56,7 @@ export async function GET(req: NextRequest) {
 			})
 			.from(userTable)
 			.leftJoin(doctorProfile, eq(doctorProfile.userId, userTable.id))
+			.leftJoin(subscription, eq(subscription.doctorId, doctorProfile.id))
 			.where(
 				search
 					? or(
@@ -66,7 +70,13 @@ export async function GET(req: NextRequest) {
 			.limit(limit)
 			.offset((page - 1) * limit);
 
-		return json(users);
+		// Plan only applies to doctors; non-doctor users get null
+		return json(
+			users.map(({ subscription: sub, ...user }) => ({
+				...user,
+				plan: user.hasDoctorProfile ? resolvePlanId(sub) : null,
+			})),
+		);
 	} catch (e) {
 		if (e instanceof Response) return e;
 		return apiError("INTERNAL_ERROR");
@@ -117,7 +127,10 @@ import { selectUserSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const userRowSchema = selectUserSchema.merge(
-	z.object({ hasDoctorProfile: z.boolean() }),
+	z.object({
+		hasDoctorProfile: z.boolean(),
+		plan: z.enum(PLAN_IDS).nullable(),
+	}),
 );
 
 registry.registerPath({

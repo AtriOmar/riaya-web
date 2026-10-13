@@ -2880,54 +2880,6 @@
         }
       }
     },
-    "/api/stats": {
-      "get": {
-        "tags": [
-          "Miscellaneous"
-        ],
-        "summary": "Get platform statistics (Admin)",
-        "responses": {
-          "200": {
-            "description": "Statistics",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "total": {
-                      "type": "number"
-                    },
-                    "admins": {
-                      "type": "number"
-                    },
-                    "verified": {
-                      "type": "number"
-                    },
-                    "pending": {
-                      "type": "number"
-                    },
-                    "rejected": {
-                      "type": "number"
-                    },
-                    "banned": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "total",
-                    "admins",
-                    "verified",
-                    "pending",
-                    "rejected",
-                    "banned"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/specialities": {
       "get": {
         "tags": [
@@ -3207,153 +3159,46 @@
         }
       }
     },
-    "/api/appointments/external": {
-      "post": {
+    "/api/stats": {
+      "get": {
         "tags": [
-          "Appointments"
+          "Miscellaneous"
         ],
-        "summary": "Book external appointment",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "start": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "end": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "illness": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "doctorId",
-                  "name",
-                  "phoneNumber",
-                  "start",
-                  "end",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
+        "summary": "Get platform statistics (Admin)",
         "responses": {
-          "201": {
-            "description": "Booked appointment",
+          "200": {
+            "description": "Statistics",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
+                    "total": {
+                      "type": "number"
                     },
-                    "doctorId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
+                    "admins": {
+                      "type": "number"
                     },
-                    "patientId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
+                    "verified": {
+                      "type": "number"
                     },
-                    "start": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                    "pending": {
+                      "type": "number"
                     },
-                    "end": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                    "rejected": {
+                      "type": "number"
                     },
-                    "status": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "source": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "name": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "description": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "newPatientName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "newPatientPhoneNumber": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "urgent": {
-                      "type": "boolean"
-                    },
-                    "emergencyGroupId": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 64
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                    "banned": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "id",
-                    "doctorId",
-                    "patientId",
-                    "start",
-                    "end",
-                    "status",
-                    "source",
-                    "name",
-                    "description",
-                    "newPatientName",
-                    "newPatientPhoneNumber",
-                    "urgent",
-                    "emergencyGroupId",
-                    "createdAt",
-                    "updatedAt"
+                    "total",
+                    "admins",
+                    "verified",
+                    "pending",
+                    "rejected",
+                    "banned"
                   ]
                 }
               }
@@ -3463,6 +3308,15 @@
                       },
                       "hasDoctorProfile": {
                         "type": "boolean"
+                      },
+                      "plan": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                          "free",
+                          "pro",
+                          null
+                        ]
                       }
                     },
                     "required": [
@@ -3478,7 +3332,8 @@
                       "type",
                       "createdAt",
                       "updatedAt",
-                      "hasDoctorProfile"
+                      "hasDoctorProfile",
+                      "plan"
                     ]
                   }
                 }
@@ -3824,6 +3679,161 @@
                     "doctorId",
                     "title",
                     "recordingId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/external": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book external appointment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "illness": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "doctorId",
+                  "name",
+                  "phoneNumber",
+                  "start",
+                  "end",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booked appointment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "patientId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "newPatientName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "newPatientPhoneNumber": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "urgent": {
+                      "type": "boolean"
+                    },
+                    "emergencyGroupId": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 64
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "patientId",
+                    "start",
+                    "end",
+                    "status",
+                    "source",
+                    "name",
+                    "description",
+                    "newPatientName",
+                    "newPatientPhoneNumber",
+                    "urgent",
+                    "emergencyGroupId",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -6596,208 +6606,6 @@
         }
       }
     },
-    "/api/livekit/test-call-token": {
-      "post": {
-        "tags": [
-          "TestCall"
-        ],
-        "summary": "Create a LiveKit test-call token (Admin)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "settings": {
-                    "type": "object",
-                    "properties": {
-                      "pipeline": {
-                        "type": "object",
-                        "properties": {
-                          "stt": {
-                            "type": "object",
-                            "properties": {
-                              "api": {
-                                "type": "string",
-                                "enum": [
-                                  "openrouter-chat",
-                                  "openrouter-transcription",
-                                  "google",
-                                  "openai",
-                                  "livekit-inference",
-                                  "inworld"
-                                ]
-                              },
-                              "model": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "reasoning": {
-                                "type": "string",
-                                "enum": [
-                                  "none",
-                                  "minimal"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "api",
-                              "model"
-                            ]
-                          },
-                          "llm": {
-                            "type": "object",
-                            "properties": {
-                              "provider": {
-                                "type": "string",
-                                "enum": [
-                                  "openrouter",
-                                  "google",
-                                  "livekit-inference"
-                                ]
-                              },
-                              "model": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            "required": [
-                              "provider",
-                              "model"
-                            ]
-                          },
-                          "tts": {
-                            "type": "object",
-                            "properties": {
-                              "provider": {
-                                "type": "string",
-                                "enum": [
-                                  "gemini-openrouter",
-                                  "gemini-google",
-                                  "openai",
-                                  "openrouter",
-                                  "inworld",
-                                  "inference"
-                                ]
-                              },
-                              "model": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "voice": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "provider",
-                              "model"
-                            ]
-                          }
-                        }
-                      },
-                      "phone": {
-                        "type": "object",
-                        "properties": {
-                          "realtime": {
-                            "type": "object",
-                            "properties": {
-                              "backend": {
-                                "type": "string",
-                                "enum": [
-                                  "gemini",
-                                  "openai",
-                                  "gpt-live"
-                                ]
-                              },
-                              "model": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "voice": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "backend",
-                              "model"
-                            ]
-                          },
-                          "callerStt": {
-                            "type": "object",
-                            "properties": {
-                              "api": {
-                                "type": "string",
-                                "enum": [
-                                  "off",
-                                  "openrouter-chat",
-                                  "openrouter-transcription"
-                                ]
-                              },
-                              "model": {
-                                "type": "string"
-                              },
-                              "reasoning": {
-                                "type": "string",
-                                "enum": [
-                                  "none",
-                                  "minimal"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "api"
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "required": [
-                  "phoneNumber"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "LiveKit room token for a browser test call",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    },
-                    "callSid": {
-                      "type": "string"
-                    },
-                    "roomName": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "token",
-                    "url",
-                    "callSid",
-                    "roomName"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/patients/{id}": {
       "get": {
         "tags": [
@@ -7598,43 +7406,169 @@
         }
       }
     },
-    "/api/reviews/submit": {
+    "/api/livekit/test-call-token": {
       "post": {
         "tags": [
-          "Reviews"
+          "TestCall"
         ],
-        "summary": "Submit a review via magic link",
+        "summary": "Create a LiveKit test-call token (Admin)",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "token": {
+                  "phoneNumber": {
                     "type": "string",
-                    "format": "uuid"
+                    "minLength": 1
                   },
-                  "rating": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 5
-                  },
-                  "waitTime": {
-                    "type": "string",
-                    "enum": [
-                      "short",
-                      "medium",
-                      "long"
-                    ]
-                  },
-                  "comment": {
-                    "type": "string"
+                  "settings": {
+                    "type": "object",
+                    "properties": {
+                      "pipeline": {
+                        "type": "object",
+                        "properties": {
+                          "stt": {
+                            "type": "object",
+                            "properties": {
+                              "api": {
+                                "type": "string",
+                                "enum": [
+                                  "openrouter-chat",
+                                  "openrouter-transcription",
+                                  "google",
+                                  "openai",
+                                  "livekit-inference",
+                                  "inworld"
+                                ]
+                              },
+                              "model": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "reasoning": {
+                                "type": "string",
+                                "enum": [
+                                  "none",
+                                  "minimal"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "api",
+                              "model"
+                            ]
+                          },
+                          "llm": {
+                            "type": "object",
+                            "properties": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "openrouter",
+                                  "google",
+                                  "livekit-inference"
+                                ]
+                              },
+                              "model": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "provider",
+                              "model"
+                            ]
+                          },
+                          "tts": {
+                            "type": "object",
+                            "properties": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "gemini-openrouter",
+                                  "gemini-google",
+                                  "openai",
+                                  "openrouter",
+                                  "inworld",
+                                  "inference"
+                                ]
+                              },
+                              "model": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "voice": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "provider",
+                              "model"
+                            ]
+                          }
+                        }
+                      },
+                      "phone": {
+                        "type": "object",
+                        "properties": {
+                          "realtime": {
+                            "type": "object",
+                            "properties": {
+                              "backend": {
+                                "type": "string",
+                                "enum": [
+                                  "gemini",
+                                  "openai",
+                                  "gpt-live"
+                                ]
+                              },
+                              "model": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "voice": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "backend",
+                              "model"
+                            ]
+                          },
+                          "callerStt": {
+                            "type": "object",
+                            "properties": {
+                              "api": {
+                                "type": "string",
+                                "enum": [
+                                  "off",
+                                  "openrouter-chat",
+                                  "openrouter-transcription"
+                                ]
+                              },
+                              "model": {
+                                "type": "string"
+                              },
+                              "reasoning": {
+                                "type": "string",
+                                "enum": [
+                                  "none",
+                                  "minimal"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "api"
+                            ]
+                          }
+                        }
+                      }
+                    }
                   }
                 },
                 "required": [
-                  "token",
-                  "rating",
-                  "waitTime"
+                  "phoneNumber"
                 ]
               }
             }
@@ -7642,18 +7576,102 @@
         },
         "responses": {
           "200": {
-            "description": "Review submitted successfully",
+            "description": "LiveKit room token for a browser test call",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean"
+                    "token": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "callSid": {
+                      "type": "string"
+                    },
+                    "roomName": {
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "success"
+                    "token",
+                    "url",
+                    "callSid",
+                    "roomName"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/lookup-by-phone": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Find doctor patient by phone number",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "phone",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lookup result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                      "type": "string"
+                    },
+                    "matchedPatient": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "phoneNumber": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "phoneNumber"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "phone",
+                    "matchedPatient"
                   ]
                 }
               }
@@ -7882,78 +7900,6 @@
                     "preferredLanguage",
                     "createdAt",
                     "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/patients/lookup-by-phone": {
-      "get": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Find doctor patient by phone number",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "phone",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lookup result",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "phone": {
-                      "type": "string"
-                    },
-                    "matchedPatient": {
-                      "type": "object",
-                      "nullable": true,
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "cin": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "phoneNumber": {
-                          "type": "string",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "firstName",
-                        "lastName",
-                        "cin",
-                        "phoneNumber"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "phone",
-                    "matchedPatient"
                   ]
                 }
               }
@@ -8235,6 +8181,179 @@
                     "transcriptStatus",
                     "createdAt",
                     "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/register/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Request registration OTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "pattern": "(?=.*[a-zA-Z])(?=.*[0-9])"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        }
+      }
+    },
+    "/api/register/resend-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend registration OTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP resent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending signup"
+          },
+          "429": {
+            "description": "Resend cooldown active"
+          }
+        }
+      }
+    },
+    "/api/reviews/submit": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Submit a review via magic link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "waitTime": {
+                    "type": "string",
+                    "enum": [
+                      "short",
+                      "medium",
+                      "long"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "rating",
+                  "waitTime"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
                   ]
                 }
               }
@@ -8577,297 +8696,6 @@
         }
       }
     },
-    "/api/register/resend-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Resend registration OTP",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                },
-                "required": [
-                  "email"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OTP resent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No pending signup"
-          },
-          "429": {
-            "description": "Resend cooldown active"
-          }
-        }
-      }
-    },
-    "/api/register/request-otp": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Request registration OTP",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "(?=.*[a-zA-Z])(?=.*[0-9])"
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OTP sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    }
-                  },
-                  "required": [
-                    "email"
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Email already registered"
-          }
-        }
-      }
-    },
-    "/api/appointments/external/emergency": {
-      "post": {
-        "tags": [
-          "Appointments"
-        ],
-        "summary": "Book urgent emergency appointments (fan-out to top doctors)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "speciality": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "lat": {
-                    "type": "number",
-                    "nullable": true
-                  },
-                  "long": {
-                    "type": "number",
-                    "nullable": true
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "illness": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "speciality",
-                  "lat",
-                  "long",
-                  "name",
-                  "phoneNumber",
-                  "illness"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Urgent appointments created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "found": {
-                      "type": "boolean"
-                    },
-                    "emergencyGroupId": {
-                      "type": "string"
-                    },
-                    "appointments": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer",
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "doctorId": {
-                            "type": "integer",
-                            "nullable": true,
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "patientId": {
-                            "type": "integer",
-                            "nullable": true,
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "start": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          },
-                          "end": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          },
-                          "status": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 50
-                          },
-                          "source": {
-                            "type": "string",
-                            "maxLength": 50
-                          },
-                          "name": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 255
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "newPatientName": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 255
-                          },
-                          "newPatientPhoneNumber": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 50
-                          },
-                          "urgent": {
-                            "type": "boolean"
-                          },
-                          "emergencyGroupId": {
-                            "type": "string",
-                            "nullable": true,
-                            "maxLength": 64
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "doctorId",
-                          "patientId",
-                          "start",
-                          "end",
-                          "status",
-                          "source",
-                          "name",
-                          "description",
-                          "newPatientName",
-                          "newPatientPhoneNumber",
-                          "urgent",
-                          "emergencyGroupId",
-                          "createdAt",
-                          "updatedAt"
-                        ]
-                      }
-                    },
-                    "doctors": {
-                      "type": "array",
-                      "items": {
-                        "nullable": true
-                      }
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "found",
-                    "appointments"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/upload/signed-url": {
       "post": {
         "tags": [
@@ -8938,350 +8766,6 @@
         }
       }
     },
-    "/api/users/me": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Get current user profile",
-        "responses": {
-          "200": {
-            "description": "Current user profile",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "displayName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "username": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "accessId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "active": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "hasDoctorProfile": {
-                      "type": "boolean"
-                    },
-                    "doctorProfile": {
-                      "type": "object",
-                      "nullable": true,
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cin": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "tin": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "status": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 50
-                        },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "cabinetName": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cabinetCityId": {
-                          "type": "integer",
-                          "nullable": true,
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "cabinetLongitude": {
-                          "type": "number",
-                          "nullable": true,
-                          "minimum": -140737488355328,
-                          "maximum": 140737488355327
-                        },
-                        "cabinetLatitude": {
-                          "type": "number",
-                          "nullable": true,
-                          "minimum": -140737488355328,
-                          "maximum": 140737488355327
-                        },
-                        "specialityId": {
-                          "type": "integer",
-                          "nullable": true,
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "availability": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "nullable": true
-                            },
-                            {
-                              "type": "object",
-                              "additionalProperties": {
-                                "nullable": true
-                              }
-                            },
-                            {
-                              "type": "array",
-                              "items": {
-                                "nullable": true
-                              }
-                            }
-                          ]
-                        },
-                        "cinRecto": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "cinVerso": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "medicalCouncilNumber": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 100
-                        },
-                        "medicalCouncilCertificate": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
-                        },
-                        "speciality": {
-                          "type": "object",
-                          "nullable": true,
-                          "properties": {
-                            "id": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "enName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "frName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "arName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "slug": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "enName",
-                            "frName",
-                            "arName",
-                            "slug"
-                          ]
-                        },
-                        "cabinetCity": {
-                          "type": "object",
-                          "nullable": true,
-                          "properties": {
-                            "id": {
-                              "type": "integer",
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "postalCode": {
-                              "type": "integer",
-                              "nullable": true,
-                              "minimum": -2147483648,
-                              "maximum": 2147483647
-                            },
-                            "latitude": {
-                              "type": "number",
-                              "nullable": true,
-                              "minimum": -140737488355328,
-                              "maximum": 140737488355327
-                            },
-                            "longitude": {
-                              "type": "number",
-                              "nullable": true,
-                              "minimum": -140737488355328,
-                              "maximum": 140737488355327
-                            },
-                            "enName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "frName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "arName": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            },
-                            "slug": {
-                              "type": "string",
-                              "nullable": true,
-                              "maxLength": 255
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "postalCode",
-                            "latitude",
-                            "longitude",
-                            "enName",
-                            "frName",
-                            "arName",
-                            "slug"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "userId",
-                        "firstName",
-                        "lastName",
-                        "cin",
-                        "tin",
-                        "status",
-                        "address",
-                        "cabinetName",
-                        "cabinetCityId",
-                        "cabinetLongitude",
-                        "cabinetLatitude",
-                        "specialityId",
-                        "availability",
-                        "cinRecto",
-                        "cinVerso",
-                        "medicalCouncilNumber",
-                        "medicalCouncilCertificate",
-                        "createdAt",
-                        "updatedAt",
-                        "speciality",
-                        "cabinetCity"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "emailVerified",
-                    "image",
-                    "displayName",
-                    "username",
-                    "accessId",
-                    "active",
-                    "type",
-                    "createdAt",
-                    "updatedAt",
-                    "hasDoctorProfile",
-                    "doctorProfile"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/register/verify-otp": {
       "post": {
         "tags": [
@@ -9338,606 +8822,6 @@
           },
           "404": {
             "description": "No pending signup"
-          }
-        }
-      }
-    },
-    "/api/users/picture": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update profile picture",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "pictureUrl": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                },
-                "required": [
-                  "pictureUrl"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "displayName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "username": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "accessId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "active": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "emailVerified",
-                    "image",
-                    "displayName",
-                    "username",
-                    "accessId",
-                    "active",
-                    "type",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/ai-chat/conversations/{id}": {
-      "get": {
-        "tags": [
-          "AiChat"
-        ],
-        "summary": "Get AI chat conversation with messages",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Conversation with messages",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "title": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "recordingId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "messages": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer",
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "conversationId": {
-                            "type": "integer",
-                            "minimum": -2147483648,
-                            "maximum": 2147483647
-                          },
-                          "role": {
-                            "type": "string",
-                            "maxLength": 20
-                          },
-                          "content": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "conversationId",
-                          "role",
-                          "content",
-                          "createdAt"
-                        ]
-                      }
-                    },
-                    "recording": {
-                      "type": "object",
-                      "nullable": true,
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "minimum": -2147483648,
-                          "maximum": 2147483647
-                        },
-                        "title": {
-                          "type": "string",
-                          "nullable": true,
-                          "maxLength": 255
-                        },
-                        "transcript": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "nullable": true
-                            },
-                            {
-                              "type": "object",
-                              "additionalProperties": {
-                                "nullable": true
-                              }
-                            },
-                            {
-                              "type": "array",
-                              "items": {
-                                "nullable": true
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "title",
-                        "transcript"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "title",
-                    "recordingId",
-                    "createdAt",
-                    "updatedAt",
-                    "messages",
-                    "recording"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "AiChat"
-        ],
-        "summary": "Update AI chat conversation (title and/or recording link)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255
-                  },
-                  "recordingId": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated conversation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "doctorId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "title": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 255
-                    },
-                    "recordingId": {
-                      "type": "integer",
-                      "nullable": true,
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "doctorId",
-                    "title",
-                    "recordingId",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "AiChat"
-        ],
-        "summary": "Delete AI chat conversation",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/calls/{id}/events": {
-      "post": {
-        "tags": [
-          "Calls"
-        ],
-        "summary": "Create call event",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "patient_transcript",
-                      "ai_transcript",
-                      "function_call",
-                      "system",
-                      "error",
-                      "appointment_booked"
-                    ]
-                  },
-                  "content": {
-                    "type": "string"
-                  },
-                  "functionName": {
-                    "type": "string"
-                  },
-                  "functionArgs": {
-                    "nullable": true
-                  },
-                  "functionResult": {
-                    "nullable": true
-                  },
-                  "functionStatus": {
-                    "type": "string",
-                    "enum": [
-                      "calling",
-                      "success",
-                      "error"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "callId": {
-                      "type": "integer",
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
-                    "type": {
-                      "type": "string",
-                      "maxLength": 50
-                    },
-                    "content": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "functionName": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 100
-                    },
-                    "functionArgs": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "nullable": true
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "nullable": true
-                          }
-                        }
-                      ]
-                    },
-                    "functionResult": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "nullable": true
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "nullable": true
-                          }
-                        }
-                      ]
-                    },
-                    "functionStatus": {
-                      "type": "string",
-                      "nullable": true,
-                      "maxLength": 50
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "callId",
-                    "type",
-                    "content",
-                    "functionName",
-                    "functionArgs",
-                    "functionResult",
-                    "functionStatus",
-                    "timestamp"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/calls/{id}/recording": {
-      "get": {
-        "tags": [
-          "Calls"
-        ],
-        "summary": "Stream a call recording (Admin)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Recording audio bytes",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
           }
         }
       }
@@ -10341,6 +9225,846 @@
         }
       }
     },
+    "/api/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get current user profile",
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "emailVerified": {
+                      "type": "boolean"
+                    },
+                    "image": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "accessId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "active": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "hasDoctorProfile": {
+                      "type": "boolean"
+                    },
+                    "doctorProfile": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "tin": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "status": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 50
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cabinetName": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cabinetCityId": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "cabinetLongitude": {
+                          "type": "number",
+                          "nullable": true,
+                          "minimum": -140737488355328,
+                          "maximum": 140737488355327
+                        },
+                        "cabinetLatitude": {
+                          "type": "number",
+                          "nullable": true,
+                          "minimum": -140737488355328,
+                          "maximum": 140737488355327
+                        },
+                        "specialityId": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "availability": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "nullable": true
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {
+                                "nullable": true
+                              }
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "nullable": true
+                              }
+                            }
+                          ]
+                        },
+                        "cinRecto": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "cinVerso": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "medicalCouncilNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 100
+                        },
+                        "medicalCouncilCertificate": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "speciality": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "enName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "frName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "arName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "slug": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "enName",
+                            "frName",
+                            "arName",
+                            "slug"
+                          ]
+                        },
+                        "cabinetCity": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "postalCode": {
+                              "type": "integer",
+                              "nullable": true,
+                              "minimum": -2147483648,
+                              "maximum": 2147483647
+                            },
+                            "latitude": {
+                              "type": "number",
+                              "nullable": true,
+                              "minimum": -140737488355328,
+                              "maximum": 140737488355327
+                            },
+                            "longitude": {
+                              "type": "number",
+                              "nullable": true,
+                              "minimum": -140737488355328,
+                              "maximum": 140737488355327
+                            },
+                            "enName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "frName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "arName": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            },
+                            "slug": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 255
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "postalCode",
+                            "latitude",
+                            "longitude",
+                            "enName",
+                            "frName",
+                            "arName",
+                            "slug"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "firstName",
+                        "lastName",
+                        "cin",
+                        "tin",
+                        "status",
+                        "address",
+                        "cabinetName",
+                        "cabinetCityId",
+                        "cabinetLongitude",
+                        "cabinetLatitude",
+                        "specialityId",
+                        "availability",
+                        "cinRecto",
+                        "cinVerso",
+                        "medicalCouncilNumber",
+                        "medicalCouncilCertificate",
+                        "createdAt",
+                        "updatedAt",
+                        "speciality",
+                        "cabinetCity"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "emailVerified",
+                    "image",
+                    "displayName",
+                    "username",
+                    "accessId",
+                    "active",
+                    "type",
+                    "createdAt",
+                    "updatedAt",
+                    "hasDoctorProfile",
+                    "doctorProfile"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/picture": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update profile picture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pictureUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "pictureUrl"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "emailVerified": {
+                      "type": "boolean"
+                    },
+                    "image": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "accessId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "active": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "emailVerified",
+                    "image",
+                    "displayName",
+                    "username",
+                    "accessId",
+                    "active",
+                    "type",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/external/emergency": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Book urgent emergency appointments (fan-out to top doctors)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "speciality": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lat": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "long": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "illness": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "speciality",
+                  "lat",
+                  "long",
+                  "name",
+                  "phoneNumber",
+                  "illness"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Urgent appointments created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "found": {
+                      "type": "boolean"
+                    },
+                    "emergencyGroupId": {
+                      "type": "string"
+                    },
+                    "appointments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "doctorId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "patientId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "start": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "end": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 50
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "newPatientName": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "newPatientPhoneNumber": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 50
+                          },
+                          "urgent": {
+                            "type": "boolean"
+                          },
+                          "emergencyGroupId": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 64
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "doctorId",
+                          "patientId",
+                          "start",
+                          "end",
+                          "status",
+                          "source",
+                          "name",
+                          "description",
+                          "newPatientName",
+                          "newPatientPhoneNumber",
+                          "urgent",
+                          "emergencyGroupId",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "doctors": {
+                      "type": "array",
+                      "items": {
+                        "nullable": true
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "found",
+                    "appointments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calls/{id}/events": {
+      "post": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Create call event",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "patient_transcript",
+                      "ai_transcript",
+                      "function_call",
+                      "system",
+                      "error",
+                      "appointment_booked"
+                    ]
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "functionName": {
+                    "type": "string"
+                  },
+                  "functionArgs": {
+                    "nullable": true
+                  },
+                  "functionResult": {
+                    "nullable": true
+                  },
+                  "functionStatus": {
+                    "type": "string",
+                    "enum": [
+                      "calling",
+                      "success",
+                      "error"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created event",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "callId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "type": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "content": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "functionName": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
+                    "functionArgs": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "functionResult": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "functionStatus": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 50
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "callId",
+                    "type",
+                    "content",
+                    "functionName",
+                    "functionArgs",
+                    "functionResult",
+                    "functionStatus",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calls/{id}/recording": {
+      "get": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Stream a call recording (Admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recording audio bytes",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/best-fit/range": {
       "get": {
         "tags": [
@@ -10584,50 +10308,285 @@
         }
       }
     },
-    "/api/internal/reviews/process-job": {
-      "post": {
+    "/api/ai-chat/conversations/{id}": {
+      "get": {
         "tags": [
-          "Internal"
+          "AiChat"
         ],
-        "summary": "Process a delayed review job (Internal)",
+        "summary": "Get AI chat conversation with messages",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation with messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "recordingId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "conversationId": {
+                            "type": "integer",
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "role": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "conversationId",
+                          "role",
+                          "content",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "recording": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -2147483648,
+                          "maximum": 2147483647
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 255
+                        },
+                        "transcript": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "nullable": true
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {
+                                "nullable": true
+                              }
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "nullable": true
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "transcript"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "title",
+                    "recordingId",
+                    "createdAt",
+                    "updatedAt",
+                    "messages",
+                    "recording"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "AiChat"
+        ],
+        "summary": "Update AI chat conversation (title and/or recording link)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
                   },
-                  "doctorId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  },
-                  "patientId": {
+                  "recordingId": {
                     "type": "integer",
                     "nullable": true,
                     "minimum": 0,
                     "exclusiveMinimum": true
                   }
-                },
-                "required": [
-                  "appointmentId",
-                  "doctorId"
-                ]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Job processed",
+            "description": "Updated conversation",
             "content": {
               "application/json": {
                 "schema": {
-                  "nullable": true
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "doctorId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "recordingId": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "doctorId",
+                    "title",
+                    "recordingId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AiChat"
+        ],
+        "summary": "Delete AI chat conversation",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
                 }
               }
             }
@@ -11841,6 +11800,121 @@
         }
       }
     },
+    "/api/internal/reviews/process-job": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Process a delayed review job (Internal)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "doctorId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "patientId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "appointmentId",
+                  "doctorId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/caller/ai-appointments/cancel": {
+      "post": {
+        "tags": [
+          "Caller"
+        ],
+        "summary": "Cancel pending AI appointment for caller phone (voice service)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "appointmentId": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "phoneNumber",
+                  "appointmentId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "appointmentId": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "appointmentId",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/internal/caller/ai-appointments/list": {
       "post": {
         "tags": [
@@ -11986,70 +12060,6 @@
                   "required": [
                     "upcoming",
                     "recentPast"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/caller/ai-appointments/cancel": {
-      "post": {
-        "tags": [
-          "Caller"
-        ],
-        "summary": "Cancel pending AI appointment for caller phone (voice service)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "phoneNumber": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "appointmentId": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true
-                  }
-                },
-                "required": [
-                  "phoneNumber",
-                  "appointmentId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Appointment cancelled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "appointmentId": {
-                      "type": "integer"
-                    },
-                    "status": {
-                      "type": "string",
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "appointmentId",
-                    "status"
                   ]
                 }
               }

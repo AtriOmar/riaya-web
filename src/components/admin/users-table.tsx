@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
+import { ProPlanBadge } from "@/components/dashboard/subscription/pro-plan-badge";
 import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,6 +88,16 @@ const columns: Column<GetApiUsers200Item>[] = [
 		header: "Username",
 		skeleton: <Skeleton className="h-4 w-20" />,
 		cell: (row) => row.username ?? "—",
+	},
+	{
+		key: "plan",
+		header: "Plan",
+		skeleton: <Skeleton className="h-4 w-14" />,
+		cell: (row) => {
+			if (row.plan === null) return "—";
+			if (row.plan === "pro") return <ProPlanBadge compact />;
+			return <span className="text-muted-foreground">Free</span>;
+		},
 	},
 	{
 		key: "created",
