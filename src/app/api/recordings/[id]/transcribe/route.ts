@@ -3,18 +3,18 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording } from "@/db/schema";
+import { transcribeAudio } from "@/lib/ai";
 import {
 	apiError,
 	json,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { transcribeAudio } from "@/lib/azure-ai";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 // ─── POST /api/recordings/[id]/transcribe ─────────────────────────────────────
-// Triggers transcription for a recording via `transcribeAudio` in azure-ai.ts.
+// Triggers transcription for a recording via `transcribeAudio` in lib/ai.ts.
 
 export async function POST(_req: NextRequest, { params }: RouteContext) {
 	try {

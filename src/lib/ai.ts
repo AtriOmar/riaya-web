@@ -40,11 +40,6 @@ export function createChatClient(): OpenAI {
 	});
 }
 
-/** @deprecated Prefer createChatClient() — kept for any leftover imports */
-export function createAzureOpenAI(): OpenAI {
-	return createChatClient();
-}
-
 /**
  * Stream assistant text via OpenRouter chat completions.
  * Yields plain text deltas.

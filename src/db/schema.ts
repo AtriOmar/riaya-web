@@ -501,7 +501,7 @@ export const billingInvoice = pgTable(
 
 // ─── Consultation Recording ───────────────────────────────────────────────────
 // Recordings made by the doctor during or after a patient consultation.
-// Linked optionally to a patient. Transcript is generated via Azure AI.
+// Linked optionally to a patient. Transcript is generated via OpenRouter.
 
 export const consultationRecording = pgTable(
 	"consultation_recording",

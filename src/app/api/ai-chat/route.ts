@@ -7,13 +7,13 @@ import {
 	aiChatMessage,
 	consultationRecording,
 } from "@/db/schema";
+import { streamChatText } from "@/lib/ai";
 import { buildAssistantInstructions } from "@/lib/ai-assistant-prompt";
 import {
 	apiError,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { streamChatText } from "@/lib/azure-ai";
 import { assertAiMessageAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 /**
- * Speaker labels from OpenRouter/Azure diarization are 0-based indexes.
+ * Speaker labels from OpenRouter diarization are 0-based indexes.
  * Missing values stay as a generic "Speaker".
  */
 export function formatSpeakerLabel(speaker: unknown): string {
