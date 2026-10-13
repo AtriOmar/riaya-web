@@ -44,14 +44,24 @@ export function useCallDuration(
 	return formatDurationSeconds(elapsed);
 }
 
-export function getTimelinePreview(timeline: TimelineEntry[]): string {
+export function getTimelinePreview(timeline: TimelineEntry[]): {
+	label: string | null;
+	text: string;
+} {
 	const lastEntry = timeline[timeline.length - 1];
-	if (!lastEntry) return "Waiting for conversation...";
+	if (!lastEntry) return { label: null, text: "Waiting for conversation..." };
 	if (lastEntry.kind === "transcript")
-		return `${lastEntry.role === "ai" ? "AI" : "Patient"}: ${lastEntry.text}`;
+		return {
+			label: lastEntry.role === "ai" ? "AI" : "Patient",
+			text: lastEntry.text,
+		};
 	if (lastEntry.kind === "function_call")
-		return `Tool ${lastEntry.name} (${lastEntry.status})`;
-	if (lastEntry.kind === "system") return lastEntry.text;
-	if (lastEntry.kind === "error") return `Error: ${lastEntry.text}`;
-	return "";
+		return {
+			label: null,
+			text: `Tool ${lastEntry.name} (${lastEntry.status})`,
+		};
+	if (lastEntry.kind === "system") return { label: null, text: lastEntry.text };
+	if (lastEntry.kind === "error")
+		return { label: "Error", text: lastEntry.text };
+	return { label: null, text: "" };
 }

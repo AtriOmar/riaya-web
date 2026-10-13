@@ -138,7 +138,10 @@ export default function CallCard({
 									{duration}
 								</span>
 							</div>
-							<p className="mt-1 text-muted-foreground text-sm">{preview}</p>
+							<p className="mt-1 text-muted-foreground text-sm">
+								{preview.label && <span>{preview.label}: </span>}
+								<bdi>{preview.text}</bdi>
+							</p>
 							<p className="mt-1 font-mono text-muted-foreground text-xs break-all">
 								{call.callSid}
 							</p>

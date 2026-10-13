@@ -91,7 +91,9 @@ function Bubble({
 						<Loader2 className="size-2.5 animate-spin text-muted-foreground" />
 					)}
 				</div>
-				<p className="whitespace-pre-wrap">{text}</p>
+				<p dir="auto" className="whitespace-pre-wrap [unicode-bidi:plaintext]">
+					{text}
+				</p>
 			</div>
 		</div>
 	);

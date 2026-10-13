@@ -65,7 +65,8 @@ export default function CallListItem({ call, selected, onSelect }: Props) {
 						{callDateLabel}
 					</p>
 					<p className="mt-1 line-clamp-2 text-muted-foreground text-xs leading-snug">
-						{preview}
+						{preview.label && <span>{preview.label}: </span>}
+						<bdi>{preview.text}</bdi>
 					</p>
 				</div>
 			</div>

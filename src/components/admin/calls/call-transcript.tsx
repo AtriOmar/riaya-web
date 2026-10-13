@@ -53,7 +53,10 @@ function TranscriptBubble({
 						{formatTime(timestamp)}
 					</span>
 				</div>
-				<p className="leading-relaxed whitespace-pre-wrap">
+				<p
+					dir="auto"
+					className="leading-relaxed whitespace-pre-wrap [unicode-bidi:plaintext]"
+				>
 					{text}
 					{partial && (
 						<span
