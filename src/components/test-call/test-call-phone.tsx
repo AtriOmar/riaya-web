@@ -3,6 +3,7 @@
 import { Loader2, Mic, MicOff, Phone, PhoneCall, PhoneOff } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ModelSettingsPanel from "@/components/test-call/model-settings-panel";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
@@ -286,6 +287,7 @@ export default function TestCallPhone() {
 									</span>
 								</div>
 							)}
+							<ThemeToggle className="shrink-0" />
 						</div>
 
 						{/* Transcript area */}

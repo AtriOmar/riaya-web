@@ -1,11 +1,17 @@
 "use client";
 
-import { Copy, Inbox, Search, ShieldAlert, ShieldCheck } from "lucide-react";
+import {
+	Copy,
+	Crown,
+	Inbox,
+	Search,
+	ShieldAlert,
+	ShieldCheck,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
-import { ProPlanBadge } from "@/components/dashboard/subscription/pro-plan-badge";
 import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,8 +101,25 @@ const columns: Column<GetApiUsers200Item>[] = [
 		skeleton: <Skeleton className="h-4 w-14" />,
 		cell: (row) => {
 			if (row.plan === null) return "—";
-			if (row.plan === "pro") return <ProPlanBadge compact />;
-			return <span className="text-muted-foreground">Free</span>;
+			if (row.plan === "pro") {
+				return (
+					<Badge
+						variant="secondary"
+						className="h-5 bg-amber-500/20 px-1.5 py-0 text-[10px] leading-none text-amber-800 hover:bg-amber-500/30 dark:text-amber-400 [&>svg]:size-2.5!"
+					>
+						<Crown />
+						Pro
+					</Badge>
+				);
+			}
+			return (
+				<Badge
+					variant="secondary"
+					className="h-5 px-1.5 py-0 text-[10px] leading-none text-foreground/75"
+				>
+					Free
+				</Badge>
+			);
 		},
 	},
 	{

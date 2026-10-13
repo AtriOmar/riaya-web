@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -67,7 +68,10 @@ export default function ReviewPage() {
 
 	if (isSuccess) {
 		return (
-			<div className="flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+			<div className="relative flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+				<div className="top-4 right-4 z-20 absolute">
+					<ThemeToggle />
+				</div>
 				<div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-900/20 to-indigo-100 dark:to-indigo-900/20 opacity-50 pointer-events-none" />
 				<Card className="z-10 relative bg-white/80 dark:bg-slate-900/80 shadow-2xl backdrop-blur-xl border-0 w-full max-w-md animate-fade-in-up glassmorphism">
 					<CardHeader className="pt-12 pb-8 text-center">
@@ -87,7 +91,10 @@ export default function ReviewPage() {
 	}
 
 	return (
-		<div className="flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+		<div className="relative flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+			<div className="top-4 right-4 z-20 absolute">
+				<ThemeToggle />
+			</div>
 			<div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-900/20 to-indigo-100 dark:to-indigo-900/20 opacity-50 pointer-events-none" />
 
 			<Card className="z-10 relative bg-white/80 dark:bg-slate-900/80 shadow-2xl backdrop-blur-xl border-0 w-full max-w-md overflow-hidden animate-fade-in-up glassmorphism">

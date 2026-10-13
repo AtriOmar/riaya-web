@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/contexts/auth-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
 import { authClient } from "@/lib/auth-client";
@@ -89,15 +90,20 @@ export default function Navbar() {
 								</Button>
 							</>
 						)}
+						<ThemeToggle />
 					</div>
 
-					<button
-						type="button"
-						onClick={() => setIsMobileMenuOpen((p) => !p)}
-						className="md:hidden p-2"
-					>
-						{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-					</button>
+					<div className="flex md:hidden items-center gap-2">
+						<ThemeToggle />
+						<button
+							type="button"
+							onClick={() => setIsMobileMenuOpen((p) => !p)}
+							className="p-2 text-foreground"
+							aria-label="Toggle navigation menu"
+						>
+							{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -125,6 +131,12 @@ export default function Navbar() {
 						))}
 
 						<div className="flex flex-col gap-2 pt-4 border-border border-t">
+							<div className="flex items-center justify-between py-1">
+								<span className="text-sm font-medium text-foreground/80">
+									Theme
+								</span>
+								<ThemeToggle />
+							</div>
 							{user ? (
 								<>
 									<Link

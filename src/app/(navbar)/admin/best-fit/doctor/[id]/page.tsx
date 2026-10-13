@@ -192,7 +192,7 @@ export default function AdminBestFitDoctorPage() {
 							Pending appointment
 						</span>
 						<span className="inline-flex items-center gap-2">
-							<span className="inline-block w-3 h-3 rounded-sm bg-slate-200 border border-slate-300" />
+							<span className="inline-block w-3 h-3 rounded-sm bg-slate-200 border border-slate-300 dark:bg-muted/40 dark:border-border" />
 							Outside availability
 						</span>
 					</div>

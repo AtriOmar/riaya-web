@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -54,7 +55,10 @@ export default function LoginForm() {
 
 	return (
 		<div className="flex min-h-screen bg-gradient-hero">
-			<div className="flex flex-1 justify-center items-center p-8">
+			<div className="relative flex flex-1 justify-center items-center p-8">
+				<div className="top-6 right-6 absolute">
+					<ThemeToggle />
+				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
 					<Link href="/" className="inline-flex items-center gap-2 mb-8">
 						<Image

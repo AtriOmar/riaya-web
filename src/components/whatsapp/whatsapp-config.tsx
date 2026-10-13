@@ -174,7 +174,7 @@ export default function WhatsappConfig({ userId }: Props) {
 							<Image
 								src={status.data}
 								alt="WhatsApp QR code"
-								className="border rounded-lg"
+								className="border rounded-lg bg-white p-2"
 								width={230}
 								height={230}
 							/>

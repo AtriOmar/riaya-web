@@ -38,7 +38,7 @@ export default function SidebarItem({
 			? "flex justify-center mt-1 mx-auto size-10"
 			: "grid grid-cols-[20px_1fr] gap-3 mt-1 px-3 py-2.5",
 		isActive && !item.disabled
-			? "bg-primary hover:bg-primary/90 text-primary-foreground"
+			? "bg-primary hover:bg-primary/90 text-primary-foreground dark:text-primary-950"
 			: "hover:bg-muted text-foreground",
 		item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
 	);
@@ -58,7 +58,7 @@ export default function SidebarItem({
 							className={cn(
 								"shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
 								isActive && !item.disabled
-									? "bg-primary-foreground/20 text-primary-foreground"
+									? "bg-primary-foreground/20 text-primary-foreground dark:text-primary-950"
 									: "bg-primary/10 text-primary",
 							)}
 						>
