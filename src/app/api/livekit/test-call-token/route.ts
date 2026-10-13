@@ -6,6 +6,8 @@ import {
 } from "livekit-server-sdk";
 import { z } from "zod";
 import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
+import { saveCallSettings } from "@/lib/call-settings";
+import { callSettingsSchema } from "@/lib/call-settings-schema";
 import { normalizePhoneForStorage } from "@/lib/phone";
 
 // ─── POST /api/livekit/test-call-token ────────────────────────────────────────
@@ -19,6 +21,8 @@ const TOKEN_TTL = "15m";
 
 const bodySchema = z.object({
 	phoneNumber: z.string().min(1),
+	/** Optional per-call model choices from the test page. */
+	settings: callSettingsSchema.optional(),
 });
 
 const responseSchema = z.object({
@@ -50,6 +54,9 @@ export async function POST(req: Request) {
 		// `CA_SIM` prefix: /api/calls skips Twilio recording for simulated calls.
 		const callSid = `CA_SIM_LK_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
 		const roomName = `test-${callSid}`;
+		if (parsed.data.settings) {
+			await saveCallSettings(callSid, parsed.data.settings);
+		}
 
 		const token = new AccessToken(apiKey, apiSecret, {
 			identity: `test-caller-${session.user.id}`,

@@ -26,6 +26,7 @@ import type {
 	SimulatedCallState,
 	SimulatedCallStatus,
 } from "@/hooks/use-simulated-call";
+import type { CallSettings } from "@/lib/call-settings-schema";
 import { getErrorMessage } from "@/lib/error-handling";
 import { usePostApiLivekitTestCallToken } from "@/services/generated/test-call/test-call";
 
@@ -100,7 +101,7 @@ export function useLivekitCall(): SimulatedCallState {
 	}, [detachAudio, disconnectDashboard]);
 
 	const startCall = useCallback(
-		async (phoneNumber: string) => {
+		async (phoneNumber: string, settings?: CallSettings) => {
 			if (status !== "idle" && status !== "ended" && status !== "error") return;
 			const trimmedPhone = phoneNumber.trim();
 			if (!trimmedPhone) return;
@@ -117,6 +118,7 @@ export function useLivekitCall(): SimulatedCallState {
 					callSid: sid,
 				} = await requestToken({
 					phoneNumber: trimmedPhone,
+					settings,
 				});
 				setCallSid(sid);
 				callSidRef.current = sid;

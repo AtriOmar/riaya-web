@@ -14,10 +14,73 @@ import type {
 	PostApiLivekitTestCallTokenBody,
 	PostApiTestCallRecording200,
 	PostApiTestCallRecordingBody,
+	PostApiTestCallSettings200,
+	PostApiTestCallSettingsBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Create a LiveKit test-call token (Admin)
+ */
+export const postApiLivekitTestCallToken = (
+	postApiLivekitTestCallTokenBody?: PostApiLivekitTestCallTokenBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiLivekitTestCallToken200>(
+		{
+			url: `/api/livekit/test-call-token`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiLivekitTestCallTokenBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiLivekitTestCallTokenMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiLivekitTestCallTokenBody | undefined },
+	) => {
+		return postApiLivekitTestCallToken(arg, options);
+	};
+};
+export const getPostApiLivekitTestCallTokenMutationKey = () =>
+	[`/api/livekit/test-call-token`] as const;
+
+export type PostApiLivekitTestCallTokenMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+>;
+
+/**
+ * @summary Create a LiveKit test-call token (Admin)
+ */
+export const usePostApiLivekitTestCallToken = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>,
+		TError,
+		Key,
+		PostApiLivekitTestCallTokenBody | undefined,
+		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiLivekitTestCallTokenMutationKey();
+	const swrFn = getPostApiLivekitTestCallTokenMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Save the recording of a test call (Admin)
  */
@@ -79,58 +142,57 @@ export const usePostApiTestCallRecording = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Create a LiveKit test-call token (Admin)
+ * @summary Save per-call model settings for a test call (Admin)
  */
-export const postApiLivekitTestCallToken = (
-	postApiLivekitTestCallTokenBody?: PostApiLivekitTestCallTokenBody,
+export const postApiTestCallSettings = (
+	postApiTestCallSettingsBody?: PostApiTestCallSettingsBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<PostApiLivekitTestCallToken200>(
+	return customInstance<PostApiTestCallSettings200>(
 		{
-			url: `/api/livekit/test-call-token`,
+			url: `/api/test-call/settings`,
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			data: postApiLivekitTestCallTokenBody,
+			data: postApiTestCallSettingsBody,
 		},
 		options,
 	);
 };
 
-export const getPostApiLivekitTestCallTokenMutationFetcher = (
+export const getPostApiTestCallSettingsMutationFetcher = (
 	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (
 		_: Key,
-		{ arg }: { arg: PostApiLivekitTestCallTokenBody | undefined },
+		{ arg }: { arg: PostApiTestCallSettingsBody | undefined },
 	) => {
-		return postApiLivekitTestCallToken(arg, options);
+		return postApiTestCallSettings(arg, options);
 	};
 };
-export const getPostApiLivekitTestCallTokenMutationKey = () =>
-	[`/api/livekit/test-call-token`] as const;
+export const getPostApiTestCallSettingsMutationKey = () =>
+	[`/api/test-call/settings`] as const;
 
-export type PostApiLivekitTestCallTokenMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+export type PostApiTestCallSettingsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiTestCallSettings>>
 >;
 
 /**
- * @summary Create a LiveKit test-call token (Admin)
+ * @summary Save per-call model settings for a test call (Admin)
  */
-export const usePostApiLivekitTestCallToken = <TError = unknown>(options?: {
+export const usePostApiTestCallSettings = <TError = unknown>(options?: {
 	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>,
+		Awaited<ReturnType<typeof postApiTestCallSettings>>,
 		TError,
 		Key,
-		PostApiLivekitTestCallTokenBody | undefined,
-		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+		PostApiTestCallSettingsBody | undefined,
+		Awaited<ReturnType<typeof postApiTestCallSettings>>
 	> & { swrKey?: string };
 	request?: SecondParameter<typeof customInstance>;
 }) => {
 	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiLivekitTestCallTokenMutationKey();
-	const swrFn = getPostApiLivekitTestCallTokenMutationFetcher(requestOptions);
+	const swrKey = swrOptions?.swrKey ?? getPostApiTestCallSettingsMutationKey();
+	const swrFn = getPostApiTestCallSettingsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

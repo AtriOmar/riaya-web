@@ -30,7 +30,9 @@ import {
 	type TranscriptLine,
 	useCallTranscript,
 } from "@/hooks/use-call-transcript";
+import type { CallSettings } from "@/lib/call-settings-schema";
 import { decodeUlaw, encodeUlawToBase64 } from "@/lib/ulaw";
+import { usePostApiTestCallSettings } from "@/services/generated/test-call/test-call";
 
 export type { TranscriptLine };
 
@@ -53,7 +55,7 @@ export type SimulatedCallState = {
 	recordingUrl: string | null;
 	recordingStatus: RecordingStatus;
 	retryRecordingSave: () => void;
-	startCall: (phoneNumber: string) => Promise<void>;
+	startCall: (phoneNumber: string, settings?: CallSettings) => Promise<void>;
 	hangUp: () => void;
 };
 
@@ -105,6 +107,12 @@ export function useSimulatedCall(): SimulatedCallState {
 	// (so barge-in can cut them without closing the context the tap lives in).
 	const playDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
 	const scheduledRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+	// Marks waiting for their audio to finish playing. Twilio only echoes a mark
+	// once the media before it has played; the server relies on that to know the
+	// caller is still hearing the reply (and so whether barge-in must clear it).
+	const pendingMarksRef = useRef<
+		Map<ReturnType<typeof setTimeout>, () => void>
+	>(new Map());
 
 	// Outgoing media timestamp counter (ms)
 	const timestampRef = useRef(0);
@@ -133,6 +141,8 @@ export function useSimulatedCall(): SimulatedCallState {
 	}, []);
 
 	const stopPlayback = useCallback(() => {
+		for (const timer of pendingMarksRef.current.keys()) clearTimeout(timer);
+		pendingMarksRef.current.clear();
 		try {
 			playCtxRef.current?.close();
 		} catch {}
@@ -291,8 +301,10 @@ export function useSimulatedCall(): SimulatedCallState {
 
 	// ─── Main connect / disconnect ─────────────────────────────────────────────
 
+	const { trigger: saveSettings } = usePostApiTestCallSettings();
+
 	const startCall = useCallback(
-		async (phoneNumber: string) => {
+		async (phoneNumber: string, settings?: CallSettings) => {
 			if (status !== "idle" && status !== "ended" && status !== "error") return;
 
 			const trimmedPhone = phoneNumber.trim();
@@ -336,9 +348,29 @@ export function useSimulatedCall(): SimulatedCallState {
 			setCallSid(sid);
 			callSidRef.current = sid;
 
+			// Per-call model choices go to Redis first; the voice server reads
+			// them (by `?cs=`) when the stream connects.
+			if (settings) {
+				try {
+					await saveSettings({ callSid: sid, settings });
+				} catch (err) {
+					for (const track of stream.getTracks()) track.stop();
+					micStreamRef.current = null;
+					setError(
+						err instanceof Error
+							? `Could not save model settings: ${err.message}`
+							: "Could not save model settings",
+					);
+					setStatus("error");
+					return;
+				}
+			}
+
 			// 2. Open WebSocket to /media-stream
 			setStatus("connecting");
-			const wsUrl = `${realtimeUrl}/media-stream`;
+			const wsUrl = settings
+				? `${realtimeUrl}/media-stream?cs=${encodeURIComponent(sid)}`
+				: `${realtimeUrl}/media-stream`;
 
 			const ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
@@ -409,28 +441,49 @@ export function useSimulatedCall(): SimulatedCallState {
 							}
 							break;
 
-						case "clear":
-							// Barge-in: flush scheduled AI audio
+						case "clear": {
+							// Barge-in: flush scheduled AI audio. Twilio answers a clear by
+							// returning every pending mark immediately.
 							flushPlaybackQueue();
+							const pending = [...pendingMarksRef.current];
+							pendingMarksRef.current.clear();
+							for (const [timer, echo] of pending) {
+								clearTimeout(timer);
+								echo();
+							}
 							break;
+						}
 
-						case "mark":
-							// Echo mark back so TwilioSession's mark queue stays consistent
-							if (
-								ws.readyState === WebSocket.OPEN &&
-								msg.streamSid &&
-								msg.mark
-							) {
+						case "mark": {
+							// Echo the mark only after the audio before it has played.
+							const { streamSid, mark } = msg;
+							if (!streamSid || !mark) break;
+							const echo = () => {
+								if (ws.readyState !== WebSocket.OPEN) return;
 								ws.send(
 									JSON.stringify({
 										event: "mark",
 										sequenceNumber: "0",
-										streamSid: msg.streamSid,
-										mark: { name: msg.mark.name },
+										streamSid,
+										mark: { name: mark.name },
 									}),
 								);
+							};
+							const ctx = playCtxRef.current;
+							const delayMs = ctx
+								? Math.max(0, nextPlayTimeRef.current - ctx.currentTime) * 1000
+								: 0;
+							if (delayMs <= 0) {
+								echo();
+								break;
 							}
+							const timer = setTimeout(() => {
+								pendingMarksRef.current.delete(timer);
+								echo();
+							}, delayMs);
+							pendingMarksRef.current.set(timer, echo);
 							break;
+						}
 
 						default:
 							break;
@@ -460,6 +513,7 @@ export function useSimulatedCall(): SimulatedCallState {
 		},
 		[
 			status,
+			saveSettings,
 			resetTranscript,
 			resetRecording,
 			startRecording,

@@ -2,6 +2,7 @@
 
 import { Loader2, Mic, MicOff, Phone, PhoneCall, PhoneOff } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import ModelSettingsPanel from "@/components/test-call/model-settings-panel";
 import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
@@ -11,6 +12,7 @@ import {
 	type SimulatedCallStatus,
 	useSimulatedCall,
 } from "@/hooks/use-simulated-call";
+import type { CallSettings } from "@/lib/call-settings-schema";
 import {
 	formatPhoneDisplay,
 	isValidPhoneNumber,
@@ -149,6 +151,7 @@ function persistTestCallPhone(phone: string) {
 export default function TestCallPhone() {
 	const [phone, setPhone] = useState("");
 	const [engine, setEngine] = useState<CallEngine>("stream");
+	const [settings, setSettings] = useState<CallSettings | undefined>();
 	// Both hooks stay mounted; the selected engine drives the UI.
 	const streamCall = useSimulatedCall();
 	const livekitCall = useLivekitCall();
@@ -210,7 +213,7 @@ export default function TestCallPhone() {
 		if (!canCall) return;
 		const stored = normalizePhoneForStorage(phone);
 		if (!stored || !isValidPhoneNumber(stored)) return;
-		void startCall(stored);
+		void startCall(stored, settings);
 	};
 
 	const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -220,221 +223,230 @@ export default function TestCallPhone() {
 	};
 
 	return (
-		<div className="flex min-h-svh items-center justify-center bg-background p-4">
-			<div className="w-full max-w-md">
-				{/* Phone card */}
-				<div className="overflow-hidden rounded-2xl border bg-card shadow-lg">
-					{/* Header */}
-					<div
-						className={cn(
-							"flex items-center gap-3 px-5 py-4 transition-colors",
-							isActive ? "bg-primary/5" : "bg-muted/40",
-						)}
-					>
-						<div className="relative shrink-0">
-							<div
-								className={cn(
-									"flex size-11 items-center justify-center rounded-full",
-									isActive ? "bg-primary/10" : "bg-muted",
-								)}
-							>
-								{status === "requesting-mic" || status === "connecting" ? (
-									<Loader2 className="size-5 animate-spin text-muted-foreground" />
-								) : isActive ? (
-									<PhoneCall className="size-5 text-primary" />
-								) : status === "ended" ? (
-									<PhoneOff className="size-5 text-muted-foreground" />
-								) : (
-									<Phone className="size-5 text-muted-foreground" />
-								)}
-							</div>
-							{isActive && (
-								<span className="-top-0.5 -right-0.5 absolute size-3 rounded-full border-2 border-card bg-green-500 animate-pulse" />
+		<div className="flex min-h-svh items-start justify-center bg-background p-4 lg:items-center">
+			<div className="flex w-full max-w-4xl flex-col items-center gap-4 lg:flex-row lg:items-start lg:justify-center">
+				<div className="w-full max-w-md">
+					{/* Phone card */}
+					<div className="overflow-hidden rounded-2xl border bg-card shadow-lg">
+						{/* Header */}
+						<div
+							className={cn(
+								"flex items-center gap-3 px-5 py-4 transition-colors",
+								isActive ? "bg-primary/5" : "bg-muted/40",
 							)}
-						</div>
-
-						<div className="min-w-0 flex-1">
-							<p className="font-semibold text-sm">
-								{isActive
-									? phone
-										? formatPhoneDisplay(phone)
-										: "Simulated Call"
-									: "Test Call Simulator"}
-							</p>
-							<p className={cn("text-xs", statusColor(status))}>
-								{error ? error : statusLabel(status)}
-							</p>
-						</div>
-
-						{isActive && (
-							<div className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-2 py-1">
-								<span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
-								<span className="font-mono text-[10px] font-medium text-green-600 dark:text-green-400">
-									LIVE
-								</span>
-							</div>
-						)}
-						{isActive && recordingStatus === "recording" && (
-							<div className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1">
-								<span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
-								<span className="font-mono text-[10px] font-medium text-red-600 dark:text-red-400">
-									REC
-								</span>
-							</div>
-						)}
-					</div>
-
-					{/* Transcript area */}
-					<div
-						ref={scrollRef}
-						onScroll={handleTranscriptScroll}
-						className="flex h-72 min-h-0 flex-col gap-3 overflow-y-auto p-4"
-					>
-						{transcript.length === 0 ? (
-							<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-								{isActive ? (
-									<>
-										<Mic className="size-8 text-muted-foreground/40" />
-										<p className="text-muted-foreground text-sm">
-											Waiting for conversation…
-										</p>
-									</>
-								) : (
-									<>
-										<MicOff className="size-8 text-muted-foreground/30" />
-										<p className="text-muted-foreground text-sm">
-											Transcript will appear here during the call
-										</p>
-									</>
-								)}
-							</div>
-						) : (
-							transcript.map((line) => (
-								<Bubble
-									key={line.id}
-									role={line.role}
-									text={line.text}
-									isFinal={line.isFinal}
-								/>
-							))
-						)}
-					</div>
-
-					{/* Footer: call SID debug info */}
-					{callSid && (
-						<div className="border-t bg-muted/30 px-4 py-2">
-							<p className="truncate font-mono text-[10px] text-muted-foreground">
-								{callSid}
-							</p>
-						</div>
-					)}
-
-					{/* Controls */}
-					<div className="border-t p-4">
-						<Tabs
-							value={engine}
-							onValueChange={handleEngineChange}
-							className="mb-3"
 						>
-							<TabsList className="w-full">
-								<TabsTrigger value="stream" disabled={isBusy}>
-									Phone stream
-								</TabsTrigger>
-								<TabsTrigger value="livekit" disabled={isBusy}>
-									LiveKit agent
-								</TabsTrigger>
-							</TabsList>
-						</Tabs>
-						<div className="flex gap-2">
-							<PhoneNumberInput
-								id="test-call-phone"
-								value={phone}
-								onChange={setPhone}
-								onKeyDown={handleKey}
-								disabled={isBusy}
-								className="min-w-0 flex-1"
-							/>
-
-							{isBusy || isActive ? (
-								<Button
-									variant="destructive"
-									size="icon"
-									onClick={hangUp}
-									title="Hang up"
-									disabled={
-										status === "requesting-mic" || status === "connecting"
-									}
-								>
-									<PhoneOff className="size-4" />
-								</Button>
-							) : (
-								<Button
-									size="icon"
-									onClick={handleCall}
-									disabled={!phoneValid}
-									title="Call"
-									className="bg-green-600 hover:bg-green-700"
-								>
-									<Phone className="size-4" />
-								</Button>
-							)}
-						</div>
-
-						{status === "ended" && recordingUrl && (
-							<div className="mt-3 space-y-1.5">
-								<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-									Recording
-								</div>
-								<AudioWaveformPlayer src={recordingUrl} />
-								<p
+							<div className="relative shrink-0">
+								<div
 									className={cn(
-										"text-xs",
-										recordingStatus === "error"
-											? "text-destructive"
-											: "text-muted-foreground",
+										"flex size-11 items-center justify-center rounded-full",
+										isActive ? "bg-primary/10" : "bg-muted",
 									)}
 								>
-									{recordingStatus === "saving" && "Saving recording…"}
-									{recordingStatus === "saved" && "Saved to the call log"}
-									{recordingStatus === "error" && (
+									{status === "requesting-mic" || status === "connecting" ? (
+										<Loader2 className="size-5 animate-spin text-muted-foreground" />
+									) : isActive ? (
+										<PhoneCall className="size-5 text-primary" />
+									) : status === "ended" ? (
+										<PhoneOff className="size-5 text-muted-foreground" />
+									) : (
+										<Phone className="size-5 text-muted-foreground" />
+									)}
+								</div>
+								{isActive && (
+									<span className="-top-0.5 -right-0.5 absolute size-3 rounded-full border-2 border-card bg-green-500 animate-pulse" />
+								)}
+							</div>
+
+							<div className="min-w-0 flex-1">
+								<p className="font-semibold text-sm">
+									{isActive
+										? phone
+											? formatPhoneDisplay(phone)
+											: "Simulated Call"
+										: "Test Call Simulator"}
+								</p>
+								<p className={cn("text-xs", statusColor(status))}>
+									{error ? error : statusLabel(status)}
+								</p>
+							</div>
+
+							{isActive && (
+								<div className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-2 py-1">
+									<span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
+									<span className="font-mono text-[10px] font-medium text-green-600 dark:text-green-400">
+										LIVE
+									</span>
+								</div>
+							)}
+							{isActive && recordingStatus === "recording" && (
+								<div className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1">
+									<span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+									<span className="font-mono text-[10px] font-medium text-red-600 dark:text-red-400">
+										REC
+									</span>
+								</div>
+							)}
+						</div>
+
+						{/* Transcript area */}
+						<div
+							ref={scrollRef}
+							onScroll={handleTranscriptScroll}
+							className="flex h-72 min-h-0 flex-col gap-3 overflow-y-auto p-4"
+						>
+							{transcript.length === 0 ? (
+								<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+									{isActive ? (
 										<>
-											Couldn't save the recording.{" "}
-											<button
-												type="button"
-												className="underline"
-												onClick={retryRecordingSave}
-											>
-												Try again
-											</button>
+											<Mic className="size-8 text-muted-foreground/40" />
+											<p className="text-muted-foreground text-sm">
+												Waiting for conversation…
+											</p>
+										</>
+									) : (
+										<>
+											<MicOff className="size-8 text-muted-foreground/30" />
+											<p className="text-muted-foreground text-sm">
+												Transcript will appear here during the call
+											</p>
 										</>
 									)}
+								</div>
+							) : (
+								transcript.map((line) => (
+									<Bubble
+										key={line.id}
+										role={line.role}
+										text={line.text}
+										isFinal={line.isFinal}
+									/>
+								))
+							)}
+						</div>
+
+						{/* Footer: call SID debug info */}
+						{callSid && (
+							<div className="border-t bg-muted/30 px-4 py-2">
+								<p className="truncate font-mono text-[10px] text-muted-foreground">
+									{callSid}
 								</p>
 							</div>
 						)}
 
-						{status === "ended" && (
-							<p className="mt-2 text-center text-muted-foreground text-xs">
-								Call ended.{" "}
-								<button
-									type="button"
-									className="underline"
-									onClick={() => void startCall(phone)}
-								>
-									Call again
-								</button>
-							</p>
-						)}
+						{/* Controls */}
+						<div className="border-t p-4">
+							<Tabs
+								value={engine}
+								onValueChange={handleEngineChange}
+								className="mb-3"
+							>
+								<TabsList className="w-full">
+									<TabsTrigger value="stream" disabled={isBusy}>
+										Phone stream
+									</TabsTrigger>
+									<TabsTrigger value="livekit" disabled={isBusy}>
+										LiveKit agent
+									</TabsTrigger>
+								</TabsList>
+							</Tabs>
+							<div className="flex gap-2">
+								<PhoneNumberInput
+									id="test-call-phone"
+									value={phone}
+									onChange={setPhone}
+									onKeyDown={handleKey}
+									disabled={isBusy}
+									className="min-w-0 flex-1"
+								/>
+
+								{isBusy || isActive ? (
+									<Button
+										variant="destructive"
+										size="icon"
+										onClick={hangUp}
+										title="Hang up"
+										disabled={
+											status === "requesting-mic" || status === "connecting"
+										}
+									>
+										<PhoneOff className="size-4" />
+									</Button>
+								) : (
+									<Button
+										size="icon"
+										onClick={handleCall}
+										disabled={!phoneValid}
+										title="Call"
+										className="bg-green-600 hover:bg-green-700"
+									>
+										<Phone className="size-4" />
+									</Button>
+								)}
+							</div>
+
+							{status === "ended" && recordingUrl && (
+								<div className="mt-3 space-y-1.5">
+									<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+										Recording
+									</div>
+									<AudioWaveformPlayer src={recordingUrl} />
+									<p
+										className={cn(
+											"text-xs",
+											recordingStatus === "error"
+												? "text-destructive"
+												: "text-muted-foreground",
+										)}
+									>
+										{recordingStatus === "saving" && "Saving recording…"}
+										{recordingStatus === "saved" && "Saved to the call log"}
+										{recordingStatus === "error" && (
+											<>
+												Couldn't save the recording.{" "}
+												<button
+													type="button"
+													className="underline"
+													onClick={retryRecordingSave}
+												>
+													Try again
+												</button>
+											</>
+										)}
+									</p>
+								</div>
+							)}
+
+							{status === "ended" && (
+								<p className="mt-2 text-center text-muted-foreground text-xs">
+									Call ended.{" "}
+									<button
+										type="button"
+										className="underline"
+										onClick={() => void startCall(phone, settings)}
+									>
+										Call again
+									</button>
+								</p>
+							)}
+						</div>
 					</div>
+
+					{/* Info note */}
+					<p className="mt-4 text-center text-muted-foreground text-xs">
+						{engine === "livekit"
+							? "LiveKit agent: talks to the LiveKit pipeline over WebRTC (admin login required)."
+							: "Phone stream: simulates a Twilio call to the voice server's current realtime model."}{" "}
+						Bookings made here create real appointments. Use a dedicated test
+						number.
+					</p>
 				</div>
 
-				{/* Info note */}
-				<p className="mt-4 text-center text-muted-foreground text-xs">
-					{engine === "livekit"
-						? "LiveKit agent: talks to the LiveKit pipeline over WebRTC (admin login required)."
-						: "Phone stream: simulates a Twilio call to the voice server's current realtime model."}{" "}
-					Bookings made here create real appointments. Use a dedicated test
-					number.
-				</p>
+				<ModelSettingsPanel
+					engine={engine}
+					disabled={isBusy}
+					onChange={setSettings}
+					className="w-full max-w-md lg:w-96"
+				/>
 			</div>
 		</div>
 	);

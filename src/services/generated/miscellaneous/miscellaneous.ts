@@ -74,6 +74,52 @@ export const useGetApiCities = <TError = unknown>(options?: {
 	};
 };
 /**
+ * @summary Get platform statistics (Admin)
+ */
+export const getApiStats = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiStats200>(
+		{ url: `/api/stats`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiStatsKey = () => [`/api/stats`] as const;
+
+export type GetApiStatsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiStats>>
+>;
+
+/**
+ * @summary Get platform statistics (Admin)
+ */
+export const useGetApiStats = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiStats>>, TError> & {
+		swrKey?: Key;
+		enabled?: boolean;
+	};
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiStatsKey() : null));
+	const swrFn = () => getApiStats(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary List specialities
  */
 export const getApiSpecialities = (
@@ -286,52 +332,6 @@ export const useDeleteApiSpecialities = <TError = unknown>(
 	const swrFn = getDeleteApiSpecialitiesMutationFetcher(params, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get platform statistics (Admin)
- */
-export const getApiStats = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiStats200>(
-		{ url: `/api/stats`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiStatsKey = () => [`/api/stats`] as const;
-
-export type GetApiStatsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiStats>>
->;
-
-/**
- * @summary Get platform statistics (Admin)
- */
-export const useGetApiStats = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiStats>>, TError> & {
-		swrKey?: Key;
-		enabled?: boolean;
-	};
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiStatsKey() : null));
-	const swrFn = () => getApiStats(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
 
 	return {
 		swrKey,
