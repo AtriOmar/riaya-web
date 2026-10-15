@@ -55,7 +55,12 @@ export type SimulatedCallState = {
 	recordingUrl: string | null;
 	recordingStatus: RecordingStatus;
 	retryRecordingSave: () => void;
-	startCall: (phoneNumber: string, settings?: CallSettings) => Promise<void>;
+	startCall: (
+		phoneNumber: string,
+		settings?: CallSettings,
+		/** Answered callback: the AI opens the call, as if Riaya had called the patient. */
+		callbackReason?: "refused" | "timeout",
+	) => Promise<void>;
 	hangUp: () => void;
 };
 
@@ -304,7 +309,11 @@ export function useSimulatedCall(): SimulatedCallState {
 	const { trigger: saveSettings } = usePostApiTestCallSettings();
 
 	const startCall = useCallback(
-		async (phoneNumber: string, settings?: CallSettings) => {
+		async (
+			phoneNumber: string,
+			settings?: CallSettings,
+			callbackReason?: "refused" | "timeout",
+		) => {
 			if (status !== "idle" && status !== "ended" && status !== "error") return;
 
 			const trimmedPhone = phoneNumber.trim();
@@ -404,6 +413,9 @@ export function useSimulatedCall(): SimulatedCallState {
 							customParameters: {
 								callerPhone: trimmedPhone,
 								simulated: "true",
+								...(callbackReason
+									? { callMode: "callback", callbackReason }
+									: {}),
 							},
 						},
 					}),

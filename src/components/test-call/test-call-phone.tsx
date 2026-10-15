@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLivekitCall } from "@/hooks/use-livekit-call";
+import { useRingtone } from "@/hooks/use-ringtone";
 import {
 	type SimulatedCallStatus,
 	useSimulatedCall,
 } from "@/hooks/use-simulated-call";
+import { useTestCallInbox } from "@/hooks/use-test-call-inbox";
 import type { CallSettings } from "@/lib/call-settings-schema";
 import {
 	formatPhoneDisplay,
@@ -218,6 +220,26 @@ export default function TestCallPhone() {
 		void startCall(stored, settings);
 	};
 
+	// Callbacks for this number ring here instead of going out through Twilio.
+	// Answering always uses the phone-stream engine (the callback script is
+	// delivered by the voice server's session).
+	const { incoming, respond } = useTestCallInbox(
+		phoneValid && !isBusy ? normalizePhoneForStorage(phone) : null,
+	);
+
+	useRingtone(incoming !== null);
+
+	const handleAnswer = () => {
+		if (!incoming || !canCall) return;
+		const stored = normalizePhoneForStorage(phone);
+		if (!stored) return;
+		setEngine("stream");
+		persistEngine("stream");
+		const { reason } = incoming;
+		respond("answered");
+		void streamCall.startCall(stored, settings, reason);
+	};
+
 	const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" && canCall && phoneValid) {
 			handleCall();
@@ -290,6 +312,33 @@ export default function TestCallPhone() {
 							)}
 							<ThemeToggle className="shrink-0" />
 						</div>
+
+						{/* Incoming callback */}
+						{incoming && (
+							<div className="flex items-center gap-3 border-t bg-green-500/10 px-5 py-3">
+								<PhoneCall className="size-5 animate-pulse text-green-600 dark:text-green-400" />
+								<div className="min-w-0 flex-1">
+									<p className="font-semibold text-sm">Riaya is calling you</p>
+									<p className="truncate text-muted-foreground text-xs">
+										Callback about your appointment request
+									</p>
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => respond("declined")}
+								>
+									Decline
+								</Button>
+								<Button
+									size="sm"
+									onClick={handleAnswer}
+									className="bg-green-600 hover:bg-green-700"
+								>
+									Answer
+								</Button>
+							</div>
+						)}
 
 						{/* Transcript area */}
 						<div
