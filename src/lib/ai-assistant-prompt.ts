@@ -123,7 +123,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 
 **AI pending bookings**
 - Accept → confirmed. If no linked patient: match by caller phone, create patient, or pick existing. May send WhatsApp confirmation (1 quota). Schedules a review WhatsApp ~2 hours after end. **Urgent** AI requests show a red badge; accepting one cancels the other pending requests in the same emergency group.
-- Refuse → cancelled (for urgent fan-outs, siblings stay pending for other doctors).
+- Refuse → cancelled (for urgent fan-outs, siblings stay pending for other doctors). For a normal (non-urgent) AI request the patient is called back (WhatsApp fallback) with up to 3 alternative doctors; on their next call the AI offers those doctors first.
 - **Timeout:** AI pending (or unanswered urgent group) auto-cancels after **10 minutes**. Patient is called back via Twilio if configured, otherwise WhatsApp asks them to call Riaya again.
 - Non-pending: edit name/description; delete permanently; cancel sets \`cancelled\`.
 

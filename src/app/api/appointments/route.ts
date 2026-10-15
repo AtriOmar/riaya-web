@@ -16,11 +16,13 @@ import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments
 import {
 	cancelEmergencyPendingTimeoutJob,
 	cancelPendingAppointmentTimeoutJob,
+	scheduleRefusalNotification,
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { recordRefusal } from "@/lib/refusal-suggestions";
 import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
@@ -217,6 +219,29 @@ export async function PUT(req: NextRequest) {
 			updated.source === "ai"
 		) {
 			void cancelPendingAppointmentTimeoutJob(updated.id);
+			// Doctor refused a normal pending request: tell the patient.
+			if (
+				fields.status === "cancelled" &&
+				existing.status === "pending" &&
+				!updated.urgent
+			) {
+				const patientPhone = updated.newPatientPhoneNumber;
+				void (async () => {
+					try {
+						// Record first: the notification job reads this context.
+						if (patientPhone && updated.doctorId != null) {
+							await recordRefusal({
+								patientPhone,
+								doctorId: updated.doctorId,
+								desiredTime: updated.start,
+							});
+						}
+						await scheduleRefusalNotification({ appointmentId: updated.id });
+					} catch (err) {
+						console.error("Failed to queue refusal notification:", err);
+					}
+				})();
+			}
 			if (updated.emergencyGroupId) {
 				// Last pending in a group may have been refused — drop timeout if none left pending.
 				const stillPending = await db.query.appointment.findFirst({

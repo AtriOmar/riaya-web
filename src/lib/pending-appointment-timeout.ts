@@ -48,6 +48,24 @@ export async function scheduleEmergencyPendingTimeout(params: {
 	);
 }
 
+/**
+ * Tell the patient (call, then WhatsApp fallback) that the doctor refused.
+ * Handled by the same worker as the timeout; no delay.
+ */
+export async function scheduleRefusalNotification(params: {
+	appointmentId: number;
+}) {
+	await pendingTimeoutQueue.add(
+		"pending-timeout",
+		{ kind: "refused" as const, appointmentId: params.appointmentId },
+		{
+			jobId: `refused:appt:${params.appointmentId}`,
+			removeOnComplete: true,
+			removeOnFail: true,
+		},
+	);
+}
+
 export async function cancelPendingAppointmentTimeoutJob(
 	appointmentId: number,
 ) {

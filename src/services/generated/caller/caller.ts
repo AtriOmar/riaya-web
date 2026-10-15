@@ -14,10 +14,76 @@ import type {
 	PostApiInternalCallerAiAppointmentsCancelBody,
 	PostApiInternalCallerAiAppointmentsList200,
 	PostApiInternalCallerAiAppointmentsListBody,
+	PostApiInternalCallerRefusalContext200,
+	PostApiInternalCallerRefusalContextBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const postApiInternalCallerRefusalContext = (
+	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerRefusalContext200>(
+		{
+			url: `/api/internal/caller/refusal-context`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerRefusalContextBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerRefusalContextMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
+	) => {
+		return postApiInternalCallerRefusalContext(arg, options);
+	};
+};
+export const getPostApiInternalCallerRefusalContextMutationKey = () =>
+	[`/api/internal/caller/refusal-context`] as const;
+
+export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+>;
+
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const usePostApiInternalCallerRefusalContext = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
+		TError,
+		Key,
+		PostApiInternalCallerRefusalContextBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
+	const swrFn =
+		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Cancel pending AI appointment for caller phone (voice service)
  */

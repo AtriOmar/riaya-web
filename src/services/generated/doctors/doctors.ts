@@ -24,6 +24,8 @@ import type {
 	GetApiDoctorsBestFitRangeParams,
 	GetApiDoctorsId200,
 	GetApiDoctorsIdParams,
+	GetApiDoctorsSearch200,
+	GetApiDoctorsSearchParams,
 	PostApiDoctorApplications201,
 	PostApiDoctorApplicationsBody,
 	PutApiDoctorApplicationsId200,
@@ -140,6 +142,221 @@ export const usePostApiDoctorApplications = <TError = unknown>(options?: {
 	const swrFn = getPostApiDoctorApplicationsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get doctor profile with appointments (Admin)
+ */
+export const getApiDoctorsId = (
+	id: string,
+	params?: GetApiDoctorsIdParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsId200>(
+		{ url: `/api/doctors/${id}`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsIdKey = (
+	id: string,
+	params?: GetApiDoctorsIdParams,
+) => [`/api/doctors/${id}`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsId>>
+>;
+
+/**
+ * @summary Get doctor profile with appointments (Admin)
+ */
+export const useGetApiDoctorsId = <TError = unknown>(
+	id: string,
+	params?: GetApiDoctorsIdParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsId>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsIdKey(id, params) : null));
+	const swrFn = () => getApiDoctorsId(id, params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get doctor availability
+ */
+export const getApiDoctorsAvailability = (
+	params: GetApiDoctorsAvailabilityParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsAvailability200>(
+		{ url: `/api/doctors/availability`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsAvailabilityKey = (
+	params: GetApiDoctorsAvailabilityParams,
+) => [`/api/doctors/availability`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsAvailabilityQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsAvailability>>
+>;
+
+/**
+ * @summary Get doctor availability
+ */
+export const useGetApiDoctorsAvailability = <TError = unknown>(
+	params: GetApiDoctorsAvailabilityParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsAvailability>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsAvailabilityKey(params) : null));
+	const swrFn = () => getApiDoctorsAvailability(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Find best fit doctors
+ */
+export const getApiDoctorsBestFit = (
+	params: GetApiDoctorsBestFitParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsBestFit200Item[]>(
+		{ url: `/api/doctors/best-fit`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsBestFitKey = (
+	params: GetApiDoctorsBestFitParams,
+) => [`/api/doctors/best-fit`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsBestFitQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsBestFit>>
+>;
+
+/**
+ * @summary Find best fit doctors
+ */
+export const useGetApiDoctorsBestFit = <TError = unknown>(
+	params: GetApiDoctorsBestFitParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsBestFit>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsBestFitKey(params) : null));
+	const swrFn = () => getApiDoctorsBestFit(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Search verified doctors by name
+ */
+export const getApiDoctorsSearch = (
+	params: GetApiDoctorsSearchParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsSearch200>(
+		{ url: `/api/doctors/search`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsSearchKey = (params: GetApiDoctorsSearchParams) =>
+	[`/api/doctors/search`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsSearchQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsSearch>>
+>;
+
+/**
+ * @summary Search verified doctors by name
+ */
+export const useGetApiDoctorsSearch = <TError = unknown>(
+	params: GetApiDoctorsSearchParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsSearch>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsSearchKey(params) : null));
+	const swrFn = () => getApiDoctorsSearch(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,
@@ -304,169 +521,6 @@ export const useGetApiDoctorApplicationsMe = <TError = unknown>(options?: {
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiDoctorApplicationsMeKey() : null));
 	const swrFn = () => getApiDoctorApplicationsMe(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get doctor profile with appointments (Admin)
- */
-export const getApiDoctorsId = (
-	id: string,
-	params?: GetApiDoctorsIdParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiDoctorsId200>(
-		{ url: `/api/doctors/${id}`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiDoctorsIdKey = (
-	id: string,
-	params?: GetApiDoctorsIdParams,
-) => [`/api/doctors/${id}`, ...(params ? [params] : [])] as const;
-
-export type GetApiDoctorsIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiDoctorsId>>
->;
-
-/**
- * @summary Get doctor profile with appointments (Admin)
- */
-export const useGetApiDoctorsId = <TError = unknown>(
-	id: string,
-	params?: GetApiDoctorsIdParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiDoctorsId>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled =
-		swrOptions?.enabled !== false && id !== null && id !== undefined;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiDoctorsIdKey(id, params) : null));
-	const swrFn = () => getApiDoctorsId(id, params, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get doctor availability
- */
-export const getApiDoctorsAvailability = (
-	params: GetApiDoctorsAvailabilityParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiDoctorsAvailability200>(
-		{ url: `/api/doctors/availability`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiDoctorsAvailabilityKey = (
-	params: GetApiDoctorsAvailabilityParams,
-) => [`/api/doctors/availability`, ...(params ? [params] : [])] as const;
-
-export type GetApiDoctorsAvailabilityQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiDoctorsAvailability>>
->;
-
-/**
- * @summary Get doctor availability
- */
-export const useGetApiDoctorsAvailability = <TError = unknown>(
-	params: GetApiDoctorsAvailabilityParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiDoctorsAvailability>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiDoctorsAvailabilityKey(params) : null));
-	const swrFn = () => getApiDoctorsAvailability(params, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Find best fit doctors
- */
-export const getApiDoctorsBestFit = (
-	params: GetApiDoctorsBestFitParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiDoctorsBestFit200Item[]>(
-		{ url: `/api/doctors/best-fit`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiDoctorsBestFitKey = (
-	params: GetApiDoctorsBestFitParams,
-) => [`/api/doctors/best-fit`, ...(params ? [params] : [])] as const;
-
-export type GetApiDoctorsBestFitQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiDoctorsBestFit>>
->;
-
-/**
- * @summary Find best fit doctors
- */
-export const useGetApiDoctorsBestFit = <TError = unknown>(
-	params: GetApiDoctorsBestFitParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiDoctorsBestFit>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiDoctorsBestFitKey(params) : null));
-	const swrFn = () => getApiDoctorsBestFit(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,

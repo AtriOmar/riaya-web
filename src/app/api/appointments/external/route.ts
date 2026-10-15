@@ -8,6 +8,7 @@ import { schedulePendingAppointmentTimeout } from "@/lib/pending-appointment-tim
 import { upsertPersonByPhone } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 import { assertAiBookingAllowed } from "@/lib/plan-limits";
+import { clearRefusalContext } from "@/lib/refusal-suggestions";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
 // Public endpoint — allows non-authenticated users to book an appointment
@@ -111,6 +112,9 @@ export async function POST(req: NextRequest) {
 				description: data.illness,
 			})
 			.returning();
+
+		// The patient found a new doctor: stop suggesting alternatives on next call.
+		void clearRefusalContext(data.phoneNumber);
 
 		void schedulePendingAppointmentTimeout({
 			appointmentId: created.id,

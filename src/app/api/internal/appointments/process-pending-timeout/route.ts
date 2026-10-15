@@ -13,14 +13,21 @@ import {
 import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { getRefusalContext } from "@/lib/refusal-suggestions";
 import {
 	buildPendingTimeoutVoiceScript,
 	buildPendingTimeoutWhatsappMessage,
+	buildRefusalVoiceScript,
+	buildRefusalWhatsappMessage,
 } from "@/lib/whatsapp-messages";
 
 const processSchema = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("appointment"),
+		appointmentId: z.number().int().positive(),
+	}),
+	z.object({
+		kind: z.literal("refused"),
 		appointmentId: z.number().int().positive(),
 	}),
 	z.object({
@@ -62,6 +69,55 @@ export async function POST(req: NextRequest) {
 			process.env.TWILIO_PHONE_NUMBER?.trim() ||
 			process.env.RIAYA_PHONE_NUMBER?.trim() ||
 			null;
+
+		// Doctor refused a normal AI request: row is already cancelled, just notify.
+		if (parsed.data.kind === "refused") {
+			const row = await db.query.appointment.findFirst({
+				where: eq(appointment.id, parsed.data.appointmentId),
+			});
+
+			if (!row) return json({ success: false, reason: "not_found" });
+			if (row.status !== "cancelled" || row.source !== "ai" || row.urgent) {
+				return json({ success: false, reason: "not_refused_ai_request" });
+			}
+
+			const { name, phone } = patientLabel(row);
+			if (!phone) {
+				return json({ success: true, cancelled: true, notified: false });
+			}
+
+			const language = await resolvePreferredLanguage({ phone });
+			const adminId = await findAdminWhatsappUserId();
+			const context = await getRefusalContext(phone);
+			const suggestions = (context?.suggestions ?? []).map((s) => ({
+				name: s.name,
+				start: new Date(s.slotStart),
+				cabinetName: s.cabinetName,
+			}));
+			const voice = buildRefusalVoiceScript({
+				language,
+				patientName: name,
+				riayaPhone,
+				suggestions,
+			});
+
+			return json({
+				success: true,
+				cancelled: true,
+				notified: true,
+				phone,
+				adminId,
+				whatsappMessage: buildRefusalWhatsappMessage({
+					language,
+					patientName: name,
+					riayaPhone,
+					suggestions,
+				}),
+				voiceScript: voice.text,
+				twilioLanguage: voice.twilioLanguage,
+				riayaPhone,
+			});
+		}
 
 		if (parsed.data.kind === "appointment") {
 			const row = await db.query.appointment.findFirst({
