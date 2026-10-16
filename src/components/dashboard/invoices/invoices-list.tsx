@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	ChevronDown,
-	Inbox,
-	ListFilter,
-	MessageSquare,
-	Plus,
-} from "lucide-react";
+import { Inbox, ListFilter, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -19,13 +13,7 @@ import {
 import DataTable, { type Column } from "@/components/data-table";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { FilterSelect } from "@/components/ui/filter-controls";
 import { getErrorMessage } from "@/lib/error-handling";
 import type { InvoiceStatus, PaymentMethod } from "@/lib/invoice";
 import { INVOICE_STATUSES } from "@/lib/invoice";
@@ -185,44 +173,20 @@ export default function InvoicesList() {
 	return (
 		<div className="space-y-4">
 			<div className="flex flex-wrap items-center justify-end gap-2 md:-mt-12">
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="quiet"
-							className="min-w-[11.5rem] justify-between hover:bg-muted/50 hover:border-muted-foreground/40 hover:text-muted-foreground"
-							aria-label="Filter by status"
-						>
-							<span className="flex items-center gap-2">
-								<ListFilter className="size-4" />
-								{statusFilter === "all"
-									? "All statuses"
-									: INVOICE_STATUS_LABELS[statusFilter as InvoiceStatus]}
-							</span>
-							<ChevronDown className="size-4 opacity-70" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuRadioGroup
-							value={statusFilter}
-							onValueChange={setStatusFilter}
-						>
-							<DropdownMenuRadioItem value="all">
-								<span
-									className={`size-2 rounded-full ${STATUS_FILTER_DOT.all}`}
-								/>
-								All statuses
-							</DropdownMenuRadioItem>
-							{INVOICE_STATUSES.map((status) => (
-								<DropdownMenuRadioItem key={status} value={status}>
-									<span
-										className={`size-2 rounded-full ${STATUS_FILTER_DOT[status]}`}
-									/>
-									{INVOICE_STATUS_LABELS[status]}
-								</DropdownMenuRadioItem>
-							))}
-						</DropdownMenuRadioGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<FilterSelect
+					icon={ListFilter}
+					label="Filter by status"
+					value={statusFilter}
+					onValueChange={setStatusFilter}
+					options={[
+						{ value: "all", label: "All statuses", dot: STATUS_FILTER_DOT.all },
+						...INVOICE_STATUSES.map((status) => ({
+							value: status,
+							label: INVOICE_STATUS_LABELS[status],
+							dot: STATUS_FILTER_DOT[status],
+						})),
+					]}
+				/>
 				<Button onClick={() => setCreateOpen(true)}>
 					<Plus className="size-4" />
 					New invoice

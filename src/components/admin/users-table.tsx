@@ -1,13 +1,6 @@
 "use client";
 
-import {
-	Copy,
-	Crown,
-	Inbox,
-	Search,
-	ShieldAlert,
-	ShieldCheck,
-} from "lucide-react";
+import { Copy, Crown, Inbox, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +9,7 @@ import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { FilterSearch } from "@/components/ui/filter-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { GetApiUsers200Item } from "@/services/generated/api.schemas";
@@ -168,13 +161,11 @@ export default function UsersTable() {
 
 	return (
 		<div>
-			<div className="relative mb-3 max-w-sm">
-				<Search className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2" />
-				<Input
+			<div className="mb-4 flex flex-wrap items-center gap-2">
+				<FilterSearch
 					placeholder="Search by email or name..."
 					value={inputValue}
-					onChange={(e) => setInputValue(e.target.value)}
-					className="bg-card pl-9 border-border rounded-sm"
+					onChange={setInputValue}
 				/>
 			</div>
 			<DataTable

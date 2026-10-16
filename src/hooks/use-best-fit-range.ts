@@ -16,7 +16,8 @@ export type BestFitRangeDoctor = {
 	cabinetLongitude: number | null;
 	specialityId: number | null;
 	address: string | null;
-	distance: number;
+	/** km from the patient pin; null when no location filter is set. */
+	distance: number | null;
 	slots: BestFitRangeSlot[];
 };
 
@@ -26,9 +27,9 @@ export type BestFitRangeDay = {
 };
 
 type Params = {
-	speciality: string;
-	lat: number;
-	long: number;
+	speciality?: string;
+	lat?: number;
+	long?: number;
 	from: string; // ISO date string
 	to: string; // ISO date string
 };

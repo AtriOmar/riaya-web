@@ -1,25 +1,11 @@
 "use client";
 
-import { Check, ChevronsUpDown, MapPin, Stethoscope } from "lucide-react";
+import { MapPin, Stethoscope } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BestFitViewToggle } from "@/components/admin/best-fit/doctors-map";
 import LocationPickerDialog from "@/components/admin/best-fit/location-picker-dialog";
 import LocationPreview from "@/components/admin/best-fit/location-preview";
-import { Button } from "@/components/ui/button";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "@/components/ui/command";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { FilterCombobox } from "@/components/ui/filter-controls";
 import type {
 	GetApiCities200Item,
 	GetApiSpecialities200Item,
@@ -58,8 +44,6 @@ export default function BestFitFilterBar({
 		useGetApiSpecialities();
 	const { data: cities, isLoading: citiesLoading } = useGetApiCities();
 
-	const [specOpen, setSpecOpen] = useState(false);
-	const [cityOpen, setCityOpen] = useState(false);
 	const [mapOpen, setMapOpen] = useState(false);
 
 	const specialityList = useMemo(() => specialities ?? [], [specialities]);
@@ -89,7 +73,6 @@ export default function BestFitFilterBar({
 			specialityId: s.id,
 			specialitySlug: s.slug ?? s.enName ?? null,
 		});
-		setSpecOpen(false);
 	}
 
 	function selectCity(c: GetApiCities200Item) {
@@ -100,7 +83,6 @@ export default function BestFitFilterBar({
 			lat: c.latitude,
 			long: c.longitude,
 		});
-		setCityOpen(false);
 	}
 
 	function confirmMapPin(lat: number, lng: number) {
@@ -122,7 +104,7 @@ export default function BestFitFilterBar({
 				: formatCoords(filters.lat as number, filters.long as number)
 		: citiesLoading
 			? "Loading…"
-			: "Select city or pin";
+			: "Patient location";
 
 	const mapCenter =
 		filters.lat != null && filters.long != null
@@ -131,147 +113,57 @@ export default function BestFitFilterBar({
 				? { lat: selectedCity.latitude, lng: selectedCity.longitude }
 				: null;
 
+	const specialityOptions = specialityList.map((s) => ({
+		id: s.id,
+		label: s.enName ?? s.frName ?? s.slug ?? "—",
+		keywords: `${s.frName ?? ""} ${s.arName ?? ""} ${s.slug ?? ""}`,
+	}));
+	const cityOptions = cityList.map((c) => ({
+		id: c.id,
+		label: c.enName ?? c.frName ?? c.slug ?? "—",
+		keywords: `${c.frName ?? ""} ${c.arName ?? ""} ${c.slug ?? ""}`,
+	}));
+
 	return (
 		<>
-			<div className="flex w-full flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
-				{/* Speciality */}
-				<div className="flex flex-col gap-1.5">
-					<label
-						htmlFor="best-fit-speciality"
-						className="text-xs font-medium text-muted-foreground"
-					>
-						Speciality
-					</label>
-					<Popover open={specOpen} onOpenChange={setSpecOpen}>
-						<PopoverTrigger asChild>
-							<Button
-								id="best-fit-speciality"
-								variant="quiet"
-								role="combobox"
-								aria-expanded={specOpen}
-								className="justify-between w-[240px] h-10 font-normal"
-							>
-								<span className="inline-flex items-center gap-2 truncate">
-									<Stethoscope className="w-4 h-4 shrink-0" />
-									<span className="truncate">
-										{selectedSpec
-											? (selectedSpec.enName ??
-												selectedSpec.frName ??
-												selectedSpec.slug)
-											: specialitiesLoading
-												? "Loading…"
-												: "Select speciality"}
-									</span>
-								</span>
-								<ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className="w-[280px] p-0" align="start">
-							<Command>
-								<CommandInput placeholder="Search speciality…" />
-								<CommandList>
-									<CommandEmpty>No speciality found.</CommandEmpty>
-									<CommandGroup>
-										{specialityList.map((s) => (
-											<CommandItem
-												key={s.id}
-												value={`${s.enName ?? ""} ${s.frName ?? ""} ${s.arName ?? ""} ${s.slug ?? ""}`}
-												onSelect={() => selectSpeciality(s)}
-											>
-												<Check
-													className={cn(
-														"w-4 h-4",
-														filters.specialityId === s.id
-															? "opacity-100"
-															: "opacity-0",
-													)}
-												/>
-												<span className="truncate">
-													{s.enName ?? s.frName ?? s.slug ?? "—"}
-												</span>
-											</CommandItem>
-										))}
-									</CommandGroup>
-								</CommandList>
-							</Command>
-						</PopoverContent>
-					</Popover>
-					{/* Matches the coords line under patient location */}
-					{hasCustomPin ? <div className="h-4" aria-hidden /> : null}
-				</div>
+			<div className="flex flex-wrap items-center gap-2">
+				<FilterCombobox
+					icon={Stethoscope}
+					placeholder="Speciality"
+					searchPlaceholder="Search speciality…"
+					emptyText="No speciality found."
+					options={specialityOptions}
+					selectedId={filters.specialityId}
+					loading={specialitiesLoading}
+					onSelect={(o) => {
+						const s = specialityList.find((x) => x.id === o.id);
+						if (s) selectSpeciality(s);
+					}}
+				/>
 
-				{/* City + map preview */}
-				<div className="flex items-center gap-3">
-					<div className="flex flex-col gap-1.5">
-						<label
-							htmlFor="best-fit-city"
-							className="text-xs font-medium text-muted-foreground"
-						>
-							Patient location
-						</label>
-						<Popover open={cityOpen} onOpenChange={setCityOpen}>
-							<PopoverTrigger asChild>
-								<Button
-									id="best-fit-city"
-									variant="quiet"
-									role="combobox"
-									aria-expanded={cityOpen}
-									className="justify-between w-[220px] h-10 font-normal"
-								>
-									<span className="inline-flex items-center gap-2 truncate">
-										<MapPin className="w-4 h-4 shrink-0" />
-										<span className="truncate">{locationLabel}</span>
-									</span>
-									<ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0" />
-								</Button>
-							</PopoverTrigger>
-							<PopoverContent className="w-[280px] p-0" align="start">
-								<Command>
-									<CommandInput placeholder="Search city…" />
-									<CommandList>
-										<CommandEmpty>No city found.</CommandEmpty>
-										<CommandGroup>
-											{cityList.map((c) => (
-												<CommandItem
-													key={c.id}
-													value={`${c.enName ?? ""} ${c.frName ?? ""} ${c.arName ?? ""} ${c.slug ?? ""}`}
-													onSelect={() => selectCity(c)}
-												>
-													<Check
-														className={cn(
-															"w-4 h-4",
-															filters.cityId === c.id && pinMatchesCity
-																? "opacity-100"
-																: "opacity-0",
-														)}
-													/>
-													<span className="truncate">
-														{c.enName ?? c.frName ?? c.slug ?? "—"}
-													</span>
-												</CommandItem>
-											))}
-										</CommandGroup>
-									</CommandList>
-								</Command>
-							</PopoverContent>
-						</Popover>
-						{hasCustomPin && (
-							<p className="h-4 text-[11px] leading-4 text-muted-foreground tabular-nums">
-								{formatCoords(filters.lat as number, filters.long as number)}
-								{!pinMatchesCity ? " · custom pin" : ""}
-							</p>
-						)}
-					</div>
+				<FilterCombobox
+					icon={MapPin}
+					placeholder="Patient location"
+					searchPlaceholder="Search city…"
+					emptyText="No city found."
+					options={cityOptions}
+					selectedId={pinMatchesCity ? filters.cityId : null}
+					loading={citiesLoading}
+					displayLabel={hasCustomPin ? locationLabel : null}
+					onSelect={(o) => {
+						const c = cityList.find((x) => x.id === o.id);
+						if (c) selectCity(c);
+					}}
+				/>
 
-					<LocationPreview
-						lat={filters.lat}
-						lng={filters.long}
-						onClick={() => setMapOpen(true)}
-					/>
-				</div>
+				<LocationPreview
+					lat={filters.lat}
+					lng={filters.long}
+					onClick={() => setMapOpen(true)}
+					className="h-10 w-16 rounded-md"
+				/>
 
-				{/* View toggle */}
-				<div className="ml-auto">
+				<div className="sm:ml-auto">
 					<BestFitViewToggle value={viewMode} onChange={onViewChange} />
 				</div>
 			</div>

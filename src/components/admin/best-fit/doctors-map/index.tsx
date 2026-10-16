@@ -4,8 +4,8 @@ import { CalendarDays, Map as MapIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { CubeLoader } from "@/components/loaders";
+import { FilterSegmented } from "@/components/ui/filter-controls";
 import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
-import { cn } from "@/lib/utils";
 import type { MappableDoctor } from "./map-inner";
 
 const DoctorsMapInner = dynamic(() => import("./map-inner"), {
@@ -34,12 +34,16 @@ export function toMappableDoctors(
 	for (const d of doctors) {
 		if (d.cabinetLatitude == null || d.cabinetLongitude == null) continue;
 		const existing = byId.get(d.id);
-		if (!existing || d.distance < existing.distance) {
+		if (
+			!existing ||
+			(d.distance ?? Number.POSITIVE_INFINITY) <
+				(existing.distance ?? Number.POSITIVE_INFINITY)
+		) {
 			byId.set(d.id, d);
 		}
 	}
 	return [...byId.values()]
-		.sort((a, b) => a.distance - b.distance)
+		.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0))
 		.map((d, i) => ({ ...d, rank: i + 1 }));
 }
 
@@ -65,7 +69,7 @@ export default function DoctorsMap({
 					<div className="flex items-center gap-2 text-sm">
 						<MapIcon className="size-4 text-muted-foreground" />
 						<span className="font-semibold text-foreground">
-							Doctors near patient
+							{patient ? "Doctors near patient" : "Doctors"}
 						</span>
 						<span className="text-muted-foreground text-xs">
 							{scopeLabel}
@@ -75,10 +79,12 @@ export default function DoctorsMap({
 						</span>
 					</div>
 					<div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
-						<span className="flex items-center gap-1.5">
-							<span className="inline-block size-3 rounded-[4px] rotate-45 bg-rose-600 border border-white shadow-sm" />
-							Patient
-						</span>
+						{patient && (
+							<span className="flex items-center gap-1.5">
+								<span className="inline-block size-3 rounded-[4px] rotate-45 bg-rose-600 border border-white shadow-sm" />
+								Patient
+							</span>
+						)}
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-3 rounded-[4px] rotate-45 bg-teal-700 border border-white shadow-sm" />
 							Doctor
@@ -92,22 +98,18 @@ export default function DoctorsMap({
 					</div>
 				</div>
 
-				<div className="h-[min(70vh,560px)] w-full">
-					{patient ? (
-						mappable.length === 0 && !isLoading ? (
-							<div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
-								<CalendarDays className="size-8 opacity-40" />
-								<p>No doctors with a cabinet location in this range.</p>
-							</div>
-						) : (
-							<DoctorsMapInner
-								patient={patient}
-								doctors={mappable}
-								onSelectDoctor={onSelectDoctor}
-							/>
-						)
+				<div className="relative isolate z-0 h-[min(70vh,560px)] w-full">
+					{mappable.length === 0 && !isLoading ? (
+						<div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
+							<CalendarDays className="size-8 opacity-40" />
+							<p>No doctors with a cabinet location in this range.</p>
+						</div>
 					) : (
-						<div className="h-full bg-muted/20" />
+						<DoctorsMapInner
+							patient={patient}
+							doctors={mappable}
+							onSelectDoctor={onSelectDoctor}
+						/>
 					)}
 				</div>
 			</div>
@@ -123,7 +125,7 @@ export default function DoctorsMap({
 	);
 }
 
-/** Compact calendar ↔ map toggle used on the best-fit page. */
+/** Calendar ↔ map toggle used on the best-fit page. */
 export function BestFitViewToggle({
 	value,
 	onChange,
@@ -132,33 +134,13 @@ export function BestFitViewToggle({
 	onChange: (next: "calendar" | "map") => void;
 }) {
 	return (
-		<div className="inline-flex items-stretch rounded-lg bg-muted/60 p-1">
-			<button
-				type="button"
-				className={cn(
-					"inline-flex min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-					value === "calendar"
-						? "bg-background text-foreground shadow-sm"
-						: "text-muted-foreground hover:text-foreground",
-				)}
-				onClick={() => onChange("calendar")}
-			>
-				<CalendarDays className="size-6" />
-				Calendar
-			</button>
-			<button
-				type="button"
-				className={cn(
-					"inline-flex min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-					value === "map"
-						? "bg-background text-foreground shadow-sm"
-						: "text-muted-foreground hover:text-foreground",
-				)}
-				onClick={() => onChange("map")}
-			>
-				<MapIcon className="size-6" />
-				Map
-			</button>
-		</div>
+		<FilterSegmented
+			value={value}
+			onChange={onChange}
+			options={[
+				{ value: "calendar", label: "Calendar", icon: CalendarDays },
+				{ value: "map", label: "Map", icon: MapIcon },
+			]}
+		/>
 	);
 }

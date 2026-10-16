@@ -56,9 +56,11 @@ export default function DoctorHoverCard({ doctor, children }: Props) {
 							{address ?? "Address not available"}
 						</span>
 					</p>
-					<p className="pl-[22px] text-xs text-muted-foreground">
-						{doctor.distance.toFixed(1)} km from patient
-					</p>
+					{doctor.distance != null && (
+						<p className="pl-[22px] text-xs text-muted-foreground">
+							{doctor.distance.toFixed(1)} km from patient
+						</p>
+					)}
 				</div>
 			</HoverCardContent>
 		</HoverCard>

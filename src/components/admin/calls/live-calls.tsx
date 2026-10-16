@@ -2,6 +2,7 @@
 
 import { Loader2, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { FilterSegmented } from "@/components/ui/filter-controls";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import useRealtimeSocket from "@/hooks/use-realtime-socket";
 import CallCard from "./call-card";
@@ -59,27 +60,21 @@ export default function LiveCalls() {
 	return (
 		<div className="">
 			<div className="flex items-center gap-4 mb-2">
-				<div className="flex w-fit gap-1 rounded-lg bg-muted p-1">
-					{(["all", "active", "ended"] as Filter[]).map((key) => (
-						<button
-							key={key}
-							type="button"
-							onClick={() => setFilter(key)}
-							className={`rounded-md px-3 py-1.5 font-medium text-sm capitalize transition-colors ${
-								filter === key
-									? "bg-background shadow-sm"
-									: "text-muted-foreground hover:text-foreground"
-							}`}
-						>
-							{key}
-							{key === "active" && activeCount > 0 && (
-								<span className="ml-1.5 text-primary text-xs">
-									({activeCount})
-								</span>
-							)}
-						</button>
-					))}
-				</div>
+				<FilterSegmented
+					value={filter}
+					onChange={setFilter}
+					options={(["all", "active", "ended"] as Filter[]).map((key) => ({
+						value: key,
+						label: (
+							<>
+								{key}
+								{key === "active" && activeCount > 0 && (
+									<span className="text-primary text-xs">({activeCount})</span>
+								)}
+							</>
+						),
+					}))}
+				/>
 
 				<div className="flex items-center gap-2">
 					<div

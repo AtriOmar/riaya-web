@@ -34,8 +34,12 @@ export default function DoctorChip({
 					{name}
 				</span>
 				<span className="truncate w-full text-[10px] leading-tight opacity-70">
-					{doctor.distance.toFixed(1)} km
-					{address ? ` · ${address}` : ""}
+					{[
+						doctor.distance != null ? `${doctor.distance.toFixed(1)} km` : null,
+						address,
+					]
+						.filter(Boolean)
+						.join(" · ")}
 				</span>
 			</button>
 		</DoctorHoverCard>

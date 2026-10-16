@@ -9,7 +9,6 @@ import DoctorsMap from "@/components/admin/best-fit/doctors-map";
 import BestFitFilterBar, {
 	type BestFitFilters,
 } from "@/components/admin/best-fit/filter-bar";
-import BestFitFiltersPrompt from "@/components/admin/best-fit/filters-prompt";
 import AdminLayout from "@/components/layouts/admin-layout";
 import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
 import { useBestFitRange } from "@/hooks/use-best-fit-range";
@@ -139,20 +138,17 @@ export default function AdminBestFitPage() {
 
 	const rangeAnchor = selectedDay ?? currentDate;
 	const { start, end } = useMemo(() => weekWindow(rangeAnchor), [rangeAnchor]);
-	const filtersReady =
-		filters.specialitySlug != null &&
-		filters.lat != null &&
-		filters.long != null;
-
-	const rangeParams = filtersReady
-		? {
-				speciality: filters.specialitySlug as string,
-				lat: filters.lat as number,
-				long: filters.long as number,
-				from: start.toISOString(),
-				to: end.toISOString(),
-			}
-		: null;
+	const hasSpeciality = filters.specialitySlug != null;
+	const hasLocation = filters.lat != null && filters.long != null;
+	// Every filter is optional: with none set, all doctors are listed.
+	const rangeParams = {
+		...(hasSpeciality ? { speciality: filters.specialitySlug as string } : {}),
+		...(hasLocation
+			? { lat: filters.lat as number, long: filters.long as number }
+			: {}),
+		from: start.toISOString(),
+		to: end.toISOString(),
+	};
 
 	const { data, isLoading } = useBestFitRange(rangeParams);
 
@@ -218,9 +214,7 @@ export default function AdminBestFitPage() {
 				onViewChange={(next) => updateUrl({ view: next })}
 			/>
 
-			{!filtersReady ? (
-				<BestFitFiltersPrompt filters={filters} viewMode={viewMode} />
-			) : viewMode === "map" ? (
+			{viewMode === "map" ? (
 				<DoctorsMap
 					patient={
 						filters.lat != null && filters.long != null

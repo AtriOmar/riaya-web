@@ -17,7 +17,11 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import TunisiaDimOverlay from "@/components/maps/tunisia-dim-overlay";
 import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
-import { TUNISIA_BOUNDS, TUNISIA_MIN_ZOOM } from "@/lib/tunisia-map";
+import {
+	TUNISIA_BOUNDS,
+	TUNISIA_CENTER,
+	TUNISIA_MIN_ZOOM,
+} from "@/lib/tunisia-map";
 import { shortName } from "../shared/helpers";
 
 const TILE_URL = "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
@@ -29,7 +33,7 @@ export type MappableDoctor = BestFitRangeDoctor & {
 };
 
 type Props = {
-	patient: { lat: number; lng: number };
+	patient: { lat: number; lng: number } | null;
 	doctors: MappableDoctor[];
 	onSelectDoctor: (doctorId: number) => void;
 };
@@ -118,7 +122,7 @@ export default function DoctorsMapInner({
 	const mapRef = useRef<LeafletMap>(null);
 
 	const points = useMemo(() => {
-		const pts: { lat: number; lng: number }[] = [patient];
+		const pts: { lat: number; lng: number }[] = patient ? [patient] : [];
 		for (const d of doctors) {
 			if (d.cabinetLatitude != null && d.cabinetLongitude != null) {
 				pts.push({ lat: d.cabinetLatitude, lng: d.cabinetLongitude });
@@ -132,8 +136,11 @@ export default function DoctorsMapInner({
 
 	return (
 		<MapContainer
-			center={[patient.lat, patient.lng]}
-			zoom={12}
+			center={[
+				(patient ?? TUNISIA_CENTER).lat,
+				(patient ?? TUNISIA_CENTER).lng,
+			]}
+			zoom={patient ? 12 : TUNISIA_MIN_ZOOM}
 			minZoom={TUNISIA_MIN_ZOOM}
 			maxBounds={TUNISIA_BOUNDS}
 			maxBoundsViscosity={1}
@@ -147,11 +154,13 @@ export default function DoctorsMapInner({
 			<FitBounds points={points} />
 
 			{/* Patient pin stays outside the cluster group */}
-			<Marker position={[patient.lat, patient.lng]} icon={patientMarkerIcon}>
-				<Popup>
-					<div className="text-xs font-medium">Patient location</div>
-				</Popup>
-			</Marker>
+			{patient && (
+				<Marker position={[patient.lat, patient.lng]} icon={patientMarkerIcon}>
+					<Popup>
+						<div className="text-xs font-medium">Patient location</div>
+					</Popup>
+				</Marker>
+			)}
 
 			<MarkerClusterGroup
 				chunkedLoading
@@ -182,8 +191,14 @@ export default function DoctorsMapInner({
 								<div className="min-w-[120px] space-y-0.5">
 									<p className="font-semibold text-xs">{name}</p>
 									<p className="text-[11px] text-muted-foreground">
-										{doctor.distance.toFixed(1)} km
-										{doctor.address ? ` · ${doctor.address}` : ""}
+										{[
+											doctor.distance != null
+												? `${doctor.distance.toFixed(1)} km`
+												: null,
+											doctor.address,
+										]
+											.filter(Boolean)
+											.join(" · ")}
 									</p>
 									<p className="text-[11px] text-muted-foreground">
 										{doctor.slots.length} slot
@@ -195,8 +210,14 @@ export default function DoctorsMapInner({
 								<div className="min-w-[140px] space-y-1">
 									<p className="font-semibold text-sm">{name}</p>
 									<p className="text-xs text-muted-foreground">
-										{doctor.distance.toFixed(1)} km
-										{doctor.address ? ` · ${doctor.address}` : ""}
+										{[
+											doctor.distance != null
+												? `${doctor.distance.toFixed(1)} km`
+												: null,
+											doctor.address,
+										]
+											.filter(Boolean)
+											.join(" · ")}
 									</p>
 									<p className="text-[11px] text-muted-foreground">
 										{doctor.slots.length} slot
