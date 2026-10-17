@@ -18,7 +18,9 @@ import RecordingDetail from "@/components/dashboard/recordings/recording-detail"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { getErrorMessage } from "@/lib/error-handling";
+import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
 import {
@@ -186,10 +188,19 @@ function RecordingRow({
 export default function RecordingsList() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { data: recordings, isLoading, mutate } = useGetApiRecordings();
+	const {
+		data: recordings,
+		isLoading,
+		mutate,
+	} = useGetApiRecordings(undefined, {
+		swr: { refreshInterval: transcriptRefreshInterval },
+	});
 
+	// Right panel: always visible on desktop (defaults to a new recording),
+	// a sheet on small screens that only opens when something is picked.
+	const isDesktop = useIsDesktop();
 	const [panel, setPanel] = useState<Panel>(null);
-	const [detailsOpen, setDetailsOpen] = useState(false);
+	const activePanel: Panel = panel ?? (isDesktop ? { type: "new" } : null);
 
 	const syncUrl = useCallback(
 		(next: Panel) => {
@@ -209,14 +220,12 @@ export default function RecordingsList() {
 	const openPanel = useCallback(
 		(next: Panel) => {
 			setPanel(next);
-			setDetailsOpen(Boolean(next));
 			syncUrl(next);
 		},
 		[syncUrl],
 	);
 
 	const closePanel = useCallback(() => {
-		setDetailsOpen(false);
 		setPanel(null);
 		syncUrl(null);
 	}, [syncUrl]);
@@ -227,65 +236,85 @@ export default function RecordingsList() {
 		const isNew = searchParams.get("new") === "1";
 		if (isNew) {
 			setPanel({ type: "new" });
-			setDetailsOpen(true);
 			return;
 		}
 		if (idParam) {
 			const id = Number(idParam);
-			if (!Number.isNaN(id)) {
-				setPanel({ type: "detail", id });
-				setDetailsOpen(true);
-				return;
-			}
+			if (!Number.isNaN(id)) setPanel({ type: "detail", id });
 		}
 	}, [searchParams]);
 
-	const selectedId = panel?.type === "detail" ? panel.id : null;
+	const selectedId = activePanel?.type === "detail" ? activePanel.id : null;
+
+	// The desktop panel always shows something, so only a recording can be
+	// closed there (back to the new-recording form). The mobile sheet always can.
+	const renderPanel = (current: NonNullable<Panel>) => {
+		const onClose =
+			!isDesktop || current.type === "detail" ? closePanel : undefined;
+		return current.type === "new" ? (
+			<NewRecording
+				onClose={onClose}
+				onSaved={(id) => {
+					void mutate();
+					openPanel({ type: "detail", id });
+				}}
+			/>
+		) : (
+			<RecordingDetail
+				key={current.id}
+				recordingId={current.id}
+				onClose={onClose}
+			/>
+		);
+	};
 
 	return (
-		<div>
-			<div className="mb-2 flex items-center justify-between gap-4">
-				<p className="text-muted-foreground text-sm">
-					{recordings?.length
-						? `${recordings.length} recording${recordings.length !== 1 ? "s" : ""}`
-						: ""}
-				</p>
-				<Button
-					className="md:-mt-12"
-					onClick={() => openPanel({ type: "new" })}
-				>
-					<Plus className="size-4" />
-					New Recording
-				</Button>
-			</div>
-
-			{isLoading && (
-				<div className="flex justify-center py-16">
-					<Loader2 className="size-8 animate-spin text-muted-foreground" />
-				</div>
-			)}
-
-			{!isLoading && (!recordings || recordings.length === 0) && (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 py-16 text-center">
-					<div className="flex size-14 items-center justify-center rounded-full bg-muted">
-						<Mic className="size-7 text-muted-foreground" />
-					</div>
-					<div>
-						<p className="font-medium">No recordings yet</p>
-						<p className="text-muted-foreground text-sm">
-							Record a patient conversation and get an AI transcript
-						</p>
-					</div>
-					<Button onClick={() => openPanel({ type: "new" })}>
+		<div className="items-start gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
+			<div className="min-w-0">
+				<div className="mb-2 flex items-center justify-between gap-4">
+					<p className="text-muted-foreground text-sm">
+						{recordings?.length
+							? `${recordings.length} recording${recordings.length !== 1 ? "s" : ""}`
+							: ""}
+					</p>
+					<Button
+						className="md:-mt-12"
+						onClick={() => openPanel({ type: "new" })}
+					>
 						<Plus className="size-4" />
 						New Recording
 					</Button>
 				</div>
-			)}
 
-			{!isLoading && recordings && recordings.length > 0 && (
-				<div className="w-full max-w-full lg:max-w-[500px]">
-					<aside className="flex min-h-[min(72vh,640px)] flex-col gap-2 overflow-y-auto lg:min-h-[calc(100dvh-9rem)]">
+				{isLoading && (
+					<div className="flex justify-center py-16">
+						<Loader2 className="size-8 animate-spin text-muted-foreground" />
+					</div>
+				)}
+
+				{!isLoading && (!recordings || recordings.length === 0) && (
+					<div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 py-16 text-center">
+						<div className="flex size-14 items-center justify-center rounded-full bg-muted">
+							<Mic className="size-7 text-muted-foreground" />
+						</div>
+						<div>
+							<p className="font-medium">No recordings yet</p>
+							<p className="text-muted-foreground text-sm">
+								Record a patient conversation and get an AI transcript
+							</p>
+						</div>
+						<Button
+							className="lg:hidden"
+							onClick={() => openPanel({ type: "new" })}
+						>
+							<Plus className="size-4" />
+							New Recording
+						</Button>
+					</div>
+				)}
+
+				{!isLoading && recordings && recordings.length > 0 && (
+					<div className="flex flex-col gap-2">
 						{recordings.map((recording) => (
 							<RecordingRow
 								key={recording.id}
@@ -295,22 +324,29 @@ export default function RecordingsList() {
 								onTranscribed={() => mutate()}
 							/>
 						))}
-					</aside>
-				</div>
+					</div>
+				)}
+			</div>
+
+			{/* Desktop: permanent right panel */}
+			{isDesktop && activePanel && (
+				<aside className="top-20 sticky bg-card shadow-sm border rounded-xl max-h-[calc(100dvh-6rem)] overflow-y-auto">
+					{renderPanel(activePanel)}
+				</aside>
 			)}
 
+			{/* Small screens: panel as a sheet */}
 			<Sheet
 				modal={false}
-				open={detailsOpen && Boolean(panel)}
+				open={!isDesktop && Boolean(panel)}
 				onOpenChange={(open) => {
 					if (!open) closePanel();
-					else setDetailsOpen(true);
 				}}
 			>
 				<SheetContent
 					side="right"
-					showCloseButton
-					className="overflow-visible gap-0 border-l border-border p-0 !w-[min(100vw,600px)] !max-w-[min(100vw,600px)]"
+					showCloseButton={false}
+					className="gap-0 bg-card p-0 border-l border-border !w-[min(100vw,600px)] !max-w-[min(100vw,600px)]"
 					onPointerDownOutside={(e) => e.preventDefault()}
 					onFocusOutside={(e) => e.preventDefault()}
 				>
@@ -318,22 +354,8 @@ export default function RecordingsList() {
 						{panel?.type === "new" ? "New recording" : "Recording details"}
 					</SheetTitle>
 					{panel ? (
-						<div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto pt-12">
-							{panel.type === "new" ? (
-								<NewRecording
-									onCancel={closePanel}
-									onSaved={(id) => {
-										void mutate();
-										openPanel({ type: "detail", id });
-									}}
-								/>
-							) : (
-								<RecordingDetail
-									key={panel.id}
-									recordingId={panel.id}
-									onClose={closePanel}
-								/>
-							)}
+						<div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+							{renderPanel(panel)}
 						</div>
 					) : null}
 				</SheetContent>

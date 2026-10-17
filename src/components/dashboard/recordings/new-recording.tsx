@@ -2,17 +2,7 @@
 
 import { MediaRecorder, register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
-import {
-	Check,
-	ChevronLeft,
-	Loader2,
-	Mic,
-	MicOff,
-	Play,
-	Square,
-	User,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Check, Loader2, Mic, RotateCcw, Square, User, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -138,16 +128,14 @@ function PatientCombobox({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function NewRecording({
-	onCancel,
+	onClose,
 	onSaved,
 }: {
-	/** Panel mode: close without navigating. */
-	onCancel?: () => void;
-	/** Panel mode: open the saved recording instead of navigating. */
-	onSaved?: (recordingId: number) => void;
+	/** Shows a close button in the header. */
+	onClose?: () => void;
+	/** Called with the new recording's id once it is saved. */
+	onSaved: (recordingId: number) => void;
 }) {
-	const router = useRouter();
-
 	// Form state
 	const [title, setTitle] = useState("");
 	const [selectedPatient, setSelectedPatient] =
@@ -276,14 +264,7 @@ export default function NewRecording({
 			});
 
 			toast.success("Recording saved");
-			const id = recording?.id;
-			if (id && onSaved) {
-				onSaved(id);
-			} else if (id) {
-				router.push(`/dashboard/recordings?id=${id}`);
-			} else {
-				router.push("/dashboard/recordings");
-			}
+			onSaved(recording.id);
 		} catch (err) {
 			toast.error(getErrorMessage(err, "Failed to save recording"));
 			setRecordingState("stopped");
@@ -294,168 +275,155 @@ export default function NewRecording({
 		durationSeconds,
 		selectedPatient,
 		createRecording,
-		router,
 		onSaved,
 	]);
 
 	const isFormComplete = title.trim().length > 0;
 
-	const goBack = () => {
-		if (onCancel) onCancel();
-		else router.push("/dashboard/recordings");
-	};
+	const isSaving = recordingState === "saving";
+	const hasAudio =
+		(recordingState === "stopped" || isSaving) && Boolean(audioUrl);
 
 	return (
-		<div className={onCancel ? "px-4 pb-6 sm:px-6" : "mx-auto max-w-xl"}>
-			{!onCancel && (
-				<Button
-					variant="ghost"
-					className="mb-6 -ml-2 gap-1.5 text-muted-foreground"
-					onClick={goBack}
-				>
-					<ChevronLeft className="size-4" />
-					Back to recordings
-				</Button>
-			)}
-
-			{onCancel && (
-				<div className="mb-4">
-					<h2 className="font-semibold text-lg">New Recording</h2>
-					<p className="text-muted-foreground text-sm">
-						Record a consultation and save it to your library
+		<div className="flex flex-col">
+			{/* Header */}
+			<div className="top-0 z-10 sticky flex items-start gap-3 bg-card px-6 pt-5 pb-4 border-b">
+				<div className="flex-1 min-w-0">
+					<h2 className="font-semibold text-lg">New recording</h2>
+					<p className="mt-1 text-muted-foreground text-sm">
+						Record a consultation. It's transcribed automatically once saved.
 					</p>
 				</div>
-			)}
+				{onClose && (
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="-mr-2 shrink-0 text-muted-foreground"
+						aria-label="Close"
+						onClick={onClose}
+					>
+						<X className="size-4" />
+					</Button>
+				)}
+			</div>
 
-			<div className="space-y-6 rounded-xl border bg-card p-6">
-				{/* Title */}
+			<div className="space-y-5 px-6 pt-5">
 				<div className="space-y-1.5">
-					<Label htmlFor="title">Recording title</Label>
+					<Label htmlFor="title">Title</Label>
 					<Input
 						id="title"
-						placeholder="e.g. Initial consultation – Dr. Smith"
+						placeholder="e.g. Initial consultation"
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
-						disabled={recordingState === "saving"}
+						disabled={isSaving}
 					/>
 				</div>
 
-				{/* Patient */}
 				<div className="space-y-1.5">
-					<Label>Patient (optional)</Label>
+					<Label>
+						Patient{" "}
+						<span className="font-normal text-muted-foreground">
+							(optional)
+						</span>
+					</Label>
 					<PatientCombobox
 						patients={patients}
 						selected={selectedPatient}
 						onSelect={setSelectedPatient}
 					/>
-					<p className="text-muted-foreground text-xs">
-						You can also assign a patient later.
+				</div>
+			</div>
+
+			{/* Recorder */}
+			<div className="flex flex-col items-center gap-4 mt-6 px-6 pt-8 pb-8 border-t text-center">
+				{micError && (
+					<p className="bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-md w-full text-red-700 dark:text-red-300 text-sm">
+						{micError}
 					</p>
-				</div>
+				)}
 
-				{/* Recorder */}
-				<div className="space-y-3">
-					<Label>Audio recording</Label>
-
-					{micError && (
-						<div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-							{micError}
-						</div>
-					)}
-
-					{/* Recording UI */}
-					{recordingState === "idle" && (
-						<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed py-8">
-							<div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-								<Mic className="size-8 text-primary" />
-							</div>
-							<p className="text-muted-foreground text-sm">
-								Press record to start capturing the conversation
+				{recordingState === "idle" && (
+					<>
+						<button
+							type="button"
+							onClick={startRecording}
+							aria-label="Start recording"
+							className="flex justify-center items-center bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 size-20 text-primary-foreground active:scale-95 transition-all cursor-pointer"
+						>
+							<Mic className="size-8" />
+						</button>
+						<div>
+							<p className="font-medium text-sm">Tap to start recording</p>
+							<p className="text-muted-foreground text-xs">
+								Your browser will ask for microphone access
 							</p>
-							<Button onClick={startRecording} className="gap-2">
-								<Mic className="size-4" />
-								Start Recording
-							</Button>
 						</div>
-					)}
+					</>
+				)}
 
-					{recordingState === "recording" && (
-						<div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50/50 py-8 dark:border-red-900/40 dark:bg-red-900/10">
-							<div className="relative flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-								<Mic className="size-8 text-red-600 dark:text-red-400" />
-								{/* Pulse ring */}
-								<span className="absolute inset-0 animate-ping rounded-full bg-red-400/30" />
-							</div>
-							<div className="text-center">
-								<p className="font-mono text-2xl font-bold text-red-600 dark:text-red-400">
+				{recordingState === "recording" && (
+					<>
+						<button
+							type="button"
+							onClick={stopRecording}
+							aria-label="Stop recording"
+							className="relative flex justify-center items-center bg-red-600 hover:bg-red-700 shadow-md rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/30 size-20 text-white active:scale-95 transition-all cursor-pointer"
+						>
+							<span className="absolute inset-0 bg-red-500/30 rounded-full animate-ping" />
+							<Square className="relative fill-current size-6" />
+						</button>
+						<div>
+							<p className="font-mono font-semibold tabular-nums text-2xl">
+								{formatDuration(durationSeconds)}
+							</p>
+							<p className="flex justify-center items-center gap-1.5 text-muted-foreground text-xs">
+								<span className="bg-red-600 rounded-full size-1.5 animate-pulse" />
+								Recording · tap to stop
+							</p>
+						</div>
+					</>
+				)}
+
+				{hasAudio && audioUrl && (
+					<div className="space-y-3 w-full">
+						<div className="flex justify-between items-center text-sm">
+							<span className="font-medium">
+								Recording ·{" "}
+								<span className="tabular-nums text-muted-foreground">
 									{formatDuration(durationSeconds)}
-								</p>
-								<p className="text-muted-foreground text-xs">Recording…</p>
-							</div>
+								</span>
+							</span>
 							<Button
-								variant="destructive"
-								onClick={stopRecording}
-								className="gap-2"
+								variant="ghost"
+								size="sm"
+								className="gap-1.5 -mr-2 text-muted-foreground hover:text-destructive"
+								onClick={discardRecording}
+								disabled={isSaving}
 							>
-								<Square className="size-4" />
-								Stop Recording
+								<RotateCcw className="size-3.5" />
+								Record again
 							</Button>
 						</div>
-					)}
-
-					{(recordingState === "stopped" || recordingState === "saving") &&
-						audioUrl && (
-							<div className="space-y-3 rounded-xl border p-4">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2 text-sm">
-										<MicOff className="size-4 text-muted-foreground" />
-										<span className="font-medium">Recording complete</span>
-										<span className="text-muted-foreground">
-											({formatDuration(durationSeconds)})
-										</span>
-									</div>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 px-2 text-muted-foreground text-xs hover:text-destructive"
-										onClick={discardRecording}
-										disabled={recordingState === "saving"}
-									>
-										Discard
-									</Button>
-								</div>
-								{/* Preview */}
-								{/* biome-ignore lint/a11y/useMediaCaption: recording preview */}
-								<audio src={audioUrl} controls className="w-full" />
-								<div className="flex items-center gap-1">
-									<Play className="size-3.5 text-muted-foreground" />
-									<p className="text-muted-foreground text-xs">
-										Listen back before saving
-									</p>
-								</div>
-							</div>
-						)}
-				</div>
-
-				{/* Save */}
-				{(recordingState === "stopped" || recordingState === "saving") && (
-					<Button
-						className="w-full gap-2"
-						onClick={saveRecording}
-						disabled={!isFormComplete || recordingState === "saving"}
-					>
-						{recordingState === "saving" ? (
-							<>
+						{/* biome-ignore lint/a11y/useMediaCaption: recording preview */}
+						<audio src={audioUrl} controls className="w-full" />
+						<Button
+							className="gap-2 w-full"
+							onClick={saveRecording}
+							disabled={!isFormComplete || isSaving}
+						>
+							{isSaving ? (
 								<Loader2 className="size-4 animate-spin" />
-								Saving…
-							</>
-						) : (
-							<>
+							) : (
 								<Check className="size-4" />
-								Save Recording
-							</>
+							)}
+							{isSaving ? "Saving…" : "Save recording"}
+						</Button>
+						{!isFormComplete && (
+							<p className="text-muted-foreground text-xs">
+								Add a title to save this recording
+							</p>
 						)}
-					</Button>
+					</div>
 				)}
 			</div>
 		</div>

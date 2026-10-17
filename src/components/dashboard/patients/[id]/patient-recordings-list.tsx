@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
 import { formatSpeakerLabel } from "@/lib/transcript";
+import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
 import {
 	useGetApiRecordings,
@@ -215,7 +216,10 @@ export function PatientRecordingsList({ patientId }: { patientId: number }) {
 		data: recordings,
 		isLoading,
 		mutate,
-	} = useGetApiRecordings({ patientId });
+	} = useGetApiRecordings(
+		{ patientId },
+		{ swr: { refreshInterval: transcriptRefreshInterval } },
+	);
 
 	return (
 		<div className="space-y-4 lg:col-span-2">
