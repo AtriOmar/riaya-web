@@ -21,6 +21,9 @@ export type BestFitRangeDoctor = {
 	slots: BestFitRangeSlot[];
 };
 
+/** A doctor without slots, as shown on the map and in doctor cards. */
+export type BestFitMapDoctor = Omit<BestFitRangeDoctor, "slots">;
+
 export type BestFitRangeDay = {
 	date: string; // yyyy-MM-dd
 	doctors: BestFitRangeDoctor[];

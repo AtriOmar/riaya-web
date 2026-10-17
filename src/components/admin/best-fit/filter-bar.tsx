@@ -6,6 +6,7 @@ import { BestFitViewToggle } from "@/components/admin/best-fit/doctors-map";
 import LocationPickerDialog from "@/components/admin/best-fit/location-picker-dialog";
 import LocationPreview from "@/components/admin/best-fit/location-preview";
 import { FilterCombobox } from "@/components/ui/filter-controls";
+import { Separator } from "@/components/ui/separator";
 import type {
 	GetApiCities200Item,
 	GetApiSpecialities200Item,
@@ -160,9 +161,9 @@ export default function BestFitFilterBar({
 					className="h-10 w-16 rounded-md"
 				/>
 
-				<div className="sm:ml-auto">
-					<BestFitViewToggle value={viewMode} onChange={onViewChange} />
-				</div>
+				<Separator orientation="vertical" className="mx-4 hidden sm:block" />
+
+				<BestFitViewToggle value={viewMode} onChange={onViewChange} />
 			</div>
 
 			<LocationPickerDialog

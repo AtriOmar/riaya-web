@@ -59,6 +59,51 @@ export async function resolveSpeciality(searchTerm: string) {
 	return specialities[0] ?? null;
 }
 
+/**
+ * Verified doctors with a cabinet location, optionally narrowed to one
+ * speciality. With a patient location, only doctors inside the radius are kept;
+ * if nobody is, the nearest few are returned so a sparse area is never empty.
+ * Shared by the admin calendar (range) and map endpoints.
+ */
+export async function listFinderDoctors(opts: {
+	specialityId: number | null;
+	location: { lat: number; long: number } | null;
+}) {
+	const { specialityId, location } = opts;
+	const allDoctors = await db
+		.select()
+		.from(doctorProfile)
+		.where(
+			and(
+				eq(doctorProfile.status, "verified"),
+				specialityId != null
+					? eq(doctorProfile.specialityId, specialityId)
+					: undefined,
+			),
+		);
+
+	const withCoords = allDoctors.filter(
+		(d) => d.cabinetLatitude != null && d.cabinetLongitude != null,
+	);
+	if (!location) return withCoords;
+
+	const ranked = withCoords
+		.map((d) => ({
+			d,
+			km: calculateHaversineKm(
+				location.lat,
+				location.long,
+				d.cabinetLatitude as number,
+				d.cabinetLongitude as number,
+			),
+		}))
+		.sort((x, y) => x.km - y.km);
+	const inRadius = ranked.filter((r) => r.km <= BEST_FIT_MAX_RADIUS_KM);
+	return (
+		inRadius.length > 0 ? inRadius : ranked.slice(0, BEST_FIT_FALLBACK_COUNT)
+	).map((r) => r.d);
+}
+
 export type BestFitDoctorResult = {
 	id: number;
 	userId: string;

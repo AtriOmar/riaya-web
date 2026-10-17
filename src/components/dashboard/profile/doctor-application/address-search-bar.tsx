@@ -31,12 +31,14 @@ type Props = {
 	onLocationSelect: (location: GeoLocation) => void;
 	biasLocation?: { lat: number; lng: number };
 	className?: string;
+	placeholder?: string;
 };
 
 export default function AddressSearchBar({
 	onLocationSelect,
 	biasLocation,
 	className,
+	placeholder = "Search for your address...",
 }: Props) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
@@ -97,7 +99,7 @@ export default function AddressSearchBar({
 				<div className="relative">
 					<Search className="z-10 top-1/2 left-3 absolute opacity-50 w-4 h-4 -translate-y-1/2 shrink-0 pointer-events-none" />
 					<CommandPrimitive.Input
-						placeholder="Search for your address..."
+						placeholder={placeholder}
 						value={query}
 						onValueChange={setQuery}
 						onFocus={() => setOpen(true)}

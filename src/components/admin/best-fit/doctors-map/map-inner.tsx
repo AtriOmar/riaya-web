@@ -1,6 +1,8 @@
 "use client";
 
 import L from "leaflet";
+import { Move } from "lucide-react";
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
 	MapContainer,
@@ -15,8 +17,11 @@ import useSWR from "swr";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
+import AddressSearchBar, {
+	type GeoLocation,
+} from "@/components/dashboard/profile/doctor-application/address-search-bar";
 import TunisiaDimOverlay from "@/components/maps/tunisia-dim-overlay";
-import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
+import type { BestFitMapDoctor } from "@/hooks/use-best-fit-range";
 import {
 	TUNISIA_BOUNDS,
 	TUNISIA_CENTER,
@@ -25,19 +30,20 @@ import {
 import { cn } from "@/lib/utils";
 import { getDrivingRoute } from "@/services/manual/driving-route";
 import { DoctorCardBody } from "../shared/doctor-hover-card";
+import RelocateBar from "./relocate-bar";
 
 const TILE_URL = "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
 const TILE_ATTR =
 	'&copy; <a href="https://www.google.com/maps">Google Maps</a>';
 
-export type MappableDoctor = BestFitRangeDoctor & {
+export type MappableDoctor = BestFitMapDoctor & {
 	rank: number;
 };
 
 type Props = {
 	patient: { lat: number; lng: number } | null;
 	doctors: MappableDoctor[];
-	onSelectDoctor: (doctorId: number) => void;
+	getDoctorHref: (doctorId: number) => string;
 };
 
 function patientIcon() {
@@ -55,7 +61,7 @@ function patientIcon() {
 	});
 }
 
-function doctorIcon() {
+function doctorIcon(color = "#0f766e", opacity = 1) {
 	return L.divIcon({
 		className: "",
 		iconSize: [26, 26],
@@ -64,7 +70,7 @@ function doctorIcon() {
 		html: `<div style="
 			width:26px;height:26px;border-radius:9999px 9999px 9999px 4px;
 			transform:rotate(-45deg);
-			background:#0f766e;border:2px solid #fff;
+			background:${color};border:2px solid #fff;opacity:${opacity};
 			box-shadow:0 1px 4px rgba(0,0,0,.35);
 		"></div>`,
 	});
@@ -88,10 +94,20 @@ function clusterIcon(cluster: L.MarkerCluster) {
 	});
 }
 
-function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
+function FitBounds({
+	points,
+	fitKey,
+}: {
+	points: { lat: number; lng: number }[];
+	/** Refit only when this changes, so moving one pin keeps the view. */
+	fitKey: string;
+}) {
 	const map = useMap();
+	const pointsRef = useRef(points);
+	pointsRef.current = points;
 
 	useEffect(() => {
+		const points = pointsRef.current;
 		if (points.length === 0) return;
 		if (points.length === 1) {
 			const p = points[0];
@@ -102,7 +118,7 @@ function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
 			points.map((p) => [p.lat, p.lng] as [number, number]),
 		);
 		map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
-	}, [map, points]);
+	}, [map, fitKey]);
 
 	return null;
 }
@@ -129,6 +145,82 @@ function ClearOnMapClick({ onClear }: { onClear: () => void }) {
 }
 
 type LatLng = { lat: number; lng: number };
+
+function searchIcon() {
+	return L.divIcon({
+		className: "",
+		iconSize: [22, 22],
+		iconAnchor: [11, 11],
+		html: `<div style="
+			width:22px;height:22px;border-radius:9999px;
+			background:#2563eb;border:3px solid #fff;
+			box-shadow:0 0 0 2px rgba(37,99,235,.35),0 1px 4px rgba(0,0,0,.35);
+		"></div>`,
+	});
+}
+
+/** Address search pinned to the top of the map; picking a result flies there. */
+function MapSearch({ onFound }: { onFound: (p: LatLng) => void }) {
+	const map = useMap();
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!ref.current) return;
+		L.DomEvent.disableClickPropagation(ref.current);
+		L.DomEvent.disableScrollPropagation(ref.current);
+	}, []);
+
+	function handleSelect(loc: GeoLocation) {
+		onFound({ lat: loc.lat, lng: loc.lon });
+		map.flyTo([loc.lat, loc.lon], Math.max(map.getZoom(), 16), {
+			duration: 0.6,
+		});
+	}
+
+	return (
+		<div
+			ref={ref}
+			className="absolute top-3 left-14 z-[1000] w-[min(calc(100%-8rem),20rem)]"
+		>
+			<AddressSearchBar
+				onLocationSelect={handleSelect}
+				biasLocation={map.getCenter()}
+				placeholder="Search an address…"
+				className="w-full"
+			/>
+		</div>
+	);
+}
+
+/**
+ * While moving a doctor's pin: zoom in on the current pin, show a crosshair
+ * cursor, and report map clicks as the new position.
+ */
+function RelocateMode({
+	from,
+	onPick,
+}: {
+	from: LatLng;
+	onPick: (p: LatLng) => void;
+}) {
+	const map = useMap();
+
+	useEffect(() => {
+		map.flyTo([from.lat, from.lng], Math.max(map.getZoom(), 16), {
+			duration: 0.6,
+		});
+		const el = map.getContainer();
+		el.style.cursor = "crosshair";
+		return () => {
+			el.style.cursor = "";
+		};
+	}, [map]);
+
+	useMapEvents({
+		click: (e) => onPick({ lat: e.latlng.lat, lng: e.latlng.lng }),
+	});
+	return null;
+}
 
 /**
  * shadcn-styled card pinned to a map coordinate. Rendered inside the map so it
@@ -208,10 +300,19 @@ function useDrivingRoute(
 export default function DoctorsMapInner({
 	patient,
 	doctors,
-	onSelectDoctor,
+	getDoctorHref,
 }: Props) {
 	const [hoveredId, setHoveredId] = useState<number | null>(null);
 	const [selectedId, setSelectedId] = useState<number | null>(null);
+
+	// Pin-moving mode: which doctor, and where the new pin is (once picked).
+	const [relocatingId, setRelocatingId] = useState<number | null>(null);
+	const [draft, setDraft] = useState<LatLng | null>(null);
+	const relocatingDoctor = doctors.find((d) => d.id === relocatingId);
+
+	// Spot found with the search box, so you can see where it landed.
+	const [searched, setSearched] = useState<LatLng | null>(null);
+	const searchMarkerIcon = useMemo(() => searchIcon(), []);
 
 	// The card stays mounted briefly after deselecting so it can animate out.
 	const [shownId, setShownId] = useState<number | null>(null);
@@ -245,8 +346,31 @@ export default function DoctorsMapInner({
 		return pts;
 	}, [patient, doctors]);
 
+	const fitKey = useMemo(
+		() =>
+			`${patient?.lat},${patient?.lng}|${doctors
+				.map((d) => d.id)
+				.sort((a, b) => a - b)
+				.join(",")}`,
+		[patient, doctors],
+	);
+
 	const patientMarkerIcon = useMemo(() => patientIcon(), []);
 	const doctorMarkerIcon = useMemo(() => doctorIcon(), []);
+	const oldPinIcon = useMemo(() => doctorIcon("#0f766e", 0.4), []);
+	const newPinIcon = useMemo(() => doctorIcon("#d97706"), []);
+
+	function startRelocate(doctorId: number) {
+		setSelectedId(null);
+		setHoveredId(null);
+		setDraft(null);
+		setRelocatingId(doctorId);
+	}
+
+	function stopRelocate() {
+		setRelocatingId(null);
+		setDraft(null);
+	}
 
 	return (
 		<MapContainer
@@ -264,8 +388,74 @@ export default function DoctorsMapInner({
 			<TileLayer attribution={TILE_ATTR} url={TILE_URL} />
 			<TunisiaDimOverlay />
 			<InvalidateOnMount />
-			<ClearOnMapClick onClear={() => setSelectedId(null)} />
-			<FitBounds points={points} />
+			{relocatingDoctor &&
+			relocatingDoctor.cabinetLatitude != null &&
+			relocatingDoctor.cabinetLongitude != null ? (
+				<>
+					<RelocateMode
+						from={{
+							lat: relocatingDoctor.cabinetLatitude,
+							lng: relocatingDoctor.cabinetLongitude,
+						}}
+						onPick={(p) => {
+							setSearched(null);
+							setDraft(p);
+						}}
+					/>
+					<RelocateBar
+						doctor={relocatingDoctor}
+						draft={draft}
+						onDone={stopRelocate}
+					/>
+					{draft && (
+						<>
+							<Polyline
+								positions={[
+									[
+										relocatingDoctor.cabinetLatitude,
+										relocatingDoctor.cabinetLongitude,
+									],
+									[draft.lat, draft.lng],
+								]}
+								interactive={false}
+								pathOptions={{
+									color: "#d97706",
+									weight: 2,
+									dashArray: "6 6",
+								}}
+							/>
+							<Marker
+								position={[draft.lat, draft.lng]}
+								icon={newPinIcon}
+								draggable
+								zIndexOffset={1000}
+								eventHandlers={{
+									dragend: (e) => {
+										const p = (e.target as L.Marker).getLatLng();
+										setDraft({ lat: p.lat, lng: p.lng });
+									},
+								}}
+							/>
+						</>
+					)}
+				</>
+			) : (
+				<ClearOnMapClick
+					onClear={() => {
+						setSelectedId(null);
+						setSearched(null);
+					}}
+				/>
+			)}
+			<MapSearch onFound={setSearched} />
+			{searched && (
+				<Marker
+					position={[searched.lat, searched.lng]}
+					icon={searchMarkerIcon}
+					interactive={false}
+				/>
+			)}
+			<FitBounds points={points} fitKey={fitKey} />
 
 			{lineRoute?.lines.map((line) => (
 				<Fragment key={`route-${lineDoctor?.id}-${line[0]?.join(",")}`}>
@@ -310,7 +500,9 @@ export default function DoctorsMapInner({
 						<Marker
 							key={doctor.id}
 							position={[doctor.cabinetLatitude, doctor.cabinetLongitude]}
-							icon={doctorMarkerIcon}
+							icon={doctor.id === relocatingId ? oldPinIcon : doctorMarkerIcon}
+							// While moving a pin, markers ignore clicks so the map gets them.
+							interactive={relocatingId == null}
 							eventHandlers={{
 								// Hover draws the route; click opens the card.
 								mouseover: () => setHoveredId(doctor.id),
@@ -358,12 +550,21 @@ export default function DoctorsMapInner({
 											? `${selectedRoute.distanceKm.toFixed(1)} km by road`
 											: "Route unavailable"}
 							</p>
-							<button
-								type="button"
+							<Link
+								href={getDoctorHref(shownDoctor.id)}
 								className="shrink-0 font-medium text-primary text-xs underline-offset-2 hover:underline"
-								onClick={() => onSelectDoctor(shownDoctor.id)}
 							>
 								View schedule
+							</Link>
+						</div>
+						<div className="border-t px-3.5 py-2">
+							<button
+								type="button"
+								className="flex items-center gap-1.5 text-muted-foreground text-xs hover:text-foreground"
+								onClick={() => startRelocate(shownDoctor.id)}
+							>
+								<Move className="size-3.5" />
+								Wrong spot? Move pin
 							</button>
 						</div>
 					</AnchoredCard>

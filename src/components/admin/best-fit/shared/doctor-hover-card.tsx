@@ -7,19 +7,24 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
+import type { BestFitMapDoctor } from "@/hooks/use-best-fit-range";
+import { useGetApiCities } from "@/services/generated/miscellaneous/miscellaneous";
 import { fullName, initials } from "./helpers";
 
 type Props = {
-	doctor: BestFitRangeDoctor;
+	doctor: BestFitMapDoctor;
 	children: ReactElement;
 };
 
 /** Card contents, shared by the calendar chips and the map. */
-export function DoctorCardBody({ doctor }: { doctor: BestFitRangeDoctor }) {
+export function DoctorCardBody({ doctor }: { doctor: BestFitMapDoctor }) {
 	const name = fullName(doctor);
 	const address = doctor.address?.trim() || null;
 	const cabinet = doctor.cabinetName?.trim() || null;
+	// Shared SWR cache, so this doesn't refetch per card.
+	const { data: cities } = useGetApiCities();
+	const cityRow = cities?.find((c) => c.id === doctor.cabinetCityId);
+	const city = cityRow ? (cityRow.frName ?? cityRow.enName) : null;
 
 	return (
 		<>
@@ -49,6 +54,9 @@ export function DoctorCardBody({ doctor }: { doctor: BestFitRangeDoctor }) {
 						{address ?? "Address not available"}
 					</span>
 				</p>
+				{city && (
+					<p className="pl-[22px] text-xs text-muted-foreground">{city}</p>
+				)}
 				{doctor.distance != null && (
 					<p className="pl-[22px] text-xs text-muted-foreground">
 						{doctor.distance.toFixed(1)} km from patient

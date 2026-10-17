@@ -21,67 +21,6 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary Create a LiveKit test-call token (Admin)
- */
-export const postApiLivekitTestCallToken = (
-	postApiLivekitTestCallTokenBody?: PostApiLivekitTestCallTokenBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiLivekitTestCallToken200>(
-		{
-			url: `/api/livekit/test-call-token`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiLivekitTestCallTokenBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiLivekitTestCallTokenMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiLivekitTestCallTokenBody | undefined },
-	) => {
-		return postApiLivekitTestCallToken(arg, options);
-	};
-};
-export const getPostApiLivekitTestCallTokenMutationKey = () =>
-	[`/api/livekit/test-call-token`] as const;
-
-export type PostApiLivekitTestCallTokenMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
->;
-
-/**
- * @summary Create a LiveKit test-call token (Admin)
- */
-export const usePostApiLivekitTestCallToken = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>,
-		TError,
-		Key,
-		PostApiLivekitTestCallTokenBody | undefined,
-		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiLivekitTestCallTokenMutationKey();
-	const swrFn = getPostApiLivekitTestCallTokenMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Save the recording of a test call (Admin)
  */
 export const postApiTestCallRecording = (
@@ -193,6 +132,67 @@ export const usePostApiTestCallSettings = <TError = unknown>(options?: {
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiTestCallSettingsMutationKey();
 	const swrFn = getPostApiTestCallSettingsMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Create a LiveKit test-call token (Admin)
+ */
+export const postApiLivekitTestCallToken = (
+	postApiLivekitTestCallTokenBody?: PostApiLivekitTestCallTokenBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiLivekitTestCallToken200>(
+		{
+			url: `/api/livekit/test-call-token`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiLivekitTestCallTokenBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiLivekitTestCallTokenMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiLivekitTestCallTokenBody | undefined },
+	) => {
+		return postApiLivekitTestCallToken(arg, options);
+	};
+};
+export const getPostApiLivekitTestCallTokenMutationKey = () =>
+	[`/api/livekit/test-call-token`] as const;
+
+export type PostApiLivekitTestCallTokenMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+>;
+
+/**
+ * @summary Create a LiveKit test-call token (Admin)
+ */
+export const usePostApiLivekitTestCallToken = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>,
+		TError,
+		Key,
+		PostApiLivekitTestCallTokenBody | undefined,
+		Awaited<ReturnType<typeof postApiLivekitTestCallToken>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiLivekitTestCallTokenMutationKey();
+	const swrFn = getPostApiLivekitTestCallTokenMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

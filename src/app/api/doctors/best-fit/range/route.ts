@@ -2,13 +2,9 @@ import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment, doctorProfile, speciality } from "@/db/schema";
+import { appointment, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import {
-	BEST_FIT_FALLBACK_COUNT,
-	BEST_FIT_MAX_RADIUS_KM,
-	calculateHaversineKm,
-} from "@/lib/best-fit";
+import { calculateHaversineKm, listFinderDoctors } from "@/lib/best-fit";
 import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit/range ─────────────────────────────────────────
@@ -18,8 +14,6 @@ import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
 // `speciality` and the `lat`/`long` pair are each optional: without a speciality
 // every verified doctor is returned; without a location there is no radius
 // filter and `distance` is null.
-
-const MAX_RADIUS_KM = BEST_FIT_MAX_RADIUS_KM;
 
 const schema = z.object({
 	speciality: z.string().min(1).optional(),
@@ -95,45 +89,7 @@ export async function GET(req: NextRequest) {
 			specialityId = specialityData.id;
 		}
 
-		// Fetch verified doctors (optionally narrowed to one speciality)
-		const allDoctors = await db
-			.select()
-			.from(doctorProfile)
-			.where(
-				and(
-					eq(doctorProfile.status, "verified"),
-					specialityId != null
-						? eq(doctorProfile.specialityId, specialityId)
-						: undefined,
-				),
-			);
-
-		// Pre-filter by radius when a location is given — mirrors the AI /best-fit
-		// cap. If nobody is inside it, fall back to the nearest few doctors so a
-		// sparse area doesn't render an empty calendar/map.
-		const withCoords = allDoctors.filter(
-			(d) => d.cabinetLatitude != null && d.cabinetLongitude != null,
-		);
-		let doctors = withCoords;
-		if (location) {
-			const ranked = withCoords
-				.map((d) => ({
-					d,
-					km: calculateHaversineKm(
-						location.lat,
-						location.long,
-						d.cabinetLatitude as number,
-						d.cabinetLongitude as number,
-					),
-				}))
-				.sort((x, y) => x.km - y.km);
-			const inRadius = ranked.filter((r) => r.km <= MAX_RADIUS_KM);
-			doctors = (
-				inRadius.length > 0
-					? inRadius
-					: ranked.slice(0, BEST_FIT_FALLBACK_COUNT)
-			).map((r) => r.d);
-		}
+		const doctors = await listFinderDoctors({ specialityId, location });
 
 		// Build list of dates in range (inclusive)
 		const days: Date[] = [];
