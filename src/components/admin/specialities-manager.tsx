@@ -8,7 +8,7 @@ import {
 	Stethoscope,
 	Trash2,
 } from "lucide-react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import DataTable, { type Column } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
 import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 import {
@@ -63,20 +64,6 @@ const SORT_OPTIONS = [
 	{ value: "fr_asc", label: "French A–Z" },
 	{ value: "ar_asc", label: "Arabic A–Z" },
 ];
-
-const DESKTOP_QUERY = "(min-width: 1024px)";
-
-function useIsDesktop() {
-	return useSyncExternalStore(
-		(cb) => {
-			const mq = window.matchMedia(DESKTOP_QUERY);
-			mq.addEventListener("change", cb);
-			return () => mq.removeEventListener("change", cb);
-		},
-		() => window.matchMedia(DESKTOP_QUERY).matches,
-		() => false,
-	);
-}
 
 export default function SpecialitiesManager() {
 	const { data: specialities, mutate, isLoading } = useGetApiSpecialities();
