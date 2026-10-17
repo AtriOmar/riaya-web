@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording, patient } from "@/db/schema";
@@ -11,6 +11,7 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { assertRecordingAllowed } from "@/lib/plan-limits";
+import { transcribeRecording } from "@/lib/recording-transcription";
 
 // ─── GET /api/recordings ──────────────────────────────────────────────────────
 // Returns recordings for the authenticated doctor, optionally filtered by patient.
@@ -66,7 +67,8 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── POST /api/recordings ─────────────────────────────────────────────────────
-// Creates a new recording row after the audio has been uploaded to R2.
+// Creates a new recording row after the audio has been uploaded to R2, then
+// transcribes it in the background once the response is sent.
 
 const createSchema = z.object({
 	audioUrl: z.url(),
@@ -108,9 +110,11 @@ export async function POST(req: NextRequest) {
 				title: parsed.data.title,
 				audioUrl: parsed.data.audioUrl,
 				durationSeconds: parsed.data.durationSeconds ?? null,
-				transcriptStatus: "pending",
+				transcriptStatus: "processing",
 			})
 			.returning();
+
+		after(() => transcribeRecording(recording.id));
 
 		return json(recording, 201);
 	} catch (e) {

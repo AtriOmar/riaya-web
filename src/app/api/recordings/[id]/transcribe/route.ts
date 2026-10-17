@@ -3,18 +3,19 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording } from "@/db/schema";
-import { transcribeAudio } from "@/lib/ai";
 import {
 	apiError,
 	json,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
+import { transcribeRecording } from "@/lib/recording-transcription";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 // ─── POST /api/recordings/[id]/transcribe ─────────────────────────────────────
-// Triggers transcription for a recording via `transcribeAudio` in lib/ai.ts.
+// Re-runs transcription for a recording (new recordings are transcribed
+// automatically on create, so this is for retries).
 
 export async function POST(_req: NextRequest, { params }: RouteContext) {
 	try {
@@ -38,54 +39,8 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 
 		if (!recording) return apiError("RECORDING_NOT_FOUND");
 
-		// Mark as processing
-		await db
-			.update(consultationRecording)
-			.set({ transcriptStatus: "processing", updatedAt: new Date() })
-			.where(eq(consultationRecording.id, recordingId));
-
-		// Fetch the audio from the CDN
-		const audioResponse = await fetch(recording.audioUrl);
-		if (!audioResponse.ok) {
-			await db
-				.update(consultationRecording)
-				.set({ transcriptStatus: "error", updatedAt: new Date() })
-				.where(eq(consultationRecording.id, recordingId));
-			return apiError("TRANSCRIPTION_FAILED");
-		}
-
-		const arrayBuffer = await audioResponse.arrayBuffer();
-		// Use arrayBuffer directly to avoid Node.js nested-Blob serialization issues
-		const contentType = audioResponse.headers.get("content-type") ?? "";
-		const audioMime = contentType.startsWith("audio/")
-			? contentType
-			: "audio/webm";
-		const audioBlob = new Blob([arrayBuffer], { type: audioMime });
-		const ext = recording.audioUrl.split(".").pop() ?? "webm";
-		const filename = `recording-${recordingId}.${ext}`;
-
-		let transcript: any;
-		try {
-			transcript = await transcribeAudio(audioBlob, filename);
-		} catch (err) {
-			await db
-				.update(consultationRecording)
-				.set({ transcriptStatus: "error", updatedAt: new Date() })
-				.where(eq(consultationRecording.id, recordingId));
-			console.error("Transcription error:", err);
-			return apiError("TRANSCRIPTION_FAILED");
-		}
-
-		// Save transcript
-		const [updated] = await db
-			.update(consultationRecording)
-			.set({
-				transcript,
-				transcriptStatus: "done",
-				updatedAt: new Date(),
-			})
-			.where(eq(consultationRecording.id, recordingId))
-			.returning();
+		const updated = await transcribeRecording(recordingId);
+		if (!updated) return apiError("TRANSCRIPTION_FAILED");
 
 		return json(updated);
 	} catch (e) {
