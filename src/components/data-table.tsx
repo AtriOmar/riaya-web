@@ -39,6 +39,7 @@ type DataTableProps<T> = {
 	data: T[];
 	keyExtractor: (row: T) => string | number;
 	onRowClick?: (row: T) => void;
+	rowClassName?: (row: T) => string | undefined;
 	emptyMessage?: React.ReactNode;
 	className?: string;
 	isLoading?: boolean;
@@ -50,6 +51,7 @@ export default function DataTable<T>({
 	data,
 	keyExtractor,
 	onRowClick,
+	rowClassName,
 	emptyMessage = "No data found.",
 	className,
 	isLoading = false,
@@ -114,6 +116,7 @@ export default function DataTable<T>({
 								className={cn(
 									"transition-colors",
 									onRowClick && "cursor-pointer hover:bg-muted/40",
+									rowClassName?.(row),
 								)}
 							>
 								{columns.map((col) => (

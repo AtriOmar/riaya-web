@@ -1,6 +1,13 @@
 "use client";
 
-import { Inbox, Pencil, Plus, Stethoscope, Trash2 } from "lucide-react";
+import {
+	ArrowUpDown,
+	Inbox,
+	Pencil,
+	Plus,
+	Stethoscope,
+	Trash2,
+} from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import DataTable, { type Column } from "@/components/data-table";
@@ -12,7 +19,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { FilterSearch } from "@/components/ui/filter-controls";
+import { FilterSearch, FilterSelect } from "@/components/ui/filter-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,6 +38,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { GetApiSpecialities200Item } from "@/services/generated/api.schemas";
 import {
 	deleteApiSpecialities,
@@ -47,6 +55,14 @@ type FormState = {
 };
 
 const EMPTY_FORM: FormState = { enName: "", frName: "", arName: "", slug: "" };
+
+const SORT_OPTIONS = [
+	{ value: "added", label: "Recently added" },
+	{ value: "en_asc", label: "English A–Z" },
+	{ value: "en_desc", label: "English Z–A" },
+	{ value: "fr_asc", label: "French A–Z" },
+	{ value: "ar_asc", label: "Arabic A–Z" },
+];
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -65,6 +81,7 @@ function useIsDesktop() {
 export default function SpecialitiesManager() {
 	const { data: specialities, mutate, isLoading } = useGetApiSpecialities();
 	const [search, setSearch] = useState("");
+	const [sort, setSort] = useState("added");
 
 	// Right sidebar (always visible on desktop, a sheet on small screens).
 	// `editItem === null` means "add", otherwise "edit".
@@ -85,13 +102,36 @@ export default function SpecialitiesManager() {
 
 	const filtered = useMemo(() => {
 		const q = search.trim().toLowerCase();
-		if (!q) return specialities ?? [];
-		return (specialities ?? []).filter((s) =>
-			[s.enName, s.frName, s.arName, s.slug].some((v) =>
-				v?.toLowerCase().includes(q),
-			),
-		);
-	}, [specialities, search]);
+		const matches = q
+			? (specialities ?? []).filter((s) =>
+					[s.enName, s.frName, s.arName, s.slug].some((v) =>
+						v?.toLowerCase().includes(q),
+					),
+				)
+			: [...(specialities ?? [])];
+		const byName = (
+			key: "enName" | "frName" | "arName",
+			locale: string,
+			dir = 1,
+		) =>
+			matches.sort(
+				(a, b) => dir * (a[key] ?? "").localeCompare(b[key] ?? "", locale),
+			);
+		switch (sort) {
+			case "en_asc":
+				return byName("enName", "en");
+			case "en_desc":
+				return byName("enName", "en", -1);
+			case "fr_asc":
+				return byName("frName", "fr");
+			case "ar_asc":
+				return byName("arName", "ar");
+			default:
+				return matches.sort((a, b) => b.id - a.id);
+		}
+	}, [specialities, search, sort]);
+
+	const isFormEmpty = Object.values(form).every((v) => !v.trim());
 
 	const canSave =
 		form.enName.trim() && form.frName.trim() && form.arName.trim() && !saving;
@@ -290,6 +330,7 @@ export default function SpecialitiesManager() {
 				<Button
 					type="button"
 					variant="outline"
+					disabled={!editItem && isFormEmpty}
 					onClick={() => {
 						setSheetOpen(false);
 						resetForm();
@@ -301,10 +342,60 @@ export default function SpecialitiesManager() {
 		</form>
 	);
 
-	const title = editItem ? "Edit speciality" : "Add speciality";
+	const title = editItem ? "Edit speciality" : "New speciality";
 	const description = editItem
 		? "Update the names shown to patients and on the phone."
 		: "Add a speciality in all three languages.";
+
+	const renderHeader = () => (
+		<div className="space-y-2">
+			<div className="flex items-center gap-2">
+				<div
+					className={cn(
+						"flex size-8 items-center justify-center rounded-lg",
+						editItem
+							? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+							: "bg-primary/10 text-primary",
+					)}
+				>
+					{editItem ? (
+						<Pencil className="size-4" />
+					) : (
+						<Plus className="size-4" />
+					)}
+				</div>
+				<h2 className="font-semibold">{title}</h2>
+				{editItem && (
+					<Badge
+						variant="secondary"
+						className="bg-amber-500/15 text-amber-700 dark:text-amber-400"
+					>
+						Editing
+					</Badge>
+				)}
+			</div>
+			{editItem && (
+				<p className="truncate font-medium text-sm">
+					{getSpecialityLabel(editItem)}
+				</p>
+			)}
+			<p className="text-muted-foreground text-sm">{description}</p>
+			{editItem && (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={() => {
+						resetForm();
+						setSheetOpen(false);
+					}}
+				>
+					<Plus className="size-4" />
+					Add a new speciality instead
+				</Button>
+			)}
+		</div>
+	);
 
 	return (
 		<div className="items-start gap-6 lg:grid lg:grid-cols-[1fr_20rem]">
@@ -314,6 +405,14 @@ export default function SpecialitiesManager() {
 						value={search}
 						onChange={setSearch}
 						placeholder="Search specialities…"
+					/>
+					<FilterSelect
+						icon={ArrowUpDown}
+						label="Sort by"
+						value={sort}
+						onValueChange={setSort}
+						options={SORT_OPTIONS}
+						className="sm:min-w-[11.5rem]"
 					/>
 					<Badge variant="secondary" className="self-start sm:self-auto">
 						{filtered.length}{" "}
@@ -329,8 +428,11 @@ export default function SpecialitiesManager() {
 				<Sheet open={sheetOpen && !isDesktop} onOpenChange={setSheetOpen}>
 					<SheetContent side="right">
 						<SheetHeader className="border-b">
-							<SheetTitle>{title}</SheetTitle>
-							<SheetDescription>{description}</SheetDescription>
+							<SheetTitle className="sr-only">{title}</SheetTitle>
+							<SheetDescription className="sr-only">
+								{description}
+							</SheetDescription>
+							{renderHeader()}
 						</SheetHeader>
 						{renderForm("sheet")}
 					</SheetContent>
@@ -382,6 +484,11 @@ export default function SpecialitiesManager() {
 					data={filtered}
 					isLoading={isLoading}
 					keyExtractor={(row) => String(row.id)}
+					rowClassName={(row) =>
+						editItem?.id === row.id
+							? "bg-amber-500/10 shadow-[inset_3px_0_0_0] shadow-amber-500 hover:bg-amber-500/10"
+							: undefined
+					}
 					emptyMessage={
 						<div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
 							<Inbox className="mb-4 w-12 h-12 opacity-50" />
@@ -405,11 +512,13 @@ export default function SpecialitiesManager() {
 			</div>
 
 			{/* Desktop: permanent right sidebar */}
-			<aside className="hidden lg:block top-4 sticky bg-card p-5 border rounded-xl">
-				<div className="mb-5">
-					<h2 className="font-semibold">{title}</h2>
-					<p className="mt-1 text-muted-foreground text-sm">{description}</p>
-				</div>
+			<aside
+				className={cn(
+					"hidden lg:block top-4 sticky bg-card p-5 border rounded-xl transition-colors",
+					editItem && "border-amber-500/60 ring-2 ring-amber-500/20",
+				)}
+			>
+				<div className="mb-5">{renderHeader()}</div>
 				{renderForm("aside")}
 			</aside>
 		</div>
