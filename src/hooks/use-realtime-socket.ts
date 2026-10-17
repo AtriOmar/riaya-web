@@ -163,6 +163,43 @@ function dbCallToData(row: GetApiCalls200Item): CallData {
 	};
 }
 
+/** Content key used to tell whether a live entry is the same as a saved one. */
+function entryKey(e: TimelineEntry): string {
+	switch (e.kind) {
+		case "transcript":
+			return `t|${e.role}|${e.text.trim()}`;
+		case "function_call":
+			return `f|${e.name}|${e.status}`;
+		default:
+			return `${e.kind}|${e.text.trim()}`;
+	}
+}
+
+/**
+ * Live entries get random ids, so once the DB has saved them they would show
+ * twice (live copy + `db-` copy). Drop each live entry that matches a saved
+ * one by content, one-to-one so repeated lines like "Yes" stay correct.
+ * Partial transcripts are still being spoken and are always kept.
+ */
+function liveEntriesNotInDb(
+	live: TimelineEntry[],
+	fromDb: TimelineEntry[],
+): TimelineEntry[] {
+	const dbCounts = new Map<string, number>();
+	for (const e of fromDb) {
+		const key = entryKey(e);
+		dbCounts.set(key, (dbCounts.get(key) ?? 0) + 1);
+	}
+	return live.filter((e) => {
+		if (e.kind === "transcript" && e.partial) return true;
+		const key = entryKey(e);
+		const left = dbCounts.get(key) ?? 0;
+		if (left === 0) return true;
+		dbCounts.set(key, left - 1);
+		return false;
+	});
+}
+
 /**
  * Deduplicate timeline entries against a newly arriving WS entry. For function
  * calls we replace any earlier `calling` entry for the same function name so
@@ -251,7 +288,16 @@ export default function useRealtimeSocket() {
 				}
 				// Merge: keep live timeline entries we already have that aren't in DB yet.
 				const dbIds = new Set(fromDb.timeline.map((t) => t.id));
-				const extraLive = existing.timeline.filter((t) => !dbIds.has(t.id));
+				const existingIds = new Set(existing.timeline.map((t) => t.id));
+				// Only DB rows we haven't shown yet can be the saved copy of a live
+				// entry; older ones already matched or are separate lines.
+				const newlySaved = fromDb.timeline.filter(
+					(t) => !existingIds.has(t.id),
+				);
+				const extraLive = liveEntriesNotInDb(
+					existing.timeline.filter((t) => !dbIds.has(t.id)),
+					newlySaved,
+				);
 				next.set(row.callSid, {
 					...fromDb,
 					// Live status wins if we already marked it active
