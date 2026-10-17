@@ -1,4 +1,4 @@
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -18,6 +18,11 @@ import { PLAN_IDS } from "@/lib/plans";
 
 const getSchema = z.object({
 	search: z.string().optional(),
+	role: z.enum(["doctor", "admin", "owner"]).optional(),
+	status: z.enum(["active", "banned"]).optional(),
+	sort: z
+		.enum(["newest", "oldest", "email_asc", "email_desc", "name_asc"])
+		.default("newest"),
 	limit: z.coerce.number().min(1).max(100).default(50),
 	page: z.coerce.number().min(1).default(1),
 });
@@ -34,7 +39,20 @@ export async function GET(req: NextRequest) {
 		const parsed = getSchema.safeParse(params);
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const { search, limit, page } = parsed.data;
+		const { search, role, status, sort, limit, page } = parsed.data;
+
+		const orderBy = {
+			newest: [desc(userTable.createdAt), desc(userTable.id)],
+			oldest: [asc(userTable.createdAt), asc(userTable.id)],
+			email_asc: [asc(userTable.email), asc(userTable.id)],
+			email_desc: [desc(userTable.email), asc(userTable.id)],
+			name_asc: [
+				sql`lower(coalesce(${userTable.displayName}, ${userTable.name})) asc nulls last`,
+				asc(userTable.id),
+			],
+		}[sort];
+
+		const roleAccessId = { doctor: 1, admin: 3, owner: 5 } as const;
 
 		const users = await db
 			.select({
@@ -58,15 +76,21 @@ export async function GET(req: NextRequest) {
 			.leftJoin(doctorProfile, eq(doctorProfile.userId, userTable.id))
 			.leftJoin(subscription, eq(subscription.doctorId, doctorProfile.id))
 			.where(
-				search
-					? or(
-							ilike(userTable.email, `%${search}%`),
-							ilike(userTable.name, `%${search}%`),
-							ilike(userTable.username, `%${search}%`),
-						)
-					: undefined,
+				and(
+					search
+						? or(
+								ilike(userTable.email, `%${search}%`),
+								ilike(userTable.name, `%${search}%`),
+								ilike(userTable.username, `%${search}%`),
+							)
+						: undefined,
+					role ? eq(userTable.accessId, roleAccessId[role]) : undefined,
+					status
+						? (status === "banned" ? eq : ne)(userTable.active, 0)
+						: undefined,
+				),
 			)
-			.orderBy(desc(userTable.createdAt))
+			.orderBy(...orderBy)
 			.limit(limit)
 			.offset((page - 1) * limit);
 
