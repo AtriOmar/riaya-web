@@ -7,12 +7,14 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { findDoctorPatientByPhone } from "@/lib/appointment-patient-link";
+import { findDoctorPatientByPerson } from "@/lib/appointment-patient-link";
 import { registry } from "@/lib/openapi";
-import { normalizePhoneForStorage } from "@/lib/phone";
+
+// ─── GET /api/patients/lookup-by-person ──────────────────────────────────────
+// The doctor's existing patient file for a person (e.g. before accepting a phone booking).
 
 const querySchema = z.object({
-	phone: z.string().min(1),
+	personId: z.coerce.number().int().positive(),
 });
 
 export async function GET(req: NextRequest) {
@@ -25,23 +27,18 @@ export async function GET(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const normalized = normalizePhoneForStorage(parsed.data.phone);
-		if (!normalized)
-			return validationError([
-				{ message: "Invalid phone number", path: ["phone"] },
-			]);
-
-		const matched = await findDoctorPatientByPhone(profile.id, normalized);
+		const matched = await findDoctorPatientByPerson(
+			profile.id,
+			parsed.data.personId,
+		);
 
 		return json({
-			phone: normalized,
 			matchedPatient: matched
 				? {
 						id: matched.id,
 						firstName: matched.firstName,
 						lastName: matched.lastName,
 						cin: matched.cin,
-						phoneNumber: matched.phoneNumber,
 					}
 				: null,
 		});
@@ -52,23 +49,21 @@ export async function GET(req: NextRequest) {
 }
 
 const lookupResponseSchema = z.object({
-	phone: z.string(),
 	matchedPatient: z
 		.object({
 			id: z.number().int(),
 			firstName: z.string().nullable(),
 			lastName: z.string().nullable(),
 			cin: z.string().nullable(),
-			phoneNumber: z.string().nullable(),
 		})
 		.nullable(),
 });
 
 registry.registerPath({
 	method: "get",
-	path: "/api/patients/lookup-by-phone",
+	path: "/api/patients/lookup-by-person",
 	tags: ["Patients"],
-	summary: "Find doctor patient by phone number",
+	summary: "Find the doctor's patient file for a person",
 	request: { query: querySchema },
 	responses: {
 		200: {

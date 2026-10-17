@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
+import { personDisplayName } from "@/lib/person-name";
 import { cn } from "@/lib/utils";
 import type { GetApiAppointments200Item } from "@/services/generated/api.schemas";
 import {
@@ -201,13 +202,12 @@ export default function AppointmentsCalendar() {
 			(appts ?? [])
 				.filter((a) => a.start && a.end && a.status !== "cancelled")
 				.map((a) => {
-					const patient = [a.patient?.firstName, a.patient?.lastName]
-						.filter(Boolean)
-						.join(" ")
-						.trim();
 					return {
 						id: a.id,
-						title: patient || a.newPatientName?.trim() || "—",
+						title:
+							personDisplayName(a.patient) ||
+							personDisplayName(a.person) ||
+							"—",
 						start: new Date(a.start ?? ""),
 						end: new Date(a.end ?? ""),
 						name: a.name ?? "",
@@ -224,8 +224,14 @@ export default function AppointmentsCalendar() {
 									address: a.patient.address,
 								}
 							: null,
-						newPatientName: a.newPatientName,
-						newPatientPhoneNumber: a.newPatientPhoneNumber,
+						person: a.person
+							? {
+									id: a.person.id,
+									firstName: a.person.firstName,
+									lastName: a.person.lastName,
+								}
+							: null,
+						contactPhone: a.contactPhone,
 						urgent: a.urgent === true,
 					};
 				}),

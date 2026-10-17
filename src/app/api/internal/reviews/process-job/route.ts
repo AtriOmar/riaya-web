@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment, doctorProfile, patient, review } from "@/db/schema";
+import { appointment, doctorProfile, review } from "@/db/schema";
 import {
 	apiError,
 	json,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
 import { buildReviewWhatsappMessage } from "@/lib/whatsapp-messages";
 
 const processJobSchema = z.object({
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
 		// 1. Fetch appointment
 		const appt = await db.query.appointment.findFirst({
 			where: eq(appointment.id, appointmentId),
+			with: { patient: true, person: true },
 		});
 
 		// Only send if it was not cancelled
@@ -51,23 +53,10 @@ export async function POST(req: NextRequest) {
 			return json({ success: false, reason: "review_already_exists" });
 		}
 
-		// 3. Get patient phone, language, and doctor info
-		let phone: string | null = null;
-		let patientName = "";
-		let preferredLanguage: string | null = null;
-
-		if (patientId) {
-			const pat = await db.query.patient.findFirst({
-				where: eq(patient.id, patientId),
-				with: { person: true },
-			});
-			phone = pat?.phoneNumber ?? pat?.person?.phoneNumber ?? null;
-			patientName = `${pat?.firstName ?? ""} ${pat?.lastName ?? ""}`.trim();
-			preferredLanguage = pat?.person?.preferredLanguage ?? null;
-		} else {
-			phone = appt.newPatientPhoneNumber ?? null;
-			patientName = appt.newPatientName ?? "";
-		}
+		// 3. Get phone, name, and doctor info. Messages go to the line that booked.
+		const phone = appt.contactPhone ?? appt.patient?.phoneNumber ?? null;
+		const patientName =
+			personDisplayName(appt.patient) || personDisplayName(appt.person);
 
 		const doc = await db.query.doctorProfile.findFirst({
 			where: eq(doctorProfile.id, doctorId),
@@ -78,10 +67,8 @@ export async function POST(req: NextRequest) {
 			return json({ success: false, reason: "no_phone_number" });
 		}
 
-		const language = await resolvePreferredLanguage({
-			preferredLanguage,
-			phone,
-		});
+		// The message goes to the phone line, so use its owner's language.
+		const language = await resolvePreferredLanguage({ phone });
 
 		// 4. Create review row
 		const token = crypto.randomUUID();

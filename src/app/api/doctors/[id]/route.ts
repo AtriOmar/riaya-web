@@ -1,8 +1,8 @@
-import { and, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
+import { and, eq, gte, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment, doctorProfile } from "@/db/schema";
+import { appointment, doctorProfile, person } from "@/db/schema";
 import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 
 // ─── GET /api/doctors/[id] ────────────────────────────────────────────────────
@@ -60,9 +60,12 @@ export async function GET(
 				status: appointment.status,
 				name: appointment.name,
 				description: appointment.description,
-				newPatientName: appointment.newPatientName,
+				patientName: sql<
+					string | null
+				>`nullif(concat_ws(' ', ${person.firstName}, ${person.lastName}), '')`,
 			})
 			.from(appointment)
+			.leftJoin(person, eq(person.id, appointment.personId))
 			.where(
 				and(
 					eq(appointment.doctorId, doctor.id),
@@ -101,15 +104,16 @@ registry.registerPath({
 					schema: z.object({
 						doctor: selectDoctorProfileWithRelationsSchema,
 						appointments: z.array(
-							selectAppointmentSchema.pick({
-								id: true,
-								start: true,
-								end: true,
-								status: true,
-								name: true,
-								description: true,
-								newPatientName: true,
-							}),
+							selectAppointmentSchema
+								.pick({
+									id: true,
+									start: true,
+									end: true,
+									status: true,
+									name: true,
+									description: true,
+								})
+								.extend({ patientName: z.string().nullable() }),
 						),
 					}),
 				},

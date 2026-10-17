@@ -71,6 +71,27 @@
       "when": 1789715296943,
       "tag": "0009_convert_transcript_to_jsonb",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792248375837,
+      "tag": "0010_create_person_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792249999518,
+      "tag": "0011_drop_appointment_new_patient_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792250000313,
+      "tag": "0012_add_appointment_person_and_contact_phone",
+      "breakpoints": true
     }
   ]
 }

@@ -19,7 +19,7 @@ const schema = z.object({
 
 export async function GET(req: NextRequest) {
 	try {
-		await requireInternal(req);
+		requireInternal(req);
 		const parsed = schema.safeParse(
 			Object.fromEntries(req.nextUrl.searchParams),
 		);

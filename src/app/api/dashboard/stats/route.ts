@@ -20,6 +20,7 @@ import {
 	requireSession,
 } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
+import { personDisplayName } from "@/lib/person-name";
 import { getPlanUsage } from "@/lib/plan-limits";
 
 function startOfLocalDay(d = new Date()) {
@@ -176,7 +177,7 @@ export async function GET() {
 				.groupBy(appointment.source),
 			db.query.appointment.findMany({
 				where: and(doctorAppt, notCancelled, gte(appointment.start, now)),
-				with: { patient: true },
+				with: { patient: true, person: true },
 				orderBy: [asc(appointment.start)],
 				limit: 6,
 			}),
@@ -231,9 +232,8 @@ export async function GET() {
 				})),
 			},
 			upcoming: upcomingRows.map((a) => {
-				const patientName = a.patient
-					? `${a.patient.firstName ?? ""} ${a.patient.lastName ?? ""}`.trim()
-					: (a.newPatientName ?? "").trim();
+				const patientName =
+					personDisplayName(a.patient) || personDisplayName(a.person);
 				return {
 					id: a.id,
 					start: a.start?.toISOString() ?? null,

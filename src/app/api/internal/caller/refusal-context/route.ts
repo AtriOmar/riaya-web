@@ -35,7 +35,7 @@ const responseSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
-		await requireInternal(req);
+		requireInternal(req);
 		const parsed = bodySchema.safeParse(await req.json());
 		if (!parsed.success) return validationError(parsed.error.issues);
 

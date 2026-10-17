@@ -11,7 +11,7 @@ export type AdminDoctorAppointment = {
 	status: "pending" | "confirmed" | "cancelled" | null;
 	name: string | null;
 	description: string | null;
-	newPatientName: string | null;
+	patientName: string | null;
 };
 
 export type AdminDoctorProfile = {

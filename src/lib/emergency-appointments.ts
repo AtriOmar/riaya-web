@@ -45,8 +45,8 @@ export async function bookEmergencyAppointments(params: {
 	speciality: string;
 	lat: number;
 	long: number;
-	name: string;
-	phoneNumber: string;
+	personId: number;
+	contactPhone: string;
 	illness: string;
 	limit?: number;
 }) {
@@ -76,8 +76,8 @@ export async function bookEmergencyAppointments(params: {
 				doctorId: doc.id,
 				start: doc.nextSlot.start,
 				end: doc.nextSlot.end,
-				newPatientName: params.name,
-				newPatientPhoneNumber: params.phoneNumber,
+				personId: params.personId,
+				contactPhone: params.contactPhone,
 				status: "pending" as const,
 				source: "ai" as const,
 				name: "Urgent consultation",

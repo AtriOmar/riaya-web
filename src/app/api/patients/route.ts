@@ -10,7 +10,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { upsertPersonByPhone } from "@/lib/person";
+import { familyRelationships, resolveDoctorPatientPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
@@ -82,6 +82,8 @@ const createSchema = z.object({
 	gender: z.string().min(1),
 	address: z.string(),
 	phoneNumber: z.string().min(1),
+	/** Set when the number belongs to someone else (e.g. a parent): how the patient relates to them. */
+	phoneOwnerRelationship: z.enum(familyRelationships).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -99,8 +101,16 @@ export async function POST(req: NextRequest) {
 				{ message: "Invalid phone number", path: ["phoneNumber"] },
 			]);
 
-		const personRow = await upsertPersonByPhone(phone, "doctor");
-		if (!personRow) return apiError("VALIDATION_ERROR");
+		const personRow = await resolveDoctorPatientPerson(
+			phone,
+			{
+				firstName: parsed.data.firstName,
+				lastName: parsed.data.lastName,
+				dateOfBirth: new Date(parsed.data.dateOfBirth),
+				gender: parsed.data.gender,
+			},
+			parsed.data.phoneOwnerRelationship,
+		);
 
 		const [created] = await db
 			.insert(patient)

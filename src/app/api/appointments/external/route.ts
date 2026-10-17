@@ -3,23 +3,29 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
-import { apiError, json, validationError } from "@/lib/api-utils";
+import {
+	apiError,
+	json,
+	requireInternal,
+	validationError,
+} from "@/lib/api-utils";
 import { schedulePendingAppointmentTimeout } from "@/lib/pending-appointment-timeout";
-import { upsertPersonByPhone } from "@/lib/person";
+import { bookingPatientSchema, resolveBookingPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 import { assertAiBookingAllowed } from "@/lib/plan-limits";
 import { clearRefusalContext } from "@/lib/refusal-suggestions";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
-// Public endpoint — allows non-authenticated users to book an appointment
+// Internal (voice assistant): book a pending appointment for someone on the calling phone.
 
 type AvailabilitySlot = { start: number; end: number };
 type Availability = Record<number, AvailabilitySlot[]>;
 
 const externalSchema = z.object({
 	doctorId: z.coerce.number().int().positive(),
-	name: z.string().min(1),
+	/** The calling phone line. */
 	phoneNumber: z.string().min(1, "Phone number is required"),
+	patient: bookingPatientSchema,
 	start: z.iso.datetime(),
 	end: z.iso.datetime(),
 	illness: z.string(),
@@ -27,6 +33,7 @@ const externalSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
+		requireInternal(req);
 		const body = await req.json();
 		const parsed = externalSchema.safeParse(body);
 
@@ -93,10 +100,11 @@ export async function POST(req: NextRequest) {
 
 		if (overlapping.length > 0) return apiError("APPOINTMENT_CONFLICT");
 
-		await assertAiBookingAllowed(doctor.id, data.phoneNumber);
-
-		// Upsert person by phone (fire-and-forget — we don't store personId on appointment yet)
-		void upsertPersonByPhone(data.phoneNumber, "call");
+		const patientPerson = await resolveBookingPerson(
+			data.phoneNumber,
+			data.patient,
+		);
+		await assertAiBookingAllowed(doctor.id, patientPerson.id);
 
 		const [created] = await db
 			.insert(appointment)
@@ -104,8 +112,8 @@ export async function POST(req: NextRequest) {
 				doctorId: doctor.id,
 				start: startDate,
 				end: endDate,
-				newPatientName: data.name,
-				newPatientPhoneNumber: data.phoneNumber,
+				personId: patientPerson.id,
+				contactPhone: data.phoneNumber,
 				status: "pending",
 				source: "ai",
 				name: "Consultation",

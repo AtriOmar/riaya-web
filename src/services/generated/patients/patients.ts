@@ -16,8 +16,8 @@ import type {
 	DeleteApiPatientsIdMedicalFilesParams,
 	GetApiPatients200Item,
 	GetApiPatientsId200,
-	GetApiPatientsLookupByPhone200,
-	GetApiPatientsLookupByPhoneParams,
+	GetApiPatientsLookupByPerson200,
+	GetApiPatientsLookupByPersonParams,
 	GetApiPatientsParams,
 	PatchApiPatientsId200,
 	PatchApiPatientsIdBody,
@@ -255,34 +255,34 @@ export const usePatchApiPatientsId = <TError = unknown>(
 	};
 };
 /**
- * @summary Find doctor patient by phone number
+ * @summary Find the doctor's patient file for a person
  */
-export const getApiPatientsLookupByPhone = (
-	params: GetApiPatientsLookupByPhoneParams,
+export const getApiPatientsLookupByPerson = (
+	params: GetApiPatientsLookupByPersonParams,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<GetApiPatientsLookupByPhone200>(
-		{ url: `/api/patients/lookup-by-phone`, method: "GET", params },
+	return customInstance<GetApiPatientsLookupByPerson200>(
+		{ url: `/api/patients/lookup-by-person`, method: "GET", params },
 		options,
 	);
 };
 
-export const getGetApiPatientsLookupByPhoneKey = (
-	params: GetApiPatientsLookupByPhoneParams,
-) => [`/api/patients/lookup-by-phone`, ...(params ? [params] : [])] as const;
+export const getGetApiPatientsLookupByPersonKey = (
+	params: GetApiPatientsLookupByPersonParams,
+) => [`/api/patients/lookup-by-person`, ...(params ? [params] : [])] as const;
 
-export type GetApiPatientsLookupByPhoneQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiPatientsLookupByPhone>>
+export type GetApiPatientsLookupByPersonQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>
 >;
 
 /**
- * @summary Find doctor patient by phone number
+ * @summary Find the doctor's patient file for a person
  */
-export const useGetApiPatientsLookupByPhone = <TError = unknown>(
-	params: GetApiPatientsLookupByPhoneParams,
+export const useGetApiPatientsLookupByPerson = <TError = unknown>(
+	params: GetApiPatientsLookupByPersonParams,
 	options?: {
 		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiPatientsLookupByPhone>>,
+			Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
 		request?: SecondParameter<typeof customInstance>;
@@ -293,8 +293,8 @@ export const useGetApiPatientsLookupByPhone = <TError = unknown>(
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiPatientsLookupByPhoneKey(params) : null));
-	const swrFn = () => getApiPatientsLookupByPhone(params, requestOptions);
+		(() => (isEnabled ? getGetApiPatientsLookupByPersonKey(params) : null));
+	const swrFn = () => getApiPatientsLookupByPerson(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,

@@ -30,7 +30,7 @@ export async function POST(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		// await requireInternal(req);
+		// requireInternal(req);
 
 		const { id } = await params;
 		const callId = Number(id);

@@ -13,6 +13,7 @@ import {
 import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
 import { getRefusalContext } from "@/lib/refusal-suggestions";
 import {
 	buildPendingTimeoutVoiceScript,
@@ -46,13 +47,10 @@ async function findAdminWhatsappUserId(): Promise<string | null> {
 }
 
 function patientLabel(row: {
-	newPatientName: string | null;
-	newPatientPhoneNumber: string | null;
+	contactPhone: string | null;
+	person: { firstName: string | null; lastName: string | null } | null;
 }): { name: string; phone: string | null } {
-	return {
-		name: row.newPatientName?.trim() || "",
-		phone: row.newPatientPhoneNumber?.trim() || null,
-	};
+	return { name: personDisplayName(row.person), phone: row.contactPhone };
 }
 
 // ─── POST /api/internal/appointments/process-pending-timeout ─────────────────
@@ -74,6 +72,7 @@ export async function POST(req: NextRequest) {
 		if (parsed.data.kind === "refused") {
 			const row = await db.query.appointment.findFirst({
 				where: eq(appointment.id, parsed.data.appointmentId),
+				with: { person: true },
 			});
 
 			if (!row) return json({ success: false, reason: "not_found" });
@@ -122,6 +121,7 @@ export async function POST(req: NextRequest) {
 		if (parsed.data.kind === "appointment") {
 			const row = await db.query.appointment.findFirst({
 				where: eq(appointment.id, parsed.data.appointmentId),
+				with: { person: true },
 			});
 
 			if (!row) {
@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
 		const groupId = parsed.data.emergencyGroupId;
 		const groupRows = await db.query.appointment.findMany({
 			where: eq(appointment.emergencyGroupId, groupId),
+			with: { person: true },
 		});
 
 		if (groupRows.length === 0) {

@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, ne, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
 	aiChatConversation,
@@ -76,14 +76,14 @@ export async function getEffectivePlan(
 	return { plan: getPlan(planId), planId, isPro: planId === "pro" };
 }
 
-/** Distinct AI-booked phones for this doctor in the current UTC calendar month. */
+/** Distinct people AI-booked with this doctor in the current UTC calendar month. */
 export async function countAiBookingPatientsThisMonth(
 	doctorId: number,
 	period = getUtcCalendarMonthPeriod(),
 ): Promise<number> {
 	const [row] = await db
 		.select({
-			count: sql<number>`count(distinct ${appointment.newPatientPhoneNumber})`,
+			count: sql<number>`count(distinct ${appointment.personId})`,
 		})
 		.from(appointment)
 		.where(
@@ -92,8 +92,6 @@ export async function countAiBookingPatientsThisMonth(
 				eq(appointment.source, "ai"),
 				gte(appointment.createdAt, period.start),
 				lt(appointment.createdAt, period.end),
-				ne(appointment.newPatientPhoneNumber, ""),
-				sql`${appointment.newPatientPhoneNumber} is not null`,
 			),
 		);
 
@@ -102,16 +100,15 @@ export async function countAiBookingPatientsThisMonth(
 
 export async function assertAiBookingAllowed(
 	doctorId: number,
-	phoneNumber: string,
+	personId: number,
 ): Promise<void> {
 	const { plan } = await getEffectivePlan(doctorId);
 	const limit = plan.limits.aiBookingPatients;
 	if (limit == null) return;
 
-	const phone = phoneNumber.replace(/\D/g, "");
 	const period = getUtcCalendarMonthPeriod();
 
-	// Already booked this phone via AI this month → allowed
+	// Already AI-booked this person this month → allowed
 	const [existing] = await db
 		.select({ id: appointment.id })
 		.from(appointment)
@@ -119,7 +116,7 @@ export async function assertAiBookingAllowed(
 			and(
 				eq(appointment.doctorId, doctorId),
 				eq(appointment.source, "ai"),
-				eq(appointment.newPatientPhoneNumber, phone),
+				eq(appointment.personId, personId),
 				gte(appointment.createdAt, period.start),
 				lt(appointment.createdAt, period.end),
 			),

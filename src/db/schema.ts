@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
 	doublePrecision,
@@ -6,6 +6,7 @@ import {
 	integer,
 	jsonb,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -94,28 +95,59 @@ export const doctorProfile = pgTable(
 );
 
 // ─── Person ───────────────────────────────────────────────────────────────────
-// Phone-number-based identity. Created automatically when someone calls.
+// One real human. Phones live in `person_phone`: a phone can serve several
+// people (a family) and a person can be reached on several phones.
 
-export const person = pgTable(
-	"person",
+export const person = pgTable("person", {
+	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+	// call = Twilio / external phone booking; doctor = dashboard patient create
+	source: varchar("source", { length: 50 }).notNull().default("call"),
+	firstName: varchar("first_name", { length: 255 }),
+	lastName: varchar("last_name", { length: 255 }),
+	dateOfBirth: timestamp("date_of_birth"),
+	gender: varchar("gender", { length: 50 }),
+	address: text("address"),
+	/** Voice/UI language: en, fr, or ar (Tunisian Derja). Default Arabic. */
+	preferredLanguage: varchar("preferred_language", { length: 8 })
+		.notNull()
+		.default("ar"),
+	createdAt: timestamp("created_at").defaultNow(),
+	updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Person Phone ─────────────────────────────────────────────────────────────
+// Links a person to a phone number (always E.164). `relationship` is how the
+// person relates to the phone's owner: `self` is the owner, at most one per phone.
+
+export const personPhoneRelationships = [
+	"self",
+	"child",
+	"parent",
+	"spouse",
+	"sibling",
+	"other",
+] as const;
+export type PersonPhoneRelationship = (typeof personPhoneRelationships)[number];
+
+export const personPhone = pgTable(
+	"person_phone",
 	{
-		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		phoneNumber: varchar("phone_number", { length: 50 }).notNull().unique(),
-		// call = Twilio / external phone booking; doctor = dashboard patient create
-		source: varchar("source", { length: 50 }).notNull().default("call"),
-		firstName: varchar("first_name", { length: 255 }),
-		lastName: varchar("last_name", { length: 255 }),
-		dateOfBirth: timestamp("date_of_birth"),
-		gender: varchar("gender", { length: 50 }),
-		address: text("address"),
-		/** Voice/UI language: en, fr, or ar (Tunisian Derja). Default Arabic. */
-		preferredLanguage: varchar("preferred_language", { length: 8 })
+		personId: integer("person_id")
 			.notNull()
-			.default("ar"),
+			.references(() => person.id, { onDelete: "cascade" }),
+		phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+		relationship: varchar("relationship", { length: 20 })
+			.$type<PersonPhoneRelationship>()
+			.notNull(),
 		createdAt: timestamp("created_at").defaultNow(),
-		updatedAt: timestamp("updated_at").defaultNow(),
 	},
-	(table) => [index("person_phone_number_idx").on(table.phoneNumber)],
+	(table) => [
+		primaryKey({ columns: [table.personId, table.phoneNumber] }),
+		index("person_phone_phone_number_idx").on(table.phoneNumber),
+		uniqueIndex("person_phone_one_owner_idx")
+			.on(table.phoneNumber)
+			.where(sql`${table.relationship} = 'self'`),
+	],
 );
 
 // ─── Patient ──────────────────────────────────────────────────────────────────
@@ -175,9 +207,10 @@ export const appointment = pgTable(
 		source: varchar("source", { length: 50 }).notNull().default("dashboard"),
 		name: varchar("name", { length: 255 }),
 		description: text("description"),
-		// Flattened newPatient sub-document
-		newPatientName: varchar("new_patient_name", { length: 255 }),
-		newPatientPhoneNumber: varchar("new_patient_phone_number", { length: 50 }),
+		/** Who the appointment is for. Set on every booking; the doctor's `patientId` file is linked on accept. */
+		personId: integer("person_id").references(() => person.id),
+		/** Phone line that booked it (E.164): where messages about this appointment go. */
+		contactPhone: varchar("contact_phone", { length: 50 }),
 		/** AI emergency fan-out: pending requests shown with an urgent badge. */
 		urgent: boolean("urgent").notNull().default(false),
 		/** Shared id across the top-N pending emergency requests for one call. */
@@ -188,6 +221,8 @@ export const appointment = pgTable(
 	(table) => [
 		index("appointment_doctor_id_idx").on(table.doctorId),
 		index("appointment_patient_id_idx").on(table.patientId),
+		index("appointment_person_id_idx").on(table.personId),
+		index("appointment_contact_phone_idx").on(table.contactPhone),
 		index("appointment_status_idx").on(table.status),
 		index("appointment_start_idx").on(table.start),
 		index("appointment_source_idx").on(table.source),
@@ -691,6 +726,15 @@ export const whatsappUsageRelations = relations(whatsappUsage, ({ one }) => ({
 
 export const personRelations = relations(person, ({ many }) => ({
 	patients: many(patient),
+	phones: many(personPhone),
+	appointments: many(appointment),
+}));
+
+export const personPhoneRelations = relations(personPhone, ({ one }) => ({
+	person: one(person, {
+		fields: [personPhone.personId],
+		references: [person.id],
+	}),
 }));
 
 export const patientRelations = relations(patient, ({ one, many }) => ({
@@ -728,6 +772,10 @@ export const appointmentRelations = relations(appointment, ({ one, many }) => ({
 	patient: one(patient, {
 		fields: [appointment.patientId],
 		references: [patient.id],
+	}),
+	person: one(person, {
+		fields: [appointment.personId],
+		references: [person.id],
 	}),
 	calls: many(call),
 	reviews: many(review),

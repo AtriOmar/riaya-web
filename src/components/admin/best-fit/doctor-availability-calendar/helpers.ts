@@ -17,7 +17,7 @@ export function buildAvailabilityByDay(avail: Availability | null | undefined) {
 }
 
 export function appointmentLabel(a: AdminDoctorAppointment): string {
-	return a.name?.trim() || a.newPatientName?.trim() || "Appointment";
+	return a.name?.trim() || a.patientName?.trim() || "Appointment";
 }
 
 export function isAvailableAt(

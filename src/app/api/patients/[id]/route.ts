@@ -10,7 +10,6 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { upsertPersonByPhone } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 
 const updateSchema = z.object({
@@ -92,19 +91,13 @@ export async function PATCH(
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
+		// Editing the doctor's contact number never changes who the patient is
+		// (`personId`); relinking here would move a child's file onto the parent.
 		const phone = normalizePhoneForStorage(parsed.data.phoneNumber.trim());
-
-		// Upsert the person by phone so personId stays current
-		let linkedPersonId = existing.personId;
-		if (phone) {
-			const personRow = await upsertPersonByPhone(phone, "doctor");
-			if (personRow) linkedPersonId = personRow.id;
-		}
 
 		await db
 			.update(patient)
 			.set({
-				personId: linkedPersonId,
 				cin: parsed.data.cin,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,

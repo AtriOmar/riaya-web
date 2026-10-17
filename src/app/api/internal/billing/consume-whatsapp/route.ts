@@ -22,7 +22,7 @@ const bodySchema = z
 
 export async function POST(req: Request) {
 	try {
-		await requireInternal(req);
+		requireInternal(req);
 		const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
 		if (!parsed.success) return validationError(parsed.error.issues);
 

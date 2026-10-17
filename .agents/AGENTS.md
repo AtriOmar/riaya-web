@@ -162,9 +162,12 @@ This document is a compact project guide for AI assistants working on this repo.
 
 ### Person vs patient (identity model)
 
-- **`person`**: Global identity keyed by **unique `phoneNumber`**. Created on inbound calls (`source: "call"`) or when a doctor adds a patient (`source: "doctor"`). Holds canonical profile fields the AI can enrich (`firstName`, `lastName`, `dateOfBirth`, `gender`, `address`). Upsert helper: `web/src/lib/person.ts` → `upsertPersonByPhone(phone, source)` — `source` is set only on insert.
+- **`person`**: One real human (no phone column). Created on inbound calls (`source: "call"`) or when a doctor adds a patient (`source: "doctor"`). Holds canonical profile fields the AI can enrich (`firstName`, `lastName`, `dateOfBirth`, `gender`, `address`, `preferredLanguage`).
+- **`person_phone`**: Person ↔ phone link (many-to-many). `relationship` is how the person relates to the phone's owner: `self` = owner (at most one per phone), else `child` / `parent` / `spouse` / `sibling` / `other` (family members booked from that phone). Phones are always stored E.164 via `toPersonPhone`.
+- Helpers in `web/src/lib/person.ts`: `upsertPhoneOwner(phone, source)` (find or create the phone's `self` person; `source` set only on insert), `findPhoneOwner(phone)`, `findPersonsOnPhone(phone)`.
 - **`patient`**: **Doctor ↔ person** link (`doctorId` + `personId`) plus **per-doctor** fields (`cin`, names, address, etc.) the doctor may customize. Medical files and appointments still reference `patient.id`.
-- Phone bookings without a linked patient still store caller name/phone on `appointment` as `newPatientName` / `newPatientPhoneNumber`.
+- **`appointment.personId`** = who the appointment is for (set on every phone booking); **`appointment.contactPhone`** = the line that booked it (where messages about it go). The doctor's `patientId` file is linked on accept by matching `doctorId` + `personId` (`resolvePatientIdForConfirm` in `web/src/lib/appointment-patient-link.ts`).
+- Doctors adding a patient can mark "this number belongs to someone else" (`phoneOwnerRelationship`) → `resolveDoctorPatientPerson` adds a family member instead of linking the owner. Editing a patient never changes its `personId`.
 
 ### Other main tables
 
@@ -179,10 +182,12 @@ This document is a compact project guide for AI assistants working on this repo.
 
 | Route | Auth | Purpose |
 |-------|------|---------|
-| `POST /api/persons` | Public | Upsert person by `phoneNumber` (+ optional `source`) |
+| `POST /api/persons` | Public | Find or create the phone owner by `phoneNumber` (+ optional `source`) |
 | `PATCH /api/persons/[id]` | Public | Update person profile (socket AI `update_person_info`) |
 | `POST /api/patients` | Doctor session | Create patient; upserts person with `source: "doctor"` |
-| `POST /api/appointments/external` | Public | Phone/AI booking; upserts person (`call`), sets `newPatient*` on appointment |
+| `POST /api/appointments/external` | Internal secret | Phone/AI booking; `patient` = `{ personId }` (someone on the line) or `{ firstName, lastName, relationship }` (new family member) via `resolveBookingPerson`; sets `personId` + `contactPhone` |
+| `POST /api/appointments/external/emergency` | Internal secret | Urgent fan-out; same `patient` shape |
+| `POST /api/internal/caller/people` | Internal secret | Everyone on the caller's phone (owner + family) for the voice prompt |
 | `POST /api/calls` | Internal secret | Create call row (socket) |
 | `GET /api/doctors/best-fit` | Public | Slots for AI `find_available_slots` |
 | `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
@@ -261,7 +266,8 @@ Use these as examples before changing related code.
 - `find_available_slots`, `find_doctor_slots` — Next doctor/slot APIs.
 - `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; name, language preference, etc.
 - `list_my_ai_appointments` / `cancel_appointment` — internal caller routes; **phone from Twilio only** (`callerAppointmentsApi` + `requireInternal`). Cancel **pending** AI bookings only.
-- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side.
+- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_person_id` (someone in PEOPLE ON THIS LINE) **or** `patient_relationship` (new family member), `patient_first_name`, `patient_last_name`, `illness`, `start`, `end`. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side. The prompt lists people on the line (`getPeopleOnLine` in `voice/src/api/callerPeopleApi.ts`).
+- `nextjsApi` (voice) always sends `x-internal-secret`; don't add it per call.
 - `end_call` — fixed goodbye then hangup.
 
 Query helper: `web/src/lib/caller-ai-appointments.ts`.
@@ -288,7 +294,7 @@ Query helper: `web/src/lib/caller-ai-appointments.ts`.
   - implement in `web/src/app/api/.../route.ts`
   - validate with Zod
   - enforce session/role/internal with `api-utils`
-  - reuse `upsertPersonByPhone` when linking patients or phone bookings to `person`
+  - reuse `upsertPhoneOwner` / `findPersonsOnPhone` when linking patients or phone bookings to `person`
   - keep error response shape consistent (`web/src/lib/errors.ts`)
   - return errors via `apiError` / `validationError` from `web/src/lib/api-utils.ts` (codes defined in `web/src/lib/errors.ts`)
 - When adding realtime events:

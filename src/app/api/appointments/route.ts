@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment } from "@/db/schema";
+import { appointment, patient } from "@/db/schema";
 import {
 	apiError,
 	json,
@@ -19,6 +19,7 @@ import {
 	scheduleRefusalNotification,
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 			session.user.accessId >= 3
 		) {
 			const appointments = await db.query.appointment.findMany({
-				with: { patient: true },
+				with: { patient: true, person: true },
 			});
 			return json(appointments);
 		}
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
 		const profile = await requireDoctorProfile(session.user.id);
 		const appointments = await db.query.appointment.findMany({
 			where: eq(appointment.doctorId, profile.id),
-			with: { patient: true },
+			with: { patient: true, person: true },
 		});
 		return json(appointments);
 	} catch (e) {
@@ -84,11 +85,20 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
+		const doctorPatient = await db.query.patient.findFirst({
+			where: and(
+				eq(patient.id, parsed.data.patientId),
+				eq(patient.doctorId, profile.id),
+			),
+		});
+		if (!doctorPatient) return apiError("PATIENT_NOT_FOUND");
+
 		const [created] = await db
 			.insert(appointment)
 			.values({
 				doctorId: profile.id,
-				patientId: parsed.data.patientId,
+				patientId: doctorPatient.id,
+				personId: doctorPatient.personId,
 				start: new Date(parsed.data.start),
 				end: new Date(parsed.data.end),
 				status: "confirmed",
@@ -176,8 +186,6 @@ export async function PUT(req: NextRequest) {
 			);
 			if (resolvedPatientId != null) {
 				updateData.patientId = resolvedPatientId;
-				updateData.newPatientName = null;
-				updateData.newPatientPhoneNumber = null;
 			}
 		}
 
@@ -225,7 +233,7 @@ export async function PUT(req: NextRequest) {
 				existing.status === "pending" &&
 				!updated.urgent
 			) {
-				const patientPhone = updated.newPatientPhoneNumber;
+				const patientPhone = updated.contactPhone;
 				void (async () => {
 					try {
 						// Record first: the notification job reads this context.
@@ -263,22 +271,19 @@ export async function PUT(req: NextRequest) {
 					const full = await db.query.appointment.findFirst({
 						where: eq(appointment.id, id),
 						with: {
-							patient: { with: { person: true } },
+							patient: true,
+							person: true,
 							doctor: true,
 						},
 					});
 
-					const phone =
-						full?.patient?.phoneNumber ?? full?.newPatientPhoneNumber;
-					const patientName = full?.patient
-						? `${full.patient.firstName ?? ""} ${full.patient.lastName ?? ""}`.trim()
-						: (full?.newPatientName ?? "");
+					const phone = full?.contactPhone ?? full?.patient?.phoneNumber;
+					const patientName =
+						personDisplayName(full?.patient) || personDisplayName(full?.person);
 
 					if (phone && patientName) {
-						const language = await resolvePreferredLanguage({
-							preferredLanguage: full?.patient?.person?.preferredLanguage,
-							phone,
-						});
+						// The message goes to the phone line, so use its owner's language.
+						const language = await resolvePreferredLanguage({ phone });
 						const message = buildAppointmentConfirmationMessage({
 							language,
 							patientName,
@@ -378,11 +383,18 @@ export async function DELETE(req: NextRequest) {
 	}
 }
 
-import { selectAppointmentSchema, selectPatientSchema } from "@/db/zod";
+import {
+	selectAppointmentSchema,
+	selectPatientSchema,
+	selectPersonSchema,
+} from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const appointmentWithPatientSchema = selectAppointmentSchema.merge(
-	z.object({ patient: selectPatientSchema.nullable() }),
+	z.object({
+		patient: selectPatientSchema.nullable(),
+		person: selectPersonSchema.nullable(),
+	}),
 );
 
 registry.registerPath({

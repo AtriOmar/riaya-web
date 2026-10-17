@@ -12,6 +12,7 @@ const bodySchema = z.object({
 
 const appointmentItemSchema = z.object({
 	appointmentId: z.number().int(),
+	patientName: z.string().nullable(),
 	status: z.string().nullable(),
 	start: z.string().nullable(),
 	end: z.string().nullable(),
@@ -29,7 +30,7 @@ const listResponseSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
-		await requireInternal(req);
+		requireInternal(req);
 		const parsed = bodySchema.safeParse(await req.json());
 		if (!parsed.success) return validationError(parsed.error.issues);
 

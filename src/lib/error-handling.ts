@@ -51,6 +51,7 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"This patient has no phone number. Add one before sending on WhatsApp.",
 	PATIENT_ASSIGNMENT_REQUIRED:
 		"Choose an existing patient or enable creating a new patient before accepting.",
+	PERSON_NOT_ON_PHONE: "This person is not linked to the calling phone number.",
 	WHATSAPP_SEND_FAILED:
 		"Failed to send WhatsApp message. Check your WhatsApp connection.",
 	BILLING_INVOICE_NOT_FOUND: "Billing invoice not found.",

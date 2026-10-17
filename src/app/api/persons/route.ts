@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import { personSources, upsertPersonByPhone } from "@/lib/person";
+import { personSources, upsertPhoneOwner } from "@/lib/person";
 
 // ─── POST /api/persons ────────────────────────────────────────────────────────
 // Public endpoint — upserts a person by phone number.
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const row = await upsertPersonByPhone(
+		const row = await upsertPhoneOwner(
 			parsed.data.phoneNumber,
 			parsed.data.source,
 		);

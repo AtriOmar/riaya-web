@@ -2,16 +2,31 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneNumberInput } from "@/components/ui/phone-input";
+import { getErrorMessage } from "@/lib/error-handling";
 import { isValidPhoneNumber, normalizePhoneForStorage } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { usePostApiPatients } from "@/services/generated/patients/patients";
+
+/** How the patient relates to the owner of the phone number. */
+const PHONE_OWNER_RELATIONSHIPS = [
+	{ value: "child", label: "Child" },
+	{ value: "parent", label: "Parent" },
+	{ value: "spouse", label: "Spouse" },
+	{ value: "sibling", label: "Sibling" },
+	{ value: "other", label: "Other" },
+] as const;
+
+type PhoneOwnerRelationship =
+	(typeof PHONE_OWNER_RELATIONSHIPS)[number]["value"];
 
 const schema = z.object({
 	cin: z.string().min(1, "CIN is required"),
@@ -24,6 +39,15 @@ const schema = z.object({
 		.string()
 		.min(1, "Phone number is required")
 		.refine((v) => isValidPhoneNumber(v), "Enter a valid phone number"),
+	/** Set when the number belongs to someone else (e.g. a child's parent). */
+	phoneOwnerRelationship: z
+		.enum(
+			PHONE_OWNER_RELATIONSHIPS.map((r) => r.value) as [
+				PhoneOwnerRelationship,
+				...PhoneOwnerRelationship[],
+			],
+		)
+		.optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -54,6 +78,8 @@ export default function NewPatientForm() {
 	});
 
 	const gender = watch("gender");
+	const phoneOwnerRelationship = watch("phoneOwnerRelationship");
+	const [phoneIsSomeoneElses, setPhoneIsSomeoneElses] = useState(false);
 
 	async function onSubmit(values: FormValues) {
 		const phone = normalizePhoneForStorage(values.phoneNumber);
@@ -62,8 +88,16 @@ export default function NewPatientForm() {
 			return;
 		}
 
+		if (phoneIsSomeoneElses && !values.phoneOwnerRelationship) {
+			toast.error("Choose how the patient is related to the number's owner");
+			return;
+		}
+
 		const payload = {
 			...values,
+			phoneOwnerRelationship: phoneIsSomeoneElses
+				? values.phoneOwnerRelationship
+				: undefined,
 			phoneNumber: phone,
 			dateOfBirth: new Date(values.dateOfBirth).toISOString(),
 		};
@@ -72,8 +106,8 @@ export default function NewPatientForm() {
 			const patient = await createPatient(payload);
 			toast.success("Patient created successfully");
 			router.push(`/dashboard/patients/${patient.id}`);
-		} catch {
-			toast.error("Failed to create patient");
+		} catch (err) {
+			toast.error(getErrorMessage(err));
 		}
 	}
 
@@ -192,6 +226,53 @@ export default function NewPatientForm() {
 					<p className="mt-1 text-destructive text-sm">
 						{errors.phoneNumber.message}
 					</p>
+				)}
+				<label
+					htmlFor="phone-is-someone-elses"
+					className="mt-2 flex cursor-pointer items-start gap-2.5"
+				>
+					<Checkbox
+						id="phone-is-someone-elses"
+						checked={phoneIsSomeoneElses}
+						onCheckedChange={(v) => setPhoneIsSomeoneElses(v === true)}
+						className="mt-0.5"
+					/>
+					<span className="text-sm">
+						This number belongs to someone else
+						<span className="block text-xs text-muted-foreground">
+							For example a child using a parent&apos;s phone.
+						</span>
+					</span>
+				</label>
+				{phoneIsSomeoneElses && (
+					<div className="mt-3">
+						<Label>
+							The patient is the number owner&apos;s{" "}
+							<span className="text-destructive">*</span>
+						</Label>
+						<div className="mt-0.5 flex flex-wrap gap-2">
+							{PHONE_OWNER_RELATIONSHIPS.map((r) => (
+								<button
+									key={r.value}
+									type="button"
+									aria-pressed={phoneOwnerRelationship === r.value}
+									className={cn(
+										"py-1.5 px-3 rounded-md border text-sm font-medium transition-colors",
+										phoneOwnerRelationship === r.value
+											? "bg-primary text-primary-foreground border-primary"
+											: "bg-background text-foreground border-input hover:bg-accent",
+									)}
+									onClick={() =>
+										setValue("phoneOwnerRelationship", r.value, {
+											shouldValidate: true,
+										})
+									}
+								>
+									{r.label}
+								</button>
+							))}
+						</div>
+					</div>
 				)}
 			</div>
 			<div>
