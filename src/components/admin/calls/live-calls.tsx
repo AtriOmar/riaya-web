@@ -1,14 +1,73 @@
 "use client";
 
-import { Loader2, Phone } from "lucide-react";
+import {
+	ArrowUpDown,
+	CalendarClock,
+	ListFilter,
+	Loader2,
+	Phone,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { FilterSegmented } from "@/components/ui/filter-controls";
+import { Button } from "@/components/ui/button";
+import {
+	FilterSearch,
+	FilterSegmented,
+	FilterSelect,
+} from "@/components/ui/filter-controls";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import useRealtimeSocket from "@/hooks/use-realtime-socket";
+import useRealtimeSocket, { type CallData } from "@/hooks/use-realtime-socket";
 import CallCard from "./call-card";
 import CallListItem from "./call-list-item";
 
 type Filter = "all" | "active" | "ended";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const RANGE_OPTIONS = [
+	{ value: "all", label: "All time" },
+	{ value: "1", label: "Last 24 hours" },
+	{ value: "7", label: "Last 7 days" },
+	{ value: "30", label: "Last 30 days" },
+];
+
+const OUTCOME_OPTIONS = [
+	{ value: "all", label: "All outcomes" },
+	{ value: "booked", label: "Booked an appointment", dot: "bg-green-500" },
+	{ value: "errors", label: "Had errors", dot: "bg-red-500" },
+	{ value: "recorded", label: "Has recording" },
+];
+
+const SORT_OPTIONS = [
+	{ value: "newest", label: "Newest first" },
+	{ value: "oldest", label: "Oldest first" },
+	{ value: "longest", label: "Longest first" },
+	{ value: "shortest", label: "Shortest first" },
+];
+
+function matchesOutcome(call: CallData, outcome: string) {
+	switch (outcome) {
+		case "booked":
+			return call.timeline.some(
+				(e) =>
+					e.kind === "function_call" &&
+					e.name === "book_appointment" &&
+					e.status === "success",
+			);
+		case "errors":
+			return call.timeline.some((e) => e.kind === "error");
+		case "recorded":
+			return Boolean(call.recordingUrl);
+		default:
+			return true;
+	}
+}
+
+/** Ended calls use their saved length; live ones count up to now. */
+function callSeconds(call: CallData) {
+	if (call.duration != null) return call.duration;
+	const end = call.endTime ? new Date(call.endTime).getTime() : Date.now();
+	return Math.max(0, (end - new Date(call.startTime).getTime()) / 1000);
+}
 
 export default function LiveCalls() {
 	const {
@@ -21,23 +80,58 @@ export default function LiveCalls() {
 	} = useRealtimeSocket();
 
 	const [filter, setFilter] = useState<Filter>("all");
+	const [search, setSearch] = useState("");
+	const [outcome, setOutcome] = useState("all");
+	const [range, setRange] = useState("all");
+	const [sort, setSort] = useState("newest");
 	const [selectedCallSid, setSelectedCallSid] = useState<string | null>(null);
 	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	const { activeCount, filtered } = useMemo(() => {
-		const list = Array.from(calls.values()).sort(
-			(a, b) =>
-				new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
-		);
-		const active = list.filter((c) => c.status === "active");
-		const ended = list.filter((c) => c.status === "ended");
-		const filteredList =
-			filter === "active" ? active : filter === "ended" ? ended : list;
+		const all = Array.from(calls.values());
+		const q = search.trim().toLowerCase();
+		const since = range === "all" ? 0 : Date.now() - Number(range) * DAY_MS;
+		const list = all
+			.filter((c) => {
+				if (filter === "active" && c.status !== "active") return false;
+				if (filter === "ended" && c.status !== "ended") return false;
+				if (since && new Date(c.startTime).getTime() < since) return false;
+				if (!matchesOutcome(c, outcome)) return false;
+				if (!q) return true;
+				return [c.callerName, c.from].some((v) => v?.toLowerCase().includes(q));
+			})
+			.sort((a, b) => {
+				const aStart = new Date(a.startTime).getTime();
+				const bStart = new Date(b.startTime).getTime();
+				switch (sort) {
+					case "oldest":
+						return aStart - bStart;
+					case "longest":
+						return callSeconds(b) - callSeconds(a);
+					case "shortest":
+						return callSeconds(a) - callSeconds(b);
+					default:
+						return bStart - aStart;
+				}
+			});
 		return {
-			activeCount: active.length,
-			filtered: filteredList,
+			activeCount: all.filter((c) => c.status === "active").length,
+			filtered: list,
 		};
-	}, [calls, filter]);
+	}, [calls, filter, search, outcome, range, sort]);
+
+	const hasFilters =
+		filter !== "all" ||
+		search.trim() !== "" ||
+		outcome !== "all" ||
+		range !== "all";
+
+	function clearFilters() {
+		setFilter("all");
+		setSearch("");
+		setOutcome("all");
+		setRange("all");
+	}
 
 	const selectedCall = useMemo(() => {
 		if (!selectedCallSid) return undefined;
@@ -59,7 +153,12 @@ export default function LiveCalls() {
 
 	return (
 		<div className="">
-			<div className="flex items-center gap-4 mb-2">
+			<div className="mb-4 flex flex-wrap items-center gap-2">
+				<FilterSearch
+					value={search}
+					onChange={setSearch}
+					placeholder="Search by caller or number..."
+				/>
 				<FilterSegmented
 					value={filter}
 					onChange={setFilter}
@@ -76,7 +175,29 @@ export default function LiveCalls() {
 					}))}
 				/>
 
-				<div className="flex items-center gap-2">
+				<FilterSelect
+					icon={ListFilter}
+					label="Filter by outcome"
+					value={outcome}
+					onValueChange={setOutcome}
+					options={OUTCOME_OPTIONS}
+				/>
+				<FilterSelect
+					icon={CalendarClock}
+					label="Filter by date"
+					value={range}
+					onValueChange={setRange}
+					options={RANGE_OPTIONS}
+				/>
+				<FilterSelect
+					icon={ArrowUpDown}
+					label="Sort by"
+					value={sort}
+					onValueChange={setSort}
+					options={SORT_OPTIONS}
+				/>
+
+				<div className="flex items-center gap-2 sm:ml-auto">
 					<div
 						className={`h-2.5 w-2.5 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
 					/>
@@ -95,15 +216,23 @@ export default function LiveCalls() {
 				<div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
 					<Phone className="mb-4 size-16 stroke-1" />
 					<p className="font-medium text-lg">
-						{filter === "active"
-							? "No active calls"
-							: filter === "ended"
-								? "No past calls"
-								: "No calls yet"}
+						{hasFilters ? "No calls match your filters" : "No calls yet"}
 					</p>
 					<p className="mt-1 text-sm">
-						Calls will appear here when patients call in
+						{hasFilters
+							? "Try different filters or a wider date range"
+							: "Calls will appear here when patients call in"}
 					</p>
+					{hasFilters && (
+						<Button
+							variant="outline"
+							size="sm"
+							className="mt-4"
+							onClick={clearFilters}
+						>
+							Clear filters
+						</Button>
+					)}
 				</div>
 			) : (
 				<>
