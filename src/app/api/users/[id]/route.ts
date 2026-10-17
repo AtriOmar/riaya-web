@@ -1,51 +1,57 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
 import { doctorProfile } from "@/db/schema";
 import {
-	apiError,
-	json,
-	requireAdmin,
-	requireSession,
-	validationError,
-} from "@/lib/api-utils";
+	selectDoctorProfileWithRelationsSchema,
+	selectUserSchema,
+} from "@/db/zod";
+import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
+import { registry } from "@/lib/openapi";
+
+/** Loads a user with their doctor profile (null for non-doctors). */
+async function findUserDetail(id: string) {
+	const [foundUser] = await db
+		.select({
+			id: userTable.id,
+			name: userTable.name,
+			email: userTable.email,
+			image: userTable.image,
+			displayName: userTable.displayName,
+			username: userTable.username,
+			accessId: userTable.accessId,
+			createdAt: userTable.createdAt,
+		})
+		.from(userTable)
+		.where(eq(userTable.id, id));
+
+	if (!foundUser) return null;
+
+	const profile = await db.query.doctorProfile.findFirst({
+		where: eq(doctorProfile.userId, id),
+		with: { speciality: true, cabinetCity: true },
+	});
+
+	return { ...foundUser, doctorProfile: profile ?? null };
+}
 
 // ─── GET /api/users/[id] ────────────────────────────────────────────────────
+// Admin-only: a user with their doctor profile
 
 export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		await requireSession();
+		await requireAdmin();
 		const { id } = await params;
 
-		const [foundUser] = await db
-			.select({
-				id: userTable.id,
-				name: userTable.name,
-				email: userTable.email,
-				image: userTable.image,
-				displayName: userTable.displayName,
-				username: userTable.username,
-				accessId: userTable.accessId,
-				active: userTable.active,
-				type: userTable.type,
-				createdAt: userTable.createdAt,
-			})
-			.from(userTable)
-			.where(eq(userTable.id, id));
+		const detail = await findUserDetail(id);
+		if (!detail) return apiError("USER_NOT_FOUND");
 
-		if (!foundUser) return apiError("USER_NOT_FOUND");
-
-		// Also fetch doctor profile with speciality if it exists
-		const doctorProfileData = await db.query.doctorProfile.findFirst({
-			where: eq(doctorProfile.userId, id),
-			with: { speciality: true, cabinetCity: true },
-		});
-
-		return json({ ...foundUser, doctorProfile: doctorProfileData ?? null });
+		return json(detail);
 	} catch (e) {
 		if (e instanceof Response) return e;
 		return apiError("INTERNAL_ERROR");
@@ -53,11 +59,13 @@ export async function GET(
 }
 
 // ─── PUT /api/users/[id] ────────────────────────────────────────────────────
-// Admin-only: update a user's status or access level
+// Admin-only: change a user's role, or ban / unban their doctor account
 
 const adminUpdateSchema = z.object({
-	status: z.string().optional(),
-	accessId: z.number().optional(),
+	/** 1 = Doctor, 3 = Admin, 5 = Owner */
+	accessId: z.union([z.literal(1), z.literal(3), z.literal(5)]).optional(),
+	/** Bans the doctor profile; unbanning restores it to verified. */
+	banned: z.boolean().optional(),
 });
 
 export async function PUT(
@@ -65,66 +73,67 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		await requireAdmin();
+		const session = await requireAdmin();
 		const { id } = await params;
-		const body = await req.json();
-		const parsed = adminUpdateSchema.safeParse(body);
-
+		const parsed = adminUpdateSchema.safeParse(await req.json());
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const { status, accessId } = parsed.data;
+		// Admins can't lock themselves out by demoting or banning their own account
+		if (id === session.user.id) return apiError("FORBIDDEN");
 
-		// Update user-level fields
+		const { accessId, banned } = parsed.data;
+
+		const existing = await findUserDetail(id);
+		if (!existing) return apiError("USER_NOT_FOUND");
+
 		if (accessId !== undefined) {
 			await db.update(userTable).set({ accessId }).where(eq(userTable.id, id));
 		}
 
-		// Update doctor profile status if provided
-		if (status !== undefined) {
+		if (banned !== undefined) {
+			if (!existing.doctorProfile) return apiError("DOCTOR_PROFILE_NOT_FOUND");
 			await db
 				.update(doctorProfile)
-				.set({ status, updatedAt: new Date() })
+				.set({ status: banned ? "banned" : "verified", updatedAt: new Date() })
 				.where(eq(doctorProfile.userId, id));
 		}
 
-		const [updatedUser] = await db
-			.select({
-				id: userTable.id,
-				name: userTable.name,
-				email: userTable.email,
-				accessId: userTable.accessId,
-				active: userTable.active,
-			})
-			.from(userTable)
-			.where(eq(userTable.id, id));
-
-		if (!updatedUser) return apiError("USER_NOT_FOUND");
-
-		return json(updatedUser);
+		return json(await findUserDetail(id));
 	} catch (e) {
 		if (e instanceof Response) return e;
 		return apiError("INTERNAL_ERROR");
 	}
 }
 
-import { z } from "zod";
-import { selectUserWithDoctorProfileSchema } from "@/db/zod";
-import { registry } from "@/lib/openapi";
-
 const paramsSchema = z.object({ id: z.string() });
+
+const userDetailSchema = selectUserSchema
+	.pick({
+		id: true,
+		name: true,
+		email: true,
+		image: true,
+		displayName: true,
+		username: true,
+		accessId: true,
+		createdAt: true,
+	})
+	.merge(
+		z.object({
+			doctorProfile: selectDoctorProfileWithRelationsSchema.nullable(),
+		}),
+	);
 
 registry.registerPath({
 	method: "get",
 	path: "/api/users/{id}",
 	tags: ["Users"],
-	summary: "Get user by ID",
+	summary: "Get user by ID (Admin)",
 	request: { params: paramsSchema },
 	responses: {
 		200: {
-			description: "User profile",
-			content: {
-				"application/json": { schema: selectUserWithDoctorProfileSchema },
-			},
+			description: "User with doctor profile",
+			content: { "application/json": { schema: userDetailSchema } },
 		},
 	},
 });
@@ -133,15 +142,15 @@ registry.registerPath({
 	method: "put",
 	path: "/api/users/{id}",
 	tags: ["Users"],
-	summary: "Update user by ID",
+	summary: "Update user role or ban status (Admin)",
 	request: {
 		params: paramsSchema,
 		body: { content: { "application/json": { schema: adminUpdateSchema } } },
 	},
 	responses: {
 		200: {
-			description: "Updated user",
-			content: { "application/json": { schema: z.any() } },
+			description: "Updated user with doctor profile",
+			content: { "application/json": { schema: userDetailSchema } },
 		},
 	},
 });

@@ -23,67 +23,6 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary People on the caller's phone (voice service)
- */
-export const postApiInternalCallerPeople = (
-	postApiInternalCallerPeopleBody?: PostApiInternalCallerPeopleBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiInternalCallerPeople200>(
-		{
-			url: `/api/internal/caller/people`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerPeopleBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiInternalCallerPeopleMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiInternalCallerPeopleBody | undefined },
-	) => {
-		return postApiInternalCallerPeople(arg, options);
-	};
-};
-export const getPostApiInternalCallerPeopleMutationKey = () =>
-	[`/api/internal/caller/people`] as const;
-
-export type PostApiInternalCallerPeopleMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalCallerPeople>>
->;
-
-/**
- * @summary People on the caller's phone (voice service)
- */
-export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerPeople>>,
-		TError,
-		Key,
-		PostApiInternalCallerPeopleBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerPeople>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
-	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Alternative doctors after a refused request (voice service)
  */
 export const postApiInternalCallerRefusalContext = (
@@ -139,6 +78,67 @@ export const usePostApiInternalCallerRefusalContext = <
 		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
 	const swrFn =
 		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary People on the caller's phone (voice service)
+ */
+export const postApiInternalCallerPeople = (
+	postApiInternalCallerPeopleBody?: PostApiInternalCallerPeopleBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerPeople200>(
+		{
+			url: `/api/internal/caller/people`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerPeopleBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerPeopleMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerPeopleBody | undefined },
+	) => {
+		return postApiInternalCallerPeople(arg, options);
+	};
+};
+export const getPostApiInternalCallerPeopleMutationKey = () =>
+	[`/api/internal/caller/people`] as const;
+
+export type PostApiInternalCallerPeopleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerPeople>>
+>;
+
+/**
+ * @summary People on the caller's phone (voice service)
+ */
+export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerPeople>>,
+		TError,
+		Key,
+		PostApiInternalCallerPeopleBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerPeople>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
+	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

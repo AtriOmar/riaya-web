@@ -20,6 +20,7 @@ import type {
 	PostApiUsersPictureBody,
 	PutApiUsers200,
 	PutApiUsersBody,
+	PutApiUsersId200,
 	PutApiUsersIdBody,
 } from "../api.schemas";
 
@@ -134,7 +135,7 @@ export const usePutApiUsers = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Get user by ID
+ * @summary Get user by ID (Admin)
  */
 export const getApiUsersId = (
 	id: string,
@@ -154,7 +155,7 @@ export type GetApiUsersIdQueryResult = NonNullable<
 >;
 
 /**
- * @summary Get user by ID
+ * @summary Get user by ID (Admin)
  */
 export const useGetApiUsersId = <TError = unknown>(
 	id: string,
@@ -186,14 +187,14 @@ export const useGetApiUsersId = <TError = unknown>(
 	};
 };
 /**
- * @summary Update user by ID
+ * @summary Update user role or ban status (Admin)
  */
 export const putApiUsersId = (
 	id: string,
 	putApiUsersIdBody?: PutApiUsersIdBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<unknown | null>(
+	return customInstance<PutApiUsersId200>(
 		{
 			url: `/api/users/${id}`,
 			method: "PUT",
@@ -220,7 +221,7 @@ export type PutApiUsersIdMutationResult = NonNullable<
 >;
 
 /**
- * @summary Update user by ID
+ * @summary Update user role or ban status (Admin)
  */
 export const usePutApiUsersId = <TError = unknown>(
 	id: string,
