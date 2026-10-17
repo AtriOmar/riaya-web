@@ -358,6 +358,63 @@ export const usePatchApiPersonsId = <TError = unknown>(
 	};
 };
 /**
+ * @summary Update profile picture
+ */
+export const postApiUsersPicture = (
+	postApiUsersPictureBody?: PostApiUsersPictureBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiUsersPicture200>(
+		{
+			url: `/api/users/picture`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiUsersPictureBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiUsersPictureMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PostApiUsersPictureBody | undefined }) => {
+		return postApiUsersPicture(arg, options);
+	};
+};
+export const getPostApiUsersPictureMutationKey = () =>
+	[`/api/users/picture`] as const;
+
+export type PostApiUsersPictureMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiUsersPicture>>
+>;
+
+/**
+ * @summary Update profile picture
+ */
+export const usePostApiUsersPicture = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiUsersPicture>>,
+		TError,
+		Key,
+		PostApiUsersPictureBody | undefined,
+		Awaited<ReturnType<typeof postApiUsersPicture>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPostApiUsersPictureMutationKey();
+	const swrFn = getPostApiUsersPictureMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Get user by ID
  */
 export const getApiUsersId = (
@@ -511,63 +568,6 @@ export const useGetApiUsersMe = <TError = unknown>(options?: {
 		swrFn,
 		swrOptions,
 	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Update profile picture
- */
-export const postApiUsersPicture = (
-	postApiUsersPictureBody?: PostApiUsersPictureBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiUsersPicture200>(
-		{
-			url: `/api/users/picture`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiUsersPictureBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiUsersPictureMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, { arg }: { arg: PostApiUsersPictureBody | undefined }) => {
-		return postApiUsersPicture(arg, options);
-	};
-};
-export const getPostApiUsersPictureMutationKey = () =>
-	[`/api/users/picture`] as const;
-
-export type PostApiUsersPictureMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiUsersPicture>>
->;
-
-/**
- * @summary Update profile picture
- */
-export const usePostApiUsersPicture = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiUsersPicture>>,
-		TError,
-		Key,
-		PostApiUsersPictureBody | undefined,
-		Awaited<ReturnType<typeof postApiUsersPicture>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPostApiUsersPictureMutationKey();
-	const swrFn = getPostApiUsersPictureMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
 	return {
 		swrKey,

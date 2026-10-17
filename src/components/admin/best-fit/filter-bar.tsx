@@ -53,9 +53,6 @@ export default function BestFitFilterBar({
 		[cities],
 	);
 
-	const selectedSpec = specialityList.find(
-		(s) => s.id === filters.specialityId,
-	);
 	const selectedCity = cityList.find((c) => c.id === filters.cityId);
 
 	const hasCustomPin = filters.lat != null && filters.long != null;

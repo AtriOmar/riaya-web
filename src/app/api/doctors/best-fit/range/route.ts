@@ -4,7 +4,11 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import { BEST_FIT_MAX_RADIUS_KM, calculateHaversineKm } from "@/lib/best-fit";
+import {
+	BEST_FIT_FALLBACK_COUNT,
+	BEST_FIT_MAX_RADIUS_KM,
+	calculateHaversineKm,
+} from "@/lib/best-fit";
 import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit/range ─────────────────────────────────────────
@@ -104,19 +108,32 @@ export async function GET(req: NextRequest) {
 				),
 			);
 
-		// Pre-filter by radius when a location is given — mirrors the AI /best-fit cap.
-		const doctors = allDoctors
-			.filter((d) => d.cabinetLatitude != null && d.cabinetLongitude != null)
-			.filter(
-				(d) =>
-					!location ||
-					calculateHaversineKm(
+		// Pre-filter by radius when a location is given — mirrors the AI /best-fit
+		// cap. If nobody is inside it, fall back to the nearest few doctors so a
+		// sparse area doesn't render an empty calendar/map.
+		const withCoords = allDoctors.filter(
+			(d) => d.cabinetLatitude != null && d.cabinetLongitude != null,
+		);
+		let doctors = withCoords;
+		if (location) {
+			const ranked = withCoords
+				.map((d) => ({
+					d,
+					km: calculateHaversineKm(
 						location.lat,
 						location.long,
 						d.cabinetLatitude as number,
 						d.cabinetLongitude as number,
-					) <= MAX_RADIUS_KM,
-			);
+					),
+				}))
+				.sort((x, y) => x.km - y.km);
+			const inRadius = ranked.filter((r) => r.km <= MAX_RADIUS_KM);
+			doctors = (
+				inRadius.length > 0
+					? inRadius
+					: ranked.slice(0, BEST_FIT_FALLBACK_COUNT)
+			).map((r) => r.d);
+		}
 
 		// Build list of dates in range (inclusive)
 		const days: Date[] = [];

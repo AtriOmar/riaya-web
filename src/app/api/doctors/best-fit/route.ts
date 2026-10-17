@@ -62,6 +62,13 @@ export async function GET(req: NextRequest) {
 			specialityId: doc.specialityId,
 			address: doc.address,
 			distance: doc.distance,
+			...(doc.outsideRadius ? { outsideRadius: true } : {}),
+			...(doc.driveMinutes != null
+				? {
+						roadDistanceKm: doc.roadDistanceKm,
+						driveMinutes: doc.driveMinutes,
+					}
+				: {}),
 			nextSlot: {
 				start: doc.nextSlot.start.toISOString(),
 				end: doc.nextSlot.end.toISOString(),

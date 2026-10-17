@@ -94,6 +94,11 @@ export const selectBestFitDoctorSchema = selectDoctorProfileSchema
 	.merge(
 		z.object({
 			distance: z.number(),
+			/** Present (true) when beyond the radius and returned as a fallback. */
+			outsideRadius: z.boolean().optional(),
+			/** Road distance (km) and drive time (min); set when routing succeeded. */
+			roadDistanceKm: z.number().optional(),
+			driveMinutes: z.number().optional(),
 			nextSlot: z.object({ start: z.string(), end: z.string() }),
 			/** Additional forward slots around desiredTime for AI alternatives. */
 			nearbySlots: z

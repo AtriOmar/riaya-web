@@ -1,17 +1,17 @@
 "use client";
 
-import type { Map as LeafletMap } from "leaflet";
 import L from "leaflet";
-import { useEffect, useMemo, useRef } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
 	MapContainer,
 	Marker,
-	Popup,
+	Polyline,
 	TileLayer,
-	Tooltip,
 	useMap,
+	useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
+import useSWR from "swr";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
@@ -22,7 +22,9 @@ import {
 	TUNISIA_CENTER,
 	TUNISIA_MIN_ZOOM,
 } from "@/lib/tunisia-map";
-import { shortName } from "../shared/helpers";
+import { cn } from "@/lib/utils";
+import { getDrivingRoute } from "@/services/manual/driving-route";
+import { DoctorCardBody } from "../shared/doctor-hover-card";
 
 const TILE_URL = "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
 const TILE_ATTR =
@@ -114,15 +116,127 @@ function InvalidateOnMount() {
 	return null;
 }
 
+/** Clears the selection on empty-map clicks (not on marker clicks). */
+function ClearOnMapClick({ onClear }: { onClear: () => void }) {
+	useMapEvents({
+		click: (e) => {
+			const target = e.originalEvent.target as HTMLElement | null;
+			if (target?.closest(".leaflet-marker-icon")) return;
+			onClear();
+		},
+	});
+	return null;
+}
+
+type LatLng = { lat: number; lng: number };
+
+/**
+ * shadcn-styled card pinned to a map coordinate. Rendered inside the map so it
+ * follows pan/zoom, and kept out of Leaflet's click/scroll handling.
+ */
+function AnchoredCard({
+	position,
+	open,
+	children,
+}: {
+	position: LatLng;
+	open: boolean;
+	children: React.ReactNode;
+}) {
+	const map = useMap();
+	const [, force] = useState(0);
+	const ref = useRef<HTMLDivElement>(null);
+
+	useMapEvents({ move: () => force((n) => n + 1) });
+
+	useEffect(() => {
+		if (!ref.current) return;
+		L.DomEvent.disableClickPropagation(ref.current);
+		L.DomEvent.disableScrollPropagation(ref.current);
+	}, []);
+
+	const pt = map.latLngToContainerPoint([position.lat, position.lng]);
+
+	return (
+		// Outer div positions (transform), inner div animates — they must not
+		// share a transform or the enter animation would shift the card.
+		<div
+			ref={ref}
+			className={cn(
+				"absolute z-[1000] w-72 -translate-x-1/2 -translate-y-full",
+				!open && "pointer-events-none",
+			)}
+			style={{ left: pt.x, top: pt.y - 34 }}
+		>
+			<div
+				className={cn(
+					"origin-bottom overflow-hidden rounded-lg bg-popover text-popover-foreground text-sm shadow-lg ring-1 ring-foreground/10 duration-150 fill-mode-forwards",
+					open
+						? "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2"
+						: "animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2",
+				)}
+			>
+				{children}
+			</div>
+		</div>
+	);
+}
+
+/** Road route from the patient to a doctor (cached per pair by SWR). */
+function useDrivingRoute(
+	patient: LatLng | null,
+	doctor: MappableDoctor | undefined,
+) {
+	const lat = doctor?.cabinetLatitude;
+	const lng = doctor?.cabinetLongitude;
+	const key =
+		patient && lat != null && lng != null
+			? ["driving-route", patient.lat, patient.lng, lat, lng]
+			: null;
+
+	return useSWR(
+		key,
+		() =>
+			getDrivingRoute(patient as LatLng, {
+				lat: lat as number,
+				lng: lng as number,
+			}),
+		{ revalidateOnFocus: false },
+	);
+}
+
 export default function DoctorsMapInner({
 	patient,
 	doctors,
 	onSelectDoctor,
 }: Props) {
-	const mapRef = useRef<LeafletMap>(null);
+	const [hoveredId, setHoveredId] = useState<number | null>(null);
+	const [selectedId, setSelectedId] = useState<number | null>(null);
+
+	// The card stays mounted briefly after deselecting so it can animate out.
+	const [shownId, setShownId] = useState<number | null>(null);
+	useEffect(() => {
+		if (selectedId != null) {
+			setShownId(selectedId);
+			return;
+		}
+		const t = setTimeout(() => setShownId(null), 160);
+		return () => clearTimeout(t);
+	}, [selectedId]);
+
+	const hoveredDoctor = doctors.find((d) => d.id === hoveredId);
+	const selectedDoctor = doctors.find((d) => d.id === selectedId);
+	const shownDoctor = doctors.find((d) => d.id === shownId);
+
+	// The line follows the hovered doctor, and falls back to the selected one.
+	const lineDoctor = hoveredDoctor ?? selectedDoctor;
+
+	const { data: lineRoute } = useDrivingRoute(patient, lineDoctor);
+	const { data: selectedRoute, isLoading: selectedRouteLoading } =
+		useDrivingRoute(patient, shownDoctor);
 
 	const points = useMemo(() => {
-		const pts: { lat: number; lng: number }[] = patient ? [patient] : [];
+		const pts: LatLng[] = patient ? [patient] : [];
 		for (const d of doctors) {
 			if (d.cabinetLatitude != null && d.cabinetLongitude != null) {
 				pts.push({ lat: d.cabinetLatitude, lng: d.cabinetLongitude });
@@ -146,20 +260,35 @@ export default function DoctorsMapInner({
 			maxBoundsViscosity={1}
 			scrollWheelZoom
 			style={{ height: "100%", width: "100%" }}
-			ref={mapRef}
 		>
 			<TileLayer attribution={TILE_ATTR} url={TILE_URL} />
 			<TunisiaDimOverlay />
 			<InvalidateOnMount />
+			<ClearOnMapClick onClear={() => setSelectedId(null)} />
 			<FitBounds points={points} />
+
+			{lineRoute?.lines.map((line) => (
+				<Fragment key={`route-${lineDoctor?.id}-${line[0]?.join(",")}`}>
+					{/* White casing keeps the line readable over roads/labels */}
+					<Polyline
+						positions={line}
+						interactive={false}
+						pathOptions={{ color: "#ffffff", weight: 8, opacity: 0.9 }}
+					/>
+					<Polyline
+						positions={line}
+						interactive={false}
+						pathOptions={{ color: "#0f766e", weight: 4, opacity: 1 }}
+					/>
+				</Fragment>
+			))}
 
 			{/* Patient pin stays outside the cluster group */}
 			{patient && (
-				<Marker position={[patient.lat, patient.lng]} icon={patientMarkerIcon}>
-					<Popup>
-						<div className="text-xs font-medium">Patient location</div>
-					</Popup>
-				</Marker>
+				<Marker
+					position={[patient.lat, patient.lng]}
+					icon={patientMarkerIcon}
+				/>
 			)}
 
 			<MarkerClusterGroup
@@ -177,65 +306,68 @@ export default function DoctorsMapInner({
 					) {
 						return null;
 					}
-					const name = shortName(doctor);
 					return (
 						<Marker
 							key={doctor.id}
 							position={[doctor.cabinetLatitude, doctor.cabinetLongitude]}
 							icon={doctorMarkerIcon}
 							eventHandlers={{
-								click: () => onSelectDoctor(doctor.id),
+								// Hover draws the route; click opens the card.
+								mouseover: () => setHoveredId(doctor.id),
+								mouseout: () =>
+									setHoveredId((cur) => (cur === doctor.id ? null : cur)),
+								// Clicking the same doctor again closes the card.
+								click: () =>
+									setSelectedId((cur) =>
+										cur === doctor.id ? null : doctor.id,
+									),
 							}}
-						>
-							<Tooltip direction="top" offset={[0, -22]} opacity={1}>
-								<div className="min-w-[120px] space-y-0.5">
-									<p className="font-semibold text-xs">{name}</p>
-									<p className="text-[11px] text-muted-foreground">
-										{[
-											doctor.distance != null
-												? `${doctor.distance.toFixed(1)} km`
-												: null,
-											doctor.address,
-										]
-											.filter(Boolean)
-											.join(" · ")}
-									</p>
-									<p className="text-[11px] text-muted-foreground">
-										{doctor.slots.length} slot
-										{doctor.slots.length === 1 ? "" : "s"} available
-									</p>
-								</div>
-							</Tooltip>
-							<Popup>
-								<div className="min-w-[140px] space-y-1">
-									<p className="font-semibold text-sm">{name}</p>
-									<p className="text-xs text-muted-foreground">
-										{[
-											doctor.distance != null
-												? `${doctor.distance.toFixed(1)} km`
-												: null,
-											doctor.address,
-										]
-											.filter(Boolean)
-											.join(" · ")}
-									</p>
-									<p className="text-[11px] text-muted-foreground">
-										{doctor.slots.length} slot
-										{doctor.slots.length === 1 ? "" : "s"} available
-									</p>
-									<button
-										type="button"
-										className="mt-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
-										onClick={() => onSelectDoctor(doctor.id)}
-									>
-										View schedule
-									</button>
-								</div>
-							</Popup>
-						</Marker>
+						/>
 					);
 				})}
 			</MarkerClusterGroup>
+
+			{shownDoctor &&
+				shownDoctor.cabinetLatitude != null &&
+				shownDoctor.cabinetLongitude != null && (
+					<AnchoredCard
+						position={{
+							lat: shownDoctor.cabinetLatitude,
+							lng: shownDoctor.cabinetLongitude,
+						}}
+						open={selectedId != null}
+					>
+						<div className="relative">
+							<button
+								type="button"
+								aria-label="Close"
+								className="absolute top-1.5 right-2 text-lg leading-none text-muted-foreground hover:text-foreground"
+								onClick={() => setSelectedId(null)}
+							>
+								×
+							</button>
+							<DoctorCardBody doctor={shownDoctor} />
+						</div>
+						<div className="flex items-center justify-between gap-3 border-t px-3.5 py-2.5">
+							<p className="text-muted-foreground text-xs">
+								{!patient
+									? "Set a location to see the route"
+									: selectedRouteLoading
+										? "Finding route…"
+										: selectedRoute
+											? `${selectedRoute.distanceKm.toFixed(1)} km by road`
+											: "Route unavailable"}
+							</p>
+							<button
+								type="button"
+								className="shrink-0 font-medium text-primary text-xs underline-offset-2 hover:underline"
+								onClick={() => onSelectDoctor(shownDoctor.id)}
+							>
+								View schedule
+							</button>
+						</div>
+					</AnchoredCard>
+				)}
 		</MapContainer>
 	);
 }

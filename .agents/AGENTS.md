@@ -146,6 +146,15 @@ This document is a compact project guide for AI assistants working on this repo.
 - **Manual network services:** However, if proxying feels like overcomplication (e.g., no secrets are involved, or you just want a simple/quick direct fetcher), you can skip the proxy route entirely. Write a direct Axios call and place it in `web/src/services/manual/`. Do not put it in the root of `src/services/` to keep it clean for Orval.
 - **Client-side SDKs:** For browser-specific SDK wrappers (e.g., maps, analytics, direct-to-S3 uploads), place them in `web/src/lib/`.
 
+### 10) Places / address search provider (Geoapify or Google)
+
+- Address search and place lookup go through `web/src/lib/geo/` (`getGeoProvider()`), never straight to a vendor. Providers: `geoapify.ts`, `google.ts` (Places API New).
+- **Switch with one env var:** `GEO_PROVIDER=geoapify` (default) or `google`, then restart the web app. Google also needs `GOOGLE_PLACES_API_KEY` with "Places API (New)" enabled and billing on. Keys stay server-side.
+- Callers: `GET /api/places/autocomplete` and `GET /api/places/details` (session; used by `address-search-bar.tsx` via the generated hooks) and `GET /api/internal/places/search` (`requireInternal`; used by the voice `search_location` tool). The voice service follows the switch automatically.
+- Google autocomplete returns no coordinates, so the client calls `details` after a pick. A `sessionToken` ties both calls into one billed lookup.
+- Routing (`lib/route-matrix.ts`, `services/manual/driving-route.ts`) is still Geoapify only and is not covered by this switch.
+- To add a provider, implement `GeoProvider` in `lib/geo/types.ts` and register it in `lib/geo/index.ts`.
+
 ## Database Notes
 
 - Drizzle schema lives in `web/src/db/schema.ts`.

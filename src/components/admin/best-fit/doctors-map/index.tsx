@@ -116,9 +116,9 @@ export default function DoctorsMap({
 
 			{mappable.length > 0 && !isLoading && (
 				<p className="mt-2 text-muted-foreground text-xs">
-					Click a doctor marker to open their schedule. Nearby doctors merge
-					into a numbered cluster when zoomed out, and split again when you zoom
-					in.
+					Hover a doctor to see the driving route from the patient; click for
+					details and their schedule. Nearby doctors merge into a numbered
+					cluster when zoomed out, and split again when you zoom in.
 				</p>
 			)}
 		</div>

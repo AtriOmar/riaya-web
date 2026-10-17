@@ -2,7 +2,8 @@
 
 import { Command as CommandPrimitive } from "cmdk";
 import { MapPin, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import {
 	Command,
 	CommandEmpty,
@@ -11,7 +12,13 @@ import {
 	CommandList,
 } from "@/components/ui/command";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getErrorMessage } from "@/lib/error-handling";
 import { cn } from "@/lib/utils";
+import type { GetApiPlacesAutocomplete200Item } from "@/services/generated/api.schemas";
+import {
+	getApiPlacesDetails,
+	useGetApiPlacesAutocomplete,
+} from "@/services/generated/places/places";
 
 export type GeoLocation = {
 	lat: number;
@@ -33,46 +40,53 @@ export default function AddressSearchBar({
 }: Props) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
+	const [resolving, setResolving] = useState(false);
 	const debouncedQuery = useDebounce(query, 300);
-	const [results, setResults] = useState<any[]>([]);
-	const [loading, setLoading] = useState(false);
+	// One token per typing session so the provider can bill suggestions + the
+	// final pick as a single lookup. Renewed after each selection.
+	const sessionToken = useRef(crypto.randomUUID());
 
-	useEffect(() => {
-		const controller = new AbortController();
+	const {
+		data: results = [],
+		isLoading: loading,
+		error,
+	} = useGetApiPlacesAutocomplete(
+		{
+			text: debouncedQuery,
+			lat: biasLocation?.lat,
+			lng: biasLocation?.lng,
+			sessionToken: sessionToken.current,
+		},
+		{ swr: { enabled: debouncedQuery.length > 0, keepPreviousData: true } },
+	);
 
-		async function search() {
-			if (!debouncedQuery) {
-				setResults([]);
-				return;
+	async function selectPlace(place: GetApiPlacesAutocomplete200Item) {
+		setOpen(false);
+		setQuery(place.label);
+		try {
+			let { lat, lng, city } = place;
+			let address = place.label;
+			// Some providers (Google) return suggestions without coordinates.
+			if (lat == null || lng == null) {
+				setResolving(true);
+				const full = await getApiPlacesDetails({
+					id: place.id,
+					sessionToken: sessionToken.current,
+				});
+				lat = full.lat;
+				lng = full.lng;
+				city = full.city;
+				address = full.label || address;
 			}
-
-			const apiKey = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY;
-			if (!apiKey) return;
-
-			setLoading(true);
-			try {
-				let url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(debouncedQuery)}&apiKey=${apiKey}&limit=5&filter=countrycode:tn`;
-				if (biasLocation) {
-					url += `&bias=proximity:${biasLocation.lng},${biasLocation.lat}`;
-				}
-
-				const res = await fetch(url, { signal: controller.signal });
-				const data = await res.json();
-				setResults(data.features || []);
-			} catch (err: any) {
-				if (err.name === "AbortError") return;
-				console.error("Geoapify search error:", err);
-			} finally {
-				setLoading(false);
-			}
+			if (lat == null || lng == null) throw new Error("No coordinates");
+			onLocationSelect({ lat, lon: lng, address, city: city ?? undefined });
+		} catch (err) {
+			toast.error(getErrorMessage(err));
+		} finally {
+			setResolving(false);
+			sessionToken.current = crypto.randomUUID();
 		}
-
-		search();
-
-		return () => {
-			controller.abort();
-		};
-	}, [debouncedQuery, biasLocation]);
+	}
 
 	return (
 		<div className={cn("relative", className)}>
@@ -94,38 +108,30 @@ export default function AddressSearchBar({
 				{open && query.length > 0 && (
 					<div className="top-full z-50 absolute bg-popover shadow-md mt-1 border rounded-md w-full overflow-hidden text-popover-foreground">
 						<CommandList>
-							{loading && (
+							{(loading || resolving) && (
 								<div className="p-4 text-muted-foreground text-sm text-center">
-									Searching...
+									{resolving ? "Locating..." : "Searching..."}
 								</div>
 							)}
-							{!loading && results.length === 0 && (
+							{!loading && !resolving && !!error && (
+								<div className="p-4 text-muted-foreground text-sm text-center">
+									{getErrorMessage(error)}
+								</div>
+							)}
+							{!loading && !resolving && !error && results.length === 0 && (
 								<CommandEmpty>No address found.</CommandEmpty>
 							)}
 							<CommandGroup>
-								{results.map((feature) => {
-									const props = feature.properties;
-									const key = props.place_id || `${props.lat}-${props.lon}`;
-									return (
-										<CommandItem
-											key={key}
-											value={key}
-											onSelect={() => {
-												onLocationSelect({
-													lat: props.lat,
-													lon: props.lon,
-													address: props.formatted,
-													city: props.city,
-												});
-												setOpen(false);
-												setQuery(props.formatted);
-											}}
-										>
-											<MapPin className="opacity-50 mr-2 w-4 h-4 shrink-0" />
-											<span className="truncate">{props.formatted}</span>
-										</CommandItem>
-									);
-								})}
+								{results.map((place) => (
+									<CommandItem
+										key={place.id}
+										value={place.id}
+										onSelect={() => selectPlace(place)}
+									>
+										<MapPin className="opacity-50 mr-2 w-4 h-4 shrink-0" />
+										<span className="truncate">{place.label}</span>
+									</CommandItem>
+								))}
 							</CommandGroup>
 						</CommandList>
 					</div>

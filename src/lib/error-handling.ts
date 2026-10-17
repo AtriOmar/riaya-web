@@ -42,6 +42,8 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	OTP_RATE_LIMITED: "Too many attempts. Please wait and try again.",
 	PENDING_SIGNUP_NOT_FOUND:
 		"No pending registration found. Please start again.",
+	GEOCODING_FAILED:
+		"Address search is unavailable right now. Please try again or place the pin on the map.",
 	INVOICE_NOT_FOUND: "Invoice not found.",
 	INVOICE_CANCELLED: "This invoice is cancelled and cannot be modified.",
 	PAYMENT_NOT_FOUND: "Payment not found.",
