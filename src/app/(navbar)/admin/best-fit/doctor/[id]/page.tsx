@@ -15,7 +15,7 @@ import { CubeLoader } from "@/components/loaders";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAdminDoctor } from "@/hooks/use-admin-doctor";
+import { useGetApiDoctorsId } from "@/services/generated/doctors/doctors";
 
 function parseDateOnly(dateStr: string | null): Date | null {
 	if (!dateStr) return null;
@@ -59,15 +59,19 @@ export default function AdminBestFitDoctorPage() {
 		const to = new Date(anchor);
 		to.setDate(to.getDate() + 30);
 		to.setHours(23, 59, 59, 999);
-		return {
-			id: doctorId,
-			from: from.toISOString(),
-			to: to.toISOString(),
-		};
-	}, [doctorId, initialDate]);
+		return { from: from.toISOString(), to: to.toISOString() };
+	}, [initialDate]);
 
-	const { data, isLoading, error } = useAdminDoctor(
-		Number.isFinite(doctorId) ? rangeParams : null,
+	const { data, isLoading, error } = useGetApiDoctorsId(
+		String(doctorId),
+		rangeParams,
+		{
+			swr: {
+				enabled: Number.isFinite(doctorId),
+				revalidateOnFocus: false,
+				keepPreviousData: true,
+			},
+		},
 	);
 
 	// Fallback when there is no in-app history (e.g. opened in a new tab).

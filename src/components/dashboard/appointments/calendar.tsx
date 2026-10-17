@@ -181,7 +181,7 @@ export default function AppointmentsCalendar() {
 	updateRef.current = updateAppt;
 
 	// ── Availability ────────────────────────────────────────────────────────────
-	const av = me?.doctorProfile?.availability as Availability | undefined;
+	const av = me?.doctorProfile?.availability ?? undefined;
 	const aMap = useMemo(() => buildAvailMap(av), [av]);
 	const hasAv = useMemo(
 		() => Object.values(aMap).some((s) => s.length > 0),

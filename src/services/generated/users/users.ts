@@ -12,17 +12,10 @@ import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
-	GetApiPersons200Item,
-	GetApiPersonsId200,
 	GetApiUsers200Item,
 	GetApiUsersId200,
 	GetApiUsersMe200,
 	GetApiUsersParams,
-	PatchApiPersonsId200,
-	PatchApiPersonsIdBody,
-	PostApiPersons200,
-	PostApiPersons201,
-	PostApiPersonsBody,
 	PostApiUsersPicture200,
 	PostApiUsersPictureBody,
 	PutApiUsers200,
@@ -32,108 +25,6 @@ import type {
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-/**
- * @summary List persons
- */
-export const getApiPersons = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiPersons200Item[]>(
-		{ url: `/api/persons`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiPersonsKey = () => [`/api/persons`] as const;
-
-export type GetApiPersonsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiPersons>>
->;
-
-/**
- * @summary List persons
- */
-export const useGetApiPersons = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiPersons>>, TError> & {
-		swrKey?: Key;
-		enabled?: boolean;
-	};
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiPersonsKey() : null));
-	const swrFn = () => getApiPersons(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Create or get person
- */
-export const postApiPersons = (
-	postApiPersonsBody?: PostApiPersonsBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiPersons200 | PostApiPersons201>(
-		{
-			url: `/api/persons`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiPersonsBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiPersonsMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, { arg }: { arg: PostApiPersonsBody | undefined }) => {
-		return postApiPersons(arg, options);
-	};
-};
-export const getPostApiPersonsMutationKey = () => [`/api/persons`] as const;
-
-export type PostApiPersonsMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiPersons>>
->;
-
-/**
- * @summary Create or get person
- */
-export const usePostApiPersons = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiPersons>>,
-		TError,
-		Key,
-		PostApiPersonsBody | undefined,
-		Awaited<ReturnType<typeof postApiPersons>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPostApiPersonsMutationKey();
-	const swrFn = getPostApiPersonsMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
 /**
  * @summary List users (Admin)
  */
@@ -236,167 +127,6 @@ export const usePutApiUsers = <TError = unknown>(options?: {
 	const swrFn = getPutApiUsersMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get person by ID
- */
-export const getApiPersonsId = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiPersonsId200>(
-		{ url: `/api/persons/${id}`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiPersonsIdKey = (id: string) =>
-	[`/api/persons/${id}`] as const;
-
-export type GetApiPersonsIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiPersonsId>>
->;
-
-/**
- * @summary Get person by ID
- */
-export const useGetApiPersonsId = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiPersonsId>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled =
-		swrOptions?.enabled !== false && id !== null && id !== undefined;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiPersonsIdKey(id) : null));
-	const swrFn = () => getApiPersonsId(id, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Update person by ID
- */
-export const patchApiPersonsId = (
-	id: string,
-	patchApiPersonsIdBody?: PatchApiPersonsIdBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PatchApiPersonsId200>(
-		{
-			url: `/api/persons/${id}`,
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			data: patchApiPersonsIdBody,
-		},
-		options,
-	);
-};
-
-export const getPatchApiPersonsIdMutationFetcher = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, { arg }: { arg: PatchApiPersonsIdBody | undefined }) => {
-		return patchApiPersonsId(id, arg, options);
-	};
-};
-export const getPatchApiPersonsIdMutationKey = (id: string) =>
-	[`/api/persons/${id}`] as const;
-
-export type PatchApiPersonsIdMutationResult = NonNullable<
-	Awaited<ReturnType<typeof patchApiPersonsId>>
->;
-
-/**
- * @summary Update person by ID
- */
-export const usePatchApiPersonsId = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRMutationConfiguration<
-			Awaited<ReturnType<typeof patchApiPersonsId>>,
-			TError,
-			Key,
-			PatchApiPersonsIdBody | undefined,
-			Awaited<ReturnType<typeof patchApiPersonsId>>
-		> & { swrKey?: string };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPatchApiPersonsIdMutationKey(id);
-	const swrFn = getPatchApiPersonsIdMutationFetcher(id, requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get current user profile
- */
-export const getApiUsersMe = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiUsersMe200>(
-		{ url: `/api/users/me`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
-
-export type GetApiUsersMeQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiUsersMe>>
->;
-
-/**
- * @summary Get current user profile
- */
-export const useGetApiUsersMe = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
-		swrKey?: Key;
-		enabled?: boolean;
-	};
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
-	const swrFn = () => getApiUsersMe(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
 
 	return {
 		swrKey,
@@ -511,6 +241,52 @@ export const usePutApiUsersId = <TError = unknown>(
 	const swrFn = getPutApiUsersIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get current user profile
+ */
+export const getApiUsersMe = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiUsersMe200>(
+		{ url: `/api/users/me`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiUsersMeKey = () => [`/api/users/me`] as const;
+
+export type GetApiUsersMeQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiUsersMe>>
+>;
+
+/**
+ * @summary Get current user profile
+ */
+export const useGetApiUsersMe = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<Awaited<ReturnType<typeof getApiUsersMe>>, TError> & {
+		swrKey?: Key;
+		enabled?: boolean;
+	};
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ?? (() => (isEnabled ? getGetApiUsersMeKey() : null));
+	const swrFn = () => getApiUsersMe(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

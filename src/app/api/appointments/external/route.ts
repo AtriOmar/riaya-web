@@ -18,9 +18,6 @@ import { clearRefusalContext } from "@/lib/refusal-suggestions";
 // ─── POST /api/appointments/external ─────────────────────────────────────────
 // Internal (voice assistant): book a pending appointment for someone on the calling phone.
 
-type AvailabilitySlot = { start: number; end: number };
-type Availability = Record<number, AvailabilitySlot[]>;
-
 const externalSchema = z.object({
 	doctorId: z.coerce.number().int().positive(),
 	/** The calling phone line. */
@@ -63,8 +60,7 @@ export async function POST(req: NextRequest) {
 		// Check availability
 		let dayOfWeek = startDate.getDay();
 		dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-		const availability =
-			(doctor.availability as Availability)?.[dayOfWeek] ?? [];
+		const availability = doctor.availability?.[dayOfWeek] ?? [];
 
 		if (!availability.length) return apiError("DOCTOR_UNAVAILABLE_DAY");
 

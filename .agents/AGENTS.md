@@ -182,8 +182,8 @@ This document is a compact project guide for AI assistants working on this repo.
 
 | Route | Auth | Purpose |
 |-------|------|---------|
-| `POST /api/persons` | Public | Find or create the phone owner by `phoneNumber` (+ optional `source`) |
-| `PATCH /api/persons/[id]` | Public | Update person profile (socket AI `update_person_info`) |
+| `POST /api/persons` | Internal secret | Find or create the phone owner by `phoneNumber` (+ optional `source`) |
+| `GET` / `PATCH /api/persons/[id]` | Internal secret | Read / update a person (voice `update_person_info`) |
 | `POST /api/patients` | Doctor session | Create patient; upserts person with `source: "doctor"` |
 | `POST /api/appointments/external` | Internal secret | Phone/AI booking; `patient` = `{ personId }` (someone on the line) or `{ firstName, lastName, relationship }` (new family member) via `resolveBookingPerson`; sets `personId` + `contactPhone` |
 | `POST /api/appointments/external/emergency` | Internal secret | Urgent fan-out; same `patient` shape |

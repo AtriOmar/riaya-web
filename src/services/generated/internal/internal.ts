@@ -5,17 +5,195 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-import type { Key } from "swr";
+
+import type { Key, SWRConfiguration } from "swr";
+import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
+	GetApiPersonsId200,
+	PatchApiPersonsId200,
+	PatchApiPersonsIdBody,
 	PostApiInternalAppointmentsProcessPendingTimeoutBody,
 	PostApiInternalReviewsProcessJobBody,
+	PostApiPersons200,
+	PostApiPersonsBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Find or create the phone owner (voice service)
+ */
+export const postApiPersons = (
+	postApiPersonsBody?: PostApiPersonsBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiPersons200>(
+		{
+			url: `/api/persons`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiPersonsBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiPersonsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PostApiPersonsBody | undefined }) => {
+		return postApiPersons(arg, options);
+	};
+};
+export const getPostApiPersonsMutationKey = () => [`/api/persons`] as const;
+
+export type PostApiPersonsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiPersons>>
+>;
+
+/**
+ * @summary Find or create the phone owner (voice service)
+ */
+export const usePostApiPersons = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiPersons>>,
+		TError,
+		Key,
+		PostApiPersonsBody | undefined,
+		Awaited<ReturnType<typeof postApiPersons>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPostApiPersonsMutationKey();
+	const swrFn = getPostApiPersonsMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get person by ID
+ */
+export const getApiPersonsId = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPersonsId200>(
+		{ url: `/api/persons/${id}`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiPersonsIdKey = (id: string) =>
+	[`/api/persons/${id}`] as const;
+
+export type GetApiPersonsIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiPersonsId>>
+>;
+
+/**
+ * @summary Get person by ID
+ */
+export const useGetApiPersonsId = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiPersonsId>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiPersonsIdKey(id) : null));
+	const swrFn = () => getApiPersonsId(id, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Update person by ID
+ */
+export const patchApiPersonsId = (
+	id: string,
+	patchApiPersonsIdBody?: PatchApiPersonsIdBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiPersonsId200>(
+		{
+			url: `/api/persons/${id}`,
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			data: patchApiPersonsIdBody,
+		},
+		options,
+	);
+};
+
+export const getPatchApiPersonsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PatchApiPersonsIdBody | undefined }) => {
+		return patchApiPersonsId(id, arg, options);
+	};
+};
+export const getPatchApiPersonsIdMutationKey = (id: string) =>
+	[`/api/persons/${id}`] as const;
+
+export type PatchApiPersonsIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchApiPersonsId>>
+>;
+
+/**
+ * @summary Update person by ID
+ */
+export const usePatchApiPersonsId = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof patchApiPersonsId>>,
+			TError,
+			Key,
+			PatchApiPersonsIdBody | undefined,
+			Awaited<ReturnType<typeof patchApiPersonsId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPatchApiPersonsIdMutationKey(id);
+	const swrFn = getPatchApiPersonsIdMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Auto-cancel unanswered AI pending appointments (Internal)
  */

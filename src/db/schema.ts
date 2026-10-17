@@ -12,6 +12,7 @@ import {
 	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
+import type { Availability } from "../lib/doctor-slots";
 import { account, session, user } from "./auth-schema";
 
 // Re-export better-auth tables so drizzle-kit picks them up from this single entry point
@@ -74,8 +75,8 @@ export const doctorProfile = pgTable(
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
 		specialityId: integer("speciality_id").references(() => speciality.id),
-		// Stored as JSONB: { [day 0-6]: [{ start: number, end: number }] }
-		availability: jsonb("availability"),
+		// { [day 0-6 = Mon-Sun]: [{ start, end }] } in minutes from midnight
+		availability: jsonb("availability").$type<Availability>(),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
@@ -164,6 +165,11 @@ export const patient = pgTable(
 		dateOfBirth: timestamp("date_of_birth"),
 		gender: varchar("gender", { length: 50 }),
 		address: text("address"),
+		/**
+		 * The number this doctor uses to reach the patient (WhatsApp, invoices).
+		 * Per-doctor contact data, not identity: who the patient is stays `personId`,
+		 * and a person can be on several phones (`person_phone`).
+		 */
 		phoneNumber: varchar("phone_number", { length: 50 }),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),

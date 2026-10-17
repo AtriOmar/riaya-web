@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { appointment, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
 import { calculateHaversineKm, listFinderDoctors } from "@/lib/best-fit";
-import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
+import { listSlotsForDay } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit/range ─────────────────────────────────────────
 // Admin tool endpoint — returns best-fit doctors grouped by day for a date range.
@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
 					)
 				: null;
 			const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
-			const availability = (doctor.availability as Availability) ?? {};
+			const availability = doctor.availability ?? {};
 
 			for (const day of days) {
 				const slots = listSlotsForDay(

@@ -2,7 +2,6 @@ import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
 import {
-	type Availability,
 	findNextAvailableSlot,
 	listAvailableSlotsForDoctor,
 } from "@/lib/doctor-slots";
@@ -216,7 +215,7 @@ export async function findBestFitDoctors(params: {
 		const out: BestFitDoctorResult[] = [];
 		for (const doctor of list) {
 			const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
-			const availability = (doctor.availability as Availability) ?? {};
+			const availability = doctor.availability ?? {};
 			const nextSlotRaw = findNextAvailableSlot(
 				availability,
 				doctorAppts,

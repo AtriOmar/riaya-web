@@ -1,5 +1,6 @@
 export type AvailabilitySlot = { start: number; end: number };
-export type Availability = Record<number, AvailabilitySlot[]>;
+/** Weekly opening hours by day index (0-6 = Mon-Sun); a missing day is closed. */
+export type Availability = Partial<Record<number, AvailabilitySlot[]>>;
 function normalizeDayIndex(date: Date): number {
 	const day = date.getDay();
 	return day === 0 ? 6 : day - 1;

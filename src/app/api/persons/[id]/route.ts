@@ -3,12 +3,17 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { person } from "@/db/schema";
-import { apiError, json, validationError } from "@/lib/api-utils";
+import {
+	apiError,
+	json,
+	requireInternal,
+	validationError,
+} from "@/lib/api-utils";
 import { personPreferredLanguages } from "@/lib/person-language";
 
 // ─── PATCH /api/persons/[id] ─────────────────────────────────────────────────
-// Public endpoint — updates a person's info.
-// Called by the socket AI tool (update_person_info) after collecting caller details.
+// Internal (voice service): read or update a person. PATCH backs the
+// update_person_info tool after collecting caller details.
 
 const updateSchema = z.object({
 	firstName: z.string().min(1).optional(),
@@ -20,11 +25,12 @@ const updateSchema = z.object({
 });
 
 export async function GET(
-	_req: NextRequest,
+	req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	let personId: number | undefined;
 	try {
+		requireInternal(req);
 		const { id } = await params;
 		personId = Number(id);
 		if (Number.isNaN(personId)) return apiError("INVALID_ID");
@@ -48,6 +54,7 @@ export async function PATCH(
 ) {
 	let personId: number | undefined;
 	try {
+		requireInternal(req);
 		const { id } = await params;
 		personId = Number(id);
 		if (Number.isNaN(personId)) return apiError("INVALID_ID");
@@ -92,7 +99,7 @@ const paramsSchema = z.object({ id: z.string() });
 registry.registerPath({
 	method: "get",
 	path: "/api/persons/{id}",
-	tags: ["Users"],
+	tags: ["Internal"],
 	summary: "Get person by ID",
 	request: { params: paramsSchema },
 	responses: {
@@ -106,7 +113,7 @@ registry.registerPath({
 registry.registerPath({
 	method: "patch",
 	path: "/api/persons/{id}",
-	tags: ["Users"],
+	tags: ["Internal"],
 	summary: "Update person by ID",
 	request: {
 		params: paramsSchema,

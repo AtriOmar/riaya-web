@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
-import type { AdminDoctorAppointment } from "@/hooks/use-admin-doctor";
 import { cn } from "@/lib/utils";
+import type { GetApiDoctorsId200AppointmentsItem as AdminDoctorAppointment } from "@/services/generated/api.schemas";
 import type { Availability } from "@/services/types";
 import {
 	buildTimeRows,

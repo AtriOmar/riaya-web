@@ -23,7 +23,15 @@ import {
 
 export const selectSpecialitySchema = createSelectSchema(speciality);
 export const selectCitiesSchema = createSelectSchema(cities);
-export const selectDoctorProfileSchema = createSelectSchema(doctorProfile);
+/** Weekly opening hours: day "0"-"6" (Mon-Sun) → slots in minutes from midnight. */
+export const availabilitySchema = z.record(
+	z.string(),
+	z.array(z.object({ start: z.number(), end: z.number() })),
+);
+
+export const selectDoctorProfileSchema = createSelectSchema(doctorProfile, {
+	availability: availabilitySchema.nullable(),
+});
 export const selectPersonSchema = createSelectSchema(person);
 export const selectPatientSchema = createSelectSchema(patient);
 export const selectPatientMedicalFileSchema =

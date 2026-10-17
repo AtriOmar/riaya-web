@@ -1,4 +1,4 @@
-import type { AdminDoctorAppointment } from "@/hooks/use-admin-doctor";
+import type { GetApiDoctorsId200AppointmentsItem as AdminDoctorAppointment } from "@/services/generated/api.schemas";
 import type { Availability } from "@/services/types";
 
 /** JS `getDay()` is Sun=0; availability keys are Mon=0 … Sun=6. */
