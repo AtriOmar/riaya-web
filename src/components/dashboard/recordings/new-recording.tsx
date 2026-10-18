@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -442,8 +443,7 @@ export default function NewRecording({
 								Record again
 							</Button>
 						</div>
-						{/* biome-ignore lint/a11y/useMediaCaption: recording preview */}
-						<audio src={audioUrl} controls className="w-full" />
+						<AudioWaveformPlayer src={audioUrl} />
 						<Button
 							className="gap-2 w-full"
 							onClick={saveRecording}

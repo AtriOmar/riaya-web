@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -408,13 +409,7 @@ export default function RecordingDetail({
 					<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
 						Audio
 					</h3>
-					{/* biome-ignore lint/a11y/useMediaCaption: doctor-recorded audio */}
-					<audio
-						ref={audioRef}
-						src={recording.audioUrl}
-						controls
-						className="w-full"
-					/>
+					<AudioWaveformPlayer src={recording.audioUrl} audioRef={audioRef} />
 				</section>
 
 				{/* Transcript */}

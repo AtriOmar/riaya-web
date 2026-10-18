@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
@@ -168,8 +169,7 @@ function RecordingCard({
 			</div>
 
 			{/* Audio player */}
-			{/* biome-ignore lint/a11y/useMediaCaption: doctor-recorded audio */}
-			<audio src={recording.audioUrl} controls className="w-full h-8" />
+			<AudioWaveformPlayer src={recording.audioUrl} />
 
 			{/* Transcript preview */}
 			{recording.transcriptStatus === "done" &&

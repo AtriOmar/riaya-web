@@ -12,7 +12,13 @@
  */
 
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	type RefObject,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { cn } from "@/lib/utils";
 
 const BAR_COUNT = 80;
@@ -48,14 +54,18 @@ function computePeaks(buffer: AudioBuffer): number[] {
 export function AudioWaveformPlayer({
 	src,
 	waveformSrc,
+	audioRef: externalAudioRef,
 	className,
 }: {
 	src: string;
 	/** Same-origin URL to decode for the waveform when `src` has no CORS. */
 	waveformSrc?: string;
+	/** Lets the parent drive the underlying element (e.g. seek from a transcript). */
+	audioRef?: RefObject<HTMLAudioElement | null>;
 	className?: string;
 }) {
-	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const ownAudioRef = useRef<HTMLAudioElement | null>(null);
+	const audioRef = externalAudioRef ?? ownAudioRef;
 	const [peaks, setPeaks] = useState<number[] | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isMuted, setIsMuted] = useState(false);
