@@ -86,12 +86,15 @@ function UsageBar({
 	used,
 	limit,
 	format,
+	display,
 	hint,
 }: {
 	label: string;
 	used: number;
 	limit: number | null;
 	format?: (n: number) => string;
+	/** Replaces the "used / limit" text (e.g. "35% used") */
+	display?: string;
 	hint?: string;
 }) {
 	const pct = usagePercent(used, limit);
@@ -107,7 +110,7 @@ function UsageBar({
 						nearLimit && "text-amber-700",
 					)}
 				>
-					{formatUsage(used, limit, format)}
+					{display ?? formatUsage(used, limit, format)}
 				</span>
 			</div>
 			<div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -407,9 +410,10 @@ export default function DoctorDashboardHome() {
 								}
 							/>
 							<UsageBar
-								label="AI assistant messages"
-								used={data.plan.usage.aiMessagesThisMonth}
-								limit={data.plan.limits.aiMessagesPerMonth}
+								label="AI assistant"
+								used={data.plan.usage.aiPercentUsed}
+								limit={100}
+								display={`${data.plan.usage.aiPercentUsed}% used`}
 							/>
 							{!data.plan.isPro ? (
 								<Button asChild variant="outline" size="sm" className="w-full">

@@ -178,13 +178,13 @@ export const planUsageSchema = z.object({
 	limits: z.object({
 		whatsappSendsPerMonth: z.number().nullable(),
 		recordingHoursPerMonth: z.number(),
-		aiMessagesPerMonth: z.number().nullable(),
 	}),
 	canBuyRecordingPacks: z.boolean(),
 	canBrandDocuments: z.boolean(),
 	usage: z.object({
 		whatsappSendsThisMonth: z.number(),
-		aiMessagesThisMonth: z.number(),
+		/** Share of the month's AI assistant budget used, 0–100 */
+		aiPercentUsed: z.number(),
 	}),
 	recordingTime: z.object({
 		includedSeconds: z.number(),

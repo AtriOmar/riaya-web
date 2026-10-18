@@ -3,12 +3,39 @@ export const PLAN_IDS = ["free", "pro"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
 /** `null` means unlimited — used for enforcement, not marketing copy */
+/**
+ * What a typical AI assistant question costs (model cost, millionths of a USD).
+ * Turns budgets into "about N questions". Set on the cautious side so most
+ * doctors get more than we promise; update it from the logged costs
+ * (`ai_chat_message.cost_micro_usd`).
+ */
+export const AI_TYPICAL_QUESTION_MICRO_USD = 2_500;
+
+/** "About N questions" for an AI budget, rounded to a friendly number. */
+export function approxAiQuestions(
+	budgetMicroUsd: number,
+	perQuestionMicroUsd = AI_TYPICAL_QUESTION_MICRO_USD,
+): number {
+	const n = budgetMicroUsd / Math.max(perQuestionMicroUsd, 1);
+	const step = n >= 1000 ? 100 : n >= 100 ? 10 : 1;
+	return Math.floor(n / step) * step;
+}
+
+// Monthly AI budgets (model cost, millionths of a USD). Placeholders until
+// the logged costs show real use.
+const FREE_AI_BUDGET_MICRO_USD = 50_000; // ≈ $0.05
+const PRO_AI_BUDGET_MICRO_USD = 5_000_000; // ≈ $5 ≈ 15 TND
+
 export type PlanLimits = {
 	/** WhatsApp sends the doctor starts (invoices, medical files). Automatic patient messages are never counted. */
 	whatsappSendsPerMonth: number | null;
 	/** Transcribed recording time included each month. Purchased packs add on top. */
 	recordingHoursPerMonth: number;
-	aiMessagesPerMonth: number | null;
+	/**
+	 * AI assistant budget per month, in millionths of a USD of real model cost.
+	 * Doctors see it as a percentage and as "about N questions".
+	 */
+	aiBudgetMicroUsdPerMonth: number;
 };
 
 export type Plan = {
@@ -40,7 +67,7 @@ export const PLANS: Record<PlanId, Plan> = {
 		limits: {
 			whatsappSendsPerMonth: 30,
 			recordingHoursPerMonth: 2,
-			aiMessagesPerMonth: 20,
+			aiBudgetMicroUsdPerMonth: FREE_AI_BUDGET_MICRO_USD,
 		},
 		canBuyRecordingPacks: false,
 		canBrandDocuments: false,
@@ -53,7 +80,7 @@ export const PLANS: Record<PlanId, Plan> = {
 			"Unlimited AI phone booking",
 			"30 WhatsApp sends / month",
 			"2 hours of recording / month",
-			"20 AI assistant messages / month",
+			`About ${approxAiQuestions(FREE_AI_BUDGET_MICRO_USD)} AI assistant questions / month`,
 		],
 	},
 	pro: {
@@ -66,7 +93,7 @@ export const PLANS: Record<PlanId, Plan> = {
 		limits: {
 			whatsappSendsPerMonth: null,
 			recordingHoursPerMonth: 100,
-			aiMessagesPerMonth: null,
+			aiBudgetMicroUsdPerMonth: PRO_AI_BUDGET_MICRO_USD,
 		},
 		canBuyRecordingPacks: true,
 		canBrandDocuments: true,
@@ -76,7 +103,7 @@ export const PLANS: Record<PlanId, Plan> = {
 			"Unlimited WhatsApp sends",
 			"100 hours of recording / month",
 			"Add more recording hours anytime",
-			"Unlimited AI assistant messages",
+			`About ${approxAiQuestions(PRO_AI_BUDGET_MICRO_USD).toLocaleString("en-US")} AI assistant questions / month`,
 			"Your logo & stamp on invoices",
 			"Secretary accounts",
 			"Priority support",

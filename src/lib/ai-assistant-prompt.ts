@@ -6,7 +6,7 @@
  * Plan numbers are imported from `plans.ts` so limits stay in sync.
  */
 
-import { PLANS, RECORDING_PACK_LIST } from "@/lib/plans";
+import { approxAiQuestions, PLANS, RECORDING_PACK_LIST } from "@/lib/plans";
 
 const FREE = PLANS.free;
 const PRO = PLANS.pro;
@@ -30,7 +30,7 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 | AI phone booking | unlimited | unlimited |
 | WhatsApp sends | ${formatLimit(FREE.limits.whatsappSendsPerMonth, "sends / UTC calendar month")} | ${formatLimit(PRO.limits.whatsappSendsPerMonth, "WhatsApp sends")} |
 | Recording time | ${FREE.limits.recordingHoursPerMonth} hours / UTC calendar month | ${PRO.limits.recordingHoursPerMonth} hours / UTC calendar month, plus hour packs |
-| AI assistant messages | ${formatLimit(FREE.limits.aiMessagesPerMonth, "user messages / UTC calendar month")} | ${formatLimit(PRO.limits.aiMessagesPerMonth, "AI assistant messages")} |
+| AI assistant | about ${approxAiQuestions(FREE.limits.aiBudgetMicroUsdPerMonth)} questions / month | about ${approxAiQuestions(PRO.limits.aiBudgetMicroUsdPerMonth)} questions / month |
 
 **Pro also includes:** the doctor's logo and stamp on invoices (set on **Profile → Invoice branding**; PNG or JPEG), which replaces the "Facture générée avec Riaya" footer; unlimited secretary accounts; priority support.
 
@@ -56,9 +56,10 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - Hour packs (Pro only): ${RECORDING_PACK_LIST.map((p) => `${p.hours} h for ${p.priceTnd} TND`).join(", ")}. Buy them on **Subscription → Add hours** (paid via Konnect). Pack hours **never expire**.
 - When no time is left, a new recording can't be started until next UTC month, more hours are added (Pro), or the doctor upgrades (Free).
 
-**How AI assistant message limit is counted (Free):**
-- Each **user** message sent in the AI assistant counts as **1** toward the current UTC calendar month (across all conversations).
-- Assistant replies do **not** count toward the limit.
+**How AI assistant use is counted:**
+- Each plan has a monthly AI allowance, quoted on the plans as "about N questions" for typical use. **Subscription** and the home Dashboard show how much of it is used, as a percentage. It resets on the 1st of each month (UTC).
+- The number is approximate: a quick question uses little; long conversations or attached transcripts use more, so they get fewer questions out of the same allowance. Always say "about".
+- When the allowance is used up, new questions are refused until the 1st (Free doctors can upgrade to Pro for a much larger allowance).
 
 **Payments:** methods \`cash\` | \`transfer\` only. Cannot exceed remaining balance; cannot pay cancelled invoices. Payments can be deleted; status re-syncs.
 
@@ -81,7 +82,7 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - Medical Q&A and consultation review with optional attached transcripts.
 - Attach only recordings that already have a **completed** transcript.
 - Conversations persist; browse past chats; start new chat. Saved automatically.
-- Free plan: up to ${FREE.limits.aiMessagesPerMonth} user messages per UTC calendar month (enforced on send).
+- Usage counts toward the plan's monthly AI allowance (see Plans & limits).
 
 ---
 
@@ -155,7 +156,7 @@ export function buildAssistantInstructions(transcriptContext?: string): string {
 
 ## Product / dashboard help
 - You know the Riaya doctor dashboard guide below. When doctors ask "can I…?", "how do I…?", or about plans/limits, answer from that guide with **exact steps**, menu names, paths, and **exact numbers** (do not round or invent limits).
-- Quote Free vs Pro limits accurately: Free = ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month, ${FREE.limits.recordingHoursPerMonth} h of recording/month and ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month (UTC); Pro (${PRO.priceTnd} TND/month) = unlimited WhatsApp sends and AI messages, ${PRO.limits.recordingHoursPerMonth} h of recording/month plus hour packs. AI phone booking is unlimited on both.
+- Quote Free vs Pro limits accurately: Free = ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month, ${FREE.limits.recordingHoursPerMonth} h of recording/month and about ${approxAiQuestions(FREE.limits.aiBudgetMicroUsdPerMonth)} AI assistant questions/month; Pro (${PRO.priceTnd} TND/month) = unlimited WhatsApp sends, about ${approxAiQuestions(PRO.limits.aiBudgetMicroUsdPerMonth)} AI assistant questions/month, ${PRO.limits.recordingHoursPerMonth} h of recording/month plus hour packs. AI phone booking is unlimited on both.
 - If they ask about something Riaya cannot do, say so clearly and suggest the closest available workflow.
 
 ${buildDashboardFeaturesGuide()}

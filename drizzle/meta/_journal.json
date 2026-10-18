@@ -120,6 +120,13 @@
       "when": 1792284125215,
       "tag": "0016_create_secretaries",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792285386769,
+      "tag": "0017_add_ai_chat_message_usage",
+      "breakpoints": true
     }
   ]
 }

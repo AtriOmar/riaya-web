@@ -75,8 +75,8 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 		"This invitation was sent to a different email. Sign in with that email to accept it.",
 	ALREADY_IN_PRACTICE:
 		"This account already belongs to a practice, so it can't join another one.",
-	AI_MESSAGE_LIMIT_REACHED:
-		"Monthly AI assistant message limit reached. It resets next calendar month, or upgrade to Pro for unlimited messages.",
+	AI_USAGE_LIMIT_REACHED:
+		"You've used this month's AI assistant allowance. It resets on the 1st of next month.",
 	APPOINTMENT_NOT_CANCELLABLE:
 		"This appointment cannot be cancelled by phone. Contact the doctor's office if it is already confirmed.",
 	CALLER_PHONE_REQUIRED: "Caller phone number is required for this action.",

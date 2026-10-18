@@ -170,9 +170,10 @@ export default function SubscriptionPanel() {
 							limit={plan.limits.whatsappSendsPerMonth}
 						/>
 						<UsageMeter
-							label="AI assistant messages"
-							used={plan.usage.aiMessagesThisMonth}
-							limit={plan.limits.aiMessagesPerMonth}
+							label="AI assistant"
+							used={plan.usage.aiPercentUsed}
+							limit={100}
+							detail={`${plan.usage.aiPercentUsed}% used this month`}
 						/>
 					</div>
 					<p className="text-xs text-muted-foreground">

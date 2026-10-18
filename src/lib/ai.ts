@@ -40,14 +40,24 @@ export function createChatClient(): OpenAI {
 	});
 }
 
+/** What one chat completion used, from OpenRouter's final stream chunk. */
+export type ChatUsage = {
+	promptTokens: number;
+	completionTokens: number;
+	/** Cost in millionths of a USD, as billed by OpenRouter; null if not reported */
+	costMicroUsd: number | null;
+};
+
 /**
  * Stream assistant text via OpenRouter chat completions.
- * Yields plain text deltas.
+ * Yields plain text deltas; `onUsage` gets the request's token use and cost
+ * once the stream ends.
  */
 export async function* streamChatText(options: {
 	instructions: string;
 	messages: { role: "user" | "assistant"; content: string }[];
 	maxOutputTokens?: number;
+	onUsage?: (usage: ChatUsage) => void;
 }): AsyncGenerator<string> {
 	const client = createChatClient();
 
@@ -58,12 +68,23 @@ export async function* streamChatText(options: {
 			...options.messages,
 		],
 		stream: true,
+		stream_options: { include_usage: true },
 		max_tokens: options.maxOutputTokens ?? 2048,
 	});
 
 	for await (const chunk of stream) {
 		const delta = chunk.choices[0]?.delta?.content;
 		if (delta) yield delta;
+		if (chunk.usage) {
+			// OpenRouter adds `cost` (USD) to the standard usage object
+			const cost = (chunk.usage as { cost?: number }).cost;
+			options.onUsage?.({
+				promptTokens: chunk.usage.prompt_tokens,
+				completionTokens: chunk.usage.completion_tokens,
+				costMicroUsd:
+					typeof cost === "number" ? Math.round(cost * 1_000_000) : null,
+			});
+		}
 	}
 }
 

@@ -71,62 +71,6 @@ export const useGetApiSecretaries = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Remove a secretary
- */
-export const deleteApiSecretariesId = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<DeleteApiSecretariesId200>(
-		{ url: `/api/secretaries/${id}`, method: "DELETE" },
-		options,
-	);
-};
-
-export const getDeleteApiSecretariesIdMutationFetcher = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, __: { arg: Arguments }) => {
-		return deleteApiSecretariesId(id, options);
-	};
-};
-export const getDeleteApiSecretariesIdMutationKey = (id: string) =>
-	[`/api/secretaries/${id}`] as const;
-
-export type DeleteApiSecretariesIdMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteApiSecretariesId>>
->;
-
-/**
- * @summary Remove a secretary
- */
-export const useDeleteApiSecretariesId = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRMutationConfiguration<
-			Awaited<ReturnType<typeof deleteApiSecretariesId>>,
-			TError,
-			Key,
-			Arguments,
-			Awaited<ReturnType<typeof deleteApiSecretariesId>>
-		> & { swrKey?: string };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getDeleteApiSecretariesIdMutationKey(id);
-	const swrFn = getDeleteApiSecretariesIdMutationFetcher(id, requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Invite a secretary by email
  */
 export const postApiSecretariesInvites = (
@@ -179,6 +123,62 @@ export const usePostApiSecretariesInvites = <TError = unknown>(options?: {
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiSecretariesInvitesMutationKey();
 	const swrFn = getPostApiSecretariesInvitesMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Remove a secretary
+ */
+export const deleteApiSecretariesId = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiSecretariesId200>(
+		{ url: `/api/secretaries/${id}`, method: "DELETE" },
+		options,
+	);
+};
+
+export const getDeleteApiSecretariesIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return deleteApiSecretariesId(id, options);
+	};
+};
+export const getDeleteApiSecretariesIdMutationKey = (id: string) =>
+	[`/api/secretaries/${id}`] as const;
+
+export type DeleteApiSecretariesIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteApiSecretariesId>>
+>;
+
+/**
+ * @summary Remove a secretary
+ */
+export const useDeleteApiSecretariesId = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof deleteApiSecretariesId>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof deleteApiSecretariesId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getDeleteApiSecretariesIdMutationKey(id);
+	const swrFn = getDeleteApiSecretariesIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

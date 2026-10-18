@@ -7,14 +7,14 @@ import {
 	aiChatMessage,
 	consultationRecording,
 } from "@/db/schema";
-import { streamChatText } from "@/lib/ai";
+import { type ChatUsage, streamChatText } from "@/lib/ai";
 import { buildAssistantInstructions } from "@/lib/ai-assistant-prompt";
 import {
 	apiError,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { assertAiMessageAllowed } from "@/lib/plan-limits";
+import { assertAiAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────
 // Streams a chat completion from OpenRouter (DeepSeek) and persists the turn.
@@ -27,6 +27,13 @@ import { assertAiMessageAllowed } from "@/lib/plan-limits";
 //
 // Response: plain text stream of the assistant reply.
 // Header: X-Conversation-Id — the conversation id (new or existing).
+
+/**
+ * Only the latest turns go to the model: every message re-sends the history,
+ * so long chats would cost more per question without better answers. An
+ * attached transcript is part of the instructions and always included.
+ */
+const HISTORY_LIMIT = 20;
 
 const messageSchema = z.object({
 	role: z.enum(["user", "assistant"]),
@@ -74,7 +81,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		await assertAiMessageAllowed(profile.id);
+		await assertAiAllowed(profile.id);
 
 		// Resolve / create conversation
 		if (conversationId) {
@@ -125,10 +132,14 @@ export async function POST(req: NextRequest) {
 			.set({ updatedAt: new Date() })
 			.where(eq(aiChatConversation.id, conversationId));
 
+		let usage: ChatUsage | null = null;
 		const clientStream = streamChatText({
 			instructions: buildAssistantInstructions(transcriptContext),
-			messages,
+			messages: messages.slice(-HISTORY_LIMIT),
 			maxOutputTokens: 2048,
+			onUsage: (u) => {
+				usage = u;
+			},
 		});
 
 		const encoder = new TextEncoder();
@@ -144,10 +155,14 @@ export async function POST(req: NextRequest) {
 					}
 
 					if (assistantText.trim()) {
+						const used = usage as ChatUsage | null;
 						await db.insert(aiChatMessage).values({
 							conversationId: savedConversationId,
 							role: "assistant",
 							content: assistantText,
+							promptTokens: used?.promptTokens ?? null,
+							completionTokens: used?.completionTokens ?? null,
+							costMicroUsd: used?.costMicroUsd ?? null,
 						});
 						await db
 							.update(aiChatConversation)

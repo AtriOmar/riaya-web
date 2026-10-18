@@ -299,14 +299,18 @@ export async function chargeRecordingUsage(
 		});
 	});
 }
-/** User messages sent to the AI assistant in the current UTC calendar month. */
-export async function countAiMessagesThisMonth(
+// ─── AI assistant ─────────────────────────────────────────────────────────────
+// Measured in real model cost (OpenRouter bills each reply), so long chats with
+// a transcript count for more than quick questions.
+
+/** Model cost of the doctor's AI replies this UTC month, in millionths of a USD. */
+export async function getAiCostThisMonth(
 	doctorId: number,
 	period = getUtcCalendarMonthPeriod(),
 ): Promise<number> {
 	const [row] = await db
 		.select({
-			count: sql<number>`count(*)`,
+			micros: sql<string>`coalesce(sum(${aiChatMessage.costMicroUsd}), 0)`,
 		})
 		.from(aiChatMessage)
 		.innerJoin(
@@ -316,23 +320,30 @@ export async function countAiMessagesThisMonth(
 		.where(
 			and(
 				eq(aiChatConversation.doctorId, doctorId),
-				eq(aiChatMessage.role, "user"),
+				eq(aiChatMessage.role, "assistant"),
 				gte(aiChatMessage.createdAt, period.start),
 				lt(aiChatMessage.createdAt, period.end),
 			),
 		);
 
-	return Number(row?.count ?? 0);
+	return Number(row?.micros ?? 0);
 }
 
-export async function assertAiMessageAllowed(doctorId: number): Promise<void> {
-	const { plan } = await getEffectivePlan(doctorId);
-	const limit = plan.limits.aiMessagesPerMonth;
-	if (limit == null) return;
+/** Share of the month's AI budget used, 0–100. */
+function aiPercentUsed(costMicros: number, budgetMicros: number): number {
+	if (budgetMicros <= 0) return 100;
+	return Math.min(100, Math.round((costMicros / budgetMicros) * 100));
+}
 
-	const used = await countAiMessagesThisMonth(doctorId);
-	if (used >= limit) {
-		throwApiError("AI_MESSAGE_LIMIT_REACHED");
+/**
+ * Blocks a new question once the month's AI budget is spent. A reply's cost
+ * is only known afterwards, so the last one may go slightly over.
+ */
+export async function assertAiAllowed(doctorId: number): Promise<void> {
+	const { plan } = await getEffectivePlan(doctorId);
+	const used = await getAiCostThisMonth(doctorId);
+	if (used >= plan.limits.aiBudgetMicroUsdPerMonth) {
+		throwApiError("AI_USAGE_LIMIT_REACHED");
 	}
 }
 
@@ -340,22 +351,27 @@ export async function assertAiMessageAllowed(doctorId: number): Promise<void> {
 export async function getPlanUsage(doctorId: number) {
 	const period = getUtcCalendarMonthPeriod();
 	const { plan, planId, isPro } = await getEffectivePlan(doctorId);
-	const [whatsappSendsThisMonth, aiMessagesThisMonth, recordingTime] =
+	const [whatsappSendsThisMonth, aiCostMicros, recordingTime] =
 		await Promise.all([
 			getWhatsappSendsThisMonth(doctorId, period),
-			countAiMessagesThisMonth(doctorId, period),
+			getAiCostThisMonth(doctorId, period),
 			getRecordingTime(doctorId, plan, period),
 		]);
+	const aiBudget = plan.limits.aiBudgetMicroUsdPerMonth;
 
 	return {
 		planId,
 		isPro,
-		limits: plan.limits,
+		// The AI budget stays server-side; doctors see a percentage
+		limits: {
+			whatsappSendsPerMonth: plan.limits.whatsappSendsPerMonth,
+			recordingHoursPerMonth: plan.limits.recordingHoursPerMonth,
+		},
 		canBuyRecordingPacks: plan.canBuyRecordingPacks,
 		canBrandDocuments: plan.canBrandDocuments,
 		usage: {
 			whatsappSendsThisMonth,
-			aiMessagesThisMonth,
+			aiPercentUsed: aiPercentUsed(aiCostMicros, aiBudget),
 		},
 		recordingTime,
 		usagePeriod: {

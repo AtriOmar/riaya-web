@@ -22,6 +22,7 @@ export function UsageMeter({
 	used,
 	limit,
 	format = String,
+	detail,
 	children,
 }: {
 	label: string;
@@ -29,6 +30,8 @@ export function UsageMeter({
 	limit: number | null;
 	/** Formats `used` and `limit` for display (e.g. hours). */
 	format?: (n: number) => string;
+	/** Replaces the "x of y" line (e.g. "35% used") */
+	detail?: string;
 	/** Extra lines or actions under the label */
 	children?: ReactNode;
 }) {
@@ -86,9 +89,10 @@ export function UsageMeter({
 			<div className="min-w-0 space-y-1">
 				<p className="text-sm font-medium leading-snug">{label}</p>
 				<p className="text-sm text-muted-foreground tabular-nums">
-					{unlimited
-						? `${format(used)} used · Unlimited`
-						: `${format(used)} of ${format(limit ?? 0)}`}
+					{detail ??
+						(unlimited
+							? `${format(used)} used · Unlimited`
+							: `${format(used)} of ${format(limit ?? 0)}`)}
 				</p>
 				{children}
 			</div>

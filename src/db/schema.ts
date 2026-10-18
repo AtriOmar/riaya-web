@@ -747,6 +747,15 @@ export const aiChatMessage = pgTable(
 		// user | assistant
 		role: varchar("role", { length: 20 }).notNull(),
 		content: text("content").notNull(),
+		// streaming | done | stopped | failed. An assistant reply is created as
+		// `streaming` and its content saved as it is written, so it survives the
+		// doctor closing the page. User messages are always `done`.
+		status: varchar("status", { length: 20 }).notNull().default("done"),
+		// What generating an assistant reply used (null on user messages)
+		promptTokens: integer("prompt_tokens"),
+		completionTokens: integer("completion_tokens"),
+		// Millionths of a USD, as billed by OpenRouter
+		costMicroUsd: integer("cost_micro_usd"),
 		createdAt: timestamp("created_at").defaultNow(),
 	},
 	(table) => [
