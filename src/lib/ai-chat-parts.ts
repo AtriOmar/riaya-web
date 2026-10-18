@@ -346,7 +346,12 @@ export function applyReplyEvent(
 	parts: AiChatPart[],
 	event: ReplyEvent,
 ): AiChatPart[] {
-	if (event.type === "part") return parts.with(event.index, event.part);
+	if (event.type === "part") {
+		// A new part arrives at the next free index; `with` only replaces
+		return event.index < parts.length
+			? parts.with(event.index, event.part)
+			: [...parts, event.part];
+	}
 	const last = parts.at(-1);
 	return last?.type === "text"
 		? parts.with(-1, { ...last, text: last.text + event.delta })
