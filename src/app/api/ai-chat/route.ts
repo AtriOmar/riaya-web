@@ -31,6 +31,7 @@ import { assertAiAllowed } from "@/lib/plan-limits";
 //   conversationId?: number          — existing conversation (created if omitted)
 //   recordingId?: number             — optional recording link when creating
 //   transcriptContext?: string       — optional transcript injected as system context
+//   page?: string                    — dashboard path the side panel was opened on
 //
 // The history comes from the saved conversation, not from the client.
 // Response: one JSON `ReplyEvent` per line while the reply is written.
@@ -41,6 +42,8 @@ const bodySchema = z.object({
 	conversationId: z.number().int().positive().optional(),
 	recordingId: z.number().int().positive().optional(),
 	transcriptContext: z.string().optional(),
+	/** The dashboard path the side panel was opened on. */
+	page: z.string().max(300).optional(),
 });
 
 function titleFromMessage(message: string) {
@@ -62,7 +65,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const { message, transcriptContext } = parsed.data;
+		const { message, transcriptContext, page } = parsed.data;
 		let conversationId = parsed.data.conversationId ?? null;
 
 		await assertAiAllowed(profile.id);
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
 			messageId: reply.id,
 			conversationId,
 			doctorId: profile.id,
-			instructions: buildAssistantInstructions(transcriptContext),
+			instructions: buildAssistantInstructions(transcriptContext, page),
 			history: await buildModelHistory(conversationId, reply.id),
 			onEvent: send,
 		}).then(

@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAppContext } from "@/components/contexts/app-provider";
+import {
+	AiPanelProvider,
+	useAiPanel,
+} from "@/components/dashboard/ai-chat/ai-panel";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Button } from "@/components/ui/button";
@@ -171,8 +175,17 @@ function useCollapsedState() {
 }
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
+	return (
+		<AiPanelProvider>
+			<SidebarShell>{children}</SidebarShell>
+		</AiPanelProvider>
+	);
+}
+
+function SidebarShell({ children }: { children: React.ReactNode }) {
 	const { showMobileSidebar, setShowMobileSidebar, isMobile } = useAppContext();
 	const { collapsed, ready, toggle } = useCollapsedState();
+	const { docked } = useAiPanel();
 
 	return (
 		<>
@@ -230,6 +243,8 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 				className={cn(
 					"mt-[70px] transition-[margin] duration-200",
 					collapsed ? "md:ml-[98px]" : "md:ml-[260px]",
+					// Room for the docked AI panel (420px wide; the page keeps its own padding)
+					docked && "xl:mr-[420px]",
 				)}
 			>
 				{children}
