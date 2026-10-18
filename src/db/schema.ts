@@ -450,6 +450,71 @@ export const callEvent = pgTable(
 	],
 );
 
+// ─── Call Report ──────────────────────────────────────────────────────────────
+// Filed by the voice AI (`report_abuse`) when a caller is abusive. Admins review
+// it and either dismiss it or block the number (see `blockedPhone`).
+
+export const callReportCategories = [
+	"mocking",
+	"insults",
+	"threats",
+	"sexual",
+	"other",
+] as const;
+export type CallReportCategory = (typeof callReportCategories)[number];
+
+export const callReportStatuses = ["open", "dismissed", "blocked"] as const;
+export type CallReportStatus = (typeof callReportStatuses)[number];
+
+export const callReport = pgTable(
+	"call_report",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callId: integer("call_id")
+			.notNull()
+			.unique()
+			.references(() => call.id, { onDelete: "cascade" }),
+		// The caller's line (E.164). Kept here because on callbacks `call.from` is our number.
+		phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+		category: varchar("category", { length: 20 })
+			.$type<CallReportCategory>()
+			.notNull(),
+		summary: text("summary").notNull(),
+		status: varchar("status", { length: 20 })
+			.$type<CallReportStatus>()
+			.notNull()
+			.default("open"),
+		reviewedBy: text("reviewed_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		reviewedAt: timestamp("reviewed_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("call_report_status_idx").on(table.status),
+		index("call_report_phone_number_idx").on(table.phoneNumber),
+	],
+);
+
+// ─── Blocked Phone ────────────────────────────────────────────────────────────
+// Numbers the voice AI refuses to answer (Twilio <Reject> in /incoming-call).
+// Blocked while a row exists and `expiresAt` is null or in the future.
+
+export const blockedPhone = pgTable("blocked_phone", {
+	phoneNumber: varchar("phone_number", { length: 50 }).primaryKey(),
+	reason: text("reason"),
+	reportId: integer("report_id").references(() => callReport.id, {
+		onDelete: "set null",
+	}),
+	blockedBy: text("blocked_by").references(() => user.id, {
+		onDelete: "set null",
+	}),
+	expiresAt: timestamp("expires_at"),
+	rejectedCallCount: integer("rejected_call_count").notNull().default(0),
+	lastRejectedAt: timestamp("last_rejected_at"),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ─── Doctor Unavailability ────────────────────────────────────────────────────
 
 export const doctorUnavailability = pgTable(
@@ -793,6 +858,14 @@ export const callRelations = relations(call, ({ one, many }) => ({
 		references: [appointment.id],
 	}),
 	events: many(callEvent),
+	report: one(callReport),
+}));
+
+export const callReportRelations = relations(callReport, ({ one }) => ({
+	call: one(call, {
+		fields: [callReport.callId],
+		references: [call.id],
+	}),
 }));
 
 export const callEventRelations = relations(callEvent, ({ one }) => ({

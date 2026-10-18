@@ -193,6 +193,10 @@ This document is a compact project guide for AI assistants working on this repo.
 | `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
 | `POST /api/internal/caller/ai-appointments/list` | Internal secret | List AI appointments for caller phone (voice) |
 | `POST /api/internal/caller/ai-appointments/cancel` | Internal secret | Cancel pending AI appointment for caller phone (voice) |
+| `POST /api/internal/caller/blocked` | Internal secret | Is the caller blocked; counts the rejected attempt (voice `/incoming-call`) |
+| `POST /api/internal/calls/report` | Internal secret | File an abuse report for a call (voice `report_abuse`) |
+| `GET` `/api/call-reports`, `GET`/`PATCH /api/call-reports/[id]` | Admin | Review queue for reported calls; dismiss / reopen |
+| `GET`/`POST /api/blocked-phones`, `PATCH`/`DELETE /api/blocked-phones/[phone]` | Admin | Blocked numbers: block (7d / 30d / permanent), change duration, unblock |
 
 ## Environment Notes
 
@@ -269,6 +273,20 @@ Use these as examples before changing related code.
 - `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_person_id` (someone in PEOPLE ON THIS LINE) **or** `patient_relationship` (new family member), `patient_first_name`, `patient_last_name`, `illness`, `start`, `end`. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side. The prompt lists people on the line (`getPeopleOnLine` in `voice/src/api/callerPeopleApi.ts`).
 - `nextjsApi` (voice) always sends `x-internal-secret`; don't add it per call.
 - `end_call` — fixed goodbye then hangup.
+- `report_abuse` — files a `call_report` (`POST /api/internal/calls/report`), then hangs up like `end_call` with a neutral goodbye. The prompt (**Abusive callers** in `systemMessages.ts`) says: one warning for mocking/insults, right away for threats/sexual talk, never for confused or frustrated callers. The AI never blocks; admins do.
+
+### Abuse reports and blocked numbers
+
+- Tables: `call_report` (one per call, `open | dismissed | blocked`) and `blocked_phone` (E.164 PK, `expiresAt` null = permanent). A number is blocked while its row exists and has not expired (`activeBlock` in `web/src/lib/blocked-phone.ts`).
+- Blocking happens in voice `/incoming-call`, before any AI session: `isCallerBlocked` → Twilio `<Reject reason="busy"/>`. This covers the media-stream and LiveKit paths. The check **fails open** (about 1.5s timeout), so a Next outage never turns patients away.
+- Blocked numbers also get no pending-timeout WhatsApp message or callback.
+- Admin UI: `/admin/reports` (`components/admin/reports/*`): a review queue with recording + transcript, and a Blocked numbers tab. The sidebar badge shows open reports.
+
+### Silent callers and call length
+
+- `voice/src/sessions/callWatchdog.ts` (`CallWatchdog`), shared by the media-stream session and the LiveKit agent. Once the assistant is quiet, it waits `SILENCE_PROMPT_MS` (12s) and then asks once "are you still there?". If the caller stays silent for `SILENCE_HANGUP_MS` (10s) more, the assistant says goodbye and the call hangs up. At `MAX_CALL_MS` (15 min) any call ends with a polite goodbye.
+- Each path feeds it signals. Media stream: `CallerVoiceDetector` on the caller's audio, provider speech-started events, transcripts, Twilio playback marks, and tool calls. LiveKit: `UserStateChanged` and `AgentStateChanged`.
+- Spoken lines come from `buildWatchdogInstructions` and are sent through `RealtimeProvider.prompt()` (LiveKit: `generateReply`). Silent calls are logged as a `system` call event, not reported as abuse.
 
 Query helper: `web/src/lib/caller-ai-appointments.ts`.
 

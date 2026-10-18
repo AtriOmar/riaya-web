@@ -4,8 +4,12 @@ import {
 	aiChatConversation,
 	aiChatMessage,
 	appointment,
+	blockedPhone,
 	call,
 	callEvent,
+	callReport,
+	callReportCategories,
+	callReportStatuses,
 	cities,
 	consultationRecording,
 	doctorApplication,
@@ -76,10 +80,50 @@ export const selectDoctorApplicationWithRelationsSchema =
 	);
 export const selectCallSchema = createSelectSchema(call);
 export const selectCallEventSchema = createSelectSchema(callEvent);
+export const selectCallReportSchema = createSelectSchema(callReport, {
+	category: z.enum(callReportCategories),
+	status: z.enum(callReportStatuses),
+});
+export const selectBlockedPhoneSchema = createSelectSchema(blockedPhone);
 export const selectCallWithEventsSchema = selectCallSchema.merge(
 	z.object({
 		events: z.array(selectCallEventSchema),
+		report: selectCallReportSchema
+			.pick({ id: true, category: true, status: true })
+			.nullable(),
 	}),
+);
+
+/** What admins see about a reported number across all its calls. */
+export const callReportNumberSchema = z.object({
+	reportCount: z.number().int(),
+	callCount: z.number().int(),
+	blocked: z.boolean(),
+});
+
+export const selectCallReportListItemSchema = selectCallReportSchema.merge(
+	z.object({
+		call: selectCallSchema.pick({
+			id: true,
+			startedAt: true,
+			duration: true,
+			recordingUrl: true,
+		}),
+		number: callReportNumberSchema,
+	}),
+);
+
+export const selectCallReportDetailSchema = selectCallReportSchema.merge(
+	z.object({
+		call: selectCallWithEventsSchema.omit({ report: true }),
+		number: callReportNumberSchema,
+		otherReports: z.array(selectCallReportSchema),
+		block: selectBlockedPhoneSchema.nullable(),
+	}),
+);
+
+export const selectBlockedPhoneListItemSchema = selectBlockedPhoneSchema.merge(
+	z.object({ blockedByName: z.string().nullable() }),
 );
 
 export const selectDoctorProfileWithRelationsSchema =

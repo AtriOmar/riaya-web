@@ -53,6 +53,8 @@ export type CallData = {
 	duration?: number | null;
 	status: "active" | "ended";
 	recordingUrl?: string | null;
+	/** The AI reported this caller as abusive (see `report_abuse`). */
+	reported?: boolean;
 	timeline: TimelineEntry[];
 };
 
@@ -85,7 +87,7 @@ type WsMessage =
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function dbEventToTimeline(
+export function dbEventToTimeline(
 	event: GetApiCalls200ItemEventsItem,
 ): TimelineEntry | null {
 	const timestamp = event.timestamp
@@ -159,6 +161,7 @@ function dbCallToData(row: GetApiCalls200Item): CallData {
 		duration: row.duration ?? null,
 		status: row.status === "in-progress" ? "active" : "ended",
 		recordingUrl: row.recordingUrl ?? null,
+		reported: row.report != null,
 		timeline,
 	};
 }
@@ -439,6 +442,7 @@ export default function useRealtimeSocket() {
 						};
 						next.set(msg.callSid, {
 							...call,
+							reported: call.reported || msg.name === "report_abuse",
 							timeline: appendTimeline(call.timeline, entry),
 						});
 						return next;

@@ -10,6 +10,7 @@ import {
 	requireInternal,
 	validationError,
 } from "@/lib/api-utils";
+import { isPhoneBlocked } from "@/lib/blocked-phone";
 import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
@@ -81,7 +82,8 @@ export async function POST(req: NextRequest) {
 			}
 
 			const { name, phone } = patientLabel(row);
-			if (!phone) {
+			// Blocked numbers get no WhatsApp message or callback.
+			if (!phone || (await isPhoneBlocked(phone))) {
 				return json({ success: true, cancelled: true, notified: false });
 			}
 
@@ -144,7 +146,8 @@ export async function POST(req: NextRequest) {
 				);
 
 			const { name, phone } = patientLabel(row);
-			if (!phone) {
+			// Blocked numbers get no WhatsApp message or callback.
+			if (!phone || (await isPhoneBlocked(phone))) {
 				return json({ success: true, cancelled: true, notified: false });
 			}
 
@@ -198,7 +201,8 @@ export async function POST(req: NextRequest) {
 
 		const sample = pendingRows[0];
 		const { name, phone } = patientLabel(sample);
-		if (!phone) {
+		// Blocked numbers get no WhatsApp message or callback.
+		if (!phone || (await isPhoneBlocked(phone))) {
 			return json({ success: true, cancelled: true, notified: false });
 		}
 

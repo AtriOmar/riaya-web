@@ -18,6 +18,7 @@ export async function GET() {
 				events: {
 					orderBy: (e, { asc }) => [asc(e.timestamp)],
 				},
+				report: { columns: { id: true, category: true, status: true } },
 			},
 		});
 
