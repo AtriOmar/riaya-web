@@ -68,17 +68,17 @@ export default function ReviewPage() {
 
 	if (isSuccess) {
 		return (
-			<div className="relative flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+			<div className="relative flex justify-center items-center bg-primary-50 dark:bg-slate-950 p-4 min-h-screen">
 				<div className="top-4 right-4 z-20 absolute">
 					<ThemeToggle />
 				</div>
-				<div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-900/20 to-indigo-100 dark:to-indigo-900/20 opacity-50 pointer-events-none" />
+				<div className="absolute inset-0 bg-gradient-to-br from-primary-100 dark:from-primary-900/20 to-primary-50 dark:to-primary-800/20 opacity-50 pointer-events-none" />
 				<Card className="z-10 relative bg-white/80 dark:bg-slate-900/80 shadow-2xl backdrop-blur-xl border-0 w-full max-w-md animate-fade-in-up glassmorphism">
 					<CardHeader className="pt-12 pb-8 text-center">
 						<div className="flex justify-center items-center bg-green-100 dark:bg-green-900/30 mx-auto mb-6 rounded-full w-20 h-20">
 							<Star className="fill-green-600 dark:fill-green-400 w-10 h-10 text-green-600 dark:text-green-400 animate-bounce" />
 						</div>
-						<CardTitle className="bg-clip-text bg-gradient-to-r from-blue-600 dark:from-blue-400 to-indigo-600 dark:to-indigo-400 font-bold text-transparent text-3xl">
+						<CardTitle className="font-bold text-primary-600 dark:text-primary-400 text-3xl">
 							Thank You!
 						</CardTitle>
 						<CardDescription className="mt-2 text-slate-600 dark:text-slate-300 text-lg">
@@ -91,14 +91,14 @@ export default function ReviewPage() {
 	}
 
 	return (
-		<div className="relative flex justify-center items-center bg-slate-50 dark:bg-slate-950 p-4 min-h-screen">
+		<div className="relative flex justify-center items-center bg-primary-50 dark:bg-slate-950 p-4 min-h-screen">
 			<div className="top-4 right-4 z-20 absolute">
 				<ThemeToggle />
 			</div>
-			<div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-900/20 to-indigo-100 dark:to-indigo-900/20 opacity-50 pointer-events-none" />
+			<div className="absolute inset-0 bg-gradient-to-br from-primary-100 dark:from-primary-900/20 to-primary-50 dark:to-primary-800/20 opacity-50 pointer-events-none" />
 
 			<Card className="z-10 relative bg-white/80 dark:bg-slate-900/80 shadow-2xl backdrop-blur-xl border-0 w-full max-w-md overflow-hidden animate-fade-in-up glassmorphism">
-				<div className="top-0 left-0 absolute bg-gradient-to-r from-blue-600 to-indigo-600 w-full h-2" />
+				<div className="top-0 left-0 absolute bg-primary w-full h-2" />
 				<CardHeader className="pb-6 text-center">
 					<CardTitle className="font-bold text-slate-900 dark:text-white text-2xl">
 						Rate your visit
@@ -163,8 +163,8 @@ export default function ReviewPage() {
 										className={cn(
 											"px-2 py-3 border-2 rounded-xl text-center transition-all duration-200 cursor-pointer",
 											waitTime === option.value
-												? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300 font-semibold shadow-sm transform scale-105"
-												: "border-slate-200 bg-white text-slate-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400",
+												? "border-primary bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:border-primary-400 dark:text-primary-300 font-semibold shadow-sm transform scale-105"
+												: "border-slate-200 bg-white text-slate-600 hover:border-primary-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400",
 										)}
 									>
 										{option.label}
@@ -183,7 +183,7 @@ export default function ReviewPage() {
 							</Label>
 							<Textarea
 								placeholder="Tell us what you liked or how we can improve..."
-								className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-slate-200 focus:border-blue-500 dark:border-slate-800 rounded-xl focus:ring-blue-500/20 h-32 transition-all resize-none"
+								className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-slate-200 focus:border-primary dark:border-slate-800 rounded-xl focus:ring-primary/20 h-32 transition-all resize-none"
 								value={comment}
 								onChange={(e) => setComment(e.target.value)}
 							/>
@@ -192,7 +192,7 @@ export default function ReviewPage() {
 						<Button
 							type="submit"
 							disabled={isSubmitting}
-							className="bg-gradient-to-r from-blue-600 hover:from-blue-700 to-indigo-600 hover:to-indigo-700 shadow-blue-500/25 shadow-lg py-6 rounded-xl w-full text-white text-lg transition-all hover:-translate-y-1 duration-300 transform"
+							className="bg-primary hover:bg-primary-600 shadow-primary/25 shadow-lg py-6 rounded-xl w-full text-white text-lg transition-all hover:-translate-y-1 duration-300 transform"
 						>
 							{isSubmitting ? "Submitting..." : "Submit Review"}
 						</Button>
