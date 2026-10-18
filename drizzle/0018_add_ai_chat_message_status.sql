@@ -1,0 +1,1 @@
+ALTER TABLE "ai_chat_message" ADD COLUMN "status" varchar(20) DEFAULT 'done' NOT NULL;

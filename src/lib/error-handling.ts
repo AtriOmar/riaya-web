@@ -29,6 +29,8 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	APPOINTMENT_CONFLICT:
 		"This time slot conflicts with an existing appointment.",
 	EMAIL_ALREADY_EXISTS: "An account with this email already exists.",
+	AI_REPLY_IN_PROGRESS:
+		"The assistant is still answering. Wait for it to finish or stop it.",
 	APPOINTMENT_NOT_FOUND: "Appointment not found.",
 	PATIENT_NOT_FOUND: "Patient not found.",
 	MEDICAL_FILE_NOT_FOUND: "Medical file not found.",

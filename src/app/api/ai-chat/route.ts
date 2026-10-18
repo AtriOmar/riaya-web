@@ -7,8 +7,12 @@ import {
 	aiChatMessage,
 	consultationRecording,
 } from "@/db/schema";
-import { type ChatUsage, streamChatText } from "@/lib/ai";
 import { buildAssistantInstructions } from "@/lib/ai-assistant-prompt";
+import {
+	expireStaleReplies,
+	generateAssistantReply,
+	hasReplyInProgress,
+} from "@/lib/ai-chat-reply";
 import {
 	apiError,
 	requireDoctorProfile,
@@ -17,7 +21,8 @@ import {
 import { assertAiAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────
-// Streams a chat completion from OpenRouter (DeepSeek) and persists the turn.
+// Starts an assistant reply (see lib/ai-chat-reply.ts) and streams it back.
+// The reply is saved even if the client disconnects.
 //
 // Body:
 //   messages: ChatMessage[]          — full history including the new user message
@@ -121,62 +126,76 @@ export async function POST(req: NextRequest) {
 			conversationId = created.id;
 		}
 
-		// Persist the user turn
+		await expireStaleReplies(conversationId);
+		if (await hasReplyInProgress(conversationId)) {
+			return apiError("AI_REPLY_IN_PROGRESS");
+		}
+
+		// Persist the user turn, then the reply as `streaming`
 		await db.insert(aiChatMessage).values({
 			conversationId,
 			role: "user",
 			content: lastUser.content,
 		});
+		const [reply] = await db
+			.insert(aiChatMessage)
+			.values({
+				conversationId,
+				role: "assistant",
+				content: "",
+				status: "streaming",
+			})
+			.returning({ id: aiChatMessage.id });
 		await db
 			.update(aiChatConversation)
 			.set({ updatedAt: new Date() })
 			.where(eq(aiChatConversation.id, conversationId));
 
-		let usage: ChatUsage | null = null;
-		const clientStream = streamChatText({
-			instructions: buildAssistantInstructions(transcriptContext),
-			messages: messages.slice(-HISTORY_LIMIT),
-			maxOutputTokens: 2048,
-			onUsage: (u) => {
-				usage = u;
-			},
-		});
-
+		// The reply is generated on its own and keeps going if the doctor leaves;
+		// this response only mirrors it while the page is open.
 		const encoder = new TextEncoder();
-		const savedConversationId = conversationId;
-
-		const readable = new ReadableStream({
-			async start(controller) {
-				let assistantText = "";
-				try {
-					for await (const delta of clientStream) {
-						assistantText += delta;
-						controller.enqueue(encoder.encode(delta));
-					}
-
-					if (assistantText.trim()) {
-						const used = usage as ChatUsage | null;
-						await db.insert(aiChatMessage).values({
-							conversationId: savedConversationId,
-							role: "assistant",
-							content: assistantText,
-							promptTokens: used?.promptTokens ?? null,
-							completionTokens: used?.completionTokens ?? null,
-							costMicroUsd: used?.costMicroUsd ?? null,
-						});
-						await db
-							.update(aiChatConversation)
-							.set({ updatedAt: new Date() })
-							.where(eq(aiChatConversation.id, savedConversationId));
-					}
-				} catch (err) {
-					console.error("AI chat stream error:", err);
-					controller.error(err);
-					return;
-				}
-				controller.close();
+		let client: ReadableStreamDefaultController<Uint8Array> | null = null;
+		const readable = new ReadableStream<Uint8Array>({
+			start(controller) {
+				client = controller;
+			},
+			cancel() {
+				client = null;
 			},
 		});
+
+		const savedConversationId = conversationId;
+		void generateAssistantReply({
+			messageId: reply.id,
+			conversationId,
+			instructions: buildAssistantInstructions(transcriptContext),
+			// Empty turns are failed or stopped-before-any-text replies
+			messages: messages.filter((m) => m.content.trim()).slice(-HISTORY_LIMIT),
+			onDelta: (delta) => {
+				try {
+					client?.enqueue(encoder.encode(delta));
+				} catch {
+					client = null;
+				}
+			},
+		}).then(
+			(status) => {
+				try {
+					if (status === "failed") client?.error(new Error("Reply failed"));
+					else client?.close();
+				} catch {
+					// The page already went away
+				}
+			},
+			(err) => {
+				console.error("AI chat reply error:", err);
+				try {
+					client?.error(err);
+				} catch {
+					// The page already went away
+				}
+			},
+		);
 
 		return new Response(readable, {
 			headers: {

@@ -6170,6 +6170,17 @@ export type PostApiUsersPicture200 = {
 	updatedAt: string;
 };
 
+export type GetApiAiChatConversationsId200MessagesItemStatus =
+	(typeof GetApiAiChatConversationsId200MessagesItemStatus)[keyof typeof GetApiAiChatConversationsId200MessagesItemStatus];
+
+export const GetApiAiChatConversationsId200MessagesItemStatus = {
+	streaming: "streaming",
+	stopping: "stopping",
+	done: "done",
+	stopped: "stopped",
+	failed: "failed",
+} as const;
+
 export type GetApiAiChatConversationsId200MessagesItem = {
 	/**
 	 * @minimum -2147483648
@@ -6184,6 +6195,7 @@ export type GetApiAiChatConversationsId200MessagesItem = {
 	/** @maxLength 20 */
 	role: string;
 	content: string;
+	status: GetApiAiChatConversationsId200MessagesItemStatus;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -6305,6 +6317,10 @@ export type PatchApiAiChatConversationsId200 = {
 };
 
 export type DeleteApiAiChatConversationsId200 = {
+	message: string;
+};
+
+export type PostApiAiChatConversationsIdStop200 = {
 	message: string;
 };
 

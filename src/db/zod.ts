@@ -4,6 +4,7 @@ import { PLAN_IDS } from "@/lib/plans";
 import {
 	aiChatConversation,
 	aiChatMessage,
+	aiChatMessageStatuses,
 	appointment,
 	billingInvoice,
 	blockedPhone,
@@ -264,7 +265,9 @@ export const selectConsultationRecordingWithPatientSchema =
 		}),
 	);
 
-export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage);
+export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage, {
+	status: z.enum(aiChatMessageStatuses),
+});
 export const selectAiChatConversationSchema =
 	createSelectSchema(aiChatConversation);
 

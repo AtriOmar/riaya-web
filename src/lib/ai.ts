@@ -58,19 +58,24 @@ export async function* streamChatText(options: {
 	messages: { role: "user" | "assistant"; content: string }[];
 	maxOutputTokens?: number;
 	onUsage?: (usage: ChatUsage) => void;
+	/** Aborting ends the request to the model. */
+	signal?: AbortSignal;
 }): AsyncGenerator<string> {
 	const client = createChatClient();
 
-	const stream = await client.chat.completions.create({
-		model: CHAT_MODEL,
-		messages: [
-			{ role: "system", content: options.instructions },
-			...options.messages,
-		],
-		stream: true,
-		stream_options: { include_usage: true },
-		max_tokens: options.maxOutputTokens ?? 2048,
-	});
+	const stream = await client.chat.completions.create(
+		{
+			model: CHAT_MODEL,
+			messages: [
+				{ role: "system", content: options.instructions },
+				...options.messages,
+			],
+			stream: true,
+			stream_options: { include_usage: true },
+			max_tokens: options.maxOutputTokens ?? 2048,
+		},
+		{ signal: options.signal },
+	);
 
 	for await (const chunk of stream) {
 		const delta = chunk.choices[0]?.delta?.content;

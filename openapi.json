@@ -12055,6 +12055,16 @@
                           "content": {
                             "type": "string"
                           },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "streaming",
+                              "stopping",
+                              "done",
+                              "stopped",
+                              "failed"
+                            ]
+                          },
                           "promptTokens": {
                             "type": "integer",
                             "nullable": true,
@@ -12084,6 +12094,7 @@
                           "conversationId",
                           "role",
                           "content",
+                          "status",
                           "promptTokens",
                           "completionTokens",
                           "costMicroUsd",
@@ -12266,6 +12277,44 @@
         "responses": {
           "200": {
             "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai-chat/conversations/{id}/stop": {
+      "post": {
+        "tags": [
+          "AiChat"
+        ],
+        "summary": "Stop the conversation's assistant reply that is being written",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stopped (or nothing was being written)",
             "content": {
               "application/json": {
                 "schema": {

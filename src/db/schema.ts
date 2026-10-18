@@ -737,6 +737,21 @@ export const aiChatConversation = pgTable(
 	],
 );
 
+export const aiChatMessageStatuses = [
+	"streaming",
+	// Stop was asked for; the generator saves the final text and sets `stopped`
+	"stopping",
+	"done",
+	"stopped",
+	"failed",
+] as const;
+export type AiChatMessageStatus = (typeof aiChatMessageStatuses)[number];
+/** A reply that is still being written (polled by the page). */
+export const liveAiChatMessageStatuses: AiChatMessageStatus[] = [
+	"streaming",
+	"stopping",
+];
+
 export const aiChatMessage = pgTable(
 	"ai_chat_message",
 	{
@@ -747,10 +762,13 @@ export const aiChatMessage = pgTable(
 		// user | assistant
 		role: varchar("role", { length: 20 }).notNull(),
 		content: text("content").notNull(),
-		// streaming | done | stopped | failed. An assistant reply is created as
+		// An assistant reply is created as
 		// `streaming` and its content saved as it is written, so it survives the
 		// doctor closing the page. User messages are always `done`.
-		status: varchar("status", { length: 20 }).notNull().default("done"),
+		status: varchar("status", { length: 20 })
+			.$type<AiChatMessageStatus>()
+			.notNull()
+			.default("done"),
 		// What generating an assistant reply used (null on user messages)
 		promptTokens: integer("prompt_tokens"),
 		completionTokens: integer("completion_tokens"),
