@@ -1,4 +1,3 @@
-import { and, eq, ilike, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -9,6 +8,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { searchPatients } from "@/lib/patients";
 import { familyRelationships, resolveDoctorPatientPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 import { requirePractice } from "@/lib/practice";
@@ -42,28 +42,7 @@ export async function GET(req: NextRequest) {
 
 		// Doctor's own patients
 		const { doctor: profile } = await requirePractice();
-		const search = parsed.data.search;
-
-		const patients = await db
-			.select({
-				id: patient.id,
-				firstName: patient.firstName,
-				lastName: patient.lastName,
-				cin: patient.cin,
-				dateOfBirth: patient.dateOfBirth,
-			})
-			.from(patient)
-			.where(
-				search
-					? and(
-							eq(patient.doctorId, profile.id),
-							or(
-								ilike(patient.firstName, `%${search}%`),
-								ilike(patient.lastName, `%${search}%`),
-							),
-						)
-					: eq(patient.doctorId, profile.id),
-			);
+		const patients = await searchPatients(profile.id, parsed.data.search);
 
 		return json(patients);
 	} catch (e) {

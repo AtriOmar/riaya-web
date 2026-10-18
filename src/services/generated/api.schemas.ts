@@ -2098,8 +2098,6 @@ export type GetApiAiChatConversations200Item = {
 	/** @nullable */
 	updatedAt: string | null;
 	messageCount: number;
-	/** @nullable */
-	preview: string | null;
 };
 
 export type PostApiAiChatConversationsBody = {
@@ -6319,6 +6317,400 @@ export type PostApiTestCallSettings200 = {
 	ok: boolean;
 };
 
+export type GetApiAiChatConversationsId200MessagesItemPartsItem =
+	| {
+			type: "text";
+			text: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_schedule";
+			status: "running" | "done" | "error";
+			args: {
+				/**
+				 * First day, YYYY-MM-DD
+				 * @pattern ^\d{4}-\d{2}-\d{2}$
+				 */
+				from: string;
+				/**
+				 * Last day (inclusive), YYYY-MM-DD
+				 * @pattern ^\d{4}-\d{2}-\d{2}$
+				 */
+				to: string;
+			};
+			result?: {
+				from: string;
+				to: string;
+				appointments: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_pending_bookings";
+			status: "running" | "done" | "error";
+			args: { [key: string]: unknown };
+			result?: {
+				appointments: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "search_patients";
+			status: "running" | "done" | "error";
+			args: {
+				/**
+				 * Name or CIN, or part of it
+				 * @minLength 1
+				 */
+				query: string;
+			};
+			result?: {
+				query: string;
+				patients: {
+					id: number;
+					/** @nullable */
+					firstName: string | null;
+					/** @nullable */
+					lastName: string | null;
+					/** @nullable */
+					cin: string | null;
+					/** @nullable */
+					dateOfBirth: string | null;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_patient_summary";
+			status: "running" | "done" | "error";
+			args: {
+				/** @exclusiveMinimum 0 */
+				patientId: number;
+			};
+			result?: {
+				patient: {
+					id: number;
+					/** @nullable */
+					firstName: string | null;
+					/** @nullable */
+					lastName: string | null;
+					/** @nullable */
+					cin: string | null;
+					/** @nullable */
+					dateOfBirth: string | null;
+					/** @nullable */
+					phoneNumber: string | null;
+				};
+				appointments: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				}[];
+				medicalFiles: {
+					id: number;
+					/** @nullable */
+					type: string | null;
+					/** @nullable */
+					title: string | null;
+					/** @nullable */
+					date: string | null;
+					/** @nullable */
+					description: string | null;
+				}[];
+				recordings: {
+					id: number;
+					/** @nullable */
+					title: string | null;
+					/** @nullable */
+					date: string | null;
+					/** @nullable */
+					summary: {
+						reason: string;
+						history: string;
+						examination: string;
+						assessment: string;
+						plan: string;
+					} | null;
+				}[];
+				unpaidInvoices: {
+					id: number;
+					number: string;
+					status: string;
+					totalCentimes: number;
+					amountPaidCentimes: number;
+					/** @nullable */
+					issuedAt: string | null;
+					patientId: number;
+					patientName: string;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_free_slots";
+			status: "running" | "done" | "error";
+			args: {
+				/**
+				 * Day, YYYY-MM-DD
+				 * @pattern ^\d{4}-\d{2}-\d{2}$
+				 */
+				date: string;
+			};
+			result?: {
+				date: string;
+				slots: {
+					start: string;
+					end: string;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_invoices";
+			status: "running" | "done" | "error";
+			args: {
+				status?: "unpaid" | "partially_paid" | "paid" | "cancelled";
+				/** @exclusiveMinimum 0 */
+				patientId?: number;
+			};
+			result?: {
+				invoices: {
+					id: number;
+					number: string;
+					status: string;
+					totalCentimes: number;
+					amountPaidCentimes: number;
+					/** @nullable */
+					issuedAt: string | null;
+					patientId: number;
+					patientName: string;
+				}[];
+			};
+			error?: string;
+	  }
+	| {
+			type: "tool";
+			id: string;
+			name: "get_practice_stats";
+			status: "running" | "done" | "error";
+			args: { [key: string]: unknown };
+			result?: {
+				patients: number;
+				appointmentsToday: number;
+				appointmentsThisWeek: number;
+				pendingAppointments: number;
+				unpaidInvoices: number;
+				collectedThisMonthCentimes: number;
+				outstandingCentimes: number;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_invoice";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				/** @nullable */
+				appointmentId: number | null;
+				/** @minItems 1 */
+				items: {
+					/** @minLength 1 */
+					description: string;
+					/** @exclusiveMinimum 0 */
+					quantity: number;
+					/** @minimum 0 */
+					unitPriceCentimes: number;
+				}[];
+				notes: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_booking_decision";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				decision: "accept" | "refuse";
+				appointment: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				};
+				/** @nullable */
+				newPatient: {
+					firstName: string;
+					lastName: string;
+				} | null;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_medical_note";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				type: "consultation" | "prescription" | "lab-report";
+				/** @minLength 1 */
+				title: string;
+				/** @minLength 1 */
+				description: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_appointment";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				start: string;
+				end: string;
+				/** @minLength 1 */
+				name: string;
+				description: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_reschedule";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				appointment: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				};
+				start: string;
+				end: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  };
+
 export type GetApiAiChatConversationsId200MessagesItemStatus =
 	(typeof GetApiAiChatConversationsId200MessagesItemStatus)[keyof typeof GetApiAiChatConversationsId200MessagesItemStatus];
 
@@ -6343,7 +6735,7 @@ export type GetApiAiChatConversationsId200MessagesItem = {
 	conversationId: number;
 	/** @maxLength 20 */
 	role: string;
-	content: string;
+	parts: GetApiAiChatConversationsId200MessagesItemPartsItem[];
 	status: GetApiAiChatConversationsId200MessagesItemStatus;
 	/**
 	 * @minimum -2147483648
@@ -7917,3 +8309,253 @@ export type PostApiInternalCallerAiAppointmentsCancel200 = {
 	/** @nullable */
 	status: string | null;
 };
+
+export type PatchApiAiChatMessagesIdPartsPartIdBody =
+	| {
+			status: "confirmed";
+			proposal?:
+				| {
+						patientId: number;
+						patientName: string;
+						/** @nullable */
+						appointmentId: number | null;
+						/** @minItems 1 */
+						items: {
+							/** @minLength 1 */
+							description: string;
+							/** @exclusiveMinimum 0 */
+							quantity: number;
+							/** @minimum 0 */
+							unitPriceCentimes: number;
+						}[];
+						notes: string;
+				  }
+				| {
+						decision: "accept" | "refuse";
+						appointment: {
+							id: number;
+							/** @nullable */
+							start: string | null;
+							/** @nullable */
+							end: string | null;
+							/** @nullable */
+							status: string | null;
+							source: string;
+							urgent: boolean;
+							/** @nullable */
+							name: string | null;
+							/** @nullable */
+							description: string | null;
+							/** @nullable */
+							patientId: number | null;
+							patientName: string;
+						};
+						/** @nullable */
+						newPatient: {
+							firstName: string;
+							lastName: string;
+						} | null;
+				  }
+				| {
+						patientId: number;
+						patientName: string;
+						type: "consultation" | "prescription" | "lab-report";
+						/** @minLength 1 */
+						title: string;
+						/** @minLength 1 */
+						description: string;
+				  }
+				| {
+						patientId: number;
+						patientName: string;
+						start: string;
+						end: string;
+						/** @minLength 1 */
+						name: string;
+						description: string;
+				  }
+				| {
+						appointment: {
+							id: number;
+							/** @nullable */
+							start: string | null;
+							/** @nullable */
+							end: string | null;
+							/** @nullable */
+							status: string | null;
+							source: string;
+							urgent: boolean;
+							/** @nullable */
+							name: string | null;
+							/** @nullable */
+							description: string | null;
+							/** @nullable */
+							patientId: number | null;
+							patientName: string;
+						};
+						start: string;
+						end: string;
+				  };
+			outcome: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+	  }
+	| {
+			status: "dismissed";
+	  }
+	| {
+			status: "failed";
+			/** @minLength 1 */
+			error: string;
+	  };
+
+export type PatchApiAiChatMessagesIdPartsPartId200 =
+	| {
+			type: "action";
+			id: string;
+			name: "propose_invoice";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				/** @nullable */
+				appointmentId: number | null;
+				/** @minItems 1 */
+				items: {
+					/** @minLength 1 */
+					description: string;
+					/** @exclusiveMinimum 0 */
+					quantity: number;
+					/** @minimum 0 */
+					unitPriceCentimes: number;
+				}[];
+				notes: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_booking_decision";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				decision: "accept" | "refuse";
+				appointment: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				};
+				/** @nullable */
+				newPatient: {
+					firstName: string;
+					lastName: string;
+				} | null;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_medical_note";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				type: "consultation" | "prescription" | "lab-report";
+				/** @minLength 1 */
+				title: string;
+				/** @minLength 1 */
+				description: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_appointment";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				patientId: number;
+				patientName: string;
+				start: string;
+				end: string;
+				/** @minLength 1 */
+				name: string;
+				description: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  }
+	| {
+			type: "action";
+			id: string;
+			name: "propose_reschedule";
+			status: "proposed" | "confirmed" | "dismissed" | "failed";
+			proposal: {
+				appointment: {
+					id: number;
+					/** @nullable */
+					start: string | null;
+					/** @nullable */
+					end: string | null;
+					/** @nullable */
+					status: string | null;
+					source: string;
+					urgent: boolean;
+					/** @nullable */
+					name: string | null;
+					/** @nullable */
+					description: string | null;
+					/** @nullable */
+					patientId: number | null;
+					patientName: string;
+				};
+				start: string;
+				end: string;
+			};
+			warnings: string[];
+			outcome?: {
+				kind: "invoice" | "appointment" | "medical_file";
+				id: number;
+				label: string;
+			};
+			error?: string;
+	  };

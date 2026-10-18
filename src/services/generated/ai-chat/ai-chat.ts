@@ -17,6 +17,8 @@ import type {
 	GetApiAiChatConversationsId200,
 	PatchApiAiChatConversationsId200,
 	PatchApiAiChatConversationsIdBody,
+	PatchApiAiChatMessagesIdPartsPartId200,
+	PatchApiAiChatMessagesIdPartsPartIdBody,
 	PostApiAiChatConversations201,
 	PostApiAiChatConversationsBody,
 	PostApiAiChatConversationsIdStop200,
@@ -365,6 +367,82 @@ export const usePostApiAiChatConversationsIdStop = <TError = unknown>(
 		swrOptions?.swrKey ?? getPostApiAiChatConversationsIdStopMutationKey(id);
 	const swrFn = getPostApiAiChatConversationsIdStopMutationFetcher(
 		id,
+		requestOptions,
+	);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Record the doctor's decision on an action the assistant proposed
+ */
+export const patchApiAiChatMessagesIdPartsPartId = (
+	id: string,
+	partId: string,
+	patchApiAiChatMessagesIdPartsPartIdBody?: PatchApiAiChatMessagesIdPartsPartIdBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiAiChatMessagesIdPartsPartId200>(
+		{
+			url: `/api/ai-chat/messages/${id}/parts/${partId}`,
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			data: patchApiAiChatMessagesIdPartsPartIdBody,
+		},
+		options,
+	);
+};
+
+export const getPatchApiAiChatMessagesIdPartsPartIdMutationFetcher = (
+	id: string,
+	partId: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PatchApiAiChatMessagesIdPartsPartIdBody | undefined },
+	) => {
+		return patchApiAiChatMessagesIdPartsPartId(id, partId, arg, options);
+	};
+};
+export const getPatchApiAiChatMessagesIdPartsPartIdMutationKey = (
+	id: string,
+	partId: string,
+) => [`/api/ai-chat/messages/${id}/parts/${partId}`] as const;
+
+export type PatchApiAiChatMessagesIdPartsPartIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchApiAiChatMessagesIdPartsPartId>>
+>;
+
+/**
+ * @summary Record the doctor's decision on an action the assistant proposed
+ */
+export const usePatchApiAiChatMessagesIdPartsPartId = <TError = unknown>(
+	id: string,
+	partId: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof patchApiAiChatMessagesIdPartsPartId>>,
+			TError,
+			Key,
+			PatchApiAiChatMessagesIdPartsPartIdBody | undefined,
+			Awaited<ReturnType<typeof patchApiAiChatMessagesIdPartsPartId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ??
+		getPatchApiAiChatMessagesIdPartsPartIdMutationKey(id, partId);
+	const swrFn = getPatchApiAiChatMessagesIdPartsPartIdMutationFetcher(
+		id,
+		partId,
 		requestOptions,
 	);
 

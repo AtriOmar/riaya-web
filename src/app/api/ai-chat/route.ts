@@ -8,7 +8,9 @@ import {
 	consultationRecording,
 } from "@/db/schema";
 import { buildAssistantInstructions } from "@/lib/ai-assistant-prompt";
+import type { ReplyEvent } from "@/lib/ai-chat-parts";
 import {
+	buildModelHistory,
 	expireStaleReplies,
 	generateAssistantReply,
 	hasReplyInProgress,
@@ -25,39 +27,24 @@ import { assertAiAllowed } from "@/lib/plan-limits";
 // The reply is saved even if the client disconnects.
 //
 // Body:
-//   messages: ChatMessage[]          — full history including the new user message
+//   message: string                  — the doctor's new message
 //   conversationId?: number          — existing conversation (created if omitted)
 //   recordingId?: number             — optional recording link when creating
 //   transcriptContext?: string       — optional transcript injected as system context
 //
-// Response: plain text stream of the assistant reply.
+// The history comes from the saved conversation, not from the client.
+// Response: one JSON `ReplyEvent` per line while the reply is written.
 // Header: X-Conversation-Id — the conversation id (new or existing).
 
-/**
- * Only the latest turns go to the model: every message re-sends the history,
- * so long chats would cost more per question without better answers. An
- * attached transcript is part of the instructions and always included.
- */
-const HISTORY_LIMIT = 20;
-
-const messageSchema = z.object({
-	role: z.enum(["user", "assistant"]),
-	content: z.string(),
-});
-
 const bodySchema = z.object({
-	messages: z.array(messageSchema).min(1),
+	message: z.string().trim().min(1),
 	conversationId: z.number().int().positive().optional(),
 	recordingId: z.number().int().positive().optional(),
 	transcriptContext: z.string().optional(),
 });
 
-function titleFromFirstUserMessage(
-	messages: { role: string; content: string }[],
-) {
-	const first = messages.find((m) => m.role === "user");
-	if (!first) return "New conversation";
-	const trimmed = first.content.trim().replace(/\s+/g, " ");
+function titleFromMessage(message: string) {
+	const trimmed = message.replace(/\s+/g, " ");
 	return trimmed.length > 60 ? `${trimmed.slice(0, 57)}…` : trimmed;
 }
 
@@ -75,16 +62,8 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const { messages, transcriptContext } = parsed.data;
+		const { message, transcriptContext } = parsed.data;
 		let conversationId = parsed.data.conversationId ?? null;
-
-		const lastUser = [...messages].reverse().find((m) => m.role === "user");
-		if (!lastUser) {
-			return Response.json(
-				{ error: "VALIDATION_ERROR", issues: [{ message: "No user message" }] },
-				{ status: 400 },
-			);
-		}
 
 		await assertAiAllowed(profile.id);
 
@@ -119,7 +98,7 @@ export async function POST(req: NextRequest) {
 				.insert(aiChatConversation)
 				.values({
 					doctorId: profile.id,
-					title: titleFromFirstUserMessage(messages),
+					title: titleFromMessage(message),
 					recordingId,
 				})
 				.returning();
@@ -135,14 +114,14 @@ export async function POST(req: NextRequest) {
 		await db.insert(aiChatMessage).values({
 			conversationId,
 			role: "user",
-			content: lastUser.content,
+			parts: [{ type: "text", text: message }],
 		});
 		const [reply] = await db
 			.insert(aiChatMessage)
 			.values({
 				conversationId,
 				role: "assistant",
-				content: "",
+				parts: [],
 				status: "streaming",
 			})
 			.returning({ id: aiChatMessage.id });
@@ -165,19 +144,20 @@ export async function POST(req: NextRequest) {
 		});
 
 		const savedConversationId = conversationId;
+		const send = (event: ReplyEvent) => {
+			try {
+				client?.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+			} catch {
+				client = null;
+			}
+		};
 		void generateAssistantReply({
 			messageId: reply.id,
 			conversationId,
+			doctorId: profile.id,
 			instructions: buildAssistantInstructions(transcriptContext),
-			// Empty turns are failed or stopped-before-any-text replies
-			messages: messages.filter((m) => m.content.trim()).slice(-HISTORY_LIMIT),
-			onDelta: (delta) => {
-				try {
-					client?.enqueue(encoder.encode(delta));
-				} catch {
-					client = null;
-				}
-			},
+			history: await buildModelHistory(conversationId, reply.id),
+			onEvent: send,
 		}).then(
 			(status) => {
 				try {
@@ -199,7 +179,7 @@ export async function POST(req: NextRequest) {
 
 		return new Response(readable, {
 			headers: {
-				"Content-Type": "text/plain; charset=utf-8",
+				"Content-Type": "application/x-ndjson; charset=utf-8",
 				"Cache-Control": "no-cache, no-transform",
 				"X-Accel-Buffering": "no",
 				"X-Content-Type-Options": "nosniff",
@@ -216,4 +196,4 @@ export async function POST(req: NextRequest) {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Streaming endpoint — not registered in OpenAPI (plain text stream).
+// Streaming endpoint — not registered in OpenAPI (JSON lines stream).

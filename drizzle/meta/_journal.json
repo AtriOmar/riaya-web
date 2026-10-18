@@ -148,6 +148,13 @@
       "when": 1792294502089,
       "tag": "0020_add_recording_speaker_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792295448291,
+      "tag": "0021_ai_chat_message_parts",
+      "breakpoints": true
     }
   ]
 }

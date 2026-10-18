@@ -4,6 +4,8 @@ import { formatDistanceToNow } from "date-fns";
 import {
 	ArrowUp,
 	CalendarCheck,
+	CalendarClock,
+	CalendarDays,
 	Check,
 	ChevronDown,
 	ChevronUp,
@@ -17,6 +19,7 @@ import {
 	PanelLeft,
 	Paperclip,
 	Plus,
+	Receipt,
 	Sparkles,
 	Square,
 	Trash2,
@@ -27,7 +30,6 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Streamdown } from "streamdown";
 import { mutate as mutateSWR } from "swr";
 import ConfirmationDialog from "@/components/confirmation-dialog";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,13 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import type { AiChatMessageStatus } from "@/db/schema";
+import {
+	type AiActionPart,
+	type AiChatPart,
+	applyReplyEvent,
+	partsText,
+	type ReplyEvent,
+} from "@/lib/ai-chat-parts";
 import { getErrorMessage } from "@/lib/error-handling";
 import { recordingTitle } from "@/lib/recording-title";
 import {
@@ -57,7 +66,9 @@ import {
 	useGetApiAiChatConversations,
 	useGetApiAiChatConversationsId,
 } from "@/services/generated/ai-chat/ai-chat";
+import { useGetApiDashboardStats } from "@/services/generated/dashboard/dashboard";
 import { useGetApiRecordings } from "@/services/generated/recordings/recordings";
+import { MessageParts } from "./parts/message-parts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,7 +76,7 @@ type Role = "user" | "assistant";
 type Message = {
 	id: string;
 	role: Role;
-	content: string;
+	parts: AiChatPart[];
 	status: AiChatMessageStatus;
 };
 
@@ -125,6 +136,46 @@ const TRANSCRIPT_SUGGESTIONS: Suggestion[] = [
 		icon: CalendarCheck,
 	},
 ];
+
+/**
+ * Suggestions from the practice's real numbers (pending bookings, today's
+ * patients, unpaid invoices), topped up with the general ones.
+ */
+function practiceSuggestions(counts?: {
+	appointmentsToday: number;
+	pendingAppointments: number;
+	unpaidInvoices: number;
+}): Suggestion[] {
+	const fromPractice: Suggestion[] = [];
+	if (counts?.pendingAppointments) {
+		const n = counts.pendingAppointments;
+		fromPractice.push({
+			label: `Review ${n} pending booking${n === 1 ? "" : "s"}`,
+			description: "Accept or refuse them here",
+			prompt: "Show my pending bookings and help me decide on them.",
+			icon: CalendarClock,
+		});
+	}
+	if (counts?.appointmentsToday) {
+		const n = counts.appointmentsToday;
+		fromPractice.push({
+			label: "Brief me on today",
+			description: `${n} appointment${n === 1 ? "" : "s"} today`,
+			prompt: "What does my day look like? Brief me on today's patients.",
+			icon: CalendarDays,
+		});
+	}
+	if (counts?.unpaidInvoices) {
+		const n = counts.unpaidInvoices;
+		fromPractice.push({
+			label: "Who still owes me?",
+			description: `${n} unpaid invoice${n === 1 ? "" : "s"}`,
+			prompt: "Which invoices are still unpaid, and how much is owed in total?",
+			icon: Receipt,
+		});
+	}
+	return [...fromPractice, ...CLINICAL_SUGGESTIONS].slice(0, 3);
+}
 
 // ─── Attach transcript dialog ─────────────────────────────────────────────────
 
@@ -309,7 +360,15 @@ function ContextChip({
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({
+	message,
+	onActionChange,
+}: {
+	message: Message;
+	onActionChange: (messageId: string, part: AiActionPart) => void;
+}) {
+	const text = partsText(message.parts);
+
 	if (message.role === "user") {
 		return (
 			<div className="flex justify-end">
@@ -317,13 +376,17 @@ function MessageBubble({ message }: { message: Message }) {
 					dir="auto"
 					className="max-w-[min(85%,36rem)] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-primary-foreground text-sm leading-relaxed shadow-sm"
 				>
-					{message.content}
+					{text}
 				</div>
 			</div>
 		);
 	}
 
 	const live = isLive(message);
+	/** Saved messages have a numeric id; the one being streamed has a temporary one. */
+	const messageId = /^\d+$/.test(message.id) ? Number(message.id) : null;
+	const lastPart = message.parts.at(-1);
+	const waiting = live && (!lastPart || lastPart.type !== "text");
 
 	return (
 		<div className="group flex gap-3">
@@ -332,42 +395,37 @@ function MessageBubble({ message }: { message: Message }) {
 			</div>
 
 			<div className="min-w-0 flex-1 pt-1">
-				{message.content ? (
-					<>
-						<Streamdown
-							dir="auto"
-							isAnimating={live}
-							caret="block"
-							lineNumbers={false}
-							controls={{ table: false }}
-							tableMaxHeight={480}
-							className="chat-markdown"
-						>
-							{message.content}
-						</Streamdown>
-					</>
-				) : live ? (
-					<span className="flex h-6 items-center gap-1 text-muted-foreground">
-						<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.3s]" />
-						<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]" />
-						<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70" />
-					</span>
-				) : null}
+				<MessageParts
+					parts={message.parts}
+					messageId={messageId}
+					live={live}
+					onActionChange={(part) => onActionChange(message.id, part)}
+				/>
+				{waiting &&
+					!message.parts.some(
+						(p) => p.type === "tool" && p.status === "running",
+					) && (
+						<span className="flex h-6 items-center gap-1 text-muted-foreground">
+							<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.3s]" />
+							<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]" />
+							<span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70" />
+						</span>
+					)}
 				{!live && (
 					<div className="mt-1.5 flex min-h-7 items-center gap-2">
 						{message.status === "stopped" && (
 							<p className="text-muted-foreground text-xs">
-								{message.content ? "Stopped" : "Stopped before answering"}
+								{message.parts.length ? "Stopped" : "Stopped before answering"}
 							</p>
 						)}
 						{message.status === "failed" && (
 							<p className="text-destructive text-xs">
-								{message.content
+								{message.parts.length
 									? "The reply was cut off. Ask again to get the rest."
 									: "Something went wrong and no reply was written. Try again."}
 							</p>
 						)}
-						{message.content && <CopyMessageButton text={message.content} />}
+						{text && <CopyMessageButton text={text} />}
 					</div>
 				)}
 			</div>
@@ -585,6 +643,7 @@ export default function AiChat() {
 		},
 	);
 	const { mutate: mutateConversationList } = useGetApiAiChatConversations();
+	const { data: stats } = useGetApiDashboardStats();
 
 	const syncTextareaHeight = useCallback(() => {
 		const el = textareaRef.current;
@@ -641,7 +700,7 @@ export default function AiChat() {
 			return serverMessages.map((m) => ({
 				id: String(m.id),
 				role: m.role as Role,
-				content: m.content,
+				parts: m.parts as AiChatPart[],
 				status: m.status,
 			}));
 		});
@@ -779,13 +838,13 @@ export default function AiChat() {
 			const userMessage: Message = {
 				id: crypto.randomUUID(),
 				role: "user",
-				content: text,
+				parts: [{ type: "text", text }],
 				status: "done",
 			};
 			const assistantMessage: Message = {
 				id: crypto.randomUUID(),
 				role: "assistant",
-				content: "",
+				parts: [],
 				status: "streaming",
 			};
 
@@ -794,8 +853,6 @@ export default function AiChat() {
 			setInput("");
 			setIsStreaming(true);
 			focusComposer();
-
-			const allMessages: Message[] = [...messages, userMessage];
 
 			abortRef.current = new AbortController();
 			let resolvedConversationId = conversationId;
@@ -806,10 +863,7 @@ export default function AiChat() {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
-						messages: allMessages.map(({ role, content }) => ({
-							role,
-							content,
-						})),
+						message: text,
 						conversationId: conversationId ?? undefined,
 						recordingId: transcriptContext?.recordingId,
 						transcriptContext: transcriptContext?.text,
@@ -838,24 +892,27 @@ export default function AiChat() {
 				replyStarted = true;
 				if (!res.body) throw new Error("No response body");
 
+				// One JSON event per line; a chunk can end mid-line
 				const reader = res.body.getReader();
 				const decoder = new TextDecoder();
-				let done = false;
-
-				while (!done) {
-					const { value, done: doneReading } = await reader.read();
-					done = doneReading;
-					if (value) {
-						const chunk = decoder.decode(value, { stream: true });
-						if (!chunk) continue;
-						setMessages((prev) =>
-							prev.map((m) =>
-								m.id === assistantMessage.id
-									? { ...m, content: m.content + chunk }
-									: m,
-							),
-						);
-					}
+				let buffer = "";
+				for (;;) {
+					const { value, done } = await reader.read();
+					if (done) break;
+					buffer += decoder.decode(value, { stream: true });
+					const lines = buffer.split("\n");
+					buffer = lines.pop() ?? "";
+					const events = lines
+						.filter((line) => line.trim())
+						.map((line) => JSON.parse(line) as ReplyEvent);
+					if (!events.length) continue;
+					setMessages((prev) =>
+						prev.map((m) =>
+							m.id === assistantMessage.id
+								? { ...m, parts: events.reduce(applyReplyEvent, m.parts) }
+								: m,
+						),
+					);
 				}
 
 				await mutateConversationList();
@@ -897,6 +954,34 @@ export default function AiChat() {
 		],
 	);
 
+	// A card confirmed or dismissed an action. Update the page and the cached
+	// conversation at once, so a refetch can't bring back the old "proposed"
+	// card while the outcome is being saved.
+	const updateActionPart = useCallback(
+		(messageId: string, part: AiActionPart) => {
+			const replace = (parts: AiChatPart[]) =>
+				parts.map((p) => (p.type === "action" && p.id === part.id ? part : p));
+			setMessages((prev) =>
+				prev.map((m) =>
+					m.id === messageId ? { ...m, parts: replace(m.parts) } : m,
+				),
+			);
+			void mutateConversationDetail(
+				(detail) =>
+					detail && {
+						...detail,
+						messages: detail.messages.map((m) =>
+							String(m.id) === messageId
+								? { ...m, parts: replace(m.parts as AiChatPart[]) }
+								: m,
+						),
+					},
+				{ revalidate: false },
+			);
+		},
+		[mutateConversationDetail],
+	);
+
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
@@ -909,7 +994,7 @@ export default function AiChat() {
 		(conversationId ? "Conversation" : "New conversation");
 	const suggestions = transcriptContext
 		? TRANSCRIPT_SUGGESTIONS
-		: CLINICAL_SUGGESTIONS;
+		: practiceSuggestions(stats?.counts);
 	const liveReply = messages.find(isLive);
 	const canSend = Boolean(input.trim()) && !isStreaming && !liveReply;
 
@@ -1016,7 +1101,11 @@ export default function AiChat() {
 					) : (
 						<div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6">
 							{messages.map((msg) => (
-								<MessageBubble key={msg.id} message={msg} />
+								<MessageBubble
+									key={msg.id}
+									message={msg}
+									onActionChange={updateActionPart}
+								/>
 							))}
 						</div>
 					)}

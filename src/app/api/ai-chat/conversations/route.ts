@@ -12,7 +12,7 @@ import {
 } from "@/lib/api-utils";
 
 // ─── GET /api/ai-chat/conversations ───────────────────────────────────────────
-// Lists the doctor's conversations (newest first) with a preview of the last message.
+// Lists the doctor's conversations (newest first).
 
 export async function GET() {
 	try {
@@ -30,12 +30,6 @@ export async function GET() {
 				messageCount: sql<number>`(
 					select count(*)::int from ai_chat_message
 					where ai_chat_message.conversation_id = ${aiChatConversation.id}
-				)`,
-				preview: sql<string | null>`(
-					select content from ai_chat_message
-					where ai_chat_message.conversation_id = ${aiChatConversation.id}
-					order by ai_chat_message.created_at desc
-					limit 1
 				)`,
 			})
 			.from(aiChatConversation)
@@ -108,7 +102,7 @@ registry.registerPath({
 	summary: "List AI chat conversations",
 	responses: {
 		200: {
-			description: "List of conversations with preview",
+			description: "List of conversations",
 			content: {
 				"application/json": {
 					schema: z.array(selectAiChatConversationListItemSchema),

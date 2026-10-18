@@ -89,6 +89,9 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	TRANSCRIPT_ALREADY_DONE: "This recording has already been transcribed.",
 	TRANSCRIPTION_FAILED: "Failed to generate transcript. Please try again.",
 	CONVERSATION_NOT_FOUND: "Conversation not found.",
+	AI_ACTION_NOT_FOUND: "This suggestion no longer exists.",
+	AI_ACTION_ALREADY_DECIDED:
+		"This suggestion was already confirmed or dismissed.",
 	REPORT_NOT_FOUND: "Report not found.",
 	BLOCKED_PHONE_NOT_FOUND: "This number is not blocked.",
 	PHONE_ALREADY_BLOCKED: "This number is already blocked.",

@@ -12,6 +12,7 @@ import {
 	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
+import type { AiChatPart } from "../lib/ai-chat-parts";
 import type { ConsultationSummary } from "../lib/consultation-summary";
 import type { Availability } from "../lib/doctor-slots";
 import type { SpeakerRoles } from "../lib/speaker-roles";
@@ -773,7 +774,8 @@ export const aiChatMessage = pgTable(
 			.references(() => aiChatConversation.id, { onDelete: "cascade" }),
 		// user | assistant
 		role: varchar("role", { length: 20 }).notNull(),
-		content: text("content").notNull(),
+		// Text, tools the assistant ran and actions it proposed (lib/ai-chat-parts.ts)
+		parts: jsonb("parts").$type<AiChatPart[]>().notNull(),
 		// An assistant reply is created as
 		// `streaming` and its content saved as it is written, so it survives the
 		// doctor closing the page. User messages are always `done`.

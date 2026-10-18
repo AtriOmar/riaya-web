@@ -1,5 +1,6 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { aiChatPartSchema } from "@/lib/ai-chat-parts";
 import { consultationSummarySchema } from "@/lib/consultation-summary";
 import { PLAN_IDS } from "@/lib/plans";
 import { speakerRolesSchema } from "@/lib/speaker-roles";
@@ -274,6 +275,7 @@ export const selectConsultationRecordingWithPatientSchema =
 
 export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage, {
 	status: z.enum(aiChatMessageStatuses),
+	parts: z.array(aiChatPartSchema),
 });
 export const selectAiChatConversationSchema =
 	createSelectSchema(aiChatConversation);
@@ -282,7 +284,6 @@ export const selectAiChatConversationListItemSchema =
 	selectAiChatConversationSchema.merge(
 		z.object({
 			messageCount: z.number(),
-			preview: z.string().nullable(),
 		}),
 	);
 

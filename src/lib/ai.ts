@@ -10,6 +10,10 @@
  */
 
 import OpenAI from "openai";
+import type {
+	ChatCompletionFunctionTool,
+	ChatCompletionMessageParam,
+} from "openai/resources/chat/completions";
 import { z } from "zod";
 import {
 	type ConsultationSummary,
@@ -55,39 +59,70 @@ export type ChatUsage = {
 };
 
 /**
- * Stream assistant text via OpenRouter chat completions.
- * Yields plain text deltas; `onUsage` gets the request's token use and cost
- * once the stream ends.
+ * OpenRouter routing that only uses providers which neither keep nor train on
+ * the request. Every chat call can carry patient data, so all of them use it.
  */
-export async function* streamChatText(options: {
-	instructions: string;
-	messages: { role: "user" | "assistant"; content: string }[];
+const NO_DATA_RETENTION = {
+	provider: { zdr: true, data_collection: "deny" },
+} as Record<string, unknown>;
+
+export type ChatMessage = ChatCompletionMessageParam;
+export type ChatTool = ChatCompletionFunctionTool;
+export type ChatToolCall = { id: string; name: string; arguments: string };
+
+/**
+ * One streamed model turn that may call tools. Text goes to `onTextDelta` as
+ * it arrives; the tool calls (gathered from their streamed pieces) and the
+ * turn's usage come back once it ends.
+ */
+export async function streamChatTurn(options: {
+	messages: ChatMessage[];
+	tools: ChatTool[];
 	maxOutputTokens?: number;
-	onUsage?: (usage: ChatUsage) => void;
 	/** Aborting ends the request to the model. */
 	signal?: AbortSignal;
-}): AsyncGenerator<string> {
+	onTextDelta: (delta: string) => void;
+}): Promise<{ toolCalls: ChatToolCall[]; usage: ChatUsage | null }> {
 	const client = createChatClient();
 
 	const stream = await client.chat.completions.create(
 		{
 			model: CHAT_MODEL,
-			messages: [
-				{ role: "system", content: options.instructions },
-				...options.messages,
-			],
+			messages: options.messages,
+			tools: options.tools,
 			stream: true,
 			stream_options: { include_usage: true },
 			max_tokens: options.maxOutputTokens ?? 2048,
+			...NO_DATA_RETENTION,
 		},
 		{ signal: options.signal },
 	);
 
+	const calls = new Map<number, ChatToolCall>();
+	let usage: ChatUsage | null = null;
 	for await (const chunk of stream) {
-		const delta = chunk.choices[0]?.delta?.content;
-		if (delta) yield delta;
-		if (chunk.usage) options.onUsage?.(usageFrom(chunk.usage));
+		const delta = chunk.choices[0]?.delta;
+		if (delta?.content) options.onTextDelta(delta.content);
+		for (const piece of delta?.tool_calls ?? []) {
+			const call = calls.get(piece.index) ?? {
+				id: "",
+				name: "",
+				arguments: "",
+			};
+			if (piece.id) call.id = piece.id;
+			if (piece.function?.name && !call.name) call.name = piece.function.name;
+			if (piece.function?.arguments) call.arguments += piece.function.arguments;
+			calls.set(piece.index, call);
+		}
+		if (chunk.usage) usage = usageFrom(chunk.usage);
 	}
+
+	// Ids also identify a message's parts, so a missing one gets a unique id
+	const toolCalls = [...calls.values()].map((call) => ({
+		...call,
+		id: call.id || `call_${crypto.randomUUID()}`,
+	}));
+	return { toolCalls, usage };
 }
 
 /**
@@ -159,6 +194,7 @@ export async function generateRecordingInsights(
 		response_format: { type: "json_object" },
 		max_tokens: 200,
 		...NO_REASONING,
+		...NO_DATA_RETENTION,
 	});
 
 	const raw = completion.choices[0]?.message?.content ?? "";
@@ -192,6 +228,7 @@ export async function generateConsultationSummary(
 		response_format: { type: "json_object" },
 		max_tokens: 1500,
 		...NO_REASONING,
+		...NO_DATA_RETENTION,
 	});
 
 	const raw = completion.choices[0]?.message?.content ?? "";
