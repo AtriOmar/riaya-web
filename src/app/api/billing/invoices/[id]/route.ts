@@ -59,9 +59,12 @@ export async function POST(
 			.from(user)
 			.where(eq(user.id, profile.userId!));
 
-		// Get plan from subscription if available
-		let planName = "Pro";
-		if (invoice.subscriptionId) {
+		// What's being paid for: a recording pack, or the subscription's plan
+		let planName =
+			invoice.kind === "top_up"
+				? `${(invoice.creditSeconds ?? 0) / 3600} h recording time`
+				: "Pro";
+		if (invoice.kind === "subscription" && invoice.subscriptionId) {
 			const [sub] = await db
 				.select({ planId: subscription.planId })
 				.from(subscription)

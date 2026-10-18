@@ -37,9 +37,6 @@ export async function cancelEmergencySiblingAppointments(params: {
  * Fan-out urgent pending appointments to the top N ASAP best-fit doctors.
  * All rows share the same emergencyGroupId. First doctor to accept cancels
  * the rest via cancelEmergencySiblingAppointments.
- *
- * Plan AI booking limits are intentionally skipped — urgent cases must reach
- * nearby doctors even on Free plans that already hit their monthly cap.
  */
 export async function bookEmergencyAppointments(params: {
 	speciality: string;

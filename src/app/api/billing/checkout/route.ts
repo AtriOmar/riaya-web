@@ -4,18 +4,28 @@
 
 import { addMonths } from "date-fns";
 import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import { billingInvoice, subscription } from "@/db/schema";
-import { getDoctorProfile, json, requireSession } from "@/lib/api-utils";
+import {
+	getDoctorProfile,
+	json,
+	requireSession,
+	validationError,
+} from "@/lib/api-utils";
 import { nextBillingInvoiceNumber, upgradeOrderId } from "@/lib/billing";
 import { apiError } from "@/lib/errors";
 import { initPayment } from "@/lib/konnect";
-import { PLAN_IDS, PLANS, type PlanId } from "@/lib/plans";
+import { PLANS } from "@/lib/plans";
 
 const APP_URL =
 	process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
 	"http://localhost:3000";
+
+const bodySchema = z.object({
+	planId: z.enum(["pro"]).default("pro"),
+});
 
 export async function POST(req: Request) {
 	try {
@@ -23,14 +33,9 @@ export async function POST(req: Request) {
 		const profile = await getDoctorProfile(session.user.id);
 		if (!profile) return apiError("DOCTOR_PROFILE_NOT_FOUND");
 
-		const body = (await req.json().catch(() => ({}))) as { planId?: string };
-		const planId = (body.planId ?? "pro") as PlanId;
-
-		if (!PLAN_IDS.includes(planId) || planId === "free") {
-			return apiError("VALIDATION_ERROR", {
-				message: "Only paid plans can be checked out.",
-			});
-		}
+		const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
+		if (!parsed.success) return validationError(parsed.error.issues);
+		const { planId } = parsed.data;
 
 		const plan = PLANS[planId];
 		const now = new Date();
@@ -87,6 +92,7 @@ export async function POST(req: Request) {
 			.from(billingInvoice)
 			.where(
 				and(
+					eq(billingInvoice.kind, "subscription"),
 					eq(billingInvoice.subscriptionId, sub.id),
 					eq(billingInvoice.status, "open"),
 				),
@@ -154,3 +160,30 @@ export async function POST(req: Request) {
 		return apiError("INTERNAL_ERROR");
 	}
 }
+
+import { registry } from "@/lib/openapi";
+
+registry.registerPath({
+	method: "post",
+	path: "/api/billing/checkout",
+	tags: ["Billing"],
+	summary: "Start a Pro upgrade or renewal payment",
+	request: {
+		body: { content: { "application/json": { schema: bodySchema } } },
+	},
+	responses: {
+		200: {
+			description: "Konnect payment URL, or alreadyActive when nothing is due",
+			content: {
+				"application/json": {
+					schema: z.object({
+						payUrl: z.string().nullable(),
+						alreadyActive: z.boolean().optional(),
+						invoiceId: z.number().optional(),
+						reused: z.boolean().optional(),
+					}),
+				},
+			},
+		},
+	},
+});

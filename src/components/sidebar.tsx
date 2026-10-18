@@ -15,7 +15,6 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 import { useAppContext } from "@/components/contexts/app-provider";
 import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
@@ -28,6 +27,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 const STORAGE_KEY = "dashboard-sidebar-collapsed";
@@ -93,15 +93,11 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 	const { user } = useAuth();
 	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
 	const isVerified = me?.doctorProfile?.status === "verified";
-	const { data: billing } = useSWR<{
-		effectivePlanId?: string;
-		isPro?: boolean;
-	}>(isVerified ? "/api/billing/subscription" : null, (url: string) =>
-		fetch(url).then((r) => r.json()),
-	);
+	const { data: billing } = useGetApiBillingSubscription({
+		swr: { enabled: isVerified },
+	});
 
-	const planBadge =
-		billing?.isPro || billing?.effectivePlanId === "pro" ? "Pro" : null;
+	const planBadge = billing?.plan.isPro ? "Pro" : null;
 
 	return (
 		<>

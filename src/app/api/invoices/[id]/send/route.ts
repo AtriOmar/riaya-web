@@ -126,7 +126,6 @@ export async function POST(
 				fileName: `${record.number}.pdf`,
 				message: caption,
 				mimetype: "application/pdf",
-				quotaConsumed: true,
 			});
 		} catch (err: unknown) {
 			if (err instanceof Response) return err;

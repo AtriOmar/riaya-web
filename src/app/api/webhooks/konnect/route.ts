@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
 
 		const now = new Date();
 
-		// ── Renewal path: invoice already exists ──────────────────────────────
+		// ── Invoice already exists: renewal, or a recording pack ──────────────
+		// A paid `top_up` invoice is what grants its hours, so marking it paid is all it needs.
 		const [invoice] = await db
 			.select()
 			.from(billingInvoice)
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
 				.set({ status: "paid", paidAt: now, updatedAt: now })
 				.where(eq(billingInvoice.id, invoice.id));
 
-			if (invoice.subscriptionId) {
+			if (invoice.kind === "subscription" && invoice.subscriptionId) {
 				await activatePro(invoice.subscriptionId, {
 					periodStart: invoice.periodStart,
 					periodEnd: invoice.periodEnd,

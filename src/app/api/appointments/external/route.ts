@@ -12,7 +12,6 @@ import {
 import { schedulePendingAppointmentTimeout } from "@/lib/pending-appointment-timeout";
 import { bookingPatientSchema, resolveBookingPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
-import { assertAiBookingAllowed } from "@/lib/plan-limits";
 import { clearRefusalContext } from "@/lib/refusal-suggestions";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
@@ -100,7 +99,6 @@ export async function POST(req: NextRequest) {
 			data.phoneNumber,
 			data.patient,
 		);
-		await assertAiBookingAllowed(doctor.id, patientPerson.id);
 
 		const [created] = await db
 			.insert(appointment)

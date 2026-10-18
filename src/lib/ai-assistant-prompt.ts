@@ -6,7 +6,7 @@
  * Plan numbers are imported from `plans.ts` so limits stay in sync.
  */
 
-import { PLANS } from "@/lib/plans";
+import { PLANS, RECORDING_PACK_LIST } from "@/lib/plans";
 
 const FREE = PLANS.free;
 const PRO = PLANS.pro;
@@ -27,116 +27,31 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 | | Free | Pro |
 |--|------|-----|
 | Price | ${FREE.priceTnd} TND / month | ${PRO.priceTnd} TND / month |
-| AI phone booking | ${formatLimit(FREE.limits.aiBookingPatients, "distinct patient phones / UTC calendar month")} | ${formatLimit(PRO.limits.aiBookingPatients, "AI phone bookings")} |
+| AI phone booking | unlimited | unlimited |
 | WhatsApp sends | ${formatLimit(FREE.limits.whatsappSendsPerMonth, "sends / UTC calendar month")} | ${formatLimit(PRO.limits.whatsappSendsPerMonth, "WhatsApp sends")} |
-| Conversation recordings | ${formatLimit(FREE.limits.recordingsPerMonth, "recordings / UTC calendar month")} | ${formatLimit(PRO.limits.recordingsPerMonth, "conversation recordings")} |
+| Recording time | ${FREE.limits.recordingHoursPerMonth} hours / UTC calendar month | ${PRO.limits.recordingHoursPerMonth} hours / UTC calendar month, plus hour packs |
 | AI assistant messages | ${formatLimit(FREE.limits.aiMessagesPerMonth, "user messages / UTC calendar month")} | ${formatLimit(PRO.limits.aiMessagesPerMonth, "AI assistant messages")} |
 
-**Free includes:** patient records & appointments; availability & calendar; invoices; medical files; AI phone booking up to ${FREE.limits.aiBookingPatients} patients/month; ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month; ${FREE.limits.recordingsPerMonth} conversation recordings/month; ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month.
+**Pro also includes:** priority support.
 
-**Pro includes:** everything in Free + unlimited AI phone booking + unlimited WhatsApp sends + unlimited conversation recordings + unlimited AI assistant messages + priority support.
+**AI phone booking:**
+- Patients calling Riaya are never refused because of a doctor's plan; there is no booking limit on any plan.
+- The AI offers the doctor who fits the patient best (distance and time). The doctor's plan plays no part.
 
-**How AI booking limit is counted (Free):**
-- Counts **distinct phone numbers** that booked via AI (\`source = ai\`) in the **current UTC calendar month**.
-- The **same phone** booking again in the same month does **not** consume another slot.
-- Dashboard-created appointments do **not** count toward this limit.
-- When the limit is hit, new AI bookings are rejected until next UTC month or upgrade to Pro.
-- **Exception:** urgent / emergency fan-out bookings still reach Free doctors even if the monthly AI booking limit is already used.
+**How WhatsApp sends are counted (Free):**
+- Only sends the doctor starts count: medical file with documents = **1 caption + 1 per document** (N docs = N+1 sends); medical file text-only or invoice PDF send = **1** each.
+- Appointment confirmations and review requests are **always sent and never counted**.
+- Usage resets at the UTC month boundary. Check usage on **Subscription** or the home Dashboard.
 
-**How WhatsApp limit is counted (Free):**
-- Each successful send increments monthly usage (period \`YYYY-MM\` UTC).
-- Medical file with documents: **1 caption + 1 per document** (so N docs = N+1 sends).
-- Medical file text-only / invoice PDF send: **1** send each.
-- Appointment confirmation WhatsApp also counts as **1** send (confirm still succeeds if WhatsApp fails/limit).
-- Usage resets at the UTC month boundary. Check remaining usage on **Subscription** or the home Dashboard meters.
-
-**How conversation recording limit is counted (Free):**
-- Each **saved** consultation recording counts as **1** toward the current UTC calendar month.
-- When the limit is hit, saving a new recording is rejected until next UTC month or upgrade to Pro.
-- Transcribing an existing recording does **not** consume another recording slot.
+**How recording time is counted:**
+- Each recording uses its audio length once it is transcribed. Re-running a transcription does not count again.
+- The plan's monthly hours are used first. After that, Pro doctors use **hour packs** they bought.
+- Hour packs (Pro only): ${RECORDING_PACK_LIST.map((p) => `${p.hours} h for ${p.priceTnd} TND`).join(", ")}. Buy them on **Subscription → Add hours** (paid via Konnect). Pack hours **never expire**.
+- When no time is left, a new recording can't be started until next UTC month, more hours are added (Pro), or the doctor upgrades (Free).
 
 **How AI assistant message limit is counted (Free):**
 - Each **user** message sent in the AI assistant counts as **1** toward the current UTC calendar month (across all conversations).
 - Assistant replies do **not** count toward the limit.
-- When the limit is hit, new messages are rejected until next UTC month or upgrade to Pro.
-
-**Effective plan:** Past-due / expired Pro behaves as Free limits until payment renews Pro.
-
-**Upgrade:** Subscription → Upgrade to Pro → Konnect payment (${PRO.priceTnd} TND). After payment, Pro activates (~1 month period). Manage / pay open Riaya billing invoices on the same page.
-
----
-
-### Sidebar routes (verified doctors only)
-| Menu | Path |
-|------|------|
-| Dashboard | /dashboard |
-| Patients | /dashboard/patients |
-| Appointments | /dashboard/appointments |
-| Invoices | /dashboard/invoices |
-| Recordings | /dashboard/recordings |
-| AI Assistant | /dashboard/ai-chat |
-| Availability | /dashboard/availability |
-| Profile | /dashboard/profile |
-| WhatsApp | /dashboard/whatsapp-config |
-| Subscription | /dashboard/subscription |
-
-Unverified doctors can only use **Profile** until status is \`verified\`. Other items redirect to Profile.
-
----
-
-### Dashboard (/dashboard)
-- Practice overview: appointment counts, pending items, unpaid invoices, revenue snapshot, usage vs plan limits.
-
----
-
-### Patients (/dashboard/patients)
-
-**Create a patient**
-1. Patients → New patient (/dashboard/patients/new).
-2. Required: CIN, first name, last name, date of birth, gender (\`male\` | \`female\` only), phone number.
-3. Optional: address.
-4. Save → opens patient detail (/dashboard/patients/[id]).
-
-**Patient detail**
-- Edit details; manage medical files; see consultation recordings; see patient invoices.
-- List search: by first/last name.
-
-**Medical files**
-- Types (exact): \`consultation\`, \`prescription\`, \`lab-report\`.
-- Add: type, date, title (required), description (optional), documents (optional).
-- Document upload: max **10** files, **20 MB** each; PDF, images (jpg/jpeg/png/gif/webp/bmp/tiff), Word (.doc/.docx).
-- **Send via WhatsApp:** patient must have a phone; doctor WhatsApp must be connected. Counts toward WhatsApp quota as above. Can resend after confirm.
-
----
-
-### Appointments (/dashboard/appointments)
-
-**Statuses:** \`pending\` | \`confirmed\` | \`cancelled\`
-**Sources:** \`dashboard\` (doctor-created, starts confirmed) | \`ai\` (phone booking, starts pending)
-
-**Create from calendar**
-1. Drag empty available slots on the calendar (30-min grid).
-2. Modal: select patient (required), name (required), description (optional).
-3. Saved as dashboard + confirmed.
-
-Also: drag to move (conflict check); click to edit. Unavailable slots (from weekly availability) cannot be selected. If no availability is set, slots are treated as selectable.
-
-**AI pending bookings**
-- Accept → confirmed. If no linked patient: match by caller phone, create patient, or pick existing. May send WhatsApp confirmation (1 quota). Schedules a review WhatsApp ~2 hours after end. **Urgent** AI requests show a red badge; accepting one cancels the other pending requests in the same emergency group.
-- Refuse → cancelled (for urgent fan-outs, siblings stay pending for other doctors). For a normal (non-urgent) AI request the patient is called back (WhatsApp fallback) with up to 3 alternative doctors; on their next call the AI offers those doctors first.
-- **Timeout:** AI pending (or unanswered urgent group) auto-cancels after **10 minutes**. Patient is called back via Twilio if configured, otherwise WhatsApp asks them to call Riaya again.
-- Non-pending: edit name/description; delete permanently; cancel sets \`cancelled\`.
-
----
-
-### Invoices (/dashboard/invoices) — patient billing, not Riaya subscription
-
-**Statuses:** \`unpaid\` | \`partially_paid\` | \`paid\` | \`cancelled\` (derived from payments vs total).
-
-**Create**
-1. Invoices → New invoice (or from patient page).
-2. Select patient; add line items (description, quantity ≥ 1, unit price in TND → stored as millimes).
-3. Optional notes. Created unpaid with sequential number.
 
 **Payments:** methods \`cash\` | \`transfer\` only. Cannot exceed remaining balance; cannot pay cancelled invoices. Payments can be deleted; status re-syncs.
 
@@ -149,7 +64,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ### Recordings (/dashboard/recordings)
 - List on the left; open a recording or create a new one in the right panel (same sheet).
 - New recording: Recordings → New Recording (or \`?new=1\`), then title, optional patient, record in-browser, save.
-- Free plan: up to ${FREE.limits.recordingsPerMonth} saved recordings per UTC calendar month (enforced on save).
+- Recording time: ${FREE.limits.recordingHoursPerMonth} h/month on Free, ${PRO.limits.recordingHoursPerMonth} h/month on Pro plus hour packs. The recorder shows the time left.
 - Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; Transcribe; Ask AI / Chat with AI when transcript is done.
 - Patient detail also lists that patient’s recordings (links into the same panel via \`?id=\`).
 
@@ -192,7 +107,7 @@ Also: drag to move (conflict check); click to edit. Unavailable slots (from week
 ---
 
 ### Phone AI booking (patients call Riaya — not a sidebar page)
-**Patients can:** book appointments (speciality → location → time → slot); list their AI appointments; cancel only if still \`pending\`; use Tunisian Derja (default), French, or English. Urgent cases → emergency fan-out to nearby doctors (first accept wins; **bypasses Free AI booking limits**). No clinical advice by phone.
+**Patients can:** book appointments (speciality → location → time → slot); list their AI appointments; cancel only if still \`pending\`; use Tunisian Derja (default), French, or English. Urgent cases → emergency fan-out to nearby doctors (first accept wins). No clinical advice by phone.
 
 **Doctors see:** pending AI bookings on Appointments calendar; accept/refuse as above; usage on Dashboard / Subscription.
 
@@ -233,7 +148,7 @@ export function buildAssistantInstructions(transcriptContext?: string): string {
 
 ## Product / dashboard help
 - You know the Riaya doctor dashboard guide below. When doctors ask "can I…?", "how do I…?", or about plans/limits, answer from that guide with **exact steps**, menu names, paths, and **exact numbers** (do not round or invent limits).
-- Quote Free vs Pro limits accurately: Free = ${FREE.limits.aiBookingPatients} AI booking phones/month, ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month, ${FREE.limits.recordingsPerMonth} conversation recordings/month, and ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month (UTC); Pro = unlimited for all four at ${PRO.priceTnd} TND/month.
+- Quote Free vs Pro limits accurately: Free = ${FREE.limits.whatsappSendsPerMonth} WhatsApp sends/month, ${FREE.limits.recordingHoursPerMonth} h of recording/month and ${FREE.limits.aiMessagesPerMonth} AI assistant messages/month (UTC); Pro (${PRO.priceTnd} TND/month) = unlimited WhatsApp sends and AI messages, ${PRO.limits.recordingHoursPerMonth} h of recording/month plus hour packs. AI phone booking is unlimited on both.
 - If they ask about something Riaya cannot do, say so clearly and suggest the closest available workflow.
 
 ${buildDashboardFeaturesGuide()}

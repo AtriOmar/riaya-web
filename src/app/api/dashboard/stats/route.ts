@@ -213,13 +213,7 @@ export async function GET() {
 				collectedThisMonth: collectedRow?.total ?? 0,
 				outstanding: outstandingRow?.total ?? 0,
 			},
-			plan: {
-				planId: plan.planId,
-				isPro: plan.isPro,
-				limits: plan.limits,
-				usage: plan.usage,
-				usagePeriod: plan.usagePeriod,
-			},
+			plan,
 			charts: {
 				appointmentsByDay: [...byDayMap.values()],
 				appointmentsByStatus: statusRows.map((r) => ({

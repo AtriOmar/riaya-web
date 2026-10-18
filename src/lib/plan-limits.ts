@@ -3,8 +3,8 @@ import { db } from "@/db";
 import {
 	aiChatConversation,
 	aiChatMessage,
-	appointment,
-	consultationRecording,
+	billingInvoice,
+	recordingUsage,
 	subscription,
 	whatsappUsage,
 } from "@/db/schema";
@@ -74,61 +74,6 @@ export async function getEffectivePlan(
 	const planId = resolvePlanId(sub ?? null);
 
 	return { plan: getPlan(planId), planId, isPro: planId === "pro" };
-}
-
-/** Distinct people AI-booked with this doctor in the current UTC calendar month. */
-export async function countAiBookingPatientsThisMonth(
-	doctorId: number,
-	period = getUtcCalendarMonthPeriod(),
-): Promise<number> {
-	const [row] = await db
-		.select({
-			count: sql<number>`count(distinct ${appointment.personId})`,
-		})
-		.from(appointment)
-		.where(
-			and(
-				eq(appointment.doctorId, doctorId),
-				eq(appointment.source, "ai"),
-				gte(appointment.createdAt, period.start),
-				lt(appointment.createdAt, period.end),
-			),
-		);
-
-	return Number(row?.count ?? 0);
-}
-
-export async function assertAiBookingAllowed(
-	doctorId: number,
-	personId: number,
-): Promise<void> {
-	const { plan } = await getEffectivePlan(doctorId);
-	const limit = plan.limits.aiBookingPatients;
-	if (limit == null) return;
-
-	const period = getUtcCalendarMonthPeriod();
-
-	// Already AI-booked this person this month → allowed
-	const [existing] = await db
-		.select({ id: appointment.id })
-		.from(appointment)
-		.where(
-			and(
-				eq(appointment.doctorId, doctorId),
-				eq(appointment.source, "ai"),
-				eq(appointment.personId, personId),
-				gte(appointment.createdAt, period.start),
-				lt(appointment.createdAt, period.end),
-			),
-		)
-		.limit(1);
-
-	if (existing) return;
-
-	const used = await countAiBookingPatientsThisMonth(doctorId, period);
-	if (used >= limit) {
-		throwApiError("AI_BOOKING_LIMIT_REACHED");
-	}
 }
 
 export async function getWhatsappSendsThisMonth(
@@ -216,37 +161,144 @@ export async function assertAndRecordWhatsappSend(
 	}
 }
 
-export async function countRecordingsThisMonth(
+// ─── Recording time ───────────────────────────────────────────────────────────
+// Each transcribed recording uses its audio length. The plan's monthly hours
+// cover it first; anything beyond comes out of purchased pack hours (no expiry).
+
+/** Advisory-lock namespace serialising recording charges per doctor. */
+const RECORDING_CHARGE_LOCK = 7301;
+
+type Reader = Pick<typeof db, "select">;
+
+async function getRecordingSecondsUsed(
+	reader: Reader,
 	doctorId: number,
-	period = getUtcCalendarMonthPeriod(),
+	period: UsagePeriod,
 ): Promise<number> {
-	const [row] = await db
+	const [row] = await reader
 		.select({
-			count: sql<number>`count(*)`,
+			seconds: sql<string>`coalesce(sum(${recordingUsage.seconds}), 0)`,
 		})
-		.from(consultationRecording)
+		.from(recordingUsage)
 		.where(
 			and(
-				eq(consultationRecording.doctorId, doctorId),
-				gte(consultationRecording.createdAt, period.start),
-				lt(consultationRecording.createdAt, period.end),
+				eq(recordingUsage.doctorId, doctorId),
+				gte(recordingUsage.createdAt, period.start),
+				lt(recordingUsage.createdAt, period.end),
 			),
 		);
-
-	return Number(row?.count ?? 0);
+	return Number(row?.seconds ?? 0);
 }
 
-export async function assertRecordingAllowed(doctorId: number): Promise<void> {
-	const { plan } = await getEffectivePlan(doctorId);
-	const limit = plan.limits.recordingsPerMonth;
-	if (limit == null) return;
+/** Purchased pack time not yet used. */
+async function getRecordingCreditSeconds(
+	reader: Reader,
+	doctorId: number,
+): Promise<number> {
+	const [[bought], [spent]] = await Promise.all([
+		reader
+			.select({
+				seconds: sql<string>`coalesce(sum(${billingInvoice.creditSeconds}), 0)`,
+			})
+			.from(billingInvoice)
+			.where(
+				and(
+					eq(billingInvoice.doctorId, doctorId),
+					eq(billingInvoice.kind, "top_up"),
+					eq(billingInvoice.status, "paid"),
+				),
+			),
+		reader
+			.select({
+				seconds: sql<string>`coalesce(sum(${recordingUsage.creditSeconds}), 0)`,
+			})
+			.from(recordingUsage)
+			.where(eq(recordingUsage.doctorId, doctorId)),
+	]);
+	return Math.max(
+		0,
+		Number(bought?.seconds ?? 0) - Number(spent?.seconds ?? 0),
+	);
+}
 
-	const used = await countRecordingsThisMonth(doctorId);
-	if (used >= limit) {
+export type RecordingTime = {
+	/** Included in the plan this month */
+	includedSeconds: number;
+	/** Used this month (included + pack time) */
+	usedSeconds: number;
+	/** Purchased pack time left */
+	extraSeconds: number;
+	/** What can still be recorded: included time left + pack time left */
+	remainingSeconds: number;
+};
+
+export async function getRecordingTime(
+	doctorId: number,
+	plan?: Plan,
+	period = getUtcCalendarMonthPeriod(),
+): Promise<RecordingTime> {
+	const effectivePlan = plan ?? (await getEffectivePlan(doctorId)).plan;
+	const includedSeconds = effectivePlan.limits.recordingHoursPerMonth * 3600;
+	const [usedSeconds, extraSeconds] = await Promise.all([
+		getRecordingSecondsUsed(db, doctorId, period),
+		getRecordingCreditSeconds(db, doctorId),
+	]);
+	return {
+		includedSeconds,
+		usedSeconds,
+		extraSeconds,
+		remainingSeconds: Math.max(0, includedSeconds - usedSeconds) + extraSeconds,
+	};
+}
+
+/** Blocks a new recording once the month's hours and pack hours are used up. */
+export async function assertRecordingAllowed(doctorId: number): Promise<void> {
+	const { remainingSeconds } = await getRecordingTime(doctorId);
+	if (remainingSeconds <= 0) {
 		throwApiError("RECORDING_LIMIT_REACHED");
 	}
 }
 
+/**
+ * Records the audio time a transcribed recording used. Once per recording.
+ * The part beyond the month's included hours is paid from pack hours (as far
+ * as they go — a recording that overruns the last minutes is not cut off).
+ */
+export async function chargeRecordingUsage(
+	doctorId: number,
+	recordingId: number,
+	seconds: number,
+): Promise<void> {
+	if (seconds <= 0) return;
+	const { plan } = await getEffectivePlan(doctorId);
+	const includedSeconds = plan.limits.recordingHoursPerMonth * 3600;
+	const period = getUtcCalendarMonthPeriod();
+
+	await db.transaction(async (tx) => {
+		await tx.execute(
+			sql`select pg_advisory_xact_lock(${RECORDING_CHARGE_LOCK}, ${doctorId})`,
+		);
+
+		const [existing] = await tx
+			.select({ id: recordingUsage.id })
+			.from(recordingUsage)
+			.where(eq(recordingUsage.recordingId, recordingId));
+		if (existing) return;
+
+		const used = await getRecordingSecondsUsed(tx, doctorId, period);
+		const beyondIncluded =
+			Math.max(0, used + seconds - includedSeconds) -
+			Math.max(0, used - includedSeconds);
+		const credit = await getRecordingCreditSeconds(tx, doctorId);
+
+		await tx.insert(recordingUsage).values({
+			doctorId,
+			recordingId,
+			seconds,
+			creditSeconds: Math.min(beyondIncluded, credit),
+		});
+	});
+}
 /** User messages sent to the AI assistant in the current UTC calendar month. */
 export async function countAiMessagesThisMonth(
 	doctorId: number,
@@ -284,32 +336,27 @@ export async function assertAiMessageAllowed(doctorId: number): Promise<void> {
 	}
 }
 
+/** Matches `planUsageSchema` in `db/zod.ts`. */
 export async function getPlanUsage(doctorId: number) {
 	const period = getUtcCalendarMonthPeriod();
 	const { plan, planId, isPro } = await getEffectivePlan(doctorId);
-	const [
-		aiBookingPatients,
-		whatsappSendsThisMonth,
-		recordingsThisMonth,
-		aiMessagesThisMonth,
-	] = await Promise.all([
-		countAiBookingPatientsThisMonth(doctorId, period),
-		getWhatsappSendsThisMonth(doctorId, period),
-		countRecordingsThisMonth(doctorId, period),
-		countAiMessagesThisMonth(doctorId, period),
-	]);
+	const [whatsappSendsThisMonth, aiMessagesThisMonth, recordingTime] =
+		await Promise.all([
+			getWhatsappSendsThisMonth(doctorId, period),
+			countAiMessagesThisMonth(doctorId, period),
+			getRecordingTime(doctorId, plan, period),
+		]);
 
 	return {
-		plan,
 		planId,
 		isPro,
 		limits: plan.limits,
+		canBuyRecordingPacks: plan.canBuyRecordingPacks,
 		usage: {
-			aiBookingPatients,
 			whatsappSendsThisMonth,
-			recordingsThisMonth,
 			aiMessagesThisMonth,
 		},
+		recordingTime,
 		usagePeriod: {
 			start: period.start.toISOString(),
 			end: period.end.toISOString(),

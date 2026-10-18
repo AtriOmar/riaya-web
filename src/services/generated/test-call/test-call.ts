@@ -82,66 +82,6 @@ export const usePostApiLivekitTestCallToken = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Save per-call model settings for a test call (Admin)
- */
-export const postApiTestCallSettings = (
-	postApiTestCallSettingsBody?: PostApiTestCallSettingsBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiTestCallSettings200>(
-		{
-			url: `/api/test-call/settings`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiTestCallSettingsBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiTestCallSettingsMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiTestCallSettingsBody | undefined },
-	) => {
-		return postApiTestCallSettings(arg, options);
-	};
-};
-export const getPostApiTestCallSettingsMutationKey = () =>
-	[`/api/test-call/settings`] as const;
-
-export type PostApiTestCallSettingsMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiTestCallSettings>>
->;
-
-/**
- * @summary Save per-call model settings for a test call (Admin)
- */
-export const usePostApiTestCallSettings = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiTestCallSettings>>,
-		TError,
-		Key,
-		PostApiTestCallSettingsBody | undefined,
-		Awaited<ReturnType<typeof postApiTestCallSettings>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPostApiTestCallSettingsMutationKey();
-	const swrFn = getPostApiTestCallSettingsMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Save the recording of a test call (Admin)
  */
 export const postApiTestCallRecording = (
@@ -193,6 +133,66 @@ export const usePostApiTestCallRecording = <TError = unknown>(options?: {
 
 	const swrKey = swrOptions?.swrKey ?? getPostApiTestCallRecordingMutationKey();
 	const swrFn = getPostApiTestCallRecordingMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Save per-call model settings for a test call (Admin)
+ */
+export const postApiTestCallSettings = (
+	postApiTestCallSettingsBody?: PostApiTestCallSettingsBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiTestCallSettings200>(
+		{
+			url: `/api/test-call/settings`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiTestCallSettingsBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiTestCallSettingsMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiTestCallSettingsBody | undefined },
+	) => {
+		return postApiTestCallSettings(arg, options);
+	};
+};
+export const getPostApiTestCallSettingsMutationKey = () =>
+	[`/api/test-call/settings`] as const;
+
+export type PostApiTestCallSettingsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiTestCallSettings>>
+>;
+
+/**
+ * @summary Save per-call model settings for a test call (Admin)
+ */
+export const usePostApiTestCallSettings = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiTestCallSettings>>,
+		TError,
+		Key,
+		PostApiTestCallSettingsBody | undefined,
+		Awaited<ReturnType<typeof postApiTestCallSettings>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPostApiTestCallSettingsMutationKey();
+	const swrFn = getPostApiTestCallSettingsMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

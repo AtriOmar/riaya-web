@@ -1,9 +1,11 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { PLAN_IDS } from "@/lib/plans";
 import {
 	aiChatConversation,
 	aiChatMessage,
 	appointment,
+	billingInvoice,
 	blockedPhone,
 	call,
 	callEvent,
@@ -22,6 +24,7 @@ import {
 	person,
 	review,
 	speciality,
+	subscription,
 	user,
 } from "./schema";
 
@@ -168,6 +171,36 @@ export const statsResponseSchema = z.object({
 	banned: z.number(),
 });
 
+/** A doctor's effective plan, its limits and this month's usage. */
+export const planUsageSchema = z.object({
+	planId: z.enum(PLAN_IDS),
+	isPro: z.boolean(),
+	limits: z.object({
+		whatsappSendsPerMonth: z.number().nullable(),
+		recordingHoursPerMonth: z.number(),
+		aiMessagesPerMonth: z.number().nullable(),
+	}),
+	canBuyRecordingPacks: z.boolean(),
+	usage: z.object({
+		whatsappSendsThisMonth: z.number(),
+		aiMessagesThisMonth: z.number(),
+	}),
+	recordingTime: z.object({
+		includedSeconds: z.number(),
+		usedSeconds: z.number(),
+		extraSeconds: z.number(),
+		remainingSeconds: z.number(),
+	}),
+	usagePeriod: z.object({
+		start: z.string(),
+		end: z.string(),
+		yyyyMm: z.string(),
+	}),
+});
+
+export const selectSubscriptionSchema = createSelectSchema(subscription);
+export const selectBillingInvoiceSchema = createSelectSchema(billingInvoice);
+
 export const doctorDashboardStatsResponseSchema = z.object({
 	counts: z.object({
 		patients: z.number(),
@@ -181,27 +214,7 @@ export const doctorDashboardStatsResponseSchema = z.object({
 		collectedThisMonth: z.number(),
 		outstanding: z.number(),
 	}),
-	plan: z.object({
-		planId: z.enum(["free", "pro"]),
-		isPro: z.boolean(),
-		limits: z.object({
-			aiBookingPatients: z.number().nullable(),
-			whatsappSendsPerMonth: z.number().nullable(),
-			recordingsPerMonth: z.number().nullable(),
-			aiMessagesPerMonth: z.number().nullable(),
-		}),
-		usage: z.object({
-			aiBookingPatients: z.number(),
-			whatsappSendsThisMonth: z.number(),
-			recordingsThisMonth: z.number(),
-			aiMessagesThisMonth: z.number(),
-		}),
-		usagePeriod: z.object({
-			start: z.string(),
-			end: z.string(),
-			yyyyMm: z.string(),
-		}),
-	}),
+	plan: planUsageSchema,
 	charts: z.object({
 		appointmentsByDay: z.array(
 			z.object({

@@ -567,7 +567,8 @@ export const subscription = pgTable(
 );
 
 // ─── Billing Invoice ──────────────────────────────────────────────────────────
-// One row per billing cycle invoice issued to a doctor (distinct from patient `invoice`).
+// Something a doctor pays Riaya for (distinct from patient `invoice`): a plan
+// billing cycle (`subscription`) or a recording-time pack (`top_up`).
 // Payment is handled via Konnect.network.
 
 export const billingInvoice = pgTable(
@@ -577,10 +578,15 @@ export const billingInvoice = pgTable(
 		doctorId: integer("doctor_id")
 			.notNull()
 			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		// subscription | top_up
+		kind: varchar("kind", { length: 50 }).notNull().default("subscription"),
+		// Set on `subscription` invoices only
 		subscriptionId: integer("subscription_id").references(
 			() => subscription.id,
 			{ onDelete: "set null" },
 		),
+		// Recording time bought, on `top_up` invoices only. Granted once paid; never expires.
+		creditSeconds: integer("credit_seconds"),
 		// Sequential invoice number e.g. "INV-2026-001"
 		number: varchar("number", { length: 100 }).notNull().unique(),
 		// open | paid | cancelled
@@ -634,6 +640,33 @@ export const consultationRecording = pgTable(
 		index("consultation_recording_doctor_id_idx").on(table.doctorId),
 		index("consultation_recording_patient_id_idx").on(table.patientId),
 		index("consultation_recording_created_at_idx").on(table.createdAt),
+	],
+);
+
+// ─── Recording Usage ──────────────────────────────────────────────────────────
+// One row per transcribed recording: the audio time it used. Kept when the
+// recording is deleted so usage can't be reset. The plan's monthly allowance
+// covers it first; `creditSeconds` is the part paid from purchased packs.
+
+export const recordingUsage = pgTable(
+	"recording_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		recordingId: integer("recording_id")
+			.unique()
+			.references(() => consultationRecording.id, { onDelete: "set null" }),
+		seconds: integer("seconds").notNull(),
+		creditSeconds: integer("credit_seconds").notNull().default(0),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("recording_usage_doctor_created_idx").on(
+			table.doctorId,
+			table.createdAt,
+		),
 	],
 );
 
@@ -762,6 +795,7 @@ export const doctorProfileRelations = relations(
 		billingInvoices: many(billingInvoice),
 		whatsappUsage: many(whatsappUsage),
 		consultationRecordings: many(consultationRecording),
+		recordingUsage: many(recordingUsage),
 		aiChatConversations: many(aiChatConversation),
 	}),
 );
@@ -959,6 +993,17 @@ export const consultationRecordingRelations = relations(
 		aiChatConversations: many(aiChatConversation),
 	}),
 );
+
+export const recordingUsageRelations = relations(recordingUsage, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [recordingUsage.doctorId],
+		references: [doctorProfile.id],
+	}),
+	recording: one(consultationRecording, {
+		fields: [recordingUsage.recordingId],
+		references: [consultationRecording.id],
+	}),
+}));
 
 export const aiChatConversationRelations = relations(
 	aiChatConversation,

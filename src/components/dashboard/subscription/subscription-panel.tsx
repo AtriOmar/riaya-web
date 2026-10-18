@@ -1,123 +1,71 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 import BillingInvoicesList from "@/components/dashboard/subscription/billing-invoices-list";
+import { RecordingPacksDialog } from "@/components/dashboard/subscription/recording-packs-dialog";
 import { UsageMeter } from "@/components/dashboard/subscription/usage-meter";
 import { PlansGrid } from "@/components/plans/plans-grid";
+import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
-import { PLAN_IDS, type Plan, type PlanId, type PlanLimits } from "@/lib/plans";
+import type { Plan } from "@/lib/plans";
+import { formatRecordingTime } from "@/lib/recording-time";
+import {
+	useGetApiBillingSubscription,
+	usePostApiBillingCheckout,
+} from "@/services/generated/billing/billing";
 
-type SubscriptionResponse = {
-	id: number;
-	planId: string;
-	effectivePlanId?: PlanId;
-	isPro?: boolean;
-	status: "active" | "canceled" | "past_due";
-	currentPeriodEnd: string | null;
-	cancelAtPeriodEnd: boolean;
-	limits?: PlanLimits;
-	usage?: {
-		aiBookingPatients: number;
-		whatsappSendsThisMonth: number;
-		recordingsThisMonth: number;
-		aiMessagesThisMonth: number;
-	};
-	usagePeriod?: {
-		start: string;
-		end: string;
-		yyyyMm: string;
-	};
-};
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+function formatDate(iso: string) {
+	return new Date(iso).toLocaleDateString("en-GB", {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	});
+}
 
 export default function SubscriptionPanel() {
-	const {
-		data: subscription,
-		isLoading,
-		mutate,
-	} = useSWR<SubscriptionResponse>("/api/billing/subscription", fetcher);
-	const [upgrading, setUpgrading] = useState(false);
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const { data, isLoading, mutate } = useGetApiBillingSubscription();
+	const { trigger: checkout, isMutating: upgrading } =
+		usePostApiBillingCheckout();
 
-	const currentPlanId: PlanId =
-		subscription?.effectivePlanId &&
-		PLAN_IDS.includes(subscription.effectivePlanId)
-			? subscription.effectivePlanId
-			: subscription && PLAN_IDS.includes(subscription.planId as PlanId)
-				? (subscription.planId as PlanId)
-				: "free";
+	// `?addHours=1` (e.g. from the dashboard or recorder) opens the pack picker
+	const [packsOpen, setPacksOpen] = useState(
+		searchParams.get("addHours") === "1",
+	);
 
-	const renewalDate = subscription?.currentPeriodEnd
-		? new Date(subscription.currentPeriodEnd).toLocaleDateString("en-GB", {
-				day: "numeric",
-				month: "long",
-				year: "numeric",
-			})
-		: null;
-
-	const resetsOn = subscription?.usagePeriod?.end
-		? new Date(subscription.usagePeriod.end).toLocaleDateString("en-GB", {
-				day: "numeric",
-				month: "long",
-				year: "numeric",
-			})
-		: null;
-
-	async function upgradeToPro() {
-		setUpgrading(true);
-		try {
-			const res = await fetch("/api/billing/checkout", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ planId: "pro" }),
-			});
-			const data = (await res.json()) as {
-				payUrl?: string | null;
-				alreadyActive?: boolean;
-				error?: string;
-				message?: string;
-			};
-
-			if (!res.ok) {
-				toast.error(
-					data.message ??
-						getErrorMessage({ response: { data } }, "Checkout failed."),
-				);
-				return;
-			}
-
-			if (data.alreadyActive) {
-				toast.success("You're already on Pro.");
-				await mutate();
-				return;
-			}
-
-			if (data.payUrl) {
-				window.open(data.payUrl, "_blank", "noopener,noreferrer");
-				toast.info("Complete payment to activate Pro.");
-				await mutate();
-				return;
-			}
-
-			toast.error("Could not start payment. Please try again.");
-		} catch (err) {
-			toast.error(getErrorMessage(err, "Could not start checkout."));
-		} finally {
-			setUpgrading(false);
+	function setPacksDialog(open: boolean) {
+		setPacksOpen(open);
+		if (!open && searchParams.get("addHours")) {
+			router.replace("/dashboard/subscription", { scroll: false });
 		}
 	}
 
-	const aiLimit = subscription?.limits?.aiBookingPatients;
-	const waLimit = subscription?.limits?.whatsappSendsPerMonth;
-	const recordingsLimit = subscription?.limits?.recordingsPerMonth;
-	const aiMessagesLimit = subscription?.limits?.aiMessagesPerMonth;
-	const aiUsed = subscription?.usage?.aiBookingPatients ?? 0;
-	const waUsed = subscription?.usage?.whatsappSendsThisMonth ?? 0;
-	const recordingsUsed = subscription?.usage?.recordingsThisMonth ?? 0;
-	const aiMessagesUsed = subscription?.usage?.aiMessagesThisMonth ?? 0;
+	const plan = data?.plan;
+	const currentPlanId = plan?.planId ?? "free";
+	const periodEnd = data?.subscription.currentPeriodEnd;
+	const renewalDate = plan?.isPro && periodEnd ? formatDate(periodEnd) : null;
+	const resetsOn = plan ? formatDate(plan.usagePeriod.end) : null;
+
+	async function upgradeToPro() {
+		try {
+			const res = await checkout({ planId: "pro" });
+			if (res.alreadyActive) {
+				toast.success("You're already on Pro.");
+			} else if (res.payUrl) {
+				window.open(res.payUrl, "_blank", "noopener,noreferrer");
+				toast.info("Complete payment to activate Pro.");
+			}
+			await mutate();
+		} catch (err) {
+			toast.error(getErrorMessage(err, "Could not start checkout."));
+		}
+	}
+
+	const recording = plan?.recordingTime;
 
 	return (
 		<div className="space-y-10">
@@ -146,15 +94,14 @@ export default function SubscriptionPanel() {
 					<PlansGrid
 						animate={false}
 						currentPlanId={currentPlanId}
-						getBadge={(plan) =>
-							plan.id === currentPlanId ? "Current plan" : undefined
+						getBadge={(p) =>
+							p.id === currentPlanId ? "Current plan" : undefined
 						}
-						getAction={(plan: Plan) => {
-							if (plan.id === currentPlanId) {
+						getAction={(p: Plan) => {
+							if (p.id === currentPlanId) {
 								return { type: "static", label: "Current plan" };
 							}
-
-							if (plan.id === "pro") {
+							if (p.id === "pro") {
 								return {
 									type: "button",
 									label: "Upgrade to Pro",
@@ -163,14 +110,13 @@ export default function SubscriptionPanel() {
 									disabled: upgrading,
 								};
 							}
-
 							return { type: "static", label: "Included" };
 						}}
 					/>
 				)}
 			</section>
 
-			{!isLoading && subscription && (
+			{plan && recording && (
 				<section className="space-y-3">
 					<div>
 						<h2 className="text-lg font-semibold">Usage this month</h2>
@@ -188,28 +134,52 @@ export default function SubscriptionPanel() {
 							.
 						</p>
 					</div>
-					<div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+					<div className="grid max-w-3xl gap-3 sm:grid-cols-3">
 						<UsageMeter
-							label="AI phone booking patients"
-							used={aiUsed}
-							limit={aiLimit ?? null}
-						/>
+							label="Recording time"
+							used={recording.usedSeconds}
+							limit={recording.includedSeconds}
+							format={formatRecordingTime}
+						>
+							{recording.extraSeconds > 0 && (
+								<p className="text-sm text-muted-foreground">
+									+ {formatRecordingTime(recording.extraSeconds)} extra
+								</p>
+							)}
+							{plan.canBuyRecordingPacks ? (
+								<Button
+									variant="outline"
+									size="sm"
+									className="gap-1.5"
+									onClick={() => setPacksDialog(true)}
+								>
+									<Plus className="size-3.5" />
+									Add hours
+								</Button>
+							) : (
+								recording.remainingSeconds <= 0 && (
+									<Button size="sm" onClick={upgradeToPro} disabled={upgrading}>
+										Upgrade for more
+									</Button>
+								)
+							)}
+						</UsageMeter>
 						<UsageMeter
 							label="WhatsApp sends"
-							used={waUsed}
-							limit={waLimit ?? null}
-						/>
-						<UsageMeter
-							label="Conversation recordings"
-							used={recordingsUsed}
-							limit={recordingsLimit ?? null}
+							used={plan.usage.whatsappSendsThisMonth}
+							limit={plan.limits.whatsappSendsPerMonth}
 						/>
 						<UsageMeter
 							label="AI assistant messages"
-							used={aiMessagesUsed}
-							limit={aiMessagesLimit ?? null}
+							used={plan.usage.aiMessagesThisMonth}
+							limit={plan.limits.aiMessagesPerMonth}
 						/>
 					</div>
+					<p className="text-xs text-muted-foreground">
+						WhatsApp sends count invoices and medical files you send.
+						Appointment confirmations and review requests are always sent and
+						never counted.
+					</p>
 				</section>
 			)}
 
@@ -217,11 +187,19 @@ export default function SubscriptionPanel() {
 				<div>
 					<h2 className="text-lg font-semibold">Billing invoices</h2>
 					<p className="text-sm text-muted-foreground">
-						Your Riaya subscription invoices. Pay open ones via Konnect.
+						Your Riaya invoices. Pay open ones via Konnect.
 					</p>
 				</div>
 				<BillingInvoicesList />
 			</section>
+
+			{plan?.canBuyRecordingPacks && recording && (
+				<RecordingPacksDialog
+					open={packsOpen}
+					onOpenChange={setPacksDialog}
+					extraSeconds={recording.extraSeconds}
+				/>
+			)}
 		</div>
 	);
 }

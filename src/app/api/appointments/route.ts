@@ -20,7 +20,6 @@ import {
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
-import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
 import { recordRefusal } from "@/lib/refusal-suggestions";
@@ -291,29 +290,20 @@ export async function PUT(req: NextRequest) {
 							doctorLastName: full?.doctor?.lastName,
 							start: full?.start,
 						});
-						try {
-							const httpUrl = getRealtimeHttpUrl();
-							if (!httpUrl) {
-								console.error("NEXT_PUBLIC_REALTIME_URL is not set");
-							} else {
-								await assertAndRecordWhatsappSend(profile.id);
-								await axios.post(`${httpUrl}/send-whatsapp`, {
+						// Automatic patient message: always sent, never counted against the plan.
+						const httpUrl = getRealtimeHttpUrl();
+						if (!httpUrl) {
+							console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+						} else {
+							await axios
+								.post(`${httpUrl}/send-whatsapp`, {
 									userId: full?.doctor?.userId,
 									phone,
 									message,
-									quotaConsumed: true,
-								});
-							}
-						} catch (waErr) {
-							if (waErr instanceof Response) {
-								const body = await waErr.json().catch(() => null);
-								console.error(
-									"WhatsApp confirmation skipped (limit or error):",
-									body ?? waErr.status,
+								})
+								.catch((waErr) =>
+									console.error("WhatsApp confirmation failed:", waErr),
 								);
-							} else {
-								throw waErr;
-							}
 						}
 					}
 

@@ -2,7 +2,17 @@
 
 import { MediaRecorder, register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
-import { Check, Loader2, Mic, RotateCcw, Square, User, X } from "lucide-react";
+import {
+	Check,
+	Clock,
+	Loader2,
+	Mic,
+	RotateCcw,
+	Square,
+	User,
+	X,
+} from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,8 +24,10 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { getErrorMessage } from "@/lib/error-handling";
+import { formatRecordingTime } from "@/lib/recording-time";
 import { uploadBlobToR2 } from "@/lib/upload";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
+import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
 import { usePostApiRecordings } from "@/services/generated/recordings/recordings";
 
@@ -156,6 +168,11 @@ export default function NewRecording({
 
 	const { data: patients = [] } = useGetApiPatients();
 	const { trigger: createRecording } = usePostApiRecordings();
+	const { data: billing, mutate: refreshBilling } =
+		useGetApiBillingSubscription();
+	const recordingTime = billing?.plan.recordingTime;
+	const outOfTime =
+		recordingTime != null && recordingTime.remainingSeconds <= 0;
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -232,24 +249,6 @@ export default function NewRecording({
 
 		setRecordingState("saving");
 		try {
-			// Preflight plan limit before uploading (server still enforces on create)
-			const subRes = await fetch("/api/billing/subscription");
-			if (subRes.ok) {
-				const sub = (await subRes.json()) as {
-					limits?: { recordingsPerMonth?: number | null };
-					usage?: { recordingsThisMonth?: number };
-				};
-				const limit = sub.limits?.recordingsPerMonth;
-				const used = sub.usage?.recordingsThisMonth ?? 0;
-				if (limit != null && used >= limit) {
-					toast.error(
-						"Monthly conversation recording limit reached. It resets next calendar month, or upgrade to Pro for unlimited recordings.",
-					);
-					setRecordingState("stopped");
-					return;
-				}
-			}
-
 			// 1. Upload audio to R2
 			const ext = "wav";
 			const filename = `recording-${Date.now()}.${ext}`;
@@ -264,6 +263,7 @@ export default function NewRecording({
 			});
 
 			toast.success("Recording saved");
+			void refreshBilling();
 			onSaved(recording.id);
 		} catch (err) {
 			toast.error(getErrorMessage(err, "Failed to save recording"));
@@ -275,6 +275,7 @@ export default function NewRecording({
 		durationSeconds,
 		selectedPatient,
 		createRecording,
+		refreshBilling,
 		onSaved,
 	]);
 
@@ -342,7 +343,38 @@ export default function NewRecording({
 					</p>
 				)}
 
-				{recordingState === "idle" && (
+				{recordingState === "idle" && outOfTime && billing && (
+					<div className="space-y-3 py-2">
+						<div className="flex justify-center items-center bg-muted mx-auto rounded-full size-14 text-muted-foreground">
+							<Clock className="size-6" />
+						</div>
+						<div>
+							<p className="font-medium text-sm">
+								You've used your recording time this month
+							</p>
+							<p className="text-muted-foreground text-xs">
+								{billing.plan.canBuyRecordingPacks
+									? "Add hours to keep recording. They never expire."
+									: "Upgrade to Pro for 100 hours a month."}
+							</p>
+						</div>
+						<Button asChild size="sm">
+							<Link
+								href={
+									billing.plan.canBuyRecordingPacks
+										? "/dashboard/subscription?addHours=1"
+										: "/dashboard/subscription"
+								}
+							>
+								{billing.plan.canBuyRecordingPacks
+									? "Add recording hours"
+									: "Upgrade to Pro"}
+							</Link>
+						</Button>
+					</div>
+				)}
+
+				{recordingState === "idle" && !outOfTime && (
 					<>
 						<button
 							type="button"
@@ -357,6 +389,12 @@ export default function NewRecording({
 							<p className="text-muted-foreground text-xs">
 								Your browser will ask for microphone access
 							</p>
+							{recordingTime && (
+								<p className="mt-1 text-muted-foreground text-xs">
+									{formatRecordingTime(recordingTime.remainingSeconds)} of
+									recording left
+								</p>
+							)}
 						</div>
 					</>
 				)}

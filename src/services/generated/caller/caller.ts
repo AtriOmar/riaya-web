@@ -14,6 +14,8 @@ import type {
 	PostApiInternalCallerAiAppointmentsCancelBody,
 	PostApiInternalCallerAiAppointmentsList200,
 	PostApiInternalCallerAiAppointmentsListBody,
+	PostApiInternalCallerBlocked200,
+	PostApiInternalCallerBlockedBody,
 	PostApiInternalCallerPeople200,
 	PostApiInternalCallerPeopleBody,
 	PostApiInternalCallerRefusalContext200,
@@ -23,61 +25,58 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary Alternative doctors after a refused request (voice service)
+ * @summary Is the caller's number blocked (voice service)
  */
-export const postApiInternalCallerRefusalContext = (
-	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
+export const postApiInternalCallerBlocked = (
+	postApiInternalCallerBlockedBody?: PostApiInternalCallerBlockedBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<PostApiInternalCallerRefusalContext200>(
+	return customInstance<PostApiInternalCallerBlocked200>(
 		{
-			url: `/api/internal/caller/refusal-context`,
+			url: `/api/internal/caller/blocked`,
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerRefusalContextBody,
+			data: postApiInternalCallerBlockedBody,
 		},
 		options,
 	);
 };
 
-export const getPostApiInternalCallerRefusalContextMutationFetcher = (
+export const getPostApiInternalCallerBlockedMutationFetcher = (
 	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (
 		_: Key,
-		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
+		{ arg }: { arg: PostApiInternalCallerBlockedBody | undefined },
 	) => {
-		return postApiInternalCallerRefusalContext(arg, options);
+		return postApiInternalCallerBlocked(arg, options);
 	};
 };
-export const getPostApiInternalCallerRefusalContextMutationKey = () =>
-	[`/api/internal/caller/refusal-context`] as const;
+export const getPostApiInternalCallerBlockedMutationKey = () =>
+	[`/api/internal/caller/blocked`] as const;
 
-export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+export type PostApiInternalCallerBlockedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
 >;
 
 /**
- * @summary Alternative doctors after a refused request (voice service)
+ * @summary Is the caller's number blocked (voice service)
  */
-export const usePostApiInternalCallerRefusalContext = <
-	TError = unknown,
->(options?: {
+export const usePostApiInternalCallerBlocked = <TError = unknown>(options?: {
 	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>,
 		TError,
 		Key,
-		PostApiInternalCallerRefusalContextBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+		PostApiInternalCallerBlockedBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
 	> & { swrKey?: string };
 	request?: SecondParameter<typeof customInstance>;
 }) => {
 	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
-		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
-	const swrFn =
-		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
+		swrOptions?.swrKey ?? getPostApiInternalCallerBlockedMutationKey();
+	const swrFn = getPostApiInternalCallerBlockedMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
@@ -139,6 +138,70 @@ export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
 	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const postApiInternalCallerRefusalContext = (
+	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerRefusalContext200>(
+		{
+			url: `/api/internal/caller/refusal-context`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerRefusalContextBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerRefusalContextMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
+	) => {
+		return postApiInternalCallerRefusalContext(arg, options);
+	};
+};
+export const getPostApiInternalCallerRefusalContextMutationKey = () =>
+	[`/api/internal/caller/refusal-context`] as const;
+
+export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+>;
+
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const usePostApiInternalCallerRefusalContext = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
+		TError,
+		Key,
+		PostApiInternalCallerRefusalContextBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
+	const swrFn =
+		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

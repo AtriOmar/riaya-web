@@ -4,9 +4,10 @@ export type PlanId = (typeof PLAN_IDS)[number];
 
 /** `null` means unlimited — used for enforcement, not marketing copy */
 export type PlanLimits = {
-	aiBookingPatients: number | null;
+	/** WhatsApp sends the doctor starts (invoices, medical files). Automatic patient messages are never counted. */
 	whatsappSendsPerMonth: number | null;
-	recordingsPerMonth: number | null;
+	/** Transcribed recording time included each month. Purchased packs add on top. */
+	recordingHoursPerMonth: number;
 	aiMessagesPerMonth: number | null;
 };
 
@@ -19,6 +20,8 @@ export type Plan = {
 	popular: boolean;
 	cta: string;
 	limits: PlanLimits;
+	/** Can buy recording time packs. */
+	canBuyRecordingPacks: boolean;
 	features: string[];
 };
 
@@ -31,19 +34,19 @@ export const PLANS: Record<PlanId, Plan> = {
 		popular: false,
 		cta: "Get Started",
 		limits: {
-			aiBookingPatients: 5,
-			whatsappSendsPerMonth: 50,
-			recordingsPerMonth: 5,
+			whatsappSendsPerMonth: 30,
+			recordingHoursPerMonth: 2,
 			aiMessagesPerMonth: 20,
 		},
+		canBuyRecordingPacks: false,
 		features: [
 			"Patient records & appointments",
 			"Availability & calendar",
 			"Invoices & PDF download",
 			"Medical files",
-			"AI phone booking for up to 5 patients / month",
-			"50 WhatsApp sends / month",
-			"5 conversation recordings / month",
+			"Unlimited AI phone booking",
+			"30 WhatsApp sends / month",
+			"2 hours of recording / month",
 			"20 AI assistant messages / month",
 		],
 	},
@@ -55,16 +58,16 @@ export const PLANS: Record<PlanId, Plan> = {
 		popular: true,
 		cta: "Start Pro",
 		limits: {
-			aiBookingPatients: null,
 			whatsappSendsPerMonth: null,
-			recordingsPerMonth: null,
+			recordingHoursPerMonth: 100,
 			aiMessagesPerMonth: null,
 		},
+		canBuyRecordingPacks: true,
 		features: [
 			"Everything in Free",
-			"Unlimited AI phone booking",
 			"Unlimited WhatsApp sends",
-			"Unlimited conversation recordings",
+			"100 hours of recording / month",
+			"Add more recording hours anytime",
 			"Unlimited AI assistant messages",
 			"Priority support",
 		],
@@ -76,3 +79,26 @@ export const PLAN_LIST = PLAN_IDS.map((id) => PLANS[id]);
 export function getPlan(id: PlanId): Plan {
 	return PLANS[id];
 }
+
+// ─── Recording time packs ─────────────────────────────────────────────────────
+// One-time purchases on top of the monthly allowance. Hours never expire and
+// are used only after the month's included hours run out.
+
+export const RECORDING_PACK_IDS = ["hours_25", "hours_100"] as const;
+
+export type RecordingPackId = (typeof RECORDING_PACK_IDS)[number];
+
+export type RecordingPack = {
+	id: RecordingPackId;
+	hours: number;
+	priceTnd: number;
+};
+
+export const RECORDING_PACKS: Record<RecordingPackId, RecordingPack> = {
+	hours_25: { id: "hours_25", hours: 25, priceTnd: 15 },
+	hours_100: { id: "hours_100", hours: 100, priceTnd: 50 },
+};
+
+export const RECORDING_PACK_LIST = RECORDING_PACK_IDS.map(
+	(id) => RECORDING_PACKS[id],
+);
