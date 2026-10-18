@@ -44,6 +44,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import type { AiChatMessageStatus } from "@/db/schema";
 import { getErrorMessage } from "@/lib/error-handling";
+import { recordingTitle } from "@/lib/recording-title";
 import {
 	formatTranscriptForAiContext,
 	transcriptContextFromRecording,
@@ -214,7 +215,7 @@ function AttachTranscriptDialog({
 											</div>
 											<div className="min-w-0 flex-1">
 												<p className="truncate font-medium text-sm">
-													{r.title ?? "Untitled"}
+													{recordingTitle(r)}
 												</p>
 												<div className="mt-0.5 flex flex-wrap gap-x-2 text-muted-foreground text-xs">
 													{patientName && <span>{patientName}</span>}

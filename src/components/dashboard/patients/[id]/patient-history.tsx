@@ -14,11 +14,13 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { DeleteRecordingButton } from "@/components/dashboard/recordings/delete-recording-button";
 import { NotTranscribed } from "@/components/dashboard/recordings/not-transcribed";
 import { RecordingSummary } from "@/components/dashboard/recordings/recording-summary";
 import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
+import { recordingTitle } from "@/lib/recording-title";
 import {
 	formatSpeakerLabel,
 	parseTranscriptPayload,
@@ -56,15 +58,24 @@ function TranscriptText({ transcript }: { transcript: unknown }) {
 			{parsed.kind === "segments" ? (
 				parsed.segments.map((s, i) => (
 					// biome-ignore lint/suspicious/noArrayIndexKey: segments have no stable id
-					<p key={i} className="text-sm leading-relaxed">
-						<span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+					<div key={i}>
+						<p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
 							{formatSpeakerLabel(s.speaker)}
-						</span>{" "}
-						{segmentText(s)}
-					</p>
+						</p>
+						{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
+						<p
+							dir="auto"
+							className="text-sm leading-relaxed [unicode-bidi:plaintext]"
+						>
+							{segmentText(s)}
+						</p>
+					</div>
 				))
 			) : (
-				<p className="whitespace-pre-wrap text-sm leading-relaxed">
+				<p
+					dir="auto"
+					className="whitespace-pre-wrap text-sm leading-relaxed [unicode-bidi:plaintext]"
+				>
 					{parsed.text}
 				</p>
 			)}
@@ -105,7 +116,7 @@ function RecordingEntry({
 						href={`/dashboard/recordings?id=${recording.id}`}
 						className="font-medium hover:underline"
 					>
-						{recording.title ?? "Untitled recording"}
+						{recordingTitle(recording)}
 					</Link>
 					<div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-muted-foreground text-xs">
 						<span>Consultation recording</span>
@@ -122,14 +133,20 @@ function RecordingEntry({
 						)}
 					</div>
 				</div>
-				{status === "done" && (
-					<Button size="sm" variant="outline" className="gap-1.5" asChild>
-						<Link href={`/dashboard/ai-chat?transcript=${recording.id}`}>
-							<Bot className="size-3.5" />
-							<span className="hidden sm:inline">Discuss with AI</span>
-						</Link>
-					</Button>
-				)}
+				<div className="flex shrink-0 items-center gap-1">
+					{status === "done" && (
+						<Button size="sm" variant="outline" className="gap-1.5" asChild>
+							<Link href={`/dashboard/ai-chat?transcript=${recording.id}`}>
+								<Bot className="size-3.5" />
+								<span className="hidden sm:inline">Discuss with AI</span>
+							</Link>
+						</Button>
+					)}
+					<DeleteRecordingButton
+						recordingId={recording.id}
+						onDeleted={onChanged}
+					/>
+				</div>
 			</div>
 
 			<AudioWaveformPlayer src={recording.audioUrl} />

@@ -1,15 +1,43 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { consultationRecording } from "@/db/schema";
-import { type TranscriptResponse, transcribeAudio } from "@/lib/ai";
+import {
+	generateRecordingTitle,
+	type TranscriptResponse,
+	transcribeAudio,
+} from "@/lib/ai";
 import { chargeRecordingUsage, getEffectivePlan } from "@/lib/plan-limits";
 import { summarizeRecording } from "@/lib/recording-summary";
+import { formatTranscriptForAiContext } from "@/lib/transcript";
 
 function setStatus(recordingId: number, status: "processing" | "error") {
 	return db
 		.update(consultationRecording)
 		.set({ transcriptStatus: status, updatedAt: new Date() })
 		.where(eq(consultationRecording.id, recordingId));
+}
+
+/** Saves an AI title if the recording still has none. Never throws. */
+async function nameRecording(recordingId: number, transcript: unknown) {
+	try {
+		const title = await generateRecordingTitle(
+			formatTranscriptForAiContext(transcript),
+		);
+		const [named] = await db
+			.update(consultationRecording)
+			.set({ title, updatedAt: new Date() })
+			.where(
+				and(
+					eq(consultationRecording.id, recordingId),
+					isNull(consultationRecording.title),
+				),
+			)
+			.returning();
+		return named ?? null;
+	} catch (err) {
+		console.error("Recording title failed:", err);
+		return null;
+	}
 }
 
 /**
@@ -39,6 +67,7 @@ export async function transcribeRecording(recordingId: number) {
 		.select({
 			doctorId: consultationRecording.doctorId,
 			audioUrl: consultationRecording.audioUrl,
+			title: consultationRecording.title,
 			durationSeconds: consultationRecording.durationSeconds,
 		})
 		.from(consultationRecording)
@@ -80,13 +109,19 @@ export async function transcribeRecording(recordingId: number) {
 			.where(eq(consultationRecording.id, recordingId))
 			.returning();
 
+		// Name it from what was said, unless the doctor already gave it a title.
+		// On failure it keeps showing its date-based name.
+		const final = recording.title?.trim()
+			? updated
+			: ((await nameRecording(recordingId, transcript)) ?? updated);
+
 		// The transcript is saved either way; a failed charge must not mark it as an error.
 		await chargeRecordingUsage(
 			recording.doctorId,
 			recordingId,
 			durationSeconds,
 		).catch((err) => console.error("Recording usage charge failed:", err));
-		return updated;
+		return final;
 	} catch (err) {
 		console.error("Transcription error:", err);
 		await setStatus(recordingId, "error");

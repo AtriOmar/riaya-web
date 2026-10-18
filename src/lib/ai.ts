@@ -88,6 +88,17 @@ export async function* streamChatText(options: {
 	}
 }
 
+/**
+ * OpenRouter option that skips the model's hidden reasoning. For short,
+ * extractive jobs (titles, notes) it gives the same result for a fraction of
+ * the tokens; with reasoning on, a small `max_tokens` can be used up before
+ * any answer is written.
+ */
+const NO_REASONING = { reasoning: { enabled: false } } as Record<
+	string,
+	unknown
+>;
+
 function usageFrom(usage: OpenAI.CompletionUsage | undefined): ChatUsage {
 	// OpenRouter adds `cost` (USD) to the standard usage object
 	const cost = (usage as { cost?: number } | undefined)?.cost;
@@ -113,6 +124,32 @@ Rules:
 - Use only what was said. Never add a diagnosis, finding or treatment the doctor didn't state. If a section wasn't discussed, use an empty string.
 - Be concise: short sentences or "-" bullet lines, no greetings or filler.`;
 
+/** Names a recording from its transcript: a few words, in English. */
+export async function generateRecordingTitle(
+	transcriptText: string,
+): Promise<string> {
+	const client = createChatClient();
+	const completion = await client.chat.completions.create({
+		model: CHAT_MODEL,
+		messages: [
+			{
+				role: "system",
+				content:
+					'Give this doctor–patient consultation a short title for the patient\'s file: 3 to 6 words, in English whatever language the conversation is in, naming the main complaint or diagnosis (e.g. "Viral pharyngitis with fever"). No patient name, no date, no quotes, no final period. If nothing clinical was discussed, describe what the conversation was about. Reply with the title only.',
+			},
+			{ role: "user", content: transcriptText.slice(0, 20_000) },
+		],
+		max_tokens: 40,
+		...NO_REASONING,
+	});
+	const title = (completion.choices[0]?.message?.content ?? "")
+		.trim()
+		.replace(/^["'«\s]+|["'»\s.]+$/g, "")
+		.slice(0, 120);
+	if (!title) throw new Error("Empty title");
+	return title;
+}
+
 /** Writes a structured consultation note from a transcript (non-streaming). */
 export async function generateConsultationSummary(
 	transcriptText: string,
@@ -126,6 +163,7 @@ export async function generateConsultationSummary(
 		],
 		response_format: { type: "json_object" },
 		max_tokens: 1500,
+		...NO_REASONING,
 	});
 
 	const raw = completion.choices[0]?.message?.content ?? "";

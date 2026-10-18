@@ -13,13 +13,16 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DeleteRecordingButton } from "@/components/dashboard/recordings/delete-recording-button";
 import NewRecording from "@/components/dashboard/recordings/new-recording";
 import RecordingDetail from "@/components/dashboard/recordings/recording-detail";
+import { UnsavedRecordingBanner } from "@/components/dashboard/recordings/unsaved-recording-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { getErrorMessage } from "@/lib/error-handling";
+import { recordingTitle } from "@/lib/recording-title";
 import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
@@ -96,11 +99,13 @@ function RecordingRow({
 	selected,
 	onSelect,
 	onTranscribed,
+	onDeleted,
 }: {
 	recording: GetApiRecordings200Item;
 	selected: boolean;
 	onSelect: () => void;
 	onTranscribed: () => void;
+	onDeleted: () => void;
 }) {
 	const { trigger: transcribe, isMutating: isTranscribing } =
 		usePostApiRecordingsIdTranscribe(recording.id.toString());
@@ -125,25 +130,28 @@ function RecordingRow({
 		}
 	};
 
+	// The open button stretches over the whole card; actions sit above it
+	// (buttons can't be nested inside a button).
 	return (
-		<button
-			type="button"
+		<div
 			className={cn(
-				"flex w-full cursor-pointer items-start justify-between gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/40",
+				"relative flex w-full items-start justify-between gap-4 rounded-xl border bg-card p-4 transition-colors hover:bg-accent/40 has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring",
 				selected && "border-primary/40 bg-accent/50 ring-1 ring-primary/20",
 			)}
-			onClick={onSelect}
-			aria-label={`Open recording: ${recording.title}`}
-			aria-pressed={selected}
 		>
-			<div className="flex min-w-0 flex-1 items-start gap-3">
+			<button
+				type="button"
+				data-open
+				className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
+				onClick={onSelect}
+				aria-label={`Open recording: ${recordingTitle(recording)}`}
+				aria-pressed={selected}
+			>
 				<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
 					<Mic className="size-4 text-primary" />
 				</div>
 				<div className="min-w-0">
-					<p className="truncate font-medium">
-						{recording.title ?? "Untitled"}
-					</p>
+					<p className="truncate font-medium">{recordingTitle(recording)}</p>
 					<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
 						{patientName && (
 							<span className="flex items-center gap-1">
@@ -165,9 +173,9 @@ function RecordingRow({
 						)}
 					</div>
 				</div>
-			</div>
+			</button>
 
-			<div className="flex shrink-0 items-center gap-2">
+			<div className="relative z-10 flex shrink-0 items-center gap-2">
 				<TranscriptStatusBadge status={recording.transcriptStatus} />
 				{canTranscribe && (
 					<Button
@@ -186,8 +194,12 @@ function RecordingRow({
 						{isTranscribing ? "Transcribing…" : "Transcribe"}
 					</Button>
 				)}
+				<DeleteRecordingButton
+					recordingId={recording.id}
+					onDeleted={onDeleted}
+				/>
 			</div>
-		</button>
+		</div>
 	);
 }
 
@@ -272,6 +284,10 @@ export default function RecordingsList() {
 				key={current.id}
 				recordingId={current.id}
 				onClose={onClose}
+				onDeleted={() => {
+					void mutate();
+					closePanel();
+				}}
 			/>
 		);
 	};
@@ -293,6 +309,14 @@ export default function RecordingsList() {
 						New Recording
 					</Button>
 				</div>
+
+				{/* Below the header row: its button is pulled up beside the page title */}
+				<UnsavedRecordingBanner
+					onSaved={(id) => {
+						void mutate();
+						openPanel({ type: "detail", id });
+					}}
+				/>
 
 				{isLoading && (
 					<div className="flex justify-center py-16">
@@ -330,6 +354,11 @@ export default function RecordingsList() {
 								selected={selectedId === recording.id}
 								onSelect={() => openPanel({ type: "detail", id: recording.id })}
 								onTranscribed={() => mutate()}
+								onDeleted={() => {
+									void mutate();
+									// Close the panel if it was showing this recording
+									if (selectedId === recording.id) closePanel();
+								}}
 							/>
 						))}
 					</div>

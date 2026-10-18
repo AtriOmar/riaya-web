@@ -77,7 +77,13 @@ export async function GET(req: NextRequest) {
 
 const createSchema = z.object({
 	audioUrl: z.url(),
-	title: z.string().min(1).max(255),
+	/** Optional: left empty, the recording is named from its transcript */
+	title: z
+		.string()
+		.trim()
+		.max(255)
+		.optional()
+		.transform((t) => t || null),
 	durationSeconds: z.number().int().positive().optional(),
 	patientId: z.number().int().positive().optional(),
 });

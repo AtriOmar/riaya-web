@@ -119,6 +119,7 @@ export function RecordingSummary({
 							{label}
 						</p>
 						<Textarea
+							dir="auto"
 							value={draft[key]}
 							rows={2}
 							onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
@@ -183,7 +184,10 @@ export function RecordingSummary({
 							<dt className="font-medium text-muted-foreground text-xs">
 								{label}
 							</dt>
-							<dd className="whitespace-pre-wrap text-sm leading-relaxed">
+							<dd
+								dir="auto"
+								className="whitespace-pre-wrap text-sm leading-relaxed [unicode-bidi:plaintext]"
+							>
 								{recording.summary?.[key]}
 							</dd>
 						</div>

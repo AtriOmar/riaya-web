@@ -1,3 +1,5 @@
+import { recordingTitle } from "@/lib/recording-title";
+
 /**
  * Speaker labels from OpenRouter diarization are 0-based indexes.
  * Missing values stay as a generic "Speaker".
@@ -154,7 +156,10 @@ export function transcriptContextFromRecording(recording: {
 
 	return {
 		recordingId: recording.id,
-		title: recording.title ?? "Untitled",
+		title: recordingTitle({
+			title: recording.title ?? null,
+			createdAt: recording.createdAt ?? null,
+		}),
 		text: formatTranscriptForAiContext(recording.transcript, {
 			title: recording.title,
 			recordedAt: recording.createdAt,

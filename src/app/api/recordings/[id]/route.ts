@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording, patient } from "@/db/schema";
@@ -11,6 +11,7 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { consultationSummarySchema } from "@/lib/consultation-summary";
+import { deleteFromR2ByUrl } from "@/lib/r2";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -58,6 +59,38 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 		if (!recording) return apiError("RECORDING_NOT_FOUND");
 
 		return json(recording);
+	} catch (e) {
+		if (e instanceof Response) return e;
+		return apiError("INTERNAL_ERROR");
+	}
+}
+
+// ─── DELETE /api/recordings/[id] ──────────────────────────────────────────────
+// Deletes the recording and its audio file. Recording time it already used
+// stays used (the transcription was paid for). AI chats about it are kept.
+
+export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+	try {
+		const session = await requireSession();
+		const profile = await requireDoctorProfile(session.user.id);
+
+		const { id } = await params;
+		const recordingId = Number(id);
+		if (Number.isNaN(recordingId)) return apiError("INVALID_ID");
+
+		const [deleted] = await db
+			.delete(consultationRecording)
+			.where(
+				and(
+					eq(consultationRecording.id, recordingId),
+					eq(consultationRecording.doctorId, profile.id),
+				),
+			)
+			.returning({ audioUrl: consultationRecording.audioUrl });
+		if (!deleted) return apiError("RECORDING_NOT_FOUND");
+
+		after(() => deleteFromR2ByUrl(deleted.audioUrl));
+		return json({ ok: true });
 	} catch (e) {
 		if (e instanceof Response) return e;
 		return apiError("INTERNAL_ERROR");
@@ -184,6 +217,22 @@ registry.registerPath({
 			description: "Updated recording",
 			content: {
 				"application/json": { schema: selectConsultationRecordingSchema },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/recordings/{id}",
+	tags: ["Recordings"],
+	summary: "Delete recording",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Recording deleted",
+			content: {
+				"application/json": { schema: z.object({ ok: z.boolean() }) },
 			},
 		},
 	},

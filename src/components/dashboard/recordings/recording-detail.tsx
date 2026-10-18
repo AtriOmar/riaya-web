@@ -26,6 +26,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { getErrorMessage } from "@/lib/error-handling";
+import { recordingTitle } from "@/lib/recording-title";
 import { formatSpeakerLabel } from "@/lib/transcript";
 import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ import {
 	usePatchApiRecordingsId,
 	usePostApiRecordingsIdTranscribe,
 } from "@/services/generated/recordings/recordings";
+import { DeleteRecordingButton } from "./delete-recording-button";
 import { NotTranscribed } from "./not-transcribed";
 import { RecordingSummary } from "./recording-summary";
 
@@ -147,10 +149,13 @@ function formatTimestamp(seconds: number) {
 export default function RecordingDetail({
 	recordingId,
 	onClose,
+	onDeleted,
 }: {
 	recordingId: number;
 	/** Shows a close button in the header. */
 	onClose?: () => void;
+	/** Called after the recording is deleted (e.g. to close the panel). */
+	onDeleted: () => void;
 }) {
 	const {
 		data: recording,
@@ -177,7 +182,7 @@ export default function RecordingDetail({
 		<Button
 			variant="ghost"
 			size="icon-sm"
-			className="-mr-2 shrink-0 text-muted-foreground"
+			className="shrink-0 text-muted-foreground"
 			aria-label="Close recording"
 			onClick={onClose}
 		>
@@ -303,7 +308,7 @@ export default function RecordingDetail({
 							aria-label="Edit title"
 						>
 							<h2 className="font-semibold text-lg truncate">
-								{recording.title ?? "Untitled"}
+								{recordingTitle(recording)}
 							</h2>
 							<Pencil className="size-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
 						</button>
@@ -339,7 +344,13 @@ export default function RecordingDetail({
 						<X className="size-4" />
 					</Button>
 				) : (
-					closeButton
+					<div className="-mr-2 flex shrink-0 items-center">
+						<DeleteRecordingButton
+							recordingId={recording.id}
+							onDeleted={onDeleted}
+						/>
+						{closeButton}
+					</div>
 				)}
 			</div>
 
@@ -515,7 +526,11 @@ export default function RecordingDetail({
 											<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 												{formatSpeakerLabel(segment.speaker)}
 											</span>
-											<p className="mt-0.5 text-sm leading-relaxed">
+											{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
+											<p
+												dir="auto"
+												className="mt-0.5 text-start text-sm leading-relaxed [unicode-bidi:plaintext]"
+											>
 												{segment.text ||
 													segment.words?.map((w: any) => w.word).join(" ")}
 											</p>
@@ -524,7 +539,10 @@ export default function RecordingDetail({
 								))}
 							</div>
 						) : (
-							<p className="text-sm leading-relaxed whitespace-pre-wrap">
+							<p
+								dir="auto"
+								className="text-sm leading-relaxed whitespace-pre-wrap [unicode-bidi:plaintext]"
+							>
 								{typeof transcript === "string"
 									? transcript
 									: JSON.stringify(transcript, null, 2)}
