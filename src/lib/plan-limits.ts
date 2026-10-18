@@ -352,6 +352,7 @@ export async function getPlanUsage(doctorId: number) {
 		isPro,
 		limits: plan.limits,
 		canBuyRecordingPacks: plan.canBuyRecordingPacks,
+		canBrandDocuments: plan.canBrandDocuments,
 		usage: {
 			whatsappSendsThisMonth,
 			aiMessagesThisMonth,

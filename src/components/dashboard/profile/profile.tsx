@@ -9,6 +9,7 @@ import {
 } from "@/services/generated/miscellaneous/miscellaneous";
 import { useGetApiUsersMe } from "@/services/generated/users/users";
 import DoctorApplicationForm from "./doctor-application";
+import DocumentBranding from "./document-branding";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 
@@ -52,6 +53,14 @@ export default function Profile() {
 			<ProfilePicture />
 
 			{showReadOnly && readOnlyInfo && <UserInfoReadOnly info={readOnlyInfo} />}
+
+			{status === "verified" && profile && (
+				<DocumentBranding
+					logoUrl={profile.logoUrl}
+					stampUrl={profile.stampUrl}
+					onSaved={() => void mutateMe()}
+				/>
+			)}
 
 			{showBanned && (
 				<div className="mt-5">

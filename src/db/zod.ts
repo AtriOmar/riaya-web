@@ -181,6 +181,7 @@ export const planUsageSchema = z.object({
 		aiMessagesPerMonth: z.number().nullable(),
 	}),
 	canBuyRecordingPacks: z.boolean(),
+	canBrandDocuments: z.boolean(),
 	usage: z.object({
 		whatsappSendsThisMonth: z.number(),
 		aiMessagesThisMonth: z.number(),

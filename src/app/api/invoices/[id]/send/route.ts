@@ -12,6 +12,7 @@ import {
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
+import { loadDocumentBranding } from "@/lib/document-branding";
 import { buildInvoicePdf } from "@/lib/invoice-pdf";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
@@ -61,6 +62,8 @@ export async function POST(
 			return apiError("PATIENT_PHONE_REQUIRED");
 		}
 
+		const branding = await loadDocumentBranding(profile);
+
 		const pdf = await buildInvoicePdf({
 			number: record.number,
 			status: record.status,
@@ -94,6 +97,7 @@ export async function POST(
 				phoneNumber: record.patient.phoneNumber,
 				address: record.patient.address,
 			},
+			branding,
 		});
 
 		const key = `invoices/${randomUUID()}.pdf`;

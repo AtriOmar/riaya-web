@@ -62,6 +62,9 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	RECORDING_LIMIT_REACHED:
 		"You've used all your recording time this month. Add hours or upgrade on the Subscription page.",
 	RECORDING_PACKS_REQUIRE_PRO: "Recording hour packs are available on Pro.",
+	DOCUMENT_BRANDING_REQUIRES_PRO:
+		"Your logo and stamp on invoices are available on Pro.",
+	INVALID_BRANDING_IMAGE: "Upload the image again as a PNG or JPEG.",
 	AI_MESSAGE_LIMIT_REACHED:
 		"Monthly AI assistant message limit reached. It resets next calendar month, or upgrade to Pro for unlimited messages.",
 	APPOINTMENT_NOT_CANCELLABLE:

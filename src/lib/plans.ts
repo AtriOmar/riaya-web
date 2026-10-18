@@ -22,6 +22,8 @@ export type Plan = {
 	limits: PlanLimits;
 	/** Can buy recording time packs. */
 	canBuyRecordingPacks: boolean;
+	/** Invoices carry the doctor's logo and stamp instead of the Riaya footer. */
+	canBrandDocuments: boolean;
 	features: string[];
 };
 
@@ -39,6 +41,7 @@ export const PLANS: Record<PlanId, Plan> = {
 			aiMessagesPerMonth: 20,
 		},
 		canBuyRecordingPacks: false,
+		canBrandDocuments: false,
 		features: [
 			"Patient records & appointments",
 			"Availability & calendar",
@@ -63,12 +66,14 @@ export const PLANS: Record<PlanId, Plan> = {
 			aiMessagesPerMonth: null,
 		},
 		canBuyRecordingPacks: true,
+		canBrandDocuments: true,
 		features: [
 			"Everything in Free",
 			"Unlimited WhatsApp sends",
 			"100 hours of recording / month",
 			"Add more recording hours anytime",
 			"Unlimited AI assistant messages",
+			"Your logo & stamp on invoices",
 			"Priority support",
 		],
 	},

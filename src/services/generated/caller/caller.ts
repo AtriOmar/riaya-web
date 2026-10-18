@@ -25,67 +25,6 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary Is the caller's number blocked (voice service)
- */
-export const postApiInternalCallerBlocked = (
-	postApiInternalCallerBlockedBody?: PostApiInternalCallerBlockedBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiInternalCallerBlocked200>(
-		{
-			url: `/api/internal/caller/blocked`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerBlockedBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiInternalCallerBlockedMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiInternalCallerBlockedBody | undefined },
-	) => {
-		return postApiInternalCallerBlocked(arg, options);
-	};
-};
-export const getPostApiInternalCallerBlockedMutationKey = () =>
-	[`/api/internal/caller/blocked`] as const;
-
-export type PostApiInternalCallerBlockedMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
->;
-
-/**
- * @summary Is the caller's number blocked (voice service)
- */
-export const usePostApiInternalCallerBlocked = <TError = unknown>(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>,
-		TError,
-		Key,
-		PostApiInternalCallerBlockedBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiInternalCallerBlockedMutationKey();
-	const swrFn = getPostApiInternalCallerBlockedMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary People on the caller's phone (voice service)
  */
 export const postApiInternalCallerPeople = (
@@ -138,6 +77,67 @@ export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
 	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Is the caller's number blocked (voice service)
+ */
+export const postApiInternalCallerBlocked = (
+	postApiInternalCallerBlockedBody?: PostApiInternalCallerBlockedBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerBlocked200>(
+		{
+			url: `/api/internal/caller/blocked`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerBlockedBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerBlockedMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerBlockedBody | undefined },
+	) => {
+		return postApiInternalCallerBlocked(arg, options);
+	};
+};
+export const getPostApiInternalCallerBlockedMutationKey = () =>
+	[`/api/internal/caller/blocked`] as const;
+
+export type PostApiInternalCallerBlockedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
+>;
+
+/**
+ * @summary Is the caller's number blocked (voice service)
+ */
+export const usePostApiInternalCallerBlocked = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>,
+		TError,
+		Key,
+		PostApiInternalCallerBlockedBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerBlockedMutationKey();
+	const swrFn = getPostApiInternalCallerBlockedMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

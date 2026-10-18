@@ -79,54 +79,6 @@ export const usePostApiBillingCheckout = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Get the doctor's subscription and plan usage
- */
-export const getApiBillingSubscription = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiBillingSubscription200>(
-		{ url: `/api/billing/subscription`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiBillingSubscriptionKey = () =>
-	[`/api/billing/subscription`] as const;
-
-export type GetApiBillingSubscriptionQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiBillingSubscription>>
->;
-
-/**
- * @summary Get the doctor's subscription and plan usage
- */
-export const useGetApiBillingSubscription = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<
-		Awaited<ReturnType<typeof getApiBillingSubscription>>,
-		TError
-	> & { swrKey?: Key; enabled?: boolean };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiBillingSubscriptionKey() : null));
-	const swrFn = () => getApiBillingSubscription(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Buy a recording time pack
  */
 export const postApiBillingRecordingPacks = (
@@ -181,6 +133,54 @@ export const usePostApiBillingRecordingPacks = <TError = unknown>(options?: {
 	const swrFn = getPostApiBillingRecordingPacksMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Get the doctor's subscription and plan usage
+ */
+export const getApiBillingSubscription = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiBillingSubscription200>(
+		{ url: `/api/billing/subscription`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiBillingSubscriptionKey = () =>
+	[`/api/billing/subscription`] as const;
+
+export type GetApiBillingSubscriptionQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiBillingSubscription>>
+>;
+
+/**
+ * @summary Get the doctor's subscription and plan usage
+ */
+export const useGetApiBillingSubscription = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<
+		Awaited<ReturnType<typeof getApiBillingSubscription>>,
+		TError
+	> & { swrKey?: Key; enabled?: boolean };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiBillingSubscriptionKey() : null));
+	const swrFn = () => getApiBillingSubscription(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

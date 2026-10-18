@@ -83,6 +83,9 @@ export const doctorProfile = pgTable(
 		medicalCouncilCertificate: varchar("medical_council_certificate", {
 			length: 255,
 		}),
+		// Printed on invoices (Pro). PNG or JPEG on the CDN.
+		logoUrl: varchar("logo_url", { length: 1024 }),
+		stampUrl: varchar("stamp_url", { length: 1024 }),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},

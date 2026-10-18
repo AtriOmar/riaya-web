@@ -32,7 +32,7 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 | Recording time | ${FREE.limits.recordingHoursPerMonth} hours / UTC calendar month | ${PRO.limits.recordingHoursPerMonth} hours / UTC calendar month, plus hour packs |
 | AI assistant messages | ${formatLimit(FREE.limits.aiMessagesPerMonth, "user messages / UTC calendar month")} | ${formatLimit(PRO.limits.aiMessagesPerMonth, "AI assistant messages")} |
 
-**Pro also includes:** priority support.
+**Pro also includes:** the doctor's logo and stamp on invoices (set on **Profile → Invoice branding**; PNG or JPEG), which replaces the "Facture générée avec Riaya" footer; priority support.
 
 **AI phone booking:**
 - Patients calling Riaya are never refused because of a doctor's plan; there is no booking limit on any plan.

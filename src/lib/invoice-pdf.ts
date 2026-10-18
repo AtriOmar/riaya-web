@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import type { DocumentBranding } from "@/lib/document-branding";
 import { millimesToTnd } from "@/lib/money";
 
 export type InvoicePdfDoctor = {
@@ -40,6 +41,8 @@ export type InvoicePdfData = {
 	}[];
 	doctor: InvoicePdfDoctor;
 	patient: InvoicePdfPatient;
+	/** Doctor's logo and stamp (Pro). `null` prints the Riaya footer instead. */
+	branding: DocumentBranding | null;
 };
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -60,6 +63,8 @@ const FONT = { regular: "Helvetica", bold: "Helvetica-Bold" };
 
 const PAGE_MARGIN = 48;
 const FOOTER_HEIGHT = 56;
+const LOGO_SIZE = 56;
+const STAMP_BOX = { width: 170, height: 96 };
 
 const STATUS_STYLE: Record<string, { label: string; fg: string; bg: string }> =
 	{
@@ -203,6 +208,28 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 				});
 		};
 
+		/** Draws an image fitted into a box; a file pdfkit can't decode is skipped. */
+		const image = (
+			bytes: Buffer,
+			x: number,
+			y: number,
+			w: number,
+			h: number,
+			centered = true,
+		): boolean => {
+			try {
+				doc.image(bytes, x, y, {
+					fit: [w, h],
+					align: centered ? "center" : undefined,
+					valign: "center",
+				});
+				return true;
+			} catch (err) {
+				console.error("Invoice PDF: could not draw image", err);
+				return false;
+			}
+		};
+
 		const label = (text: string, x: number, y: number, w?: number) =>
 			line(text.toUpperCase(), x, y, {
 				font: FONT.bold,
@@ -231,8 +258,13 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 		drawTopBar();
 		y = PAGE_MARGIN;
 
-		const headerLeftWidth = width * 0.58;
-		line(doctorDisplayName(data.doctor), left, y, {
+		// The logo sits left of the doctor's details and pushes them right.
+		const logo = data.branding?.logo;
+		const hasLogo =
+			!!logo && image(logo, left, y - 4, LOGO_SIZE, LOGO_SIZE, false);
+		const headerX = hasLogo ? left + LOGO_SIZE + 14 : left;
+		const headerLeftWidth = width * 0.58 - (headerX - left);
+		line(doctorDisplayName(data.doctor), headerX, y, {
 			font: FONT.bold,
 			size: 17,
 			color: COLOR.ink,
@@ -240,7 +272,7 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 		});
 		let hy = y + 22;
 		if (data.doctor.specialityName) {
-			line(data.doctor.specialityName, left, hy, {
+			line(data.doctor.specialityName, headerX, hy, {
 				font: FONT.bold,
 				size: 10,
 				color: COLOR.brand,
@@ -257,7 +289,7 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 				.font(FONT.regular)
 				.fontSize(9)
 				.fillColor(COLOR.body)
-				.text(text, left, hy, { width: headerLeftWidth });
+				.text(text, headerX, hy, { width: headerLeftWidth });
 			hy = doc.y + 2;
 		}
 		const legalLine = compact([
@@ -266,7 +298,7 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 				`N° Ordre : ${data.doctor.medicalCouncilNumber}`,
 		]).join("   ·   ");
 		if (legalLine) {
-			line(legalLine, left, hy + 2, {
+			line(legalLine, headerX, hy + 2, {
 				size: 8.5,
 				color: COLOR.muted,
 				width: headerLeftWidth,
@@ -297,7 +329,7 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 			align: "right",
 		});
 
-		y = Math.max(hy, y + 60) + 18;
+		y = Math.max(hy, y + 60, hasLogo ? y + LOGO_SIZE : 0) + 18;
 
 		// ── Patient + amount due ────────────────────────────────────────────────
 		const gap = 16;
@@ -604,6 +636,16 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 			y += notesHeight + 16;
 		}
 
+		// ── Stamp & signature ───────────────────────────────────────────────────
+		const stamp = data.branding?.stamp;
+		if (stamp) {
+			ensureSpace(STAMP_BOX.height + 24);
+			const sx = right - STAMP_BOX.width;
+			label("Cachet et signature", sx, y, STAMP_BOX.width);
+			image(stamp, sx, y + 14, STAMP_BOX.width, STAMP_BOX.height);
+			y += STAMP_BOX.height + 24;
+		}
+
 		// ── Footer on every page ────────────────────────────────────────────────
 		const range = doc.bufferedPageRange();
 		const issuer = compact([
@@ -634,10 +676,12 @@ export async function buildInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 				width,
 				align: "right",
 			});
-			line("Facture générée avec Riaya", left, fy + 12, {
-				size: 7,
-				color: COLOR.faint,
-			});
+			if (!data.branding) {
+				line("Facture générée avec Riaya", left, fy + 12, {
+					size: 7,
+					color: COLOR.faint,
+				});
+			}
 			doc.page.margins.bottom = bottomMargin;
 		}
 
