@@ -10,6 +10,7 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { consultationSummarySchema } from "@/lib/consultation-summary";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -34,6 +35,9 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				summary: consultationRecording.summary,
+				summaryStatus: consultationRecording.summaryStatus,
+				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,
 				createdAt: consultationRecording.createdAt,
 				updatedAt: consultationRecording.updatedAt,
 				patient: {
@@ -66,10 +70,16 @@ const patchSchema = z
 	.object({
 		title: z.string().min(1).max(255).optional(),
 		patientId: z.number().int().positive().nullable().optional(),
+		/** The doctor's edits to the AI consultation note */
+		summary: consultationSummarySchema.optional(),
 	})
-	.refine((d) => d.title !== undefined || d.patientId !== undefined, {
-		message: "At least one field to update is required",
-	});
+	.refine(
+		(d) =>
+			d.title !== undefined ||
+			d.patientId !== undefined ||
+			d.summary !== undefined,
+		{ message: "At least one field to update is required" },
+	);
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
 	try {
@@ -116,6 +126,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 		if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
 		if (parsed.data.patientId !== undefined)
 			updateData.patientId = parsed.data.patientId;
+		if (parsed.data.summary !== undefined) {
+			updateData.summary = parsed.data.summary;
+			updateData.summaryStatus = "done";
+		}
 
 		const [updated] = await db
 			.update(consultationRecording)

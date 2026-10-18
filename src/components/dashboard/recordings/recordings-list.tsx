@@ -67,6 +67,14 @@ function TranscriptStatusBadge({
 			</Badge>
 		);
 	}
+	if (status === "skipped") {
+		return (
+			<Badge variant="outline" className="gap-1 text-muted-foreground">
+				<Clock className="size-3" />
+				Not transcribed
+			</Badge>
+		);
+	}
 	if (status === "error") {
 		return (
 			<Badge

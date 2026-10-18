@@ -2,7 +2,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { consultationRecording } from "@/db/schema";
 import { type TranscriptResponse, transcribeAudio } from "@/lib/ai";
-import { chargeRecordingUsage } from "@/lib/plan-limits";
+import { chargeRecordingUsage, getEffectivePlan } from "@/lib/plan-limits";
+import { summarizeRecording } from "@/lib/recording-summary";
 
 function setStatus(recordingId: number, status: "processing" | "error") {
 	return db
@@ -90,5 +91,19 @@ export async function transcribeRecording(recordingId: number) {
 		console.error("Transcription error:", err);
 		await setStatus(recordingId, "error");
 		return null;
+	}
+}
+
+/** The AI note runs after transcription when the doctor's plan includes it. */
+export async function shouldSummarize(doctorId: number): Promise<boolean> {
+	const { plan } = await getEffectivePlan(doctorId);
+	return plan.canSummarizeRecordings;
+}
+
+/** Background job for a new recording: transcribe, then write the AI note (Pro). */
+export async function transcribeAndSummarize(recordingId: number) {
+	const transcribed = await transcribeRecording(recordingId);
+	if (transcribed && (await shouldSummarize(transcribed.doctorId))) {
+		await summarizeRecording(recordingId);
 	}
 }

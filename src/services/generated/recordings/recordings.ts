@@ -19,6 +19,7 @@ import type {
 	PatchApiRecordingsIdBody,
 	PostApiRecordings201,
 	PostApiRecordingsBody,
+	PostApiRecordingsIdSummary200,
 	PostApiRecordingsIdTranscribe200,
 } from "../api.schemas";
 
@@ -240,6 +241,66 @@ export const usePatchApiRecordingsId = <TError = unknown>(
 
 	const swrKey = swrOptions?.swrKey ?? getPatchApiRecordingsIdMutationKey(id);
 	const swrFn = getPatchApiRecordingsIdMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Write the AI consultation note
+ */
+export const postApiRecordingsIdSummary = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiRecordingsIdSummary200>(
+		{ url: `/api/recordings/${id}/summary`, method: "POST" },
+		options,
+	);
+};
+
+export const getPostApiRecordingsIdSummaryMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return postApiRecordingsIdSummary(id, options);
+	};
+};
+export const getPostApiRecordingsIdSummaryMutationKey = (id: string) =>
+	[`/api/recordings/${id}/summary`] as const;
+
+export type PostApiRecordingsIdSummaryMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiRecordingsIdSummary>>
+>;
+
+/**
+ * @summary Write the AI consultation note
+ */
+export const usePostApiRecordingsIdSummary = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiRecordingsIdSummaryMutationKey(id);
+	const swrFn = getPostApiRecordingsIdSummaryMutationFetcher(
+		id,
+		requestOptions,
+	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

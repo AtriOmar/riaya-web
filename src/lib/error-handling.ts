@@ -64,6 +64,9 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	RECORDING_LIMIT_REACHED:
 		"You've used all your recording time this month. Add hours or upgrade on the Subscription page.",
 	RECORDING_PACKS_REQUIRE_PRO: "Recording hour packs are available on Pro.",
+	SUMMARIES_REQUIRE_PRO: "Consultation summaries are available on Pro.",
+	TRANSCRIPT_REQUIRED: "Transcribe the recording first.",
+	SUMMARY_FAILED: "Couldn't write the summary. Please try again.",
 	DOCUMENT_BRANDING_REQUIRES_PRO:
 		"Your logo and stamp on invoices are available on Pro.",
 	INVALID_BRANDING_IMAGE: "Upload the image again as a PNG or JPEG.",

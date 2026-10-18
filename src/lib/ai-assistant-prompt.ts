@@ -54,7 +54,8 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - Each recording uses its audio length once it is transcribed. Re-running a transcription does not count again.
 - The plan's monthly hours are used first. After that, Pro doctors use **hour packs** they bought.
 - Hour packs (Pro only): ${RECORDING_PACK_LIST.map((p) => `${p.hours} h for ${p.priceTnd} TND`).join(", ")}. Buy them on **Subscription → Add hours** (paid via Konnect). Pack hours **never expire**.
-- When no time is left, a new recording can't be started until next UTC month, more hours are added (Pro), or the doctor upgrades (Free).
+- Recording **always works**, even with no time left: the recording is saved without a transcript ("Not transcribed"). The doctor can transcribe it later with one click once time is available (next UTC month, after adding hours on Pro, or after upgrading). It is never transcribed automatically later.
+- On Pro, every transcribed recording also gets an automatic **consultation note** (reason for visit, history, examination, assessment, plan), written in French from what was said. It's included in recording hours (no separate limit), can be edited, and can be rewritten from the transcript.
 
 **How AI assistant use is counted:**
 - Each plan has a monthly AI allowance, quoted on the plans as "about N questions" for typical use. **Subscription** and the home Dashboard show how much of it is used, as a percentage. It resets on the 1st of each month (UTC).
@@ -73,8 +74,8 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - List on the left; open a recording or create a new one in the right panel (same sheet).
 - New recording: Recordings → New Recording (or \`?new=1\`), then title, optional patient, record in-browser, save.
 - Recording time: ${FREE.limits.recordingHoursPerMonth} h/month on Free, ${PRO.limits.recordingHoursPerMonth} h/month on Pro plus hour packs. The recorder shows the time left.
-- Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; Transcribe; Ask AI / Chat with AI when transcript is done.
-- Patient detail also lists that patient’s recordings (links into the same panel via \`?id=\`).
+- Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; consultation note (Pro); transcript; Transcribe; **Discuss with AI** when the transcript is done.
+- Patient detail shows one **History** timeline: medical files and recorded consultations together, newest first. Each recording there has its audio, note, transcript and Discuss with AI.
 
 ---
 

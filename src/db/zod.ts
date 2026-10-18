@@ -1,5 +1,6 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { consultationSummarySchema } from "@/lib/consultation-summary";
 import { PLAN_IDS } from "@/lib/plans";
 import {
 	aiChatConversation,
@@ -182,6 +183,7 @@ export const planUsageSchema = z.object({
 	}),
 	canBuyRecordingPacks: z.boolean(),
 	canBrandDocuments: z.boolean(),
+	canSummarizeRecordings: z.boolean(),
 	usage: z.object({
 		whatsappSendsThisMonth: z.number(),
 		/** Share of the month's AI assistant budget used, 0–100 */
@@ -254,6 +256,7 @@ export const doctorDashboardStatsResponseSchema = z.object({
 
 export const selectConsultationRecordingSchema = createSelectSchema(
 	consultationRecording,
+	{ summary: consultationSummarySchema.nullable() },
 );
 
 export const selectConsultationRecordingWithPatientSchema =

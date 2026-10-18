@@ -32,6 +32,58 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * @summary List reported calls (Admin)
+ */
+export const getApiCallReports = (
+	params?: GetApiCallReportsParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiCallReports200Item[]>(
+		{ url: `/api/call-reports`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiCallReportsKey = (params?: GetApiCallReportsParams) =>
+	[`/api/call-reports`, ...(params ? [params] : [])] as const;
+
+export type GetApiCallReportsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiCallReports>>
+>;
+
+/**
+ * @summary List reported calls (Admin)
+ */
+export const useGetApiCallReports = <TError = unknown>(
+	params?: GetApiCallReportsParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiCallReports>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiCallReportsKey(params) : null));
+	const swrFn = () => getApiCallReports(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary List blocked numbers (Admin)
  */
 export const getApiBlockedPhones = (
@@ -136,33 +188,33 @@ export const usePostApiBlockedPhones = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary List reported calls (Admin)
+ * @summary Get a reported call (Admin)
  */
-export const getApiCallReports = (
-	params?: GetApiCallReportsParams,
+export const getApiCallReportsId = (
+	id: string,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<GetApiCallReports200Item[]>(
-		{ url: `/api/call-reports`, method: "GET", params },
+	return customInstance<GetApiCallReportsId200>(
+		{ url: `/api/call-reports/${id}`, method: "GET" },
 		options,
 	);
 };
 
-export const getGetApiCallReportsKey = (params?: GetApiCallReportsParams) =>
-	[`/api/call-reports`, ...(params ? [params] : [])] as const;
+export const getGetApiCallReportsIdKey = (id: string) =>
+	[`/api/call-reports/${id}`] as const;
 
-export type GetApiCallReportsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiCallReports>>
+export type GetApiCallReportsIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiCallReportsId>>
 >;
 
 /**
- * @summary List reported calls (Admin)
+ * @summary Get a reported call (Admin)
  */
-export const useGetApiCallReports = <TError = unknown>(
-	params?: GetApiCallReportsParams,
+export const useGetApiCallReportsId = <TError = unknown>(
+	id: string,
 	options?: {
 		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiCallReports>>,
+			Awaited<ReturnType<typeof getApiCallReportsId>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
 		request?: SecondParameter<typeof customInstance>;
@@ -170,11 +222,122 @@ export const useGetApiCallReports = <TError = unknown>(
 ) => {
 	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiCallReportsIdKey(id) : null));
+	const swrFn = () => getApiCallReportsId(id, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Dismiss or reopen a reported call (Admin)
+ */
+export const patchApiCallReportsId = (
+	id: string,
+	patchApiCallReportsIdBody?: PatchApiCallReportsIdBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PatchApiCallReportsId200>(
+		{
+			url: `/api/call-reports/${id}`,
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			data: patchApiCallReportsIdBody,
+		},
+		options,
+	);
+};
+
+export const getPatchApiCallReportsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PatchApiCallReportsIdBody | undefined }) => {
+		return patchApiCallReportsId(id, arg, options);
+	};
+};
+export const getPatchApiCallReportsIdMutationKey = (id: string) =>
+	[`/api/call-reports/${id}`] as const;
+
+export type PatchApiCallReportsIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchApiCallReportsId>>
+>;
+
+/**
+ * @summary Dismiss or reopen a reported call (Admin)
+ */
+export const usePatchApiCallReportsId = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof patchApiCallReportsId>>,
+			TError,
+			Key,
+			PatchApiCallReportsIdBody | undefined,
+			Awaited<ReturnType<typeof patchApiCallReportsId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPatchApiCallReportsIdMutationKey(id);
+	const swrFn = getPatchApiCallReportsIdMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Count open call reports (Admin)
+ */
+export const getApiCallReportsCount = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiCallReportsCount200>(
+		{ url: `/api/call-reports/count`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiCallReportsCountKey = () =>
+	[`/api/call-reports/count`] as const;
+
+export type GetApiCallReportsCountQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiCallReportsCount>>
+>;
+
+/**
+ * @summary Count open call reports (Admin)
+ */
+export const useGetApiCallReportsCount = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<
+		Awaited<ReturnType<typeof getApiCallReportsCount>>,
+		TError
+	> & { swrKey?: Key; enabled?: boolean };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
 	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiCallReportsKey(params) : null));
-	const swrFn = () => getApiCallReports(params, requestOptions);
+		(() => (isEnabled ? getGetApiCallReportsCountKey() : null));
+	const swrFn = () => getApiCallReportsCount(requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -308,169 +471,6 @@ export const useDeleteApiBlockedPhonesPhone = <TError = unknown>(
 		phone,
 		requestOptions,
 	);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Count open call reports (Admin)
- */
-export const getApiCallReportsCount = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiCallReportsCount200>(
-		{ url: `/api/call-reports/count`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiCallReportsCountKey = () =>
-	[`/api/call-reports/count`] as const;
-
-export type GetApiCallReportsCountQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiCallReportsCount>>
->;
-
-/**
- * @summary Count open call reports (Admin)
- */
-export const useGetApiCallReportsCount = <TError = unknown>(options?: {
-	swr?: SWRConfiguration<
-		Awaited<ReturnType<typeof getApiCallReportsCount>>,
-		TError
-	> & { swrKey?: Key; enabled?: boolean };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiCallReportsCountKey() : null));
-	const swrFn = () => getApiCallReportsCount(requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Get a reported call (Admin)
- */
-export const getApiCallReportsId = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiCallReportsId200>(
-		{ url: `/api/call-reports/${id}`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiCallReportsIdKey = (id: string) =>
-	[`/api/call-reports/${id}`] as const;
-
-export type GetApiCallReportsIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiCallReportsId>>
->;
-
-/**
- * @summary Get a reported call (Admin)
- */
-export const useGetApiCallReportsId = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiCallReportsId>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled =
-		swrOptions?.enabled !== false && id !== null && id !== undefined;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiCallReportsIdKey(id) : null));
-	const swrFn = () => getApiCallReportsId(id, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Dismiss or reopen a reported call (Admin)
- */
-export const patchApiCallReportsId = (
-	id: string,
-	patchApiCallReportsIdBody?: PatchApiCallReportsIdBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PatchApiCallReportsId200>(
-		{
-			url: `/api/call-reports/${id}`,
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			data: patchApiCallReportsIdBody,
-		},
-		options,
-	);
-};
-
-export const getPatchApiCallReportsIdMutationFetcher = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, { arg }: { arg: PatchApiCallReportsIdBody | undefined }) => {
-		return patchApiCallReportsId(id, arg, options);
-	};
-};
-export const getPatchApiCallReportsIdMutationKey = (id: string) =>
-	[`/api/call-reports/${id}`] as const;
-
-export type PatchApiCallReportsIdMutationResult = NonNullable<
-	Awaited<ReturnType<typeof patchApiCallReportsId>>
->;
-
-/**
- * @summary Dismiss or reopen a reported call (Admin)
- */
-export const usePatchApiCallReportsId = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRMutationConfiguration<
-			Awaited<ReturnType<typeof patchApiCallReportsId>>,
-			TError,
-			Key,
-			PatchApiCallReportsIdBody | undefined,
-			Awaited<ReturnType<typeof patchApiCallReportsId>>
-		> & { swrKey?: string };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey = swrOptions?.swrKey ?? getPatchApiCallReportsIdMutationKey(id);
-	const swrFn = getPatchApiCallReportsIdMutationFetcher(id, requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

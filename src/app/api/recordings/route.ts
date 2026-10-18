@@ -10,8 +10,8 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { assertRecordingAllowed } from "@/lib/plan-limits";
-import { transcribeRecording } from "@/lib/recording-transcription";
+import { getRecordingTime } from "@/lib/plan-limits";
+import { transcribeAndSummarize } from "@/lib/recording-transcription";
 
 // ─── GET /api/recordings ──────────────────────────────────────────────────────
 // Returns recordings for the authenticated doctor, optionally filtered by patient.
@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				summary: consultationRecording.summary,
+				summaryStatus: consultationRecording.summaryStatus,
+				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,
 				createdAt: consultationRecording.createdAt,
 				updatedAt: consultationRecording.updatedAt,
 				patient: {
@@ -67,8 +70,10 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── POST /api/recordings ─────────────────────────────────────────────────────
-// Creates a new recording row after the audio has been uploaded to R2, then
-// transcribes it in the background once the response is sent.
+// Creates a new recording row after the audio has been uploaded to R2. Saving
+// always works; it's transcribed (and summarized on Pro) in the background
+// only while recording time is left, otherwise it's kept as `skipped` for the
+// doctor to transcribe later.
 
 const createSchema = z.object({
 	audioUrl: z.url(),
@@ -86,8 +91,6 @@ export async function POST(req: NextRequest) {
 		const parsed = createSchema.safeParse(body);
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		await assertRecordingAllowed(profile.id);
-
 		// If patientId is provided, verify it belongs to this doctor
 		if (parsed.data.patientId) {
 			const [found] = await db
@@ -102,6 +105,9 @@ export async function POST(req: NextRequest) {
 			if (!found) return apiError("PATIENT_NOT_FOUND");
 		}
 
+		const { remainingSeconds } = await getRecordingTime(profile.id);
+		const hasTime = remainingSeconds > 0;
+
 		const [recording] = await db
 			.insert(consultationRecording)
 			.values({
@@ -110,11 +116,11 @@ export async function POST(req: NextRequest) {
 				title: parsed.data.title,
 				audioUrl: parsed.data.audioUrl,
 				durationSeconds: parsed.data.durationSeconds ?? null,
-				transcriptStatus: "processing",
+				transcriptStatus: hasTime ? "processing" : "skipped",
 			})
 			.returning();
 
-		after(() => transcribeRecording(recording.id));
+		if (hasTime) after(() => transcribeAndSummarize(recording.id));
 
 		return json(recording, 201);
 	} catch (e) {

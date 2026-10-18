@@ -369,6 +369,7 @@ export async function getPlanUsage(doctorId: number) {
 		},
 		canBuyRecordingPacks: plan.canBuyRecordingPacks,
 		canBrandDocuments: plan.canBrandDocuments,
+		canSummarizeRecordings: plan.canSummarizeRecordings,
 		usage: {
 			whatsappSendsThisMonth,
 			aiPercentUsed: aiPercentUsed(aiCostMicros, aiBudget),

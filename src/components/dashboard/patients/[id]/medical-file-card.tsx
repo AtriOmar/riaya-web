@@ -90,7 +90,8 @@ function draftFromFile(file: GetApiPatientsId200MedicalFilesItem): Draft {
 	};
 }
 
-function MedicalFileCard({
+/** One medical file in the patient's history: view, edit, delete, send on WhatsApp. */
+export function MedicalFileCard({
 	file,
 	patientId,
 	onChanged,
@@ -371,44 +372,6 @@ function MedicalFileCard({
 				onConfirm={sendViaWhatsapp}
 				isLoading={isSending}
 			/>
-		</div>
-	);
-}
-
-type PatientMedicalFilesListProps = {
-	patientId: number;
-	medicalFiles: GetApiPatientsId200MedicalFilesItem[] | null | undefined;
-	onChanged: () => void;
-};
-
-export function PatientMedicalFilesList({
-	patientId,
-	medicalFiles,
-	onChanged,
-}: PatientMedicalFilesListProps) {
-	return (
-		<div className="space-y-4 lg:col-span-2">
-			<h4 className="font-semibold text-lg">Medical Files</h4>
-
-			{medicalFiles?.length ? (
-				<div className="space-y-3">
-					{medicalFiles.map((file) => (
-						<MedicalFileCard
-							key={file.id}
-							file={file}
-							patientId={patientId}
-							onChanged={onChanged}
-						/>
-					))}
-				</div>
-			) : (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 py-10 text-center">
-					<div className="flex size-12 items-center justify-center rounded-full bg-muted">
-						<FileText className="size-6 text-muted-foreground" aria-hidden />
-					</div>
-					<p className="text-muted-foreground text-sm">No medical files yet.</p>
-				</div>
-			)}
 		</div>
 	);
 }

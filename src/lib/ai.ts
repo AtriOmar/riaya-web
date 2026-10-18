@@ -10,6 +10,10 @@
  */
 
 import OpenAI from "openai";
+import {
+	type ConsultationSummary,
+	consultationSummarySchema,
+} from "@/lib/consultation-summary";
 import { formatSpeakerLabel } from "@/lib/transcript";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -80,17 +84,55 @@ export async function* streamChatText(options: {
 	for await (const chunk of stream) {
 		const delta = chunk.choices[0]?.delta?.content;
 		if (delta) yield delta;
-		if (chunk.usage) {
-			// OpenRouter adds `cost` (USD) to the standard usage object
-			const cost = (chunk.usage as { cost?: number }).cost;
-			options.onUsage?.({
-				promptTokens: chunk.usage.prompt_tokens,
-				completionTokens: chunk.usage.completion_tokens,
-				costMicroUsd:
-					typeof cost === "number" ? Math.round(cost * 1_000_000) : null,
-			});
-		}
+		if (chunk.usage) options.onUsage?.(usageFrom(chunk.usage));
 	}
+}
+
+function usageFrom(usage: OpenAI.CompletionUsage | undefined): ChatUsage {
+	// OpenRouter adds `cost` (USD) to the standard usage object
+	const cost = (usage as { cost?: number } | undefined)?.cost;
+	return {
+		promptTokens: usage?.prompt_tokens ?? 0,
+		completionTokens: usage?.completion_tokens ?? 0,
+		costMicroUsd:
+			typeof cost === "number" ? Math.round(cost * 1_000_000) : null,
+	};
+}
+
+const SUMMARY_INSTRUCTIONS = `You turn a doctor–patient consultation transcript into a short clinical note for the patient's file.
+
+Return only a JSON object with these string fields:
+- "reason": why the patient came, in one or two sentences
+- "history": relevant symptoms, their duration and history mentioned
+- "examination": examination findings and measurements mentioned
+- "assessment": the doctor's assessment or working diagnosis, as the doctor stated it
+- "plan": treatment, prescriptions, tests, advice and follow-up the doctor gave
+
+Rules:
+- Write in French, the usual language of medical records in Tunisia, even when the conversation is in Tunisian Derja or Arabic. Keep drug names and doses exactly as said.
+- Use only what was said. Never add a diagnosis, finding or treatment the doctor didn't state. If a section wasn't discussed, use an empty string.
+- Be concise: short sentences or "-" bullet lines, no greetings or filler.`;
+
+/** Writes a structured consultation note from a transcript (non-streaming). */
+export async function generateConsultationSummary(
+	transcriptText: string,
+): Promise<{ summary: ConsultationSummary; usage: ChatUsage }> {
+	const client = createChatClient();
+	const completion = await client.chat.completions.create({
+		model: CHAT_MODEL,
+		messages: [
+			{ role: "system", content: SUMMARY_INSTRUCTIONS },
+			{ role: "user", content: transcriptText },
+		],
+		response_format: { type: "json_object" },
+		max_tokens: 1500,
+	});
+
+	const raw = completion.choices[0]?.message?.content ?? "";
+	const parsed = consultationSummarySchema.parse(
+		JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")),
+	);
+	return { summary: parsed, usage: usageFrom(completion.usage) };
 }
 
 export type TranscriptWord = {

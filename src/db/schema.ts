@@ -12,6 +12,7 @@ import {
 	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
+import type { ConsultationSummary } from "../lib/consultation-summary";
 import type { Availability } from "../lib/doctor-slots";
 import { account, session, user } from "./auth-schema";
 
@@ -671,10 +672,17 @@ export const consultationRecording = pgTable(
 		audioUrl: varchar("audio_url", { length: 1024 }).notNull(),
 		durationSeconds: integer("duration_seconds"),
 		transcript: jsonb("transcript"),
-		// pending | processing | done | error
+		// pending | processing | done | error | skipped (saved with no recording
+		// time left; the doctor can transcribe it later)
 		transcriptStatus: varchar("transcript_status", { length: 50 })
 			.notNull()
 			.default("pending"),
+		// Structured note written from the transcript (Pro), editable by the doctor
+		summary: jsonb("summary").$type<ConsultationSummary>(),
+		// processing | done | error; null = no summary asked for
+		summaryStatus: varchar("summary_status", { length: 50 }),
+		// Model cost of the last summary, millionths of a USD (covered by recording hours)
+		summaryCostMicroUsd: integer("summary_cost_micro_usd"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},

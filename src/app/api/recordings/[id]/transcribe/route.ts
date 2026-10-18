@@ -1,21 +1,27 @@
 import { and, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { consultationRecording } from "@/db/schema";
+import { consultationRecording, recordingUsage } from "@/db/schema";
 import {
 	apiError,
 	json,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { transcribeRecording } from "@/lib/recording-transcription";
+import { getRecordingTime } from "@/lib/plan-limits";
+import { summarizeRecording } from "@/lib/recording-summary";
+import {
+	shouldSummarize,
+	transcribeRecording,
+} from "@/lib/recording-transcription";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 // ─── POST /api/recordings/[id]/transcribe ─────────────────────────────────────
-// Re-runs transcription for a recording (new recordings are transcribed
-// automatically on create, so this is for retries).
+// Transcribes a recording: a retry, or one saved while no recording time was
+// left. A recording's time is only charged once, so retries are free; a first
+// transcription needs time left. On Pro the AI note follows in the background.
 
 export async function POST(_req: NextRequest, { params }: RouteContext) {
 	try {
@@ -39,9 +45,27 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 
 		if (!recording) return apiError("RECORDING_NOT_FOUND");
 
-		const updated = await transcribeRecording(recordingId);
-		if (!updated) return apiError("TRANSCRIPTION_FAILED");
+		const [charged] = await db
+			.select({ id: recordingUsage.id })
+			.from(recordingUsage)
+			.where(eq(recordingUsage.recordingId, recordingId));
+		if (!charged) {
+			const { remainingSeconds } = await getRecordingTime(profile.id);
+			if (remainingSeconds <= 0) return apiError("RECORDING_LIMIT_REACHED");
+		}
 
+		const transcribed = await transcribeRecording(recordingId);
+		if (!transcribed) return apiError("TRANSCRIPTION_FAILED");
+
+		if (!(await shouldSummarize(profile.id))) return json(transcribed);
+
+		// Mark it now so the page starts polling, then write the note after responding
+		const [updated] = await db
+			.update(consultationRecording)
+			.set({ summaryStatus: "processing" })
+			.where(eq(consultationRecording.id, recordingId))
+			.returning();
+		after(() => summarizeRecording(recordingId));
 		return json(updated);
 	} catch (e) {
 		if (e instanceof Response) return e;

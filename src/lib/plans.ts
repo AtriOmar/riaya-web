@@ -53,6 +53,8 @@ export type Plan = {
 	canBrandDocuments: boolean;
 	/** Can add secretary accounts (as many as they like). */
 	canHaveSecretaries: boolean;
+	/** Transcribed recordings get an AI consultation note (covered by recording hours). */
+	canSummarizeRecordings: boolean;
 	features: string[];
 };
 
@@ -72,6 +74,7 @@ export const PLANS: Record<PlanId, Plan> = {
 		canBuyRecordingPacks: false,
 		canBrandDocuments: false,
 		canHaveSecretaries: false,
+		canSummarizeRecordings: false,
 		features: [
 			"Patient records & appointments",
 			"Availability & calendar",
@@ -98,10 +101,11 @@ export const PLANS: Record<PlanId, Plan> = {
 		canBuyRecordingPacks: true,
 		canBrandDocuments: true,
 		canHaveSecretaries: true,
+		canSummarizeRecordings: true,
 		features: [
 			"Everything in Free",
 			"Unlimited WhatsApp sends",
-			"100 hours of recording / month",
+			"100 hours of recording / month, transcribed & summarized",
 			"Add more recording hours anytime",
 			`About ${approxAiQuestions(PRO_AI_BUDGET_MICRO_USD).toLocaleString("en-US")} AI assistant questions / month`,
 			"Your logo & stamp on invoices",

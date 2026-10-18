@@ -36,6 +36,8 @@ import {
 	usePatchApiRecordingsId,
 	usePostApiRecordingsIdTranscribe,
 } from "@/services/generated/recordings/recordings";
+import { NotTranscribed } from "./not-transcribed";
+import { RecordingSummary } from "./recording-summary";
 
 // ─── Patient picker (reused from new-recording) ───────────────────────────────
 
@@ -412,6 +414,16 @@ export default function RecordingDetail({
 					<AudioWaveformPlayer src={recording.audioUrl} audioRef={audioRef} />
 				</section>
 
+				{/* Consultation note (Pro) */}
+				{status === "done" && (
+					<section>
+						<RecordingSummary
+							recording={recording}
+							onChanged={() => mutate()}
+						/>
+					</section>
+				)}
+
 				{/* Transcript */}
 				<section className="space-y-3">
 					<div className="flex justify-between items-center gap-2">
@@ -436,7 +448,7 @@ export default function RecordingDetail({
 								<Button size="sm" className="gap-1.5" asChild>
 									<Link href={`/dashboard/ai-chat?transcript=${recordingId}`}>
 										<Bot className="size-3.5" />
-										Chat with AI
+										Discuss with AI
 									</Link>
 								</Button>
 							</div>
@@ -448,6 +460,14 @@ export default function RecordingDetail({
 							<Loader2 className="size-4 animate-spin" />
 							Transcribing the conversation. This updates on its own.
 						</div>
+					)}
+
+					{status === "skipped" && !isTranscribing && (
+						<NotTranscribed
+							recordingId={recording.id}
+							durationSeconds={recording.durationSeconds}
+							onTranscribed={() => mutate()}
+						/>
 					)}
 
 					{!isTranscribing &&

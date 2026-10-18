@@ -38,7 +38,8 @@ type RawSegment = {
 	words?: { word?: string }[];
 };
 
-function segmentText(segment: RawSegment): string {
+/** A segment's text, falling back to its words. */
+export function segmentText(segment: RawSegment): string {
 	if (segment.text?.trim()) return segment.text.trim();
 	return (
 		segment.words
@@ -48,7 +49,8 @@ function segmentText(segment: RawSegment): string {
 	);
 }
 
-function parseTranscriptPayload(
+/** Normalizes a stored transcript into segments or plain text. */
+export function parseTranscriptPayload(
 	transcript: unknown,
 ):
 	| { kind: "segments"; segments: RawSegment[] }

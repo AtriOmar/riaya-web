@@ -2,16 +2,7 @@
 
 import { MediaRecorder, register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
-import {
-	Check,
-	Clock,
-	Loader2,
-	Mic,
-	RotateCcw,
-	Square,
-	User,
-	X,
-} from "lucide-react";
+import { Check, Loader2, Mic, RotateCcw, Square, User, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -345,37 +336,30 @@ export default function NewRecording({
 				)}
 
 				{recordingState === "idle" && outOfTime && billing && (
-					<div className="space-y-3 py-2">
-						<div className="flex justify-center items-center bg-muted mx-auto rounded-full size-14 text-muted-foreground">
-							<Clock className="size-6" />
-						</div>
-						<div>
-							<p className="font-medium text-sm">
-								You've used your recording time this month
-							</p>
-							<p className="text-muted-foreground text-xs">
-								{billing.plan.canBuyRecordingPacks
-									? "Add hours to keep recording. They never expire."
-									: "Upgrade to Pro for 100 hours a month."}
-							</p>
-						</div>
-						<Button asChild size="sm">
+					<div className="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-left">
+						<p className="font-medium text-amber-900 text-sm dark:text-amber-200">
+							No transcription time left this month
+						</p>
+						<p className="mt-0.5 text-amber-900/80 text-xs dark:text-amber-200/80">
+							You can still record. It's saved to the patient's history and you
+							can transcribe it once you have time again.{" "}
 							<Link
 								href={
 									billing.plan.canBuyRecordingPacks
 										? "/dashboard/subscription?addHours=1"
 										: "/dashboard/subscription"
 								}
+								className="font-medium underline underline-offset-2"
 							>
 								{billing.plan.canBuyRecordingPacks
-									? "Add recording hours"
+									? "Add hours"
 									: "Upgrade to Pro"}
 							</Link>
-						</Button>
+						</p>
 					</div>
 				)}
 
-				{recordingState === "idle" && !outOfTime && (
+				{recordingState === "idle" && (
 					<>
 						<button
 							type="button"
@@ -390,7 +374,7 @@ export default function NewRecording({
 							<p className="text-muted-foreground text-xs">
 								Your browser will ask for microphone access
 							</p>
-							{recordingTime && (
+							{recordingTime && !outOfTime && (
 								<p className="mt-1 text-muted-foreground text-xs">
 									{formatRecordingTime(recordingTime.remainingSeconds)} of
 									recording left
