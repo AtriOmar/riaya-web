@@ -75,6 +75,7 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 - New recording: Recordings → New Recording (or \`?new=1\`), then title, optional patient, record in-browser, save.
 - Recording time: ${FREE.limits.recordingHoursPerMonth} h/month on Free, ${PRO.limits.recordingHoursPerMonth} h/month on Pro plus hour packs. The recorder shows the time left.
 - Detail panel (\`?id=<recordingId>\`): play audio; edit title; assign/clear patient; consultation note (Pro); transcript; Transcribe; **Discuss with AI** when the transcript is done.
+- Transcripts name each speaker **Doctor**, **Patient** or **Companion** (e.g. a parent speaking for a child), worked out automatically after transcription. If one is wrong, the doctor fixes it in the **Speakers** row above the transcript; it changes that speaker everywhere in the transcript.
 - Patient detail shows one **History** timeline: medical files and recorded consultations together, newest first. Each recording there has its audio, note, transcript and Discuss with AI.
 
 ---

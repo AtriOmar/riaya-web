@@ -2,6 +2,7 @@ import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { consultationSummarySchema } from "@/lib/consultation-summary";
 import { PLAN_IDS } from "@/lib/plans";
+import { speakerRolesSchema } from "@/lib/speaker-roles";
 import {
 	aiChatConversation,
 	aiChatMessage,
@@ -256,7 +257,10 @@ export const doctorDashboardStatsResponseSchema = z.object({
 
 export const selectConsultationRecordingSchema = createSelectSchema(
 	consultationRecording,
-	{ summary: consultationSummarySchema.nullable() },
+	{
+		summary: consultationSummarySchema.nullable(),
+		speakerRoles: speakerRolesSchema.nullable(),
+	},
 );
 
 export const selectConsultationRecordingWithPatientSchema =
@@ -287,7 +291,7 @@ export const selectAiChatConversationWithMessagesSchema =
 		z.object({
 			messages: z.array(selectAiChatMessageSchema),
 			recording: selectConsultationRecordingSchema
-				.pick({ id: true, title: true, transcript: true })
+				.pick({ id: true, title: true, transcript: true, speakerRoles: true })
 				.nullable(),
 		}),
 	);

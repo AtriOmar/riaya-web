@@ -10,10 +10,12 @@
  */
 
 import OpenAI from "openai";
+import { z } from "zod";
 import {
 	type ConsultationSummary,
 	consultationSummarySchema,
 } from "@/lib/consultation-summary";
+import { SPEAKER_ROLES, type SpeakerRoles } from "@/lib/speaker-roles";
 import { formatSpeakerLabel } from "@/lib/transcript";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -124,30 +126,56 @@ Rules:
 - Use only what was said. Never add a diagnosis, finding or treatment the doctor didn't state. If a section wasn't discussed, use an empty string.
 - Be concise: short sentences or "-" bullet lines, no greetings or filler.`;
 
-/** Names a recording from its transcript: a few words, in English. */
-export async function generateRecordingTitle(
+const RECORDING_INSIGHTS_INSTRUCTIONS = `You read a doctor–patient consultation transcript (it may mix Tunisian Derja, Arabic and French). Speakers are labelled "Speaker 1", "Speaker 2"…
+
+Return only a JSON object:
+- "title": a short title for the patient's file, 3 to 6 words, in English whatever language the conversation is in, naming the main complaint or diagnosis (e.g. "Viral pharyngitis with fever"). No patient name, no date, no final period. If nothing clinical was discussed, describe what the conversation was about.
+- "speakers": an object mapping every speaker label to "doctor", "patient" or "companion".
+  - doctor: asks the clinical questions, examines, gives the assessment, prescribes or advises.
+  - patient: the person being treated; describes their own symptoms.
+  - companion: anyone else, e.g. a parent speaking for a child or someone accompanying the patient. If a parent describes their child's symptoms and the child barely speaks, the parent is the companion and the child is the patient.
+  There is normally exactly one doctor.`;
+
+const recordingInsightsSchema = z.object({
+	title: z.string(),
+	speakers: z.record(z.string(), z.enum(SPEAKER_ROLES)),
+});
+
+/**
+ * One call after transcription: a short English title and who each speaker is.
+ * Speakers the model leaves out simply stay "Speaker N".
+ */
+export async function generateRecordingInsights(
 	transcriptText: string,
-): Promise<string> {
+	speakerLabels: string[],
+): Promise<{ title: string; speakerRoles: SpeakerRoles }> {
 	const client = createChatClient();
 	const completion = await client.chat.completions.create({
 		model: CHAT_MODEL,
 		messages: [
-			{
-				role: "system",
-				content:
-					'Give this doctor–patient consultation a short title for the patient\'s file: 3 to 6 words, in English whatever language the conversation is in, naming the main complaint or diagnosis (e.g. "Viral pharyngitis with fever"). No patient name, no date, no quotes, no final period. If nothing clinical was discussed, describe what the conversation was about. Reply with the title only.',
-			},
-			{ role: "user", content: transcriptText.slice(0, 20_000) },
+			{ role: "system", content: RECORDING_INSIGHTS_INSTRUCTIONS },
+			{ role: "user", content: transcriptText.slice(0, 30_000) },
 		],
-		max_tokens: 40,
+		response_format: { type: "json_object" },
+		max_tokens: 200,
 		...NO_REASONING,
 	});
-	const title = (completion.choices[0]?.message?.content ?? "")
+
+	const raw = completion.choices[0]?.message?.content ?? "";
+	const parsed = recordingInsightsSchema.parse(
+		JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")),
+	);
+	const title = parsed.title
 		.trim()
 		.replace(/^["'«\s]+|["'»\s.]+$/g, "")
 		.slice(0, 120);
-	if (!title) throw new Error("Empty title");
-	return title;
+	// Keep only labels that exist in this transcript
+	const speakerRoles: SpeakerRoles = Object.fromEntries(
+		Object.entries(parsed.speakers).filter(([label]) =>
+			speakerLabels.includes(label),
+		),
+	);
+	return { title, speakerRoles };
 }
 
 /** Writes a structured consultation note from a transcript (non-streaming). */

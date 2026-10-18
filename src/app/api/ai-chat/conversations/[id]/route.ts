@@ -41,6 +41,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 					id: consultationRecording.id,
 					title: consultationRecording.title,
 					transcript: consultationRecording.transcript,
+					speakerRoles: consultationRecording.speakerRoles,
 				},
 			})
 			.from(aiChatConversation)

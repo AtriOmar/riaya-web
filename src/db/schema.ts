@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { ConsultationSummary } from "../lib/consultation-summary";
 import type { Availability } from "../lib/doctor-slots";
+import type { SpeakerRoles } from "../lib/speaker-roles";
 import { account, session, user } from "./auth-schema";
 
 // Re-export better-auth tables so drizzle-kit picks them up from this single entry point
@@ -677,6 +678,9 @@ export const consultationRecording = pgTable(
 		transcriptStatus: varchar("transcript_status", { length: 50 })
 			.notNull()
 			.default("pending"),
+		// Transcript speaker label ("Speaker 1") → doctor | patient | companion.
+		// Set by the AI after transcription; the doctor can correct it.
+		speakerRoles: jsonb("speaker_roles").$type<SpeakerRoles>(),
 		// Structured note written from the transcript (Pro), editable by the doctor
 		summary: jsonb("summary").$type<ConsultationSummary>(),
 		// processing | done | error; null = no summary asked for

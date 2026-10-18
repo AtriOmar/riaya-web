@@ -410,6 +410,136 @@ export type PostApiBlockedPhones201 = {
 	createdAt: string;
 };
 
+export type GetApiCallReportsParams = {
+	status?: GetApiCallReportsStatus;
+};
+
+export type GetApiCallReportsStatus =
+	(typeof GetApiCallReportsStatus)[keyof typeof GetApiCallReportsStatus];
+
+export const GetApiCallReportsStatus = {
+	open: "open",
+	reviewed: "reviewed",
+} as const;
+
+export type GetApiCallReports200ItemCategory =
+	(typeof GetApiCallReports200ItemCategory)[keyof typeof GetApiCallReports200ItemCategory];
+
+export const GetApiCallReports200ItemCategory = {
+	mocking: "mocking",
+	insults: "insults",
+	threats: "threats",
+	sexual: "sexual",
+	other: "other",
+} as const;
+
+export type GetApiCallReports200ItemStatus =
+	(typeof GetApiCallReports200ItemStatus)[keyof typeof GetApiCallReports200ItemStatus];
+
+export const GetApiCallReports200ItemStatus = {
+	open: "open",
+	dismissed: "dismissed",
+	blocked: "blocked",
+} as const;
+
+export type GetApiCallReports200ItemCall = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @nullable */
+	startedAt: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	duration: number | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	recordingUrl: string | null;
+};
+
+export type GetApiCallReports200ItemNumber = {
+	reportCount: number;
+	callCount: number;
+	blocked: boolean;
+};
+
+export type GetApiCallReports200Item = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	callId: number;
+	/** @maxLength 50 */
+	phoneNumber: string;
+	category: GetApiCallReports200ItemCategory;
+	summary: string;
+	status: GetApiCallReports200ItemStatus;
+	/** @nullable */
+	reviewedBy: string | null;
+	/** @nullable */
+	reviewedAt: string | null;
+	createdAt: string;
+	call: GetApiCallReports200ItemCall;
+	number: GetApiCallReports200ItemNumber;
+};
+
+export type GetApiCities200Item = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	postalCode: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	latitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	longitude: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+};
+
 export type GetApiCalls200ItemEventsItemFunctionArgs =
 	| string
 	| number
@@ -641,136 +771,6 @@ export type PostApiCalls201 = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
-};
-
-export type GetApiCities200Item = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	postalCode: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	latitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	longitude: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-};
-
-export type GetApiCallReportsParams = {
-	status?: GetApiCallReportsStatus;
-};
-
-export type GetApiCallReportsStatus =
-	(typeof GetApiCallReportsStatus)[keyof typeof GetApiCallReportsStatus];
-
-export const GetApiCallReportsStatus = {
-	open: "open",
-	reviewed: "reviewed",
-} as const;
-
-export type GetApiCallReports200ItemCategory =
-	(typeof GetApiCallReports200ItemCategory)[keyof typeof GetApiCallReports200ItemCategory];
-
-export const GetApiCallReports200ItemCategory = {
-	mocking: "mocking",
-	insults: "insults",
-	threats: "threats",
-	sexual: "sexual",
-	other: "other",
-} as const;
-
-export type GetApiCallReports200ItemStatus =
-	(typeof GetApiCallReports200ItemStatus)[keyof typeof GetApiCallReports200ItemStatus];
-
-export const GetApiCallReports200ItemStatus = {
-	open: "open",
-	dismissed: "dismissed",
-	blocked: "blocked",
-} as const;
-
-export type GetApiCallReports200ItemCall = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @nullable */
-	startedAt: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	duration: number | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	recordingUrl: string | null;
-};
-
-export type GetApiCallReports200ItemNumber = {
-	reportCount: number;
-	callCount: number;
-	blocked: boolean;
-};
-
-export type GetApiCallReports200Item = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	callId: number;
-	/** @maxLength 50 */
-	phoneNumber: string;
-	category: GetApiCallReports200ItemCategory;
-	summary: string;
-	status: GetApiCallReports200ItemStatus;
-	/** @nullable */
-	reviewedBy: string | null;
-	/** @nullable */
-	reviewedAt: string | null;
-	createdAt: string;
-	call: GetApiCallReports200ItemCall;
-	number: GetApiCallReports200ItemNumber;
 };
 
 export type GetApiDoctorApplicationsParams = {
@@ -1437,6 +1437,208 @@ export type PostApiPersons200 = {
 	updatedAt: string | null;
 };
 
+export type GetApiRecordingsParams = {
+	/**
+	 * @exclusiveMinimum 0
+	 */
+	patientId?: number;
+};
+
+export type GetApiRecordings200ItemTranscript =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type GetApiRecordings200ItemSpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiRecordings200ItemSummary = {
+	reason: string;
+	history: string;
+	examination: string;
+	assessment: string;
+	plan: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiRecordings200ItemPatient = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+} | null;
+
+export type GetApiRecordings200Item = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @maxLength 1024 */
+	audioUrl: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	durationSeconds: number | null;
+	transcript: GetApiRecordings200ItemTranscript;
+	/** @maxLength 50 */
+	transcriptStatus: string;
+	/** @nullable */
+	speakerRoles: GetApiRecordings200ItemSpeakerRoles;
+	/** @nullable */
+	summary: GetApiRecordings200ItemSummary;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	summaryStatus: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	summaryCostMicroUsd: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	/** @nullable */
+	patient: GetApiRecordings200ItemPatient;
+};
+
+export type PostApiRecordingsBody = {
+	audioUrl: string;
+	/** @maxLength 255 */
+	title?: string;
+	/** @exclusiveMinimum 0 */
+	durationSeconds?: number;
+	/** @exclusiveMinimum 0 */
+	patientId?: number;
+};
+
+export type PostApiRecordings201Transcript =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type PostApiRecordings201SpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
+
+/**
+ * @nullable
+ */
+export type PostApiRecordings201Summary = {
+	reason: string;
+	history: string;
+	examination: string;
+	assessment: string;
+	plan: string;
+} | null;
+
+export type PostApiRecordings201 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @maxLength 1024 */
+	audioUrl: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	durationSeconds: number | null;
+	transcript: PostApiRecordings201Transcript;
+	/** @maxLength 50 */
+	transcriptStatus: string;
+	/** @nullable */
+	speakerRoles: PostApiRecordings201SpeakerRoles;
+	/** @nullable */
+	summary: PostApiRecordings201Summary;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	summaryStatus: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	summaryCostMicroUsd: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
 export type GetApiPatientsParams = {
 	search?: string;
 	/**
@@ -1550,190 +1752,6 @@ export type PostApiPatients201 = {
 	updatedAt: string | null;
 };
 
-export type GetApiRecordingsParams = {
-	/**
-	 * @exclusiveMinimum 0
-	 */
-	patientId?: number;
-};
-
-export type GetApiRecordings200ItemTranscript =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-/**
- * @nullable
- */
-export type GetApiRecordings200ItemSummary = {
-	reason: string;
-	history: string;
-	examination: string;
-	assessment: string;
-	plan: string;
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiRecordings200ItemPatient = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-} | null;
-
-export type GetApiRecordings200Item = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @maxLength 1024 */
-	audioUrl: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	durationSeconds: number | null;
-	transcript: GetApiRecordings200ItemTranscript;
-	/** @maxLength 50 */
-	transcriptStatus: string;
-	/** @nullable */
-	summary: GetApiRecordings200ItemSummary;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	summaryStatus: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	summaryCostMicroUsd: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	/** @nullable */
-	patient: GetApiRecordings200ItemPatient;
-};
-
-export type PostApiRecordingsBody = {
-	audioUrl: string;
-	/** @maxLength 255 */
-	title?: string;
-	/** @exclusiveMinimum 0 */
-	durationSeconds?: number;
-	/** @exclusiveMinimum 0 */
-	patientId?: number;
-};
-
-export type PostApiRecordings201Transcript =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-/**
- * @nullable
- */
-export type PostApiRecordings201Summary = {
-	reason: string;
-	history: string;
-	examination: string;
-	assessment: string;
-	plan: string;
-} | null;
-
-export type PostApiRecordings201 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @maxLength 1024 */
-	audioUrl: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	durationSeconds: number | null;
-	transcript: PostApiRecordings201Transcript;
-	/** @maxLength 50 */
-	transcriptStatus: string;
-	/** @nullable */
-	summary: PostApiRecordings201Summary;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	summaryStatus: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	summaryCostMicroUsd: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
 export type GetApiSecretaries200SecretariesItem = {
 	id: number;
 	name: string;
@@ -1754,6 +1772,15 @@ export type GetApiSecretaries200 = {
 	secretaries: GetApiSecretaries200SecretariesItem[];
 	invites: GetApiSecretaries200InvitesItem[];
 	canHaveSecretaries: boolean;
+};
+
+export type GetApiStats200 = {
+	total: number;
+	admins: number;
+	verified: number;
+	pending: number;
+	rejected: number;
+	banned: number;
 };
 
 export type GetApiUsersParams = {
@@ -1919,15 +1946,6 @@ export type PutApiUsers200 = {
 	 * @nullable
 	 */
 	active: number | null;
-};
-
-export type GetApiStats200 = {
-	total: number;
-	admins: number;
-	verified: number;
-	pending: number;
-	rejected: number;
-	banned: number;
 };
 
 export type GetApiSpecialities200Item = {
@@ -2206,332 +2224,6 @@ export type PostApiAppointmentsExternal201 = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type PostApiBillingCheckoutBodyPlanId =
-	(typeof PostApiBillingCheckoutBodyPlanId)[keyof typeof PostApiBillingCheckoutBodyPlanId];
-
-export const PostApiBillingCheckoutBodyPlanId = {
-	pro: "pro",
-} as const;
-
-export type PostApiBillingCheckoutBody = {
-	planId?: PostApiBillingCheckoutBodyPlanId;
-};
-
-export type PostApiBillingCheckout200 = {
-	/** @nullable */
-	payUrl: string | null;
-	alreadyActive?: boolean;
-	invoiceId?: number;
-	reused?: boolean;
-};
-
-export type PostApiBillingRecordingPacksBodyPackId =
-	(typeof PostApiBillingRecordingPacksBodyPackId)[keyof typeof PostApiBillingRecordingPacksBodyPackId];
-
-export const PostApiBillingRecordingPacksBodyPackId = {
-	hours_25: "hours_25",
-	hours_100: "hours_100",
-} as const;
-
-export type PostApiBillingRecordingPacksBody = {
-	packId: PostApiBillingRecordingPacksBodyPackId;
-};
-
-export type PostApiBillingRecordingPacks200 = {
-	payUrl: string;
-	invoiceId: number;
-};
-
-export type GetApiBillingSubscription200Subscription = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/** @maxLength 50 */
-	planId: string;
-	/** @maxLength 50 */
-	status: string;
-	/** @nullable */
-	currentPeriodStart: string | null;
-	/** @nullable */
-	currentPeriodEnd: string | null;
-	cancelAtPeriodEnd: boolean;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type GetApiBillingSubscription200PlanPlanId =
-	(typeof GetApiBillingSubscription200PlanPlanId)[keyof typeof GetApiBillingSubscription200PlanPlanId];
-
-export const GetApiBillingSubscription200PlanPlanId = {
-	free: "free",
-	pro: "pro",
-} as const;
-
-export type GetApiBillingSubscription200PlanLimits = {
-	/** @nullable */
-	whatsappSendsPerMonth: number | null;
-	recordingHoursPerMonth: number;
-};
-
-export type GetApiBillingSubscription200PlanUsage = {
-	whatsappSendsThisMonth: number;
-	aiPercentUsed: number;
-};
-
-export type GetApiBillingSubscription200PlanRecordingTime = {
-	includedSeconds: number;
-	usedSeconds: number;
-	extraSeconds: number;
-	remainingSeconds: number;
-};
-
-export type GetApiBillingSubscription200PlanUsagePeriod = {
-	start: string;
-	end: string;
-	yyyyMm: string;
-};
-
-export type GetApiBillingSubscription200Plan = {
-	planId: GetApiBillingSubscription200PlanPlanId;
-	isPro: boolean;
-	limits: GetApiBillingSubscription200PlanLimits;
-	canBuyRecordingPacks: boolean;
-	canBrandDocuments: boolean;
-	canSummarizeRecordings: boolean;
-	usage: GetApiBillingSubscription200PlanUsage;
-	recordingTime: GetApiBillingSubscription200PlanRecordingTime;
-	usagePeriod: GetApiBillingSubscription200PlanUsagePeriod;
-};
-
-export type GetApiBillingSubscription200 = {
-	subscription: GetApiBillingSubscription200Subscription;
-	plan: GetApiBillingSubscription200Plan;
-};
-
-export type GetApiCallsId200EventsItemFunctionArgs =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-export type GetApiCallsId200EventsItemFunctionResult =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-export type GetApiCallsId200EventsItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	callId: number;
-	/** @maxLength 50 */
-	type: string;
-	/** @nullable */
-	content: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	functionName: string | null;
-	functionArgs: GetApiCallsId200EventsItemFunctionArgs;
-	functionResult: GetApiCallsId200EventsItemFunctionResult;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	functionStatus: string | null;
-	/** @nullable */
-	timestamp: string | null;
-};
-
-export type GetApiCallsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @maxLength 100 */
-	callSid: string;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	from: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	to: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	direction: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	callerName: string | null;
-	/** @nullable */
-	startedAt: string | null;
-	/** @nullable */
-	endedAt: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	duration: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	recordingSid: string | null;
-	/**
-	 * @maxLength 512
-	 * @nullable
-	 */
-	recordingKey: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	recordingUrl: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	events: GetApiCallsId200EventsItem[];
-};
-
-export type PutApiCallsIdBodyStatus =
-	(typeof PutApiCallsIdBodyStatus)[keyof typeof PutApiCallsIdBodyStatus];
-
-export const PutApiCallsIdBodyStatus = {
-	"in-progress": "in-progress",
-	completed: "completed",
-	failed: "failed",
-} as const;
-
-export type PutApiCallsIdBody = {
-	status?: PutApiCallsIdBodyStatus;
-	callerName?: string;
-	endedAt?: string;
-	/**
-	 * @minimum 0
-	 * @nullable
-	 */
-	duration?: number | null;
-	/**
-	 * @exclusiveMinimum 0
-	 * @nullable
-	 */
-	appointmentId?: number | null;
-};
-
-export type PutApiCallsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @maxLength 100 */
-	callSid: string;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	from: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	to: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	direction: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	callerName: string | null;
-	/** @nullable */
-	startedAt: string | null;
-	/** @nullable */
-	endedAt: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	duration: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	recordingSid: string | null;
-	/**
-	 * @maxLength 512
-	 * @nullable
-	 */
-	recordingKey: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	recordingUrl: string | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -2838,10 +2530,6 @@ export type PatchApiCallReportsId200 = {
 	createdAt: string;
 };
 
-export type GetApiCallReportsCount200 = {
-	open: number;
-};
-
 export type PatchApiBlockedPhonesPhoneBodyDuration =
 	(typeof PatchApiBlockedPhonesPhoneBodyDuration)[keyof typeof PatchApiBlockedPhonesPhoneBodyDuration];
 
@@ -2903,6 +2591,244 @@ export type DeleteApiBlockedPhonesPhone200 = {
 	/** @nullable */
 	lastRejectedAt: string | null;
 	createdAt: string;
+};
+
+export type GetApiCallReportsCount200 = {
+	open: number;
+};
+
+export type GetApiCallsId200EventsItemFunctionArgs =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+export type GetApiCallsId200EventsItemFunctionResult =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+export type GetApiCallsId200EventsItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	callId: number;
+	/** @maxLength 50 */
+	type: string;
+	/** @nullable */
+	content: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	functionName: string | null;
+	functionArgs: GetApiCallsId200EventsItemFunctionArgs;
+	functionResult: GetApiCallsId200EventsItemFunctionResult;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	functionStatus: string | null;
+	/** @nullable */
+	timestamp: string | null;
+};
+
+export type GetApiCallsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @maxLength 100 */
+	callSid: string;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	from: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	to: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	direction: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	callerName: string | null;
+	/** @nullable */
+	startedAt: string | null;
+	/** @nullable */
+	endedAt: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	duration: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	recordingSid: string | null;
+	/**
+	 * @maxLength 512
+	 * @nullable
+	 */
+	recordingKey: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	recordingUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	events: GetApiCallsId200EventsItem[];
+};
+
+export type PutApiCallsIdBodyStatus =
+	(typeof PutApiCallsIdBodyStatus)[keyof typeof PutApiCallsIdBodyStatus];
+
+export const PutApiCallsIdBodyStatus = {
+	"in-progress": "in-progress",
+	completed: "completed",
+	failed: "failed",
+} as const;
+
+export type PutApiCallsIdBody = {
+	status?: PutApiCallsIdBodyStatus;
+	callerName?: string;
+	endedAt?: string;
+	/**
+	 * @minimum 0
+	 * @nullable
+	 */
+	duration?: number | null;
+	/**
+	 * @exclusiveMinimum 0
+	 * @nullable
+	 */
+	appointmentId?: number | null;
+};
+
+export type PutApiCallsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @maxLength 100 */
+	callSid: string;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	from: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	to: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	direction: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	callerName: string | null;
+	/** @nullable */
+	startedAt: string | null;
+	/** @nullable */
+	endedAt: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	duration: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	recordingSid: string | null;
+	/**
+	 * @maxLength 512
+	 * @nullable
+	 */
+	recordingKey: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	recordingUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PostApiBillingCheckoutBodyPlanId =
+	(typeof PostApiBillingCheckoutBodyPlanId)[keyof typeof PostApiBillingCheckoutBodyPlanId];
+
+export const PostApiBillingCheckoutBodyPlanId = {
+	pro: "pro",
+} as const;
+
+export type PostApiBillingCheckoutBody = {
+	planId?: PostApiBillingCheckoutBodyPlanId;
+};
+
+export type PostApiBillingCheckout200 = {
+	/** @nullable */
+	payUrl: string | null;
+	alreadyActive?: boolean;
+	invoiceId?: number;
+	reused?: boolean;
 };
 
 export type GetApiDashboardStats200Counts = {
@@ -3008,41 +2934,24 @@ export type GetApiDashboardStats200 = {
 	upcoming: GetApiDashboardStats200UpcomingItem[];
 };
 
-/**
- * @nullable
- */
-export type GetApiDoctorApplicationsId200Speciality = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
+export type PostApiBillingRecordingPacksBodyPackId =
+	(typeof PostApiBillingRecordingPacksBodyPackId)[keyof typeof PostApiBillingRecordingPacksBodyPackId];
 
-/**
- * @nullable
- */
-export type GetApiDoctorApplicationsId200CabinetCity = {
+export const PostApiBillingRecordingPacksBodyPackId = {
+	hours_25: "hours_25",
+	hours_100: "hours_100",
+} as const;
+
+export type PostApiBillingRecordingPacksBody = {
+	packId: PostApiBillingRecordingPacksBodyPackId;
+};
+
+export type PostApiBillingRecordingPacks200 = {
+	payUrl: string;
+	invoiceId: number;
+};
+
+export type GetApiBillingSubscription200Subscription = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3051,163 +2960,70 @@ export type GetApiDoctorApplicationsId200CabinetCity = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
-	 * @nullable
 	 */
-	postalCode: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	latitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	longitude: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiDoctorApplicationsId200User = {
-	id: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	username: string | null;
-	email: string;
-} | null;
-
-export type GetApiDoctorApplicationsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
+	doctorId: number;
+	/** @maxLength 50 */
+	planId: string;
+	/** @maxLength 50 */
+	status: string;
 	/** @nullable */
-	userId: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinRecto: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinVerso: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cabinetName: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	cabinetCityId: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLongitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLatitude: number | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	tin: string | null;
+	currentPeriodStart: string | null;
 	/** @nullable */
-	rejectionReasons: string[] | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	specialityId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	medicalCouncilNumber: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	medicalCouncilCertificate: string | null;
+	currentPeriodEnd: string | null;
+	cancelAtPeriodEnd: boolean;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
-	/** @nullable */
-	speciality: GetApiDoctorApplicationsId200Speciality;
-	/** @nullable */
-	cabinetCity: GetApiDoctorApplicationsId200CabinetCity;
-	/** @nullable */
-	user: GetApiDoctorApplicationsId200User;
 };
 
-export type PutApiDoctorApplicationsIdBodyStatus =
-	(typeof PutApiDoctorApplicationsIdBodyStatus)[keyof typeof PutApiDoctorApplicationsIdBodyStatus];
+export type GetApiBillingSubscription200PlanPlanId =
+	(typeof GetApiBillingSubscription200PlanPlanId)[keyof typeof GetApiBillingSubscription200PlanPlanId];
 
-export const PutApiDoctorApplicationsIdBodyStatus = {
-	verified: "verified",
-	rejected: "rejected",
-	banned: "banned",
+export const GetApiBillingSubscription200PlanPlanId = {
+	free: "free",
+	pro: "pro",
 } as const;
 
-export type PutApiDoctorApplicationsIdBody = {
-	status: PutApiDoctorApplicationsIdBodyStatus;
-	rejectionReasons?: string[];
+export type GetApiBillingSubscription200PlanLimits = {
+	/** @nullable */
+	whatsappSendsPerMonth: number | null;
+	recordingHoursPerMonth: number;
 };
 
-export type PutApiDoctorApplicationsId200 = {
-	message: string;
+export type GetApiBillingSubscription200PlanUsage = {
+	whatsappSendsThisMonth: number;
+	aiPercentUsed: number;
+};
+
+export type GetApiBillingSubscription200PlanRecordingTime = {
+	includedSeconds: number;
+	usedSeconds: number;
+	extraSeconds: number;
+	remainingSeconds: number;
+};
+
+export type GetApiBillingSubscription200PlanUsagePeriod = {
+	start: string;
+	end: string;
+	yyyyMm: string;
+};
+
+export type GetApiBillingSubscription200Plan = {
+	planId: GetApiBillingSubscription200PlanPlanId;
+	isPro: boolean;
+	limits: GetApiBillingSubscription200PlanLimits;
+	canBuyRecordingPacks: boolean;
+	canBrandDocuments: boolean;
+	canSummarizeRecordings: boolean;
+	usage: GetApiBillingSubscription200PlanUsage;
+	recordingTime: GetApiBillingSubscription200PlanRecordingTime;
+	usagePeriod: GetApiBillingSubscription200PlanUsagePeriod;
+};
+
+export type GetApiBillingSubscription200 = {
+	subscription: GetApiBillingSubscription200Subscription;
+	plan: GetApiBillingSubscription200Plan;
 };
 
 /**
@@ -3790,6 +3606,208 @@ export type GetApiDoctorsBestFit200Item = {
 	nearbySlots?: GetApiDoctorsBestFit200ItemNearbySlotsItem[];
 };
 
+/**
+ * @nullable
+ */
+export type GetApiDoctorApplicationsId200Speciality = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiDoctorApplicationsId200CabinetCity = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	postalCode: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	latitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	longitude: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiDoctorApplicationsId200User = {
+	id: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	username: string | null;
+	email: string;
+} | null;
+
+export type GetApiDoctorApplicationsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @nullable */
+	userId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinRecto: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinVerso: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cabinetName: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	cabinetCityId: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLongitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLatitude: number | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	tin: string | null;
+	/** @nullable */
+	rejectionReasons: string[] | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	specialityId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	medicalCouncilNumber: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	medicalCouncilCertificate: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	/** @nullable */
+	speciality: GetApiDoctorApplicationsId200Speciality;
+	/** @nullable */
+	cabinetCity: GetApiDoctorApplicationsId200CabinetCity;
+	/** @nullable */
+	user: GetApiDoctorApplicationsId200User;
+};
+
+export type PutApiDoctorApplicationsIdBodyStatus =
+	(typeof PutApiDoctorApplicationsIdBodyStatus)[keyof typeof PutApiDoctorApplicationsIdBodyStatus];
+
+export const PutApiDoctorApplicationsIdBodyStatus = {
+	verified: "verified",
+	rejected: "rejected",
+	banned: "banned",
+} as const;
+
+export type PutApiDoctorApplicationsIdBody = {
+	status: PutApiDoctorApplicationsIdBodyStatus;
+	rejectionReasons?: string[];
+};
+
+export type PutApiDoctorApplicationsId200 = {
+	message: string;
+};
+
 export type GetApiDoctorsSearchParams = {
 	/**
 	 * @minLength 2
@@ -4353,41 +4371,6 @@ export type PatchApiPersonsId200 = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
-};
-
-export type GetApiPlacesAutocompleteParams = {
-	/**
-	 * @minLength 1
-	 * @maxLength 200
-	 */
-	text: string;
-	/**
-	 * @nullable
-	 */
-	lat?: number | null;
-	/**
-	 * @nullable
-	 */
-	lng?: number | null;
-	/**
-	 * @maxLength 100
-	 */
-	sessionToken?: string;
-};
-
-export type GetApiPlacesAutocomplete200Item = {
-	id: string;
-	label: string;
-	/** @nullable */
-	lat: number | null;
-	/** @nullable */
-	lng: number | null;
-	/** @nullable */
-	city: string | null;
-	/** @nullable */
-	state: string | null;
-	/** @nullable */
-	street: string | null;
 };
 
 export type PostApiLivekitTestCallTokenBodySettingsPipelineSttApi =
@@ -4995,6 +4978,62 @@ export type GetApiPatientsLookupByPerson200 = {
 	matchedPatient: GetApiPatientsLookupByPerson200MatchedPatient;
 };
 
+export type GetApiPlacesAutocompleteParams = {
+	/**
+	 * @minLength 1
+	 * @maxLength 200
+	 */
+	text: string;
+	/**
+	 * @nullable
+	 */
+	lat?: number | null;
+	/**
+	 * @nullable
+	 */
+	lng?: number | null;
+	/**
+	 * @maxLength 100
+	 */
+	sessionToken?: string;
+};
+
+export type GetApiPlacesAutocomplete200Item = {
+	id: string;
+	label: string;
+	/** @nullable */
+	lat: number | null;
+	/** @nullable */
+	lng: number | null;
+	/** @nullable */
+	city: string | null;
+	/** @nullable */
+	state: string | null;
+	/** @nullable */
+	street: string | null;
+};
+
+export type PostApiRegisterRequestOtpBody = {
+	email: string;
+	/**
+	 * @minLength 8
+	 * @pattern (?=.*[a-zA-Z])(?=.*[0-9])
+	 */
+	password: string;
+};
+
+export type PostApiRegisterRequestOtp200 = {
+	email: string;
+};
+
+export type PostApiRegisterResendOtpBody = {
+	email: string;
+};
+
+export type PostApiRegisterResendOtp200 = {
+	email: string;
+};
+
 export type GetApiRecordingsId200Transcript =
 	| string
 	| number
@@ -5003,6 +5042,13 @@ export type GetApiRecordingsId200Transcript =
 	| null
 	| { [key: string]: unknown | null }
 	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type GetApiRecordingsId200SpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
 
 /**
  * @nullable
@@ -5070,6 +5116,8 @@ export type GetApiRecordingsId200 = {
 	/** @maxLength 50 */
 	transcriptStatus: string;
 	/** @nullable */
+	speakerRoles: GetApiRecordingsId200SpeakerRoles;
+	/** @nullable */
 	summary: GetApiRecordingsId200Summary;
 	/**
 	 * @maxLength 50
@@ -5098,6 +5146,10 @@ export type PatchApiRecordingsIdBodySummary = {
 	plan: string;
 };
 
+export type PatchApiRecordingsIdBodySpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+};
+
 export type PatchApiRecordingsIdBody = {
 	/**
 	 * @minLength 1
@@ -5110,6 +5162,7 @@ export type PatchApiRecordingsIdBody = {
 	 */
 	patientId?: number | null;
 	summary?: PatchApiRecordingsIdBodySummary;
+	speakerRoles?: PatchApiRecordingsIdBodySpeakerRoles;
 };
 
 export type PatchApiRecordingsId200Transcript =
@@ -5120,6 +5173,13 @@ export type PatchApiRecordingsId200Transcript =
 	| null
 	| { [key: string]: unknown | null }
 	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type PatchApiRecordingsId200SpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
 
 /**
  * @nullable
@@ -5166,6 +5226,8 @@ export type PatchApiRecordingsId200 = {
 	/** @maxLength 50 */
 	transcriptStatus: string;
 	/** @nullable */
+	speakerRoles: PatchApiRecordingsId200SpeakerRoles;
+	/** @nullable */
 	summary: PatchApiRecordingsId200Summary;
 	/**
 	 * @maxLength 50
@@ -5186,41 +5248,6 @@ export type PatchApiRecordingsId200 = {
 
 export type DeleteApiRecordingsId200 = {
 	ok: boolean;
-};
-
-export type PostApiRegisterRequestOtpBody = {
-	email: string;
-	/**
-	 * @minLength 8
-	 * @pattern (?=.*[a-zA-Z])(?=.*[0-9])
-	 */
-	password: string;
-};
-
-export type PostApiRegisterRequestOtp200 = {
-	email: string;
-};
-
-export type PostApiRegisterResendOtpBody = {
-	email: string;
-};
-
-export type PostApiRegisterResendOtp200 = {
-	email: string;
-};
-
-export type PostApiRegisterVerifyOtpBody = {
-	email: string;
-	/**
-	 * @minLength 6
-	 * @maxLength 6
-	 * @pattern ^\d+$
-	 */
-	otp: string;
-};
-
-export type PostApiRegisterVerifyOtp200 = {
-	email: string;
 };
 
 export type PostApiReviewsSubmitBodyWaitTime =
@@ -5251,6 +5278,20 @@ export type DeleteApiSecretariesId200 = {
 	ok: boolean;
 };
 
+export type PostApiRegisterVerifyOtpBody = {
+	email: string;
+	/**
+	 * @minLength 6
+	 * @maxLength 6
+	 * @pattern ^\d+$
+	 */
+	otp: string;
+};
+
+export type PostApiRegisterVerifyOtp200 = {
+	email: string;
+};
+
 export type PostApiSecretariesInvitesBody = {
 	email: string;
 };
@@ -5268,212 +5309,11 @@ export type PostApiSecretariesInvites201 = {
 	emailSent: boolean;
 };
 
-export type PostApiTestCallRecordingBody = {
-	callSid: string;
-	/** @maxLength 1024 */
-	recordingUrl: string;
-};
-
-export type PostApiTestCallRecording200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/** @maxLength 100 */
-	callSid: string;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	from: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	to: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	direction: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	callerName: string | null;
-	/** @nullable */
-	startedAt: string | null;
-	/** @nullable */
-	endedAt: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	duration: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	recordingSid: string | null;
-	/**
-	 * @maxLength 512
-	 * @nullable
-	 */
-	recordingKey: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	recordingUrl: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
 export type GetApiSecretaryInvitesToken200 = {
 	email: string;
 	doctorName: string;
 	/** @nullable */
 	cabinetName: string | null;
-};
-
-export type PostApiTestCallSettingsBodySettingsPipelineSttApi =
-	(typeof PostApiTestCallSettingsBodySettingsPipelineSttApi)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineSttApi];
-
-export const PostApiTestCallSettingsBodySettingsPipelineSttApi = {
-	"openrouter-chat": "openrouter-chat",
-	"openrouter-transcription": "openrouter-transcription",
-	google: "google",
-	openai: "openai",
-	"livekit-inference": "livekit-inference",
-	inworld: "inworld",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPipelineSttReasoning =
-	(typeof PostApiTestCallSettingsBodySettingsPipelineSttReasoning)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineSttReasoning];
-
-export const PostApiTestCallSettingsBodySettingsPipelineSttReasoning = {
-	none: "none",
-	minimal: "minimal",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPipelineStt = {
-	api: PostApiTestCallSettingsBodySettingsPipelineSttApi;
-	/** @minLength 1 */
-	model: string;
-	reasoning?: PostApiTestCallSettingsBodySettingsPipelineSttReasoning;
-};
-
-export type PostApiTestCallSettingsBodySettingsPipelineLlmProvider =
-	(typeof PostApiTestCallSettingsBodySettingsPipelineLlmProvider)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineLlmProvider];
-
-export const PostApiTestCallSettingsBodySettingsPipelineLlmProvider = {
-	openrouter: "openrouter",
-	google: "google",
-	"livekit-inference": "livekit-inference",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPipelineLlm = {
-	provider: PostApiTestCallSettingsBodySettingsPipelineLlmProvider;
-	/** @minLength 1 */
-	model: string;
-};
-
-export type PostApiTestCallSettingsBodySettingsPipelineTtsProvider =
-	(typeof PostApiTestCallSettingsBodySettingsPipelineTtsProvider)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineTtsProvider];
-
-export const PostApiTestCallSettingsBodySettingsPipelineTtsProvider = {
-	"gemini-openrouter": "gemini-openrouter",
-	"gemini-google": "gemini-google",
-	openai: "openai",
-	openrouter: "openrouter",
-	inworld: "inworld",
-	inference: "inference",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPipelineTts = {
-	provider: PostApiTestCallSettingsBodySettingsPipelineTtsProvider;
-	/** @minLength 1 */
-	model: string;
-	voice?: string;
-};
-
-export type PostApiTestCallSettingsBodySettingsPipeline = {
-	stt?: PostApiTestCallSettingsBodySettingsPipelineStt;
-	llm?: PostApiTestCallSettingsBodySettingsPipelineLlm;
-	tts?: PostApiTestCallSettingsBodySettingsPipelineTts;
-};
-
-export type PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend =
-	(typeof PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend];
-
-export const PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend = {
-	gemini: "gemini",
-	openai: "openai",
-	"gpt-live": "gpt-live",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPhoneRealtime = {
-	backend: PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend;
-	/** @minLength 1 */
-	model: string;
-	voice?: string;
-};
-
-export type PostApiTestCallSettingsBodySettingsPhoneCallerSttApi =
-	(typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttApi)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttApi];
-
-export const PostApiTestCallSettingsBodySettingsPhoneCallerSttApi = {
-	off: "off",
-	"openrouter-chat": "openrouter-chat",
-	"openrouter-transcription": "openrouter-transcription",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning =
-	(typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning];
-
-export const PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning = {
-	none: "none",
-	minimal: "minimal",
-} as const;
-
-export type PostApiTestCallSettingsBodySettingsPhoneCallerStt = {
-	api: PostApiTestCallSettingsBodySettingsPhoneCallerSttApi;
-	model?: string;
-	reasoning?: PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning;
-};
-
-export type PostApiTestCallSettingsBodySettingsPhone = {
-	realtime?: PostApiTestCallSettingsBodySettingsPhoneRealtime;
-	callerStt?: PostApiTestCallSettingsBodySettingsPhoneCallerStt;
-};
-
-export type PostApiTestCallSettingsBodySettings = {
-	pipeline?: PostApiTestCallSettingsBodySettingsPipeline;
-	phone?: PostApiTestCallSettingsBodySettingsPhone;
-};
-
-export type PostApiTestCallSettingsBody = {
-	callSid: string;
-	settings: PostApiTestCallSettingsBodySettings;
-};
-
-export type PostApiTestCallSettings200 = {
-	ok: boolean;
 };
 
 export type PostApiUploadSignedUrlBodyFolder =
@@ -5500,279 +5340,6 @@ export type PostApiUploadSignedUrl200 = {
 	signedUrl: string;
 	key: string;
 	cdnUrl: string;
-};
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200DoctorProfileAvailability = {
-	[key: string]: {
-		start: number;
-		end: number;
-	}[];
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200DoctorProfileSpeciality = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200DoctorProfileCabinetCity = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	postalCode: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	latitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	longitude: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	enName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	frName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	arName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	slug: string | null;
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200DoctorProfile = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	userId: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	cin: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	tin: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/** @nullable */
-	address: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cabinetName: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	cabinetCityId: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLongitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLatitude: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	specialityId: number | null;
-	/** @nullable */
-	availability: GetApiUsersMe200DoctorProfileAvailability;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinRecto: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinVerso: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	medicalCouncilNumber: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	medicalCouncilCertificate: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	logoUrl: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	stampUrl: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	/** @nullable */
-	speciality: GetApiUsersMe200DoctorProfileSpeciality;
-	/** @nullable */
-	cabinetCity: GetApiUsersMe200DoctorProfileCabinetCity;
-} | null;
-
-export type GetApiUsersMe200PracticeRole =
-	(typeof GetApiUsersMe200PracticeRole)[keyof typeof GetApiUsersMe200PracticeRole];
-
-export const GetApiUsersMe200PracticeRole = {
-	doctor: "doctor",
-	secretary: "secretary",
-} as const;
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200PracticeAvailability = {
-	[key: string]: {
-		start: number;
-		end: number;
-	}[];
-} | null;
-
-/**
- * @nullable
- */
-export type GetApiUsersMe200Practice = {
-	role: GetApiUsersMe200PracticeRole;
-	doctorId: number;
-	/** @nullable */
-	doctorName: string | null;
-	/** @nullable */
-	availability: GetApiUsersMe200PracticeAvailability;
-	active: boolean;
-} | null;
-
-export type GetApiUsersMe200 = {
-	id: string;
-	name: string;
-	email: string;
-	emailVerified: boolean;
-	/** @nullable */
-	image: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	displayName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	username: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	accessId: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	active: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	type: number | null;
-	createdAt: string;
-	updatedAt: string;
-	hasDoctorProfile: boolean;
-	/** @nullable */
-	doctorProfile: GetApiUsersMe200DoctorProfile;
-	/** @nullable */
-	practice: GetApiUsersMe200Practice;
 };
 
 /**
@@ -6235,6 +5802,279 @@ export type PutApiUsersId200 = {
 	doctorProfile: PutApiUsersId200DoctorProfile;
 };
 
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200DoctorProfileAvailability = {
+	[key: string]: {
+		start: number;
+		end: number;
+	}[];
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200DoctorProfileSpeciality = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200DoctorProfileCabinetCity = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	postalCode: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	latitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	longitude: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	enName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	frName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	arName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	slug: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200DoctorProfile = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	userId: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	tin: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/** @nullable */
+	address: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cabinetName: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	cabinetCityId: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLongitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLatitude: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	specialityId: number | null;
+	/** @nullable */
+	availability: GetApiUsersMe200DoctorProfileAvailability;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinRecto: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinVerso: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	medicalCouncilNumber: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	medicalCouncilCertificate: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	logoUrl: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	stampUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	/** @nullable */
+	speciality: GetApiUsersMe200DoctorProfileSpeciality;
+	/** @nullable */
+	cabinetCity: GetApiUsersMe200DoctorProfileCabinetCity;
+} | null;
+
+export type GetApiUsersMe200PracticeRole =
+	(typeof GetApiUsersMe200PracticeRole)[keyof typeof GetApiUsersMe200PracticeRole];
+
+export const GetApiUsersMe200PracticeRole = {
+	doctor: "doctor",
+	secretary: "secretary",
+} as const;
+
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200PracticeAvailability = {
+	[key: string]: {
+		start: number;
+		end: number;
+	}[];
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiUsersMe200Practice = {
+	role: GetApiUsersMe200PracticeRole;
+	doctorId: number;
+	/** @nullable */
+	doctorName: string | null;
+	/** @nullable */
+	availability: GetApiUsersMe200PracticeAvailability;
+	active: boolean;
+} | null;
+
+export type GetApiUsersMe200 = {
+	id: string;
+	name: string;
+	email: string;
+	emailVerified: boolean;
+	/** @nullable */
+	image: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	displayName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	username: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	accessId: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	active: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	type: number | null;
+	createdAt: string;
+	updatedAt: string;
+	hasDoctorProfile: boolean;
+	/** @nullable */
+	doctorProfile: GetApiUsersMe200DoctorProfile;
+	/** @nullable */
+	practice: GetApiUsersMe200Practice;
+};
+
 export type PostApiUsersPictureBody = {
 	pictureUrl: string;
 };
@@ -6276,6 +6116,366 @@ export type PostApiUsersPicture200 = {
 	type: number | null;
 	createdAt: string;
 	updatedAt: string;
+};
+
+export type PostApiTestCallRecordingBody = {
+	callSid: string;
+	/** @maxLength 1024 */
+	recordingUrl: string;
+};
+
+export type PostApiTestCallRecording200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/** @maxLength 100 */
+	callSid: string;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	from: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	to: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	direction: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	callerName: string | null;
+	/** @nullable */
+	startedAt: string | null;
+	/** @nullable */
+	endedAt: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	duration: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	recordingSid: string | null;
+	/**
+	 * @maxLength 512
+	 * @nullable
+	 */
+	recordingKey: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	recordingUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PostApiTestCallSettingsBodySettingsPipelineSttApi =
+	(typeof PostApiTestCallSettingsBodySettingsPipelineSttApi)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineSttApi];
+
+export const PostApiTestCallSettingsBodySettingsPipelineSttApi = {
+	"openrouter-chat": "openrouter-chat",
+	"openrouter-transcription": "openrouter-transcription",
+	google: "google",
+	openai: "openai",
+	"livekit-inference": "livekit-inference",
+	inworld: "inworld",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPipelineSttReasoning =
+	(typeof PostApiTestCallSettingsBodySettingsPipelineSttReasoning)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineSttReasoning];
+
+export const PostApiTestCallSettingsBodySettingsPipelineSttReasoning = {
+	none: "none",
+	minimal: "minimal",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPipelineStt = {
+	api: PostApiTestCallSettingsBodySettingsPipelineSttApi;
+	/** @minLength 1 */
+	model: string;
+	reasoning?: PostApiTestCallSettingsBodySettingsPipelineSttReasoning;
+};
+
+export type PostApiTestCallSettingsBodySettingsPipelineLlmProvider =
+	(typeof PostApiTestCallSettingsBodySettingsPipelineLlmProvider)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineLlmProvider];
+
+export const PostApiTestCallSettingsBodySettingsPipelineLlmProvider = {
+	openrouter: "openrouter",
+	google: "google",
+	"livekit-inference": "livekit-inference",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPipelineLlm = {
+	provider: PostApiTestCallSettingsBodySettingsPipelineLlmProvider;
+	/** @minLength 1 */
+	model: string;
+};
+
+export type PostApiTestCallSettingsBodySettingsPipelineTtsProvider =
+	(typeof PostApiTestCallSettingsBodySettingsPipelineTtsProvider)[keyof typeof PostApiTestCallSettingsBodySettingsPipelineTtsProvider];
+
+export const PostApiTestCallSettingsBodySettingsPipelineTtsProvider = {
+	"gemini-openrouter": "gemini-openrouter",
+	"gemini-google": "gemini-google",
+	openai: "openai",
+	openrouter: "openrouter",
+	inworld: "inworld",
+	inference: "inference",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPipelineTts = {
+	provider: PostApiTestCallSettingsBodySettingsPipelineTtsProvider;
+	/** @minLength 1 */
+	model: string;
+	voice?: string;
+};
+
+export type PostApiTestCallSettingsBodySettingsPipeline = {
+	stt?: PostApiTestCallSettingsBodySettingsPipelineStt;
+	llm?: PostApiTestCallSettingsBodySettingsPipelineLlm;
+	tts?: PostApiTestCallSettingsBodySettingsPipelineTts;
+};
+
+export type PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend =
+	(typeof PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend];
+
+export const PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend = {
+	gemini: "gemini",
+	openai: "openai",
+	"gpt-live": "gpt-live",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPhoneRealtime = {
+	backend: PostApiTestCallSettingsBodySettingsPhoneRealtimeBackend;
+	/** @minLength 1 */
+	model: string;
+	voice?: string;
+};
+
+export type PostApiTestCallSettingsBodySettingsPhoneCallerSttApi =
+	(typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttApi)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttApi];
+
+export const PostApiTestCallSettingsBodySettingsPhoneCallerSttApi = {
+	off: "off",
+	"openrouter-chat": "openrouter-chat",
+	"openrouter-transcription": "openrouter-transcription",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning =
+	(typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning)[keyof typeof PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning];
+
+export const PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning = {
+	none: "none",
+	minimal: "minimal",
+} as const;
+
+export type PostApiTestCallSettingsBodySettingsPhoneCallerStt = {
+	api: PostApiTestCallSettingsBodySettingsPhoneCallerSttApi;
+	model?: string;
+	reasoning?: PostApiTestCallSettingsBodySettingsPhoneCallerSttReasoning;
+};
+
+export type PostApiTestCallSettingsBodySettingsPhone = {
+	realtime?: PostApiTestCallSettingsBodySettingsPhoneRealtime;
+	callerStt?: PostApiTestCallSettingsBodySettingsPhoneCallerStt;
+};
+
+export type PostApiTestCallSettingsBodySettings = {
+	pipeline?: PostApiTestCallSettingsBodySettingsPipeline;
+	phone?: PostApiTestCallSettingsBodySettingsPhone;
+};
+
+export type PostApiTestCallSettingsBody = {
+	callSid: string;
+	settings: PostApiTestCallSettingsBodySettings;
+};
+
+export type PostApiTestCallSettings200 = {
+	ok: boolean;
+};
+
+export type GetApiAiChatConversationsId200MessagesItemStatus =
+	(typeof GetApiAiChatConversationsId200MessagesItemStatus)[keyof typeof GetApiAiChatConversationsId200MessagesItemStatus];
+
+export const GetApiAiChatConversationsId200MessagesItemStatus = {
+	streaming: "streaming",
+	stopping: "stopping",
+	done: "done",
+	stopped: "stopped",
+	failed: "failed",
+} as const;
+
+export type GetApiAiChatConversationsId200MessagesItem = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	conversationId: number;
+	/** @maxLength 20 */
+	role: string;
+	content: string;
+	status: GetApiAiChatConversationsId200MessagesItemStatus;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	promptTokens: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	completionTokens: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	costMicroUsd: number | null;
+	/** @nullable */
+	createdAt: string | null;
+};
+
+export type GetApiAiChatConversationsId200RecordingTranscript =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type GetApiAiChatConversationsId200RecordingSpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
+
+/**
+ * @nullable
+ */
+export type GetApiAiChatConversationsId200Recording = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	transcript: GetApiAiChatConversationsId200RecordingTranscript;
+	/** @nullable */
+	speakerRoles: GetApiAiChatConversationsId200RecordingSpeakerRoles;
+} | null;
+
+export type GetApiAiChatConversationsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	recordingId: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	messages: GetApiAiChatConversationsId200MessagesItem[];
+	/** @nullable */
+	recording: GetApiAiChatConversationsId200Recording;
+};
+
+export type PatchApiAiChatConversationsIdBody = {
+	/**
+	 * @minLength 1
+	 * @maxLength 255
+	 */
+	title?: string;
+	/**
+	 * @exclusiveMinimum 0
+	 * @nullable
+	 */
+	recordingId?: number | null;
+};
+
+export type PatchApiAiChatConversationsId200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	recordingId: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type DeleteApiAiChatConversationsId200 = {
+	message: string;
 };
 
 export type PostApiAppointmentsExternalEmergencyBodyPatientRelationship =
@@ -6379,156 +6579,6 @@ export type PostApiAppointmentsExternalEmergency201 = {
 	message?: string;
 };
 
-export type GetApiAiChatConversationsId200MessagesItemStatus =
-	(typeof GetApiAiChatConversationsId200MessagesItemStatus)[keyof typeof GetApiAiChatConversationsId200MessagesItemStatus];
-
-export const GetApiAiChatConversationsId200MessagesItemStatus = {
-	streaming: "streaming",
-	stopping: "stopping",
-	done: "done",
-	stopped: "stopped",
-	failed: "failed",
-} as const;
-
-export type GetApiAiChatConversationsId200MessagesItem = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	conversationId: number;
-	/** @maxLength 20 */
-	role: string;
-	content: string;
-	status: GetApiAiChatConversationsId200MessagesItemStatus;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	promptTokens: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	completionTokens: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	costMicroUsd: number | null;
-	/** @nullable */
-	createdAt: string | null;
-};
-
-export type GetApiAiChatConversationsId200RecordingTranscript =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-/**
- * @nullable
- */
-export type GetApiAiChatConversationsId200Recording = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	transcript: GetApiAiChatConversationsId200RecordingTranscript;
-} | null;
-
-export type GetApiAiChatConversationsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	recordingId: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	messages: GetApiAiChatConversationsId200MessagesItem[];
-	/** @nullable */
-	recording: GetApiAiChatConversationsId200Recording;
-};
-
-export type PatchApiAiChatConversationsIdBody = {
-	/**
-	 * @minLength 1
-	 * @maxLength 255
-	 */
-	title?: string;
-	/**
-	 * @exclusiveMinimum 0
-	 * @nullable
-	 */
-	recordingId?: number | null;
-};
-
-export type PatchApiAiChatConversationsId200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	recordingId: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type DeleteApiAiChatConversationsId200 = {
-	message: string;
-};
-
 export type PostApiCallsIdEventsBodyType =
 	(typeof PostApiCallsIdEventsBodyType)[keyof typeof PostApiCallsIdEventsBodyType];
 
@@ -6608,6 +6658,125 @@ export type PostApiCallsIdEvents201 = {
 	timestamp: string | null;
 };
 
+export type GetApiDoctorsBestFitMapParams = {
+	/**
+	 * @minLength 1
+	 */
+	speciality?: string;
+	/**
+	 * @nullable
+	 */
+	long?: number | null;
+	/**
+	 * @nullable
+	 */
+	lat?: number | null;
+};
+
+export type GetApiDoctorsBestFitMap200Item = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	userId: string;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	firstName: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	tin: string | null;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	status: string | null;
+	/** @nullable */
+	address: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cabinetName: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	cabinetCityId: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLongitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	cabinetLatitude: number | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	specialityId: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinRecto: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	cinVerso: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	medicalCouncilNumber: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	medicalCouncilCertificate: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	logoUrl: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	stampUrl: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	outsideRadius?: boolean;
+	roadDistanceKm?: number;
+	driveMinutes?: number;
+	/** @nullable */
+	distance: number | null;
+};
+
 export type PatchApiDoctorsIdLocationBody = {
 	/**
 	 * @minimum -90
@@ -6647,6 +6816,20 @@ export type PatchApiDoctorsIdLocation200 = {
 	cabinetCityId: number | null;
 	/** @nullable */
 	cityName: string | null;
+};
+
+export type PutApiDoctorsMeBrandingBody = {
+	/** @nullable */
+	logoUrl: string | null;
+	/** @nullable */
+	stampUrl: string | null;
+};
+
+export type PutApiDoctorsMeBranding200 = {
+	/** @nullable */
+	logoUrl: string | null;
+	/** @nullable */
+	stampUrl: string | null;
 };
 
 export type GetApiDoctorsBestFitRangeParams = {
@@ -6787,138 +6970,22 @@ export type GetApiDoctorsBestFitRange200Item = {
 	doctors: GetApiDoctorsBestFitRange200ItemDoctorsItem[];
 };
 
-export type GetApiDoctorsBestFitMapParams = {
-	/**
-	 * @minLength 1
-	 */
-	speciality?: string;
-	/**
-	 * @nullable
-	 */
-	long?: number | null;
-	/**
-	 * @nullable
-	 */
-	lat?: number | null;
-};
-
-export type GetApiDoctorsBestFitMap200Item = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	userId: string;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	firstName: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	lastName: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	cin: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	tin: string | null;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	status: string | null;
-	/** @nullable */
-	address: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cabinetName: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	cabinetCityId: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLongitude: number | null;
-	/**
-	 * @minimum -140737488355328
-	 * @maximum 140737488355327
-	 * @nullable
-	 */
-	cabinetLatitude: number | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	specialityId: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinRecto: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	cinVerso: string | null;
-	/**
-	 * @maxLength 100
-	 * @nullable
-	 */
-	medicalCouncilNumber: string | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	medicalCouncilCertificate: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	logoUrl: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	stampUrl: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	outsideRadius?: boolean;
-	roadDistanceKm?: number;
-	driveMinutes?: number;
-	/** @nullable */
-	distance: number | null;
-};
-
-export type PutApiDoctorsMeBrandingBody = {
-	/** @nullable */
-	logoUrl: string | null;
-	/** @nullable */
-	stampUrl: string | null;
-};
-
-export type PutApiDoctorsMeBranding200 = {
-	/** @nullable */
-	logoUrl: string | null;
-	/** @nullable */
-	stampUrl: string | null;
-};
+export type PostApiInternalAppointmentsProcessPendingTimeoutBody =
+	| {
+			kind: "appointment";
+			/** @exclusiveMinimum 0 */
+			appointmentId: number;
+	  }
+	| {
+			kind: "refused";
+			/** @exclusiveMinimum 0 */
+			appointmentId: number;
+	  }
+	| {
+			kind: "emergency";
+			/** @minLength 1 */
+			emergencyGroupId: string;
+	  };
 
 export type PostApiInternalCallerBlockedBody = {
 	/** @minLength 1 */
@@ -6983,51 +7050,54 @@ export type PostApiInternalCallerRefusalContext200 = {
 	suggestions: PostApiInternalCallerRefusalContext200SuggestionsItem[];
 };
 
-export type PostApiInternalCallsReportBodyCategory =
-	(typeof PostApiInternalCallsReportBodyCategory)[keyof typeof PostApiInternalCallsReportBodyCategory];
-
-export const PostApiInternalCallsReportBodyCategory = {
-	mocking: "mocking",
-	insults: "insults",
-	threats: "threats",
-	sexual: "sexual",
-	other: "other",
-} as const;
-
-export type PostApiInternalCallsReportBody = {
-	/** @minLength 1 */
-	callSid: string;
-	/** @minLength 1 */
-	phoneNumber: string;
-	category: PostApiInternalCallsReportBodyCategory;
+export type GetApiInternalPlacesSearchParams = {
 	/**
 	 * @minLength 1
-	 * @maxLength 1000
+	 * @maxLength 300
 	 */
-	summary: string;
+	text: string;
+	/**
+	 * @nullable
+	 */
+	lat?: number | null;
+	/**
+	 * @nullable
+	 */
+	lng?: number | null;
+	/**
+	 * @exclusiveMinimum 0
+	 */
+	radiusM?: number;
 };
 
-export type PostApiInternalCallsReport200Category =
-	(typeof PostApiInternalCallsReport200Category)[keyof typeof PostApiInternalCallsReport200Category];
+export type GetApiInternalPlacesSearch200Item = {
+	id: string;
+	label: string;
+	/** @nullable */
+	lat: number | null;
+	/** @nullable */
+	lng: number | null;
+	/** @nullable */
+	city: string | null;
+	/** @nullable */
+	state: string | null;
+	/** @nullable */
+	street: string | null;
+};
 
-export const PostApiInternalCallsReport200Category = {
-	mocking: "mocking",
-	insults: "insults",
-	threats: "threats",
-	sexual: "sexual",
-	other: "other",
-} as const;
+export type PostApiInternalReviewsProcessJobBody = {
+	/** @exclusiveMinimum 0 */
+	appointmentId: number;
+	/** @exclusiveMinimum 0 */
+	doctorId: number;
+	/**
+	 * @exclusiveMinimum 0
+	 * @nullable
+	 */
+	patientId?: number | null;
+};
 
-export type PostApiInternalCallsReport200Status =
-	(typeof PostApiInternalCallsReport200Status)[keyof typeof PostApiInternalCallsReport200Status];
-
-export const PostApiInternalCallsReport200Status = {
-	open: "open",
-	dismissed: "dismissed",
-	blocked: "blocked",
-} as const;
-
-export type PostApiInternalCallsReport200 = {
+export type PostApiInvoicesIdSend200ItemsItem = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -7037,40 +7107,24 @@ export type PostApiInternalCallsReport200 = {
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
-	callId: number;
-	/** @maxLength 50 */
-	phoneNumber: string;
-	category: PostApiInternalCallsReport200Category;
-	summary: string;
-	status: PostApiInternalCallsReport200Status;
+	invoiceId: number;
+	/** @maxLength 255 */
+	description: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	quantity: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	unitPriceCentimes: number;
 	/** @nullable */
-	reviewedBy: string | null;
-	/** @nullable */
-	reviewedAt: string | null;
-	createdAt: string;
+	createdAt: string | null;
 };
 
-export type PostApiInternalCallsReport201Category =
-	(typeof PostApiInternalCallsReport201Category)[keyof typeof PostApiInternalCallsReport201Category];
-
-export const PostApiInternalCallsReport201Category = {
-	mocking: "mocking",
-	insults: "insults",
-	threats: "threats",
-	sexual: "sexual",
-	other: "other",
-} as const;
-
-export type PostApiInternalCallsReport201Status =
-	(typeof PostApiInternalCallsReport201Status)[keyof typeof PostApiInternalCallsReport201Status];
-
-export const PostApiInternalCallsReport201Status = {
-	open: "open",
-	dismissed: "dismissed",
-	blocked: "blocked",
-} as const;
-
-export type PostApiInternalCallsReport201 = {
+export type PostApiInvoicesIdSend200PaymentsItem = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -7080,35 +7134,84 @@ export type PostApiInternalCallsReport201 = {
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
-	callId: number;
+	invoiceId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountCentimes: number;
 	/** @maxLength 50 */
-	phoneNumber: string;
-	category: PostApiInternalCallsReport201Category;
-	summary: string;
-	status: PostApiInternalCallsReport201Status;
+	paymentMethod: string;
+	paidAt: string;
 	/** @nullable */
-	reviewedBy: string | null;
+	notes: string | null;
 	/** @nullable */
-	reviewedAt: string | null;
-	createdAt: string;
+	createdAt: string | null;
 };
 
-export type PostApiInternalAppointmentsProcessPendingTimeoutBody =
-	| {
-			kind: "appointment";
-			/** @exclusiveMinimum 0 */
-			appointmentId: number;
-	  }
-	| {
-			kind: "refused";
-			/** @exclusiveMinimum 0 */
-			appointmentId: number;
-	  }
-	| {
-			kind: "emergency";
-			/** @minLength 1 */
-			emergencyGroupId: string;
-	  };
+export type PostApiInvoicesIdSend200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	patientId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	appointmentId: number | null;
+	/** @maxLength 50 */
+	number: string;
+	/** @maxLength 50 */
+	status: string;
+	/** @maxLength 10 */
+	currency: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	totalCentimes: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	amountPaidCentimes: number;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	paymentMethod: string | null;
+	/** @nullable */
+	notes: string | null;
+	/**
+	 * @maxLength 1024
+	 * @nullable
+	 */
+	pdfUrl: string | null;
+	/** @nullable */
+	sentViaWhatsapp: boolean | null;
+	/** @nullable */
+	issuedAt: string | null;
+	/** @nullable */
+	paidAt: string | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+	items: PostApiInvoicesIdSend200ItemsItem[];
+	payments: PostApiInvoicesIdSend200PaymentsItem[];
+};
 
 export type PostApiInvoicesIdPaymentsBodyPaymentMethod =
 	(typeof PostApiInvoicesIdPaymentsBodyPaymentMethod)[keyof typeof PostApiInvoicesIdPaymentsBodyPaymentMethod];
@@ -7365,54 +7468,51 @@ export type DeleteApiInvoicesIdPayments200 = {
 	payments: DeleteApiInvoicesIdPayments200PaymentsItem[];
 };
 
-export type PostApiInternalReviewsProcessJobBody = {
-	/** @exclusiveMinimum 0 */
-	appointmentId: number;
-	/** @exclusiveMinimum 0 */
-	doctorId: number;
-	/**
-	 * @exclusiveMinimum 0
-	 * @nullable
-	 */
-	patientId?: number | null;
-};
+export type PostApiInternalCallsReportBodyCategory =
+	(typeof PostApiInternalCallsReportBodyCategory)[keyof typeof PostApiInternalCallsReportBodyCategory];
 
-export type GetApiInternalPlacesSearchParams = {
+export const PostApiInternalCallsReportBodyCategory = {
+	mocking: "mocking",
+	insults: "insults",
+	threats: "threats",
+	sexual: "sexual",
+	other: "other",
+} as const;
+
+export type PostApiInternalCallsReportBody = {
+	/** @minLength 1 */
+	callSid: string;
+	/** @minLength 1 */
+	phoneNumber: string;
+	category: PostApiInternalCallsReportBodyCategory;
 	/**
 	 * @minLength 1
-	 * @maxLength 300
+	 * @maxLength 1000
 	 */
-	text: string;
-	/**
-	 * @nullable
-	 */
-	lat?: number | null;
-	/**
-	 * @nullable
-	 */
-	lng?: number | null;
-	/**
-	 * @exclusiveMinimum 0
-	 */
-	radiusM?: number;
+	summary: string;
 };
 
-export type GetApiInternalPlacesSearch200Item = {
-	id: string;
-	label: string;
-	/** @nullable */
-	lat: number | null;
-	/** @nullable */
-	lng: number | null;
-	/** @nullable */
-	city: string | null;
-	/** @nullable */
-	state: string | null;
-	/** @nullable */
-	street: string | null;
-};
+export type PostApiInternalCallsReport200Category =
+	(typeof PostApiInternalCallsReport200Category)[keyof typeof PostApiInternalCallsReport200Category];
 
-export type PostApiInvoicesIdSend200ItemsItem = {
+export const PostApiInternalCallsReport200Category = {
+	mocking: "mocking",
+	insults: "insults",
+	threats: "threats",
+	sexual: "sexual",
+	other: "other",
+} as const;
+
+export type PostApiInternalCallsReport200Status =
+	(typeof PostApiInternalCallsReport200Status)[keyof typeof PostApiInternalCallsReport200Status];
+
+export const PostApiInternalCallsReport200Status = {
+	open: "open",
+	dismissed: "dismissed",
+	blocked: "blocked",
+} as const;
+
+export type PostApiInternalCallsReport200 = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -7422,24 +7522,40 @@ export type PostApiInvoicesIdSend200ItemsItem = {
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
-	invoiceId: number;
-	/** @maxLength 255 */
-	description: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	quantity: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	unitPriceCentimes: number;
+	callId: number;
+	/** @maxLength 50 */
+	phoneNumber: string;
+	category: PostApiInternalCallsReport200Category;
+	summary: string;
+	status: PostApiInternalCallsReport200Status;
 	/** @nullable */
-	createdAt: string | null;
+	reviewedBy: string | null;
+	/** @nullable */
+	reviewedAt: string | null;
+	createdAt: string;
 };
 
-export type PostApiInvoicesIdSend200PaymentsItem = {
+export type PostApiInternalCallsReport201Category =
+	(typeof PostApiInternalCallsReport201Category)[keyof typeof PostApiInternalCallsReport201Category];
+
+export const PostApiInternalCallsReport201Category = {
+	mocking: "mocking",
+	insults: "insults",
+	threats: "threats",
+	sexual: "sexual",
+	other: "other",
+} as const;
+
+export type PostApiInternalCallsReport201Status =
+	(typeof PostApiInternalCallsReport201Status)[keyof typeof PostApiInternalCallsReport201Status];
+
+export const PostApiInternalCallsReport201Status = {
+	open: "open",
+	dismissed: "dismissed",
+	blocked: "blocked",
+} as const;
+
+export type PostApiInternalCallsReport201 = {
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -7449,227 +7565,17 @@ export type PostApiInvoicesIdSend200PaymentsItem = {
 	 * @minimum -2147483648
 	 * @maximum 2147483647
 	 */
-	invoiceId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountCentimes: number;
+	callId: number;
 	/** @maxLength 50 */
-	paymentMethod: string;
-	paidAt: string;
+	phoneNumber: string;
+	category: PostApiInternalCallsReport201Category;
+	summary: string;
+	status: PostApiInternalCallsReport201Status;
 	/** @nullable */
-	notes: string | null;
+	reviewedBy: string | null;
 	/** @nullable */
-	createdAt: string | null;
-};
-
-export type PostApiInvoicesIdSend200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	patientId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	appointmentId: number | null;
-	/** @maxLength 50 */
-	number: string;
-	/** @maxLength 50 */
-	status: string;
-	/** @maxLength 10 */
-	currency: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	totalCentimes: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	amountPaidCentimes: number;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	paymentMethod: string | null;
-	/** @nullable */
-	notes: string | null;
-	/**
-	 * @maxLength 1024
-	 * @nullable
-	 */
-	pdfUrl: string | null;
-	/** @nullable */
-	sentViaWhatsapp: boolean | null;
-	/** @nullable */
-	issuedAt: string | null;
-	/** @nullable */
-	paidAt: string | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-	items: PostApiInvoicesIdSend200ItemsItem[];
-	payments: PostApiInvoicesIdSend200PaymentsItem[];
-};
-
-export type PostApiRecordingsIdTranscribe200Transcript =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-/**
- * @nullable
- */
-export type PostApiRecordingsIdTranscribe200Summary = {
-	reason: string;
-	history: string;
-	examination: string;
-	assessment: string;
-	plan: string;
-} | null;
-
-export type PostApiRecordingsIdTranscribe200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @maxLength 1024 */
-	audioUrl: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	durationSeconds: number | null;
-	transcript: PostApiRecordingsIdTranscribe200Transcript;
-	/** @maxLength 50 */
-	transcriptStatus: string;
-	/** @nullable */
-	summary: PostApiRecordingsIdTranscribe200Summary;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	summaryStatus: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	summaryCostMicroUsd: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
-};
-
-export type PostApiRecordingsIdSummary200Transcript =
-	| string
-	| number
-	| boolean
-	| unknown
-	| null
-	| { [key: string]: unknown | null }
-	| (unknown | null)[];
-
-/**
- * @nullable
- */
-export type PostApiRecordingsIdSummary200Summary = {
-	reason: string;
-	history: string;
-	examination: string;
-	assessment: string;
-	plan: string;
-} | null;
-
-export type PostApiRecordingsIdSummary200 = {
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	id: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 */
-	doctorId: number;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	patientId: number | null;
-	/**
-	 * @maxLength 255
-	 * @nullable
-	 */
-	title: string | null;
-	/** @maxLength 1024 */
-	audioUrl: string;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	durationSeconds: number | null;
-	transcript: PostApiRecordingsIdSummary200Transcript;
-	/** @maxLength 50 */
-	transcriptStatus: string;
-	/** @nullable */
-	summary: PostApiRecordingsIdSummary200Summary;
-	/**
-	 * @maxLength 50
-	 * @nullable
-	 */
-	summaryStatus: string | null;
-	/**
-	 * @minimum -2147483648
-	 * @maximum 2147483647
-	 * @nullable
-	 */
-	summaryCostMicroUsd: number | null;
-	/** @nullable */
-	createdAt: string | null;
-	/** @nullable */
-	updatedAt: string | null;
+	reviewedAt: string | null;
+	createdAt: string;
 };
 
 export type PostApiPatientsIdMedicalFilesBody = {
@@ -7771,30 +7677,174 @@ export type DeleteApiPatientsIdMedicalFiles200 = {
 	message: string;
 };
 
+export type PostApiRecordingsIdTranscribe200Transcript =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type PostApiRecordingsIdTranscribe200SpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
+
+/**
+ * @nullable
+ */
+export type PostApiRecordingsIdTranscribe200Summary = {
+	reason: string;
+	history: string;
+	examination: string;
+	assessment: string;
+	plan: string;
+} | null;
+
+export type PostApiRecordingsIdTranscribe200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @maxLength 1024 */
+	audioUrl: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	durationSeconds: number | null;
+	transcript: PostApiRecordingsIdTranscribe200Transcript;
+	/** @maxLength 50 */
+	transcriptStatus: string;
+	/** @nullable */
+	speakerRoles: PostApiRecordingsIdTranscribe200SpeakerRoles;
+	/** @nullable */
+	summary: PostApiRecordingsIdTranscribe200Summary;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	summaryStatus: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	summaryCostMicroUsd: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
+export type PostApiRecordingsIdSummary200Transcript =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+/**
+ * @nullable
+ */
+export type PostApiRecordingsIdSummary200SpeakerRoles = {
+	[key: string]: "doctor" | "patient" | "companion";
+} | null;
+
+/**
+ * @nullable
+ */
+export type PostApiRecordingsIdSummary200Summary = {
+	reason: string;
+	history: string;
+	examination: string;
+	assessment: string;
+	plan: string;
+} | null;
+
+export type PostApiRecordingsIdSummary200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	doctorId: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	patientId: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	title: string | null;
+	/** @maxLength 1024 */
+	audioUrl: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	durationSeconds: number | null;
+	transcript: PostApiRecordingsIdSummary200Transcript;
+	/** @maxLength 50 */
+	transcriptStatus: string;
+	/** @nullable */
+	speakerRoles: PostApiRecordingsIdSummary200SpeakerRoles;
+	/** @nullable */
+	summary: PostApiRecordingsIdSummary200Summary;
+	/**
+	 * @maxLength 50
+	 * @nullable
+	 */
+	summaryStatus: string | null;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 * @nullable
+	 */
+	summaryCostMicroUsd: number | null;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
 export type DeleteApiSecretariesInvitesId200 = {
 	ok: boolean;
 };
 
 export type PostApiSecretaryInvitesTokenAccept200 = {
 	ok: boolean;
-};
-
-export type PostApiInternalCallerAiAppointmentsCancelBody = {
-	/** @minLength 1 */
-	phoneNumber: string;
-	/** @exclusiveMinimum 0 */
-	appointmentId: number;
-};
-
-export type PostApiInternalCallerAiAppointmentsCancel200 = {
-	success: true;
-	appointmentId: number;
-	/** @nullable */
-	status: string | null;
-};
-
-export type PostApiAiChatConversationsIdStop200 = {
-	message: string;
 };
 
 export type PostApiInternalCallerAiAppointmentsListBody = {
@@ -7848,4 +7898,22 @@ export type PostApiInternalCallerAiAppointmentsList200RecentPastItem = {
 export type PostApiInternalCallerAiAppointmentsList200 = {
 	upcoming: PostApiInternalCallerAiAppointmentsList200UpcomingItem[];
 	recentPast: PostApiInternalCallerAiAppointmentsList200RecentPastItem[];
+};
+
+export type PostApiAiChatConversationsIdStop200 = {
+	message: string;
+};
+
+export type PostApiInternalCallerAiAppointmentsCancelBody = {
+	/** @minLength 1 */
+	phoneNumber: string;
+	/** @exclusiveMinimum 0 */
+	appointmentId: number;
+};
+
+export type PostApiInternalCallerAiAppointmentsCancel200 = {
+	success: true;
+	appointmentId: number;
+	/** @nullable */
+	status: string | null;
 };

@@ -233,6 +233,7 @@ function AttachTranscriptDialog({
 															title: r.title,
 															recordedAt: r.createdAt,
 															patientName: patientName ?? undefined,
+															speakerRoles: r.speakerRoles,
 														})}
 													</p>
 												)}
@@ -660,6 +661,7 @@ export default function AiChat() {
 					id: conversationDetail.recording.id,
 					title: conversationDetail.recording.title,
 					transcript: conversationDetail.recording.transcript,
+					speakerRoles: conversationDetail.recording.speakerRoles,
 				}),
 			);
 		} else {

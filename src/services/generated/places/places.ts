@@ -21,6 +21,58 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * @summary Coordinates and address parts for a picked suggestion
+ */
+export const getApiPlacesDetails = (
+	params: GetApiPlacesDetailsParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPlacesDetails200>(
+		{ url: `/api/places/details`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiPlacesDetailsKey = (params: GetApiPlacesDetailsParams) =>
+	[`/api/places/details`, ...(params ? [params] : [])] as const;
+
+export type GetApiPlacesDetailsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiPlacesDetails>>
+>;
+
+/**
+ * @summary Coordinates and address parts for a picked suggestion
+ */
+export const useGetApiPlacesDetails = <TError = unknown>(
+	params: GetApiPlacesDetailsParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiPlacesDetails>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiPlacesDetailsKey(params) : null));
+	const swrFn = () => getApiPlacesDetails(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Address suggestions from the active geo provider
  */
 export const getApiPlacesAutocomplete = (
@@ -61,58 +113,6 @@ export const useGetApiPlacesAutocomplete = <TError = unknown>(
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPlacesAutocompleteKey(params) : null));
 	const swrFn = () => getApiPlacesAutocomplete(params, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Coordinates and address parts for a picked suggestion
- */
-export const getApiPlacesDetails = (
-	params: GetApiPlacesDetailsParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiPlacesDetails200>(
-		{ url: `/api/places/details`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiPlacesDetailsKey = (params: GetApiPlacesDetailsParams) =>
-	[`/api/places/details`, ...(params ? [params] : [])] as const;
-
-export type GetApiPlacesDetailsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiPlacesDetails>>
->;
-
-/**
- * @summary Coordinates and address parts for a picked suggestion
- */
-export const useGetApiPlacesDetails = <TError = unknown>(
-	params: GetApiPlacesDetailsParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiPlacesDetails>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiPlacesDetailsKey(params) : null));
-	const swrFn = () => getApiPlacesDetails(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,

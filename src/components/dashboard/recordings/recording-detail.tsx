@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { getErrorMessage } from "@/lib/error-handling";
 import { recordingTitle } from "@/lib/recording-title";
-import { formatSpeakerLabel } from "@/lib/transcript";
+import { speakerName, transcriptSpeakers } from "@/lib/transcript";
 import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
@@ -40,6 +40,7 @@ import {
 import { DeleteRecordingButton } from "./delete-recording-button";
 import { NotTranscribed } from "./not-transcribed";
 import { RecordingSummary } from "./recording-summary";
+import { SpeakerRolesEditor } from "./speaker-roles-editor";
 
 // ─── Patient picker (reused from new-recording) ───────────────────────────────
 
@@ -511,32 +512,40 @@ export default function RecordingDetail({
 						!isTranscribing &&
 						Boolean(transcript) &&
 						(segments ? (
-							<div className="-mx-2">
-								{segments.map((segment: any, idx: number) => (
-									<button
-										key={idx}
-										type="button"
-										onClick={() => seekTo(segment.start)}
-										className="flex gap-4 hover:bg-muted/60 px-2 py-2.5 rounded-md w-full text-left transition-colors cursor-pointer"
-									>
-										<span className="mt-0.5 w-9 font-mono tabular-nums text-primary text-xs shrink-0">
-											{formatTimestamp(segment.start)}
-										</span>
-										<div className="min-w-0">
-											<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-												{formatSpeakerLabel(segment.speaker)}
+							<div className="space-y-3">
+								<SpeakerRolesEditor
+									recordingId={recording.id}
+									speakers={transcriptSpeakers(transcript)}
+									speakerRoles={recording.speakerRoles}
+									onChanged={() => mutate()}
+								/>
+								<div className="-mx-2">
+									{segments.map((segment: any, idx: number) => (
+										<button
+											key={idx}
+											type="button"
+											onClick={() => seekTo(segment.start)}
+											className="flex gap-4 hover:bg-muted/60 px-2 py-2.5 rounded-md w-full text-left transition-colors cursor-pointer"
+										>
+											<span className="mt-0.5 w-9 font-mono tabular-nums text-primary text-xs shrink-0">
+												{formatTimestamp(segment.start)}
 											</span>
-											{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
-											<p
-												dir="auto"
-												className="mt-0.5 text-start text-sm leading-relaxed [unicode-bidi:plaintext]"
-											>
-												{segment.text ||
-													segment.words?.map((w: any) => w.word).join(" ")}
-											</p>
-										</div>
-									</button>
-								))}
+											<div className="min-w-0">
+												<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+													{speakerName(segment.speaker, recording.speakerRoles)}
+												</span>
+												{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
+												<p
+													dir="auto"
+													className="mt-0.5 text-start text-sm leading-relaxed [unicode-bidi:plaintext]"
+												>
+													{segment.text ||
+														segment.words?.map((w: any) => w.word).join(" ")}
+												</p>
+											</div>
+										</button>
+									))}
+								</div>
 							</div>
 						) : (
 							<p

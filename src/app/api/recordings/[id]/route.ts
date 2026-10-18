@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-utils";
 import { consultationSummarySchema } from "@/lib/consultation-summary";
 import { deleteFromR2ByUrl } from "@/lib/r2";
+import { speakerRolesSchema } from "@/lib/speaker-roles";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -36,6 +37,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				speakerRoles: consultationRecording.speakerRoles,
 				summary: consultationRecording.summary,
 				summaryStatus: consultationRecording.summaryStatus,
 				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,
@@ -105,12 +107,15 @@ const patchSchema = z
 		patientId: z.number().int().positive().nullable().optional(),
 		/** The doctor's edits to the AI consultation note */
 		summary: consultationSummarySchema.optional(),
+		/** The doctor's corrections to who each speaker is */
+		speakerRoles: speakerRolesSchema.optional(),
 	})
 	.refine(
 		(d) =>
 			d.title !== undefined ||
 			d.patientId !== undefined ||
-			d.summary !== undefined,
+			d.summary !== undefined ||
+			d.speakerRoles !== undefined,
 		{ message: "At least one field to update is required" },
 	);
 
@@ -159,6 +164,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 		if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
 		if (parsed.data.patientId !== undefined)
 			updateData.patientId = parsed.data.patientId;
+		if (parsed.data.speakerRoles !== undefined) {
+			updateData.speakerRoles = parsed.data.speakerRoles;
+		}
 		if (parsed.data.summary !== undefined) {
 			updateData.summary = parsed.data.summary;
 			updateData.summaryStatus = "done";

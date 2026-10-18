@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				speakerRoles: consultationRecording.speakerRoles,
 				summary: consultationRecording.summary,
 				summaryStatus: consultationRecording.summaryStatus,
 				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,

@@ -14,12 +14,16 @@ export async function summarizeRecording(recordingId: number) {
 		.select({
 			transcript: consultationRecording.transcript,
 			transcriptStatus: consultationRecording.transcriptStatus,
+			speakerRoles: consultationRecording.speakerRoles,
 		})
 		.from(consultationRecording)
 		.where(eq(consultationRecording.id, recordingId));
 	if (!recording || recording.transcriptStatus !== "done") return null;
 
-	const text = formatTranscriptForAiContext(recording.transcript);
+	// With roles, the note knows who said what (patient's symptoms vs doctor's plan)
+	const text = formatTranscriptForAiContext(recording.transcript, {
+		speakerRoles: recording.speakerRoles,
+	});
 	if (!text) return null;
 
 	await db

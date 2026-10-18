@@ -1,14 +1,17 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { consultationRecording } from "@/db/schema";
 import {
-	generateRecordingTitle,
+	generateRecordingInsights,
 	type TranscriptResponse,
 	transcribeAudio,
 } from "@/lib/ai";
 import { chargeRecordingUsage, getEffectivePlan } from "@/lib/plan-limits";
 import { summarizeRecording } from "@/lib/recording-summary";
-import { formatTranscriptForAiContext } from "@/lib/transcript";
+import {
+	formatTranscriptForAiContext,
+	transcriptSpeakers,
+} from "@/lib/transcript";
 
 function setStatus(recordingId: number, status: "processing" | "error") {
 	return db
@@ -17,25 +20,32 @@ function setStatus(recordingId: number, status: "processing" | "error") {
 		.where(eq(consultationRecording.id, recordingId));
 }
 
-/** Saves an AI title if the recording still has none. Never throws. */
-async function nameRecording(recordingId: number, transcript: unknown) {
+/**
+ * Works out who each speaker is and, if the recording has no title yet, names
+ * it. Never throws: on failure speakers stay "Speaker N" and the recording
+ * keeps its date-based name.
+ */
+async function analyzeRecording(recordingId: number, transcript: unknown) {
 	try {
-		const title = await generateRecordingTitle(
+		const { title, speakerRoles } = await generateRecordingInsights(
 			formatTranscriptForAiContext(transcript),
+			transcriptSpeakers(transcript),
 		);
-		const [named] = await db
+		const [analyzed] = await db
 			.update(consultationRecording)
-			.set({ title, updatedAt: new Date() })
-			.where(
-				and(
-					eq(consultationRecording.id, recordingId),
-					isNull(consultationRecording.title),
-				),
-			)
+			.set({
+				speakerRoles,
+				// Never overwrite a title the doctor gave
+				...(title
+					? { title: sql`coalesce(${consultationRecording.title}, ${title})` }
+					: {}),
+				updatedAt: new Date(),
+			})
+			.where(eq(consultationRecording.id, recordingId))
 			.returning();
-		return named ?? null;
+		return analyzed ?? null;
 	} catch (err) {
-		console.error("Recording title failed:", err);
+		console.error("Recording analysis failed:", err);
 		return null;
 	}
 }
@@ -67,7 +77,6 @@ export async function transcribeRecording(recordingId: number) {
 		.select({
 			doctorId: consultationRecording.doctorId,
 			audioUrl: consultationRecording.audioUrl,
-			title: consultationRecording.title,
 			durationSeconds: consultationRecording.durationSeconds,
 		})
 		.from(consultationRecording)
@@ -104,16 +113,15 @@ export async function transcribeRecording(recordingId: number) {
 				transcript,
 				transcriptStatus: "done",
 				durationSeconds,
+				// Speaker numbers can change with a new transcript
+				speakerRoles: null,
 				updatedAt: new Date(),
 			})
 			.where(eq(consultationRecording.id, recordingId))
 			.returning();
 
-		// Name it from what was said, unless the doctor already gave it a title.
-		// On failure it keeps showing its date-based name.
-		const final = recording.title?.trim()
-			? updated
-			: ((await nameRecording(recordingId, transcript)) ?? updated);
+		// Who's speaking, and a title from what was said (unless the doctor gave one)
+		const final = (await analyzeRecording(recordingId, transcript)) ?? updated;
 
 		// The transcript is saved either way; a failed charge must not mark it as an error.
 		await chargeRecordingUsage(

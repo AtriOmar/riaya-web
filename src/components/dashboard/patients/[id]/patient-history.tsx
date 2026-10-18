@@ -21,10 +21,11 @@ import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/error-handling";
 import { recordingTitle } from "@/lib/recording-title";
+import type { SpeakerRoles } from "@/lib/speaker-roles";
 import {
-	formatSpeakerLabel,
 	parseTranscriptPayload,
 	segmentText,
+	speakerName,
 } from "@/lib/transcript";
 import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import type {
@@ -50,7 +51,13 @@ function formatDuration(seconds: number) {
 	return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }
 
-function TranscriptText({ transcript }: { transcript: unknown }) {
+function TranscriptText({
+	transcript,
+	speakerRoles,
+}: {
+	transcript: unknown;
+	speakerRoles: SpeakerRoles | null;
+}) {
 	const parsed = parseTranscriptPayload(transcript);
 	if (!parsed) return null;
 	return (
@@ -60,7 +67,7 @@ function TranscriptText({ transcript }: { transcript: unknown }) {
 					// biome-ignore lint/suspicious/noArrayIndexKey: segments have no stable id
 					<div key={i}>
 						<p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-							{formatSpeakerLabel(s.speaker)}
+							{speakerName(s.speaker, speakerRoles)}
 						</p>
 						{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
 						<p
@@ -207,7 +214,10 @@ function RecordingEntry({
 						{showTranscript ? "Hide transcript" : "Show transcript"}
 					</button>
 					{showTranscript && (
-						<TranscriptText transcript={recording.transcript} />
+						<TranscriptText
+							transcript={recording.transcript}
+							speakerRoles={recording.speakerRoles}
+						/>
 					)}
 				</div>
 			)}
