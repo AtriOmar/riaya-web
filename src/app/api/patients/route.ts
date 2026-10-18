@@ -6,12 +6,12 @@ import { patient } from "@/db/schema";
 import {
 	apiError,
 	json,
-	requireDoctorProfile,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
 import { familyRelationships, resolveDoctorPatientPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
+import { requirePractice } from "@/lib/practice";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 // Returns patients for the authenticated doctor (with optional search)
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 		}
 
 		// Doctor's own patients
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const search = parsed.data.search;
 
 		const patients = await db
@@ -88,8 +88,7 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 

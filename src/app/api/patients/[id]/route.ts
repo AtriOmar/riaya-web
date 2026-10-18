@@ -3,14 +3,9 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { patient } from "@/db/schema";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, validationError } from "@/lib/api-utils";
 import { normalizePhoneForStorage } from "@/lib/phone";
+import { requirePractice } from "@/lib/practice";
 
 const updateSchema = z.object({
 	cin: z.string().min(1),
@@ -29,8 +24,7 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile, role } = await requirePractice();
 
 		const { id } = await params;
 		const patientId = Number(id);
@@ -39,8 +33,11 @@ export async function GET(
 		const record = await db.query.patient.findFirst({
 			where: and(eq(patient.id, patientId), eq(patient.doctorId, profile.id)),
 			with: {
+				// Secretaries never see medical files
 				medicalFiles: {
 					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
+					where: (_, { sql }) =>
+						role === "secretary" ? sql`false` : undefined,
 				},
 				invoices: {
 					with: {
@@ -73,8 +70,7 @@ export async function PATCH(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile, role } = await requirePractice();
 
 		const { id } = await params;
 		const patientId = Number(id);
@@ -114,8 +110,11 @@ export async function PATCH(
 		const record = await db.query.patient.findFirst({
 			where: and(eq(patient.id, existing.id), eq(patient.doctorId, profile.id)),
 			with: {
+				// Secretaries never see medical files
 				medicalFiles: {
 					orderBy: (medicalFiles, { desc }) => [desc(medicalFiles.createdAt)],
+					where: (_, { sql }) =>
+						role === "secretary" ? sql`false` : undefined,
 				},
 				invoices: {
 					with: {

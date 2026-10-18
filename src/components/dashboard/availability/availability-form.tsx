@@ -5,9 +5,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePractice } from "@/hooks/use-practice";
 import { cn } from "@/lib/utils";
 import type { PutApiUsersBodyAvailability } from "@/services/generated/api.schemas";
-import { usePutApiUsers } from "@/services/generated/users/users";
+import {
+	useGetApiUsersMe,
+	usePutApiUsers,
+} from "@/services/generated/users/users";
 
 const DAYS = [
 	"Monday",
@@ -43,9 +47,22 @@ const defaultAvailability: PutApiUsersBodyAvailability = {
 };
 
 export default function AvailabilityForm() {
+	const { me, isLoading } = usePractice();
+	const saved = me?.practice?.availability;
+	if (isLoading || !me) return null;
+	// Remount when the saved hours load, so the form starts from them
+	return <AvailabilityFormInner initial={saved ?? defaultAvailability} />;
+}
+
+function AvailabilityFormInner({
+	initial,
+}: {
+	initial: PutApiUsersBodyAvailability;
+}) {
 	const [availability, setAvailability] =
-		useState<PutApiUsersBodyAvailability>(defaultAvailability);
+		useState<PutApiUsersBodyAvailability>(initial);
 	const { trigger: updateAvailability, isMutating: saving } = usePutApiUsers();
+	const { mutate: mutateMe } = useGetApiUsersMe();
 
 	function handleToggle(day: number) {
 		setAvailability((prev) => {
@@ -79,6 +96,7 @@ export default function AvailabilityForm() {
 		e.preventDefault();
 		try {
 			await updateAvailability({ availability });
+			await mutateMe();
 			toast.success("Availability updated successfully");
 		} catch {
 			toast.error("Failed to update availability");

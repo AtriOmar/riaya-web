@@ -98,6 +98,45 @@ export const doctorProfile = pgTable(
 	],
 );
 
+// ─── Secretary ────────────────────────────────────────────────────────────────
+// A user who works in one doctor's practice (Pro). Secretaries manage
+// appointments, patients, invoices and availability, but never see medical
+// files, recordings, AI chat or billing. Access pauses while the doctor is on Free.
+
+export const secretary = pgTable(
+	"secretary",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.unique()
+			.references(() => user.id, { onDelete: "cascade" }),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [index("secretary_doctor_id_idx").on(table.doctorId)],
+);
+
+// Emailed link that lets someone join a doctor's practice as a secretary.
+// Only a hash of the token is stored.
+export const secretaryInvite = pgTable(
+	"secretary_invite",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		email: varchar("email", { length: 255 }).notNull(),
+		tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+		expiresAt: timestamp("expires_at").notNull(),
+		acceptedAt: timestamp("accepted_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [index("secretary_invite_doctor_id_idx").on(table.doctorId)],
+);
+
 // ─── Person ───────────────────────────────────────────────────────────────────
 // One real human. Phones live in `person_phone`: a phone can serve several
 // people (a family) and a person can be reached on several phones.
@@ -800,6 +839,8 @@ export const doctorProfileRelations = relations(
 		consultationRecordings: many(consultationRecording),
 		recordingUsage: many(recordingUsage),
 		aiChatConversations: many(aiChatConversation),
+		secretaries: many(secretary),
+		secretaryInvites: many(secretaryInvite),
 	}),
 );
 
@@ -994,6 +1035,27 @@ export const consultationRecordingRelations = relations(
 			references: [patient.id],
 		}),
 		aiChatConversations: many(aiChatConversation),
+	}),
+);
+
+export const secretaryRelations = relations(secretary, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [secretary.doctorId],
+		references: [doctorProfile.id],
+	}),
+	user: one(user, {
+		fields: [secretary.userId],
+		references: [user.id],
+	}),
+}));
+
+export const secretaryInviteRelations = relations(
+	secretaryInvite,
+	({ one }) => ({
+		doctor: one(doctorProfile, {
+			fields: [secretaryInvite.doctorId],
+			references: [doctorProfile.id],
+		}),
 	}),
 );
 

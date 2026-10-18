@@ -2,28 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAuth } from "@/components/contexts/auth-provider";
 import DoctorDashboardHome from "@/components/dashboard/home/doctor-dashboard-home";
 import DashboardLayout from "@/components/layouts/dashboard-layout";
-import { useGetApiUsersMe } from "@/services/generated/users/users";
+import SecretaryPaused from "@/components/layouts/secretary-paused";
+import { usePractice } from "@/hooks/use-practice";
 
 export default function DashboardHome() {
-	const { user } = useAuth();
 	const router = useRouter();
-
-	const { data: me, isLoading } = useGetApiUsersMe({
-		swr: { enabled: !!user },
-	});
-
-	const isVerified = me?.doctorProfile?.status === "verified";
+	const { me, isLoading, practice, isPausedSecretary, canWork } = usePractice();
 
 	useEffect(() => {
-		if (!isLoading && me && !isVerified) {
+		if (!isLoading && me && !canWork && !isPausedSecretary) {
 			router.replace("/dashboard/profile");
 		}
-	}, [isLoading, me, isVerified, router]);
+	}, [isLoading, me, canWork, isPausedSecretary, router]);
 
-	if (!isVerified) {
+	if (isPausedSecretary) {
+		return <SecretaryPaused doctorName={practice?.doctorName ?? null} />;
+	}
+
+	if (!canWork) {
 		return null;
 	}
 

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePractice } from "@/hooks/use-practice";
 import { formatTnd } from "@/lib/money";
 import { formatRecordingTime } from "@/lib/recording-time";
 import { cn } from "@/lib/utils";
@@ -267,6 +268,8 @@ function DashboardSkeleton() {
 
 export default function DoctorDashboardHome() {
 	const { data, isLoading, error } = useGetApiDashboardStats();
+	// The plan card is the doctor's business, not their secretary's
+	const { isSecretary } = usePractice();
 
 	if (isLoading) return <DashboardSkeleton />;
 
@@ -358,7 +361,7 @@ export default function DoctorDashboardHome() {
 			</section>
 
 			<section className="grid gap-4 lg:grid-cols-3">
-				<Card className="lg:col-span-2">
+				<Card className={isSecretary ? "lg:col-span-3" : "lg:col-span-2"}>
 					<CardHeader className="pb-2">
 						<CardTitle className="text-base">
 							Appointments · last 14 days
@@ -369,59 +372,68 @@ export default function DoctorDashboardHome() {
 					</CardContent>
 				</Card>
 
-				<Card>
-					<CardHeader className="pb-2">
-						<div className="flex items-center justify-between gap-2">
-							<CardTitle className="text-base">Plan usage</CardTitle>
-							{data.plan.isPro ? (
-								<ProPlanBadge compact />
-							) : (
-								<Badge variant="secondary">Free</Badge>
+				{!isSecretary && (
+					<Card>
+						<CardHeader className="pb-2">
+							<div className="flex items-center justify-between gap-2">
+								<CardTitle className="text-base">Plan usage</CardTitle>
+								{data.plan.isPro ? (
+									<ProPlanBadge compact />
+								) : (
+									<Badge variant="secondary">Free</Badge>
+								)}
+							</div>
+							{resetsOn && (
+								<p className="text-xs text-muted-foreground">
+									Resets {resetsOn}
+								</p>
 							)}
-						</div>
-						{resetsOn && (
-							<p className="text-xs text-muted-foreground">Resets {resetsOn}</p>
-						)}
-					</CardHeader>
-					<CardContent className="space-y-5">
-						<UsageBar
-							label="WhatsApp sends"
-							used={data.plan.usage.whatsappSendsThisMonth}
-							limit={data.plan.limits.whatsappSendsPerMonth}
-						/>
-						<UsageBar
-							label="Recording time"
-							used={data.plan.recordingTime.usedSeconds}
-							limit={data.plan.recordingTime.includedSeconds}
-							format={formatRecordingTime}
-							hint={
-								data.plan.recordingTime.extraSeconds > 0
-									? `+ ${formatRecordingTime(data.plan.recordingTime.extraSeconds)} extra`
-									: undefined
-							}
-						/>
-						<UsageBar
-							label="AI assistant messages"
-							used={data.plan.usage.aiMessagesThisMonth}
-							limit={data.plan.limits.aiMessagesPerMonth}
-						/>
-						{!data.plan.isPro ? (
-							<Button asChild variant="outline" size="sm" className="w-full">
-								<Link href="/dashboard/subscription">Upgrade to Pro</Link>
-							</Button>
-						) : (
-							data.plan.canBuyRecordingPacks &&
-							data.plan.recordingTime.remainingSeconds <
-								data.plan.recordingTime.includedSeconds * 0.2 && (
+						</CardHeader>
+						<CardContent className="space-y-5">
+							<UsageBar
+								label="WhatsApp sends"
+								used={data.plan.usage.whatsappSendsThisMonth}
+								limit={data.plan.limits.whatsappSendsPerMonth}
+							/>
+							<UsageBar
+								label="Recording time"
+								used={data.plan.recordingTime.usedSeconds}
+								limit={data.plan.recordingTime.includedSeconds}
+								format={formatRecordingTime}
+								hint={
+									data.plan.recordingTime.extraSeconds > 0
+										? `+ ${formatRecordingTime(data.plan.recordingTime.extraSeconds)} extra`
+										: undefined
+								}
+							/>
+							<UsageBar
+								label="AI assistant messages"
+								used={data.plan.usage.aiMessagesThisMonth}
+								limit={data.plan.limits.aiMessagesPerMonth}
+							/>
+							{!data.plan.isPro ? (
 								<Button asChild variant="outline" size="sm" className="w-full">
-									<Link href="/dashboard/subscription?addHours=1">
-										Add recording hours
-									</Link>
+									<Link href="/dashboard/subscription">Upgrade to Pro</Link>
 								</Button>
-							)
-						)}
-					</CardContent>
-				</Card>
+							) : (
+								data.plan.canBuyRecordingPacks &&
+								data.plan.recordingTime.remainingSeconds <
+									data.plan.recordingTime.includedSeconds * 0.2 && (
+									<Button
+										asChild
+										variant="outline"
+										size="sm"
+										className="w-full"
+									>
+										<Link href="/dashboard/subscription?addHours=1">
+											Add recording hours
+										</Link>
+									</Button>
+								)
+							)}
+						</CardContent>
+					</Card>
+				)}
 			</section>
 
 			<section className="grid gap-4 lg:grid-cols-2">

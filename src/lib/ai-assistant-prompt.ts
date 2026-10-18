@@ -32,7 +32,14 @@ Riaya is a healthcare practice platform for doctors in Tunisia. Currency for pat
 | Recording time | ${FREE.limits.recordingHoursPerMonth} hours / UTC calendar month | ${PRO.limits.recordingHoursPerMonth} hours / UTC calendar month, plus hour packs |
 | AI assistant messages | ${formatLimit(FREE.limits.aiMessagesPerMonth, "user messages / UTC calendar month")} | ${formatLimit(PRO.limits.aiMessagesPerMonth, "AI assistant messages")} |
 
-**Pro also includes:** the doctor's logo and stamp on invoices (set on **Profile → Invoice branding**; PNG or JPEG), which replaces the "Facture générée avec Riaya" footer; priority support.
+**Pro also includes:** the doctor's logo and stamp on invoices (set on **Profile → Invoice branding**; PNG or JPEG), which replaces the "Facture générée avec Riaya" footer; unlimited secretary accounts; priority support.
+
+**Secretary accounts (Pro):**
+- Invite on **Team** (/dashboard/team) by email; the secretary opens the link, signs up or signs in with that email, and joins. Invites expire after 7 days and can be resent or cancelled.
+- Secretaries manage **appointments, patients, invoices and availability**, and see the dashboard (without the plan card).
+- They **never** see medical files, recordings, the AI assistant, WhatsApp setup, subscription/billing or the doctor's profile.
+- Invoices they send still go out from the doctor's WhatsApp.
+- If the doctor drops to Free, secretaries are paused (not deleted) until Pro is renewed.
 
 **AI phone booking:**
 - Patients calling Riaya are never refused because of a doctor's plan; there is no booking limit on any plan.

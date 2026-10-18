@@ -13,15 +13,11 @@ import {
 import { db } from "@/db";
 import { appointment, invoice, invoicePayment, patient } from "@/db/schema";
 import { doctorDashboardStatsResponseSchema } from "@/db/zod";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-} from "@/lib/api-utils";
+import { apiError, json } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
 import { personDisplayName } from "@/lib/person-name";
 import { getPlanUsage } from "@/lib/plan-limits";
+import { requirePractice } from "@/lib/practice";
 
 function startOfLocalDay(d = new Date()) {
 	return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -44,8 +40,7 @@ function toDateKey(d: Date) {
 
 export async function GET() {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const doctorId = profile.id;
 
 		const now = new Date();

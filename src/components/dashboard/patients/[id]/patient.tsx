@@ -1,6 +1,7 @@
 "use client";
 
 import { CubeLoader } from "@/components/loaders";
+import { usePractice } from "@/hooks/use-practice";
 import { useGetApiPatientsId } from "@/services/generated/patients/patients";
 import { AddMedicalFile } from "./add-medical-file";
 import { PatientDetails } from "./patient-details";
@@ -14,6 +15,8 @@ export default function Patient({ patientId }: { patientId: number }) {
 		isLoading,
 		mutate,
 	} = useGetApiPatientsId(patientId.toString());
+	// Medical files and recordings are for the doctor only
+	const { isSecretary } = usePractice();
 
 	if (isLoading) {
 		return (
@@ -29,15 +32,22 @@ export default function Patient({ patientId }: { patientId: number }) {
 	return (
 		<div className="space-y-6">
 			<PatientDetails patient={patient} onUpdated={() => mutate()} />
-			<div className="gap-6 grid lg:grid-cols-3">
-				<PatientMedicalFilesList
-					patientId={patientId}
-					medicalFiles={patient.medicalFiles}
-					onChanged={() => mutate()}
-				/>
-				<AddMedicalFile patientId={patientId} onFileAdded={() => mutate()} />
-			</div>
-			<PatientRecordingsList patientId={patientId} />
+			{!isSecretary && (
+				<>
+					<div className="gap-6 grid lg:grid-cols-3">
+						<PatientMedicalFilesList
+							patientId={patientId}
+							medicalFiles={patient.medicalFiles}
+							onChanged={() => mutate()}
+						/>
+						<AddMedicalFile
+							patientId={patientId}
+							onFileAdded={() => mutate()}
+						/>
+					</div>
+					<PatientRecordingsList patientId={patientId} />
+				</>
+			)}
 			<PatientInvoices
 				patientId={patientId}
 				invoices={patient.invoices ?? []}

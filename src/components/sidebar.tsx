@@ -13,10 +13,10 @@ import {
 	Receipt,
 	Stethoscope,
 	User,
+	Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAppContext } from "@/components/contexts/app-provider";
-import { useAuth } from "@/components/contexts/auth-provider";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,9 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
 import { cn } from "@/lib/utils";
 import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
-import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 const STORAGE_KEY = "dashboard-sidebar-collapsed";
 
@@ -78,6 +78,11 @@ const items2: SidebarItemData[] = [
 		path: "/dashboard/profile",
 	},
 	{
+		name: "Team",
+		icon: <Users className="size-5" />,
+		path: "/dashboard/team",
+	},
+	{
 		name: "WhatsApp",
 		icon: <MessageSquare className="size-5" />,
 		path: "/dashboard/whatsapp-config",
@@ -90,25 +95,32 @@ const items2: SidebarItemData[] = [
 ];
 
 function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
-	const { user } = useAuth();
-	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
-	const isVerified = me?.doctorProfile?.status === "verified";
+	const { practice, isSecretary, canWork } = usePractice();
 	const { data: billing } = useGetApiBillingSubscription({
-		swr: { enabled: isVerified },
+		swr: { enabled: canWork && !isSecretary },
 	});
 
 	const planBadge = billing?.plan.isPro ? "Pro" : null;
+	// Secretaries only see the pages they can use
+	const visible = (items: SidebarItemData[]) =>
+		isSecretary ? items.filter((i) => !isDoctorOnlyPath(i.path)) : items;
 
 	return (
 		<>
-			<SidebarUserInfo collapsed={collapsed} planBadge={planBadge} />
+			<SidebarUserInfo
+				collapsed={collapsed}
+				planBadge={planBadge}
+				subtitle={
+					isSecretary ? `Secretary · ${practice?.doctorName}` : undefined
+				}
+			/>
 			<ul className={cn("font-medium text-sm", collapsed ? "px-1" : "px-2")}>
-				{items1.map((item) => (
+				{visible(items1).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
 							item={{
 								...item,
-								disabled: !isVerified && item.path !== "/dashboard/profile",
+								disabled: !canWork && item.path !== "/dashboard/profile",
 							}}
 							collapsed={collapsed}
 						/>
@@ -117,12 +129,12 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 				<li>
 					<div className="h-px my-2 bg-border" />
 				</li>
-				{items2.map((item) => (
+				{visible(items2).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
 							item={{
 								...item,
-								disabled: !isVerified && item.path !== "/dashboard/profile",
+								disabled: !canWork && item.path !== "/dashboard/profile",
 								badge:
 									item.path === "/dashboard/subscription" && planBadge
 										? planBadge

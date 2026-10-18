@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-utils";
 import { resolvePlanId } from "@/lib/plan-limits";
 import { PLAN_IDS } from "@/lib/plans";
+import { requirePractice } from "@/lib/practice";
 
 // ─── GET /api/users ──────────────────────────────────────────────────────────
 // Admin: search all users
@@ -108,7 +109,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── PUT /api/users ──────────────────────────────────────────────────────────
-// Authenticated user updates their own profile (availability)
+// The doctor (or their secretary) updates the practice's availability
 
 const availabilitySlotSchema = z.object({ start: z.number(), end: z.number() });
 
@@ -126,7 +127,7 @@ const updateSchema = z.object({
 
 export async function PUT(req: NextRequest) {
 	try {
-		const session = await requireSession();
+		const { doctor } = await requirePractice();
 		const body = await req.json();
 		const parsed = updateSchema.safeParse(body);
 
@@ -135,7 +136,7 @@ export async function PUT(req: NextRequest) {
 		const [updated] = await db
 			.update(doctorProfile)
 			.set({ availability: parsed.data.availability, updatedAt: new Date() })
-			.where(eq(doctorProfile.userId, session.user.id))
+			.where(eq(doctorProfile.id, doctor.id))
 			.returning();
 
 		if (!updated) return apiError("DOCTOR_PROFILE_NOT_FOUND");

@@ -24,6 +24,8 @@ export type Plan = {
 	canBuyRecordingPacks: boolean;
 	/** Invoices carry the doctor's logo and stamp instead of the Riaya footer. */
 	canBrandDocuments: boolean;
+	/** Can add secretary accounts (as many as they like). */
+	canHaveSecretaries: boolean;
 	features: string[];
 };
 
@@ -42,6 +44,7 @@ export const PLANS: Record<PlanId, Plan> = {
 		},
 		canBuyRecordingPacks: false,
 		canBrandDocuments: false,
+		canHaveSecretaries: false,
 		features: [
 			"Patient records & appointments",
 			"Availability & calendar",
@@ -67,6 +70,7 @@ export const PLANS: Record<PlanId, Plan> = {
 		},
 		canBuyRecordingPacks: true,
 		canBrandDocuments: true,
+		canHaveSecretaries: true,
 		features: [
 			"Everything in Free",
 			"Unlimited WhatsApp sends",
@@ -74,6 +78,7 @@ export const PLANS: Record<PlanId, Plan> = {
 			"Add more recording hours anytime",
 			"Unlimited AI assistant messages",
 			"Your logo & stamp on invoices",
+			"Secretary accounts",
 			"Priority support",
 		],
 	},

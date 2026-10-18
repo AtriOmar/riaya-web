@@ -1,14 +1,9 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, validationError } from "@/lib/api-utils";
 import { findDoctorPatientByPerson } from "@/lib/appointment-patient-link";
 import { registry } from "@/lib/openapi";
+import { requirePractice } from "@/lib/practice";
 
 // ─── GET /api/patients/lookup-by-person ──────────────────────────────────────
 // The doctor's existing patient file for a person (e.g. before accepting a phone booking).
@@ -19,8 +14,7 @@ const querySchema = z.object({
 
 export async function GET(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const parsed = querySchema.safeParse(
 			Object.fromEntries(req.nextUrl.searchParams),
 		);

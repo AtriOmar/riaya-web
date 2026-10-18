@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { authQuery, safeNextPath } from "@/lib/safe-next";
 
 const loginSchema = z.object({
 	email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -23,7 +24,15 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+export default function LoginForm({
+	next,
+	email,
+}: {
+	/** Path to open after signing in (e.g. an invite link) */
+	next: string | null;
+	/** Prefilled email (e.g. from an invite) */
+	email: string | null;
+}) {
 	const [showPassword, setShowPassword] = useState(false);
 	const [apiError, setApiError] = useState<string | null>(null);
 	const router = useRouter();
@@ -34,6 +43,7 @@ export default function LoginForm() {
 		formState: { errors, isSubmitting },
 	} = useForm<LoginValues>({
 		resolver: zodResolver(loginSchema),
+		defaultValues: { email: email ?? "" },
 	});
 
 	async function onSubmit(values: LoginValues) {
@@ -49,7 +59,7 @@ export default function LoginForm() {
 		}
 
 		toast.success("Logged in successfully");
-		router.push("/dashboard");
+		router.push(safeNextPath(next));
 		router.refresh();
 	}
 
@@ -165,7 +175,7 @@ export default function LoginForm() {
 					<p className="mt-8 text-muted-foreground text-center">
 						New to Riaya?{" "}
 						<Link
-							href="/register"
+							href={`/register${authQuery(next, email)}`}
 							className="font-semibold text-primary hover:underline"
 						>
 							Register your practice

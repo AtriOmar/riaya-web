@@ -7,7 +7,6 @@ import { appointment, patient } from "@/db/schema";
 import {
 	apiError,
 	json,
-	requireDoctorProfile,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
@@ -20,6 +19,7 @@ import {
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
+import { requirePractice } from "@/lib/practice";
 import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
 import { recordRefusal } from "@/lib/refusal-suggestions";
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 		}
 
 		// Doctor's own appointments
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const appointments = await db.query.appointment.findMany({
 			where: eq(appointment.doctorId, profile.id),
 			with: { patient: true, person: true },
@@ -77,8 +77,7 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 
@@ -131,8 +130,7 @@ const updateSchema = z.object({
 
 export async function PUT(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = updateSchema.safeParse(body);
 
@@ -347,8 +345,7 @@ const deleteSchema = z.object({
 
 export async function DELETE(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const params = Object.fromEntries(req.nextUrl.searchParams);
 		const parsed = deleteSchema.safeParse(params);
 

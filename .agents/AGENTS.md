@@ -178,6 +178,13 @@ This document is a compact project guide for AI assistants working on this repo.
 - `call`, `call_event` (Twilio call logging from socket)
 - Better Auth tables via `auth-schema`, re-exported from schema entry.
 
+### Secretaries (practice access)
+
+- `secretary` (doctor ↔ user, one practice per user) and `secretary_invite` (email + hashed token, 7-day expiry). Pro includes unlimited secretaries (`canHaveSecretaries` in `lib/plans.ts`); Free has none.
+- Routes a secretary may use call `requirePractice()` (`web/src/lib/practice.ts`) instead of `requireDoctorProfile`: appointments, patients (medical files stripped), invoices, availability (`PUT /api/users`), dashboard stats. Everything else stays doctor-only. Secretaries are refused while the doctor is on Free or not verified (`SECRETARY_ACCESS_PAUSED`).
+- Client: `usePractice()` (`web/src/hooks/use-practice.ts`) gives the role, `canWork` and the practice's `doctorId`/`availability` from `GET /api/users/me` → `practice`. `DOCTOR_ONLY_PATHS` hides and blocks doctor-only pages for secretaries. Never read the user's own `doctorProfile` for practice data.
+- WhatsApp sends use the doctor's `userId` (`profile.userId`), not the session user.
+
 ## Key API routes (booking & identity)
 
 | Route | Auth | Purpose |

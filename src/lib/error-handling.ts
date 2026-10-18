@@ -65,6 +65,16 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
 	DOCUMENT_BRANDING_REQUIRES_PRO:
 		"Your logo and stamp on invoices are available on Pro.",
 	INVALID_BRANDING_IMAGE: "Upload the image again as a PNG or JPEG.",
+	SECRETARY_ACCESS_PAUSED:
+		"Secretary access is paused because the doctor's plan no longer includes it.",
+	SECRETARIES_REQUIRE_PRO: "Secretary accounts are available on Pro.",
+	SECRETARY_NOT_FOUND: "Secretary not found.",
+	INVITE_NOT_FOUND:
+		"This invitation is invalid or has expired. Ask the doctor to send a new one.",
+	INVITE_EMAIL_MISMATCH:
+		"This invitation was sent to a different email. Sign in with that email to accept it.",
+	ALREADY_IN_PRACTICE:
+		"This account already belongs to a practice, so it can't join another one.",
 	AI_MESSAGE_LIMIT_REACHED:
 		"Monthly AI assistant message limit reached. It resets next calendar month, or upgrade to Pro for unlimited messages.",
 	APPOINTMENT_NOT_CANCELLABLE:
