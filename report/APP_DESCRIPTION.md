@@ -80,14 +80,14 @@ Riaya is split into **two repositories**:
 | Calendar / maps / PDF | react-big-calendar, Leaflet, pdfkit |
 | Realtime server | Node.js, Express 5, `ws`, Pino logging |
 | Phone | Twilio (inbound calls, outbound callbacks, call recording) |
-| Phone AI | Gemini Live, OpenAI Realtime, GPT-Live or Inworld (switch with `BACKEND`); or the LiveKit agent (speech-to-text → LLM → text-to-speech) |
+| Phone AI | **Gemini Live** (`gemini-3.1-flash-live-preview`, voice Puck) in production (`BACKEND=gemini`). OpenAI Realtime, GPT-Live and Inworld stay available (switch with `BACKEND`), and so does the LiveKit agent (speech-to-text → LLM → text-to-speech) |
 | Doctor AI | OpenRouter (chat model `deepseek/deepseek-v4-flash-0731` by default; transcription `microsoft/mai-transcribe-2`) |
 | WhatsApp | Baileys (one linked session per doctor) |
 | Jobs | BullMQ + Redis |
 | Files | Cloudflare R2 with presigned upload URLs, public CDN URL stored on the record |
 | Payments | Konnect.network |
 | Email | Nodemailer (sign-up OTP, secretary invites) |
-| Maps / places | Geoapify (default) or Google Places, switched by `GEO_PROVIDER`; road distance from Geoapify Route Matrix |
+| Maps / places | **Google Places** is the chosen provider for finding places; Geoapify was only a test provider for places. The code can switch with `GEO_PROVIDER`. Road distance comes from the Geoapify Route Matrix |
 | Package manager | pnpm |
 | Lint/format | Biome |
 
@@ -310,7 +310,7 @@ Silent calls are logged as a `system` event, not as abuse.
 
 Used by the phone assistant and by the admin Best Fit Finder.
 
-1. **Location.** The patient's place is geocoded with the configured provider (Geoapify by default, Google Places optional, both restricted to Tunisia). A `sessionToken` ties Google's autocomplete and details calls into one billed lookup. If a precise place is not found, the AI falls back to the stored list of **24 Tunisian cities** with GPS coordinates. Doctor cabinets store exact latitude and longitude from the registration map, so matching is coordinate to coordinate.
+1. **Location.** The patient's place is geocoded with **Google Places**, restricted to Tunisia (the code keeps a switch, `GEO_PROVIDER`, that also supports Geoapify, which we only used for testing). A `sessionToken` ties Google's autocomplete and details calls into one billed lookup. If a precise place is not found, the AI falls back to the stored list of **24 Tunisian cities** with GPS coordinates. Doctor cabinets store exact latitude and longitude from the registration map, so matching is coordinate to coordinate.
 2. **Candidates.** Only **verified** doctors with the chosen speciality and a mapped cabinet.
 3. **Radius.** Doctors farther than **50 km** (Haversine) are excluded. This stops a Sfax doctor being offered to a Tunis patient. **Fallback:** if no doctor inside 50 km has a slot, the **3 nearest** doctors beyond it are returned, flagged `farAway`, and the AI tells the patient honestly.
 4. **Slots.** For each doctor, find the nearest free **30-minute slot** around the preferred time within the next week, searching both before and after, skipping appointments and the doctor's weekly availability limits. Up to **3 extra forward slots** are returned so the AI can offer alternatives without another search.
@@ -633,13 +633,13 @@ This section is taken from `voice/MODEL_NOTES.md` (prices from OpenRouter, check
 | Use | Model | Where |
 |---|---|---|
 | Doctor AI assistant, recording titles and speaker roles, consultation notes | `deepseek/deepseek-v4-flash-0731` via OpenRouter | web |
-| Recording transcription with speakers | `microsoft/mai-transcribe-2` via OpenRouter (Azure diarization) | web |
-| Phone assistant (realtime) | OpenAI Realtime, Gemini Live, GPT-Live or Inworld, chosen by `BACKEND` | voice |
+| Recording transcription with speakers | `microsoft/mai-transcribe-2` via OpenRouter | web |
+| Phone assistant (realtime) | **Gemini Live** `gemini-3.1-flash-live-preview`, voice Puck (`BACKEND=gemini`, `CALL_ROUTER=gemini`). OpenAI Realtime, GPT-Live and Inworld are still in the code | voice |
 | Caller transcript on the phone path | `google/gemini-3.1-flash-lite` via OpenRouter (`CALLER_STT`) | voice |
 | Background name/language capture (LiveKit path) | `openai/gpt-5.4-nano` (`PROFILE_EXTRACT_MODEL`), runs on every caller sentence | voice |
 | LiveKit agent | Configurable speech-to-text, LLM and text-to-speech (see tables) | voice |
 
-Note: the `.env` on the development machine currently points to Gemini (`BACKEND=gemini`, `gemini-3.1-flash-live-preview`, `CALL_ROUTER=gemini`), while the report's final decision is OpenAI Realtime. Confirm the production environment before quoting a live model in the report.
+The final choice for the phone assistant is **Gemini Live** (`gemini-3.1-flash-live-preview`). The `.env` in the voice repository confirms it: `BACKEND=gemini`, `CALL_ROUTER=gemini`, `GEMINI_VOICE=Puck`. Older notes still call OpenAI Realtime the final choice; that is out of date.
 
 ### Two ways to build a phone call
 
@@ -699,9 +699,9 @@ Note: the `.env` on the development machine currently points to Gemini (`BACKEND
 |---|---|---|
 | `gemini-3.8-live` | untested | Tunisian dialect good, fast, but does not understand well. |
 | `gemini-3.8-live-extended-thinking` | untested | Accent decent, fast, understanding not good. |
-| `gemini-3.1-flash-live-preview` | untested | Dialect almost perfect, very fast, very good interruptions, best thinking of the Gemini models, understands well. **Transcript accuracy is very bad** (it comes from a separate speech-to-text step that we cannot tune) — which is why we added the separate caller transcriber. |
+| **`gemini-3.1-flash-live-preview`** (`GEMINI_MODEL`) | **chosen** | Dialect almost perfect, very fast, very good interruptions, best thinking of the Gemini models, understands well. **Transcript accuracy is very bad** (it comes from a separate speech-to-text step that we cannot tune), which is why we added the separate caller transcriber. |
 | GPT-Live (`gpt-live-1`) | bad | Fast but too artificial; understanding alright but with mistakes; flow not smooth; costly (two models). |
-| **OpenAI Realtime** | **good** | Fast, good speech recognition, **smartest model so far**, very good with interruptions. Voice not perfect in the right accent. **Very expensive.** |
+| OpenAI Realtime | good, not chosen | Fast, good speech recognition, **smartest model of the first tests**, very good with interruptions. Voice not perfect in the right accent. **Very expensive.** |
 | `gpt-realtime-2.1` | untested | Fast, good pronunciation, Arabic understanding and flow "not that well". |
 
 ### How we tested
@@ -725,12 +725,16 @@ A small program acts like a **phone caller** and plays the same **7 sentences** 
 | Voice | Gemini | Most natural | 2 to 3 s before it talks |
 | Voice | Inworld | Fast | Only 2 Arabic voices, not perfect |
 
-- **Realtime response times:** Gemini Live answered in 1.6 to 4.5 s (slower when it first called a tool). The Inworld chain was about 2.2 s. GPT realtime had a very good response time and followed instructions well but its pronunciation was not perfect. Gemini Live had the best voice but could not follow instructions carefully and lost track of the conversation (its extended-thinking version failed to use tool results in 8 of 18 tries).
+- **Realtime response times:** Gemini Live answered in 1.6 to 4.5 s (slower when it first called a tool). The Inworld chain was about 2.2 s. GPT realtime had a very good response time and followed instructions well but its pronunciation was not perfect. The first Gemini Live versions (`gemini-3.8-live` and its extended-thinking version) had a good voice and speed but understood poorly, and the extended-thinking version failed to use tool results in 8 of 18 tries. `gemini-3.1-flash-live-preview` was the best of the Gemini family.
 - **Testing found real bugs.** The AI saved the caller's name or language on almost every turn, costing ~1 extra second each time. We moved it to a background job (the LiveKit path's `profileCapture`).
 
 ### Final choice
 
-We chose **OpenAI Realtime**, directly from the OpenAI API, because it gave the best overall experience: fast answers and a smarter AI. Both realtime paths and the LiveKit chain stay in the code on purpose so they can be compared again.
+We chose **Gemini Live**, with the `gemini-3.1-flash-live-preview` model and the Puck voice. Among the models we tried it had the most natural Tunisian dialect (almost perfect), a very fast response, very good handling of interruptions, and the best understanding and reasoning of the Gemini family. OpenAI Realtime was the smartest in the first tests, but its voice did not have the right accent and it was very expensive. GPT-Live was too artificial and costly, and the chains of separate steps were too slow.
+
+The one weakness is the caller transcript, which Gemini Live produces badly. We solved it with a separate **caller transcriber** (`google/gemini-3.1-flash-lite` through OpenRouter) that feeds the admin live view. All other realtime paths and the LiveKit chain stay in the code on purpose, so they can be compared again.
+
+(The reasons above come from the verdicts in `voice/MODEL_NOTES.md`; the notes do not record a dated decision, so check them against what you remember before quoting them as the team's reasoning.)
 
 ---
 
@@ -746,7 +750,7 @@ Price matters when choosing a doctor, but the real price depends on many things,
 
 ### Geocoding
 
-We tested several services; **Geoapify had the richest data**, but it is not perfect and some addresses exist in several places. So we also give the AI help with **Tunisian cities and places**. A switch (`GEO_PROVIDER`) lets us use Google Places instead, without changing the callers.
+We compared several geocoding services on Tunisian places: hospitals, universities, train stations and the addresses of doctors' cabinets, written in French. For each query we checked how far the returned position was from the real one. **Google Places was clearly the best**: it knew many more places, including businesses and clinics, and it placed them more accurately. Geoapify and Mapbox were weaker, so Geoapify stayed only a test provider. It is not perfect either, and some addresses exist in several places, so we also give the AI help with **Tunisian cities and places**. A switch (`GEO_PROVIDER`) keeps the other provider available without changing the callers. Road distance for the best-fit polish still comes from the Geoapify Route Matrix.
 
 ### Patients have no website
 
@@ -763,6 +767,10 @@ The assistant never changes data on its own. It prepares a card and the doctor c
 ### Pay-for-cost AI limits
 
 AI use is limited by real model cost, not by message count, because a long chat with a transcript costs far more than a quick question.
+
+### Free doctors stay in the best-fit search
+
+We considered leaving Free doctors out of the best-fit results, so that they would have one more reason to subscribe. We dropped the idea. Our patients should always get the best service, which means the best-matching doctor, whatever plan that doctor is on.
 
 ### Plan limits do not touch patients
 
@@ -782,7 +790,7 @@ Use these when copying from `report/DESCRIPTION.md`, `report/ACTORS.md`, or the 
 | Free = 20 AI messages / month | AI is a **cost budget** (about 20 questions on Free, about 2,000 on Pro) |
 | Pro = unlimited everything | Pro has **100 recording hours** (plus buyable packs) and a **$5 AI budget** |
 | No mention of secretaries, branding, packs, summaries | Pro adds **secretaries, logo and stamp, hour packs, AI consultation notes** |
-| Voice AI = OpenAI Realtime through Azure only | Four realtime backends plus a LiveKit chain are supported; final choice is OpenAI Realtime |
+| Voice AI = OpenAI Realtime through Azure only | Four realtime backends plus a LiveKit chain are supported; **final choice is Gemini Live** (`gemini-3.1-flash-live-preview`). Azure is no longer used |
 | No abuse handling | **Abuse reports, admin review, blocked numbers** |
 | AI assistant = chat only | The assistant **reads the practice and proposes actions** (invoices, accept/refuse, notes, appointments) |
 | "Consultations" page | Consultation notes are **medical files** and **recording summaries**; there is no separate Consultations menu |
