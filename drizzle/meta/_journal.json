@@ -162,6 +162,20 @@
       "when": 1792385547781,
       "tag": "0022_add_appointment_patient_place",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792386154449,
+      "tag": "0023_review_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792386473257,
+      "tag": "0024_review_unique_appointment",
+      "breakpoints": true
     }
   ]
 }

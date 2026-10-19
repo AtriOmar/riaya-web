@@ -20,9 +20,9 @@ import {
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
 import { requirePractice } from "@/lib/practice";
-import { reviewQueue } from "@/lib/queue";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
 import { recordRefusal } from "@/lib/refusal-suggestions";
+import { scheduleReviewRequest } from "@/lib/review-scheduling";
 import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
@@ -208,6 +208,16 @@ export async function PUT(req: NextRequest) {
 			return apiError("APPOINTMENT_NOT_FOUND");
 		}
 
+		// Confirm or reschedule of a confirmed visit: (re)queue the review request.
+		if (
+			updated.status === "confirmed" &&
+			(fields.status === "confirmed" || fields.end !== undefined)
+		) {
+			void scheduleReviewRequest(updated).catch((err) =>
+				console.error("Failed to schedule review request:", err),
+			);
+		}
+
 		// Cancel sibling urgent requests so only one doctor keeps the patient.
 		if (
 			fields.status === "confirmed" &&
@@ -303,23 +313,6 @@ export async function PUT(req: NextRequest) {
 									console.error("WhatsApp confirmation failed:", waErr),
 								);
 						}
-					}
-
-					// Schedule a review request 2 hours after the appointment ends
-					if (updated.end) {
-						const delay = Math.max(
-							0,
-							new Date(updated.end).getTime() + 2 * 60 * 60 * 1000 - Date.now(),
-						);
-						await reviewQueue.add(
-							"sendReview",
-							{
-								appointmentId: updated.id,
-								doctorId: updated.doctorId,
-								patientId: updated.patientId,
-							},
-							{ delay },
-						);
 					}
 				} catch (err) {
 					console.error(

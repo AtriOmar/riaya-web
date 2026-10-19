@@ -5,6 +5,7 @@ import {
 	index,
 	integer,
 	jsonb,
+	pgEnum,
 	pgTable,
 	primaryKey,
 	text,
@@ -287,18 +288,35 @@ export const appointment = pgTable(
 
 // ─── Review ───────────────────────────────────────────────────────────────────
 
+export const reviewStatusEnum = pgEnum("review_status", [
+	"pending",
+	"submitted",
+]);
+export const reviewWaitTimeEnum = pgEnum("review_wait_time", [
+	"short",
+	"medium",
+	"long",
+]);
+
 export const review = pgTable(
 	"review",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		appointmentId: integer("appointment_id").references(() => appointment.id),
-		doctorId: integer("doctor_id").references(() => doctorProfile.id),
+		appointmentId: integer("appointment_id")
+			.notNull()
+			.unique()
+			.references(() => appointment.id),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id),
 		patientId: integer("patient_id").references(() => patient.id),
 		token: varchar("token", { length: 255 }).unique().notNull(),
 		rating: integer("rating"),
-		waitTime: varchar("wait_time", { length: 50 }),
+		waitTime: reviewWaitTimeEnum("wait_time"),
 		comment: text("comment"),
-		status: varchar("status", { length: 50 }).default("pending"),
+		status: reviewStatusEnum("status").notNull().default("pending"),
+		/** The magic link stops accepting answers after this time. */
+		expiresAt: timestamp("expires_at").notNull(),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},

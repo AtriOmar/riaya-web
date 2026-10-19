@@ -31,6 +31,7 @@ export default function ReviewPage() {
 	const [comment, setComment] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSuccess, setIsSuccess] = useState(false);
+	const [isExpired, setIsExpired] = useState(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -54,7 +55,12 @@ export default function ReviewPage() {
 			});
 			setIsSuccess(true);
 		} catch (error) {
-			if (axios.isAxiosError(error)) {
+			if (
+				axios.isAxiosError(error) &&
+				error.response?.data?.error === "REVIEW_EXPIRED"
+			) {
+				setIsExpired(true);
+			} else if (axios.isAxiosError(error)) {
 				toast.error(
 					error.response?.data?.message || "Failed to submit review.",
 				);
@@ -65,6 +71,26 @@ export default function ReviewPage() {
 			setIsSubmitting(false);
 		}
 	};
+
+	if (isExpired) {
+		return (
+			<div className="relative flex justify-center items-center bg-primary-50 dark:bg-slate-950 p-4 min-h-screen">
+				<div className="top-4 right-4 z-20 absolute">
+					<ThemeToggle />
+				</div>
+				<Card className="z-10 relative bg-white/80 dark:bg-slate-900/80 shadow-2xl backdrop-blur-xl border-0 w-full max-w-md">
+					<CardHeader className="py-12 text-center">
+						<CardTitle className="font-bold text-slate-900 dark:text-white text-2xl">
+							This link has expired
+						</CardTitle>
+						<CardDescription className="mt-2 text-base">
+							Review links are only valid for 30 days after your visit.
+						</CardDescription>
+					</CardHeader>
+				</Card>
+			</div>
+		);
+	}
 
 	if (isSuccess) {
 		return (

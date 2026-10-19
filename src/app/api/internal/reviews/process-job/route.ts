@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -13,7 +13,12 @@ import {
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
+import { REVIEW_REQUEST_DELAY_MS } from "@/lib/review-scheduling";
 import { buildReviewWhatsappMessage } from "@/lib/whatsapp-messages";
+
+const REVIEW_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Minimum gap between review requests to one patient for one doctor. */
+const REVIEW_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
 const processJobSchema = z.object({
 	appointmentId: z.number().int().positive(),
@@ -37,20 +42,46 @@ export async function POST(req: NextRequest) {
 			with: { patient: true, person: true },
 		});
 
-		// Only send if it was not cancelled
-		if (!appt || appt.status === "cancelled") {
-			return json({ success: false, reason: "appointment_cancelled" });
+		if (!appt) {
+			return json({ success: false, reason: "appointment_not_found" });
 		}
 
-		// 2. Check if a review already exists for this patient + doctor (or for this appointment if no patientId)
-		const existingReview = await db.query.review.findFirst({
-			where: patientId
-				? and(eq(review.doctorId, doctorId), eq(review.patientId, patientId))
-				: eq(review.appointmentId, appointmentId),
-		});
+		// Appointments only have pending | confirmed | cancelled (no no-show
+		// status). Only a confirmed one means the visit was accepted and
+		// plausibly happened; pending was never accepted, cancelled never took place.
+		if (appt.status !== "confirmed") {
+			return json({ success: false, reason: "appointment_not_confirmed" });
+		}
 
+		// A rescheduled visit may still be ahead of this (stale) job.
+		if (
+			!appt.end ||
+			appt.end.getTime() + REVIEW_REQUEST_DELAY_MS > Date.now()
+		) {
+			return json({ success: false, reason: "appointment_not_finished" });
+		}
+
+		// 2. One review per appointment.
+		const existingReview = await db.query.review.findFirst({
+			where: eq(review.appointmentId, appointmentId),
+		});
 		if (existingReview) {
 			return json({ success: false, reason: "review_already_exists" });
+		}
+
+		// Cooldown: don't ask the same patient about the same doctor again soon,
+		// whether or not they answered the earlier request.
+		if (patientId) {
+			const recentRequest = await db.query.review.findFirst({
+				where: and(
+					eq(review.doctorId, doctorId),
+					eq(review.patientId, patientId),
+					gte(review.createdAt, new Date(Date.now() - REVIEW_COOLDOWN_MS)),
+				),
+			});
+			if (recentRequest) {
+				return json({ success: false, reason: "review_recently_requested" });
+			}
 		}
 
 		// 3. Get phone, name, and doctor info. Messages go to the line that booked.
@@ -78,6 +109,7 @@ export async function POST(req: NextRequest) {
 			patientId: patientId ?? null,
 			token,
 			status: "pending",
+			expiresAt: new Date(Date.now() + REVIEW_LINK_TTL_MS),
 		});
 
 		const doctorName = doc?.lastName ? `Dr. ${doc.lastName}` : "your doctor";

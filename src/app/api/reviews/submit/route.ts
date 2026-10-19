@@ -39,6 +39,12 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
+		if (existingReview.expiresAt.getTime() < Date.now()) {
+			return apiError("REVIEW_EXPIRED", {
+				message: "This review link has expired.",
+			});
+		}
+
 		// 2. Update the review
 		await db
 			.update(review)
