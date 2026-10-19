@@ -21,6 +21,8 @@ const emergencySchema = z.object({
 	speciality: z.string().min(1),
 	lat: z.coerce.number(),
 	long: z.coerce.number(),
+	/** Name of the place at `lat`/`long`, kept on the bookings for the next call. */
+	placeLabel: z.string().max(255).nullable().optional(),
 	/** The calling phone line. */
 	phoneNumber: z.string().min(1, "Phone number is required"),
 	patient: bookingPatientSchema,
@@ -50,6 +52,7 @@ export async function POST(req: NextRequest) {
 			speciality: parsed.data.speciality,
 			lat: parsed.data.lat,
 			long: parsed.data.long,
+			placeLabel: parsed.data.placeLabel ?? null,
 			personId: patientPerson.id,
 			contactPhone: normalizedPhone,
 			illness: parsed.data.illness,

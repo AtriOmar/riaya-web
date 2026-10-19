@@ -42,6 +42,7 @@ export async function bookEmergencyAppointments(params: {
 	speciality: string;
 	lat: number;
 	long: number;
+	placeLabel: string | null;
 	personId: number;
 	contactPhone: string;
 	illness: string;
@@ -81,6 +82,9 @@ export async function bookEmergencyAppointments(params: {
 				description: params.illness,
 				urgent: true,
 				emergencyGroupId,
+				patientPlaceLabel: params.placeLabel,
+				patientLatitude: params.lat,
+				patientLongitude: params.long,
 			})),
 		)
 		.returning();

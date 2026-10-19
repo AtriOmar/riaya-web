@@ -266,6 +266,10 @@ export const appointment = pgTable(
 		urgent: boolean("urgent").notNull().default(false),
 		/** Shared id across the top-N pending emergency requests for one call. */
 		emergencyGroupId: varchar("emergency_group_id", { length: 64 }),
+		/** Phone bookings: the place the patient searched from, offered again on their next call. */
+		patientPlaceLabel: varchar("patient_place_label", { length: 255 }),
+		patientLatitude: doublePrecision("patient_latitude"),
+		patientLongitude: doublePrecision("patient_longitude"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},

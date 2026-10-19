@@ -159,6 +159,23 @@ export type GetApiAppointments200Item = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	patientPlaceLabel: string | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLatitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLongitude: number | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -232,6 +249,23 @@ export type PostApiAppointments201 = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	patientPlaceLabel: string | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLatitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLongitude: number | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -316,6 +350,23 @@ export type PutApiAppointments200 = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	patientPlaceLabel: string | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLatitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLongitude: number | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -2158,6 +2209,16 @@ export type PostApiAppointmentsExternalBodyPatient = {
 	relationship?: PostApiAppointmentsExternalBodyPatientRelationship;
 };
 
+export type PostApiAppointmentsExternalBodyPatientPlace = {
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	label: string | null;
+	lat: number;
+	long: number;
+};
+
 export type PostApiAppointmentsExternalBody = {
 	/** @exclusiveMinimum 0 */
 	doctorId: number;
@@ -2167,6 +2228,7 @@ export type PostApiAppointmentsExternalBody = {
 	start: string;
 	end: string;
 	illness: string;
+	patientPlace?: PostApiAppointmentsExternalBodyPatientPlace;
 };
 
 export type PostApiAppointmentsExternal201 = {
@@ -2222,6 +2284,23 @@ export type PostApiAppointmentsExternal201 = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	patientPlaceLabel: string | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLatitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLongitude: number | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -6897,6 +6976,11 @@ export type PostApiAppointmentsExternalEmergencyBody = {
 	lat: number | null;
 	/** @nullable */
 	long: number | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	placeLabel?: string | null;
 	/** @minLength 1 */
 	phoneNumber: string;
 	patient: PostApiAppointmentsExternalEmergencyBodyPatient;
@@ -6957,6 +7041,23 @@ export type PostApiAppointmentsExternalEmergency201AppointmentsItem = {
 	 * @nullable
 	 */
 	emergencyGroupId: string | null;
+	/**
+	 * @maxLength 255
+	 * @nullable
+	 */
+	patientPlaceLabel: string | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLatitude: number | null;
+	/**
+	 * @minimum -140737488355328
+	 * @maximum 140737488355327
+	 * @nullable
+	 */
+	patientLongitude: number | null;
 	/** @nullable */
 	createdAt: string | null;
 	/** @nullable */
@@ -7416,6 +7517,21 @@ export type PostApiInternalCallerPeople200PeopleItem = {
 
 export type PostApiInternalCallerPeople200 = {
 	people: PostApiInternalCallerPeople200PeopleItem[];
+};
+
+export type PostApiInternalCallerLastPlaceBody = {
+	/** @minLength 1 */
+	phoneNumber: string;
+};
+
+export type PostApiInternalCallerLastPlace200 = {
+	found: boolean;
+	/** @nullable */
+	label: string | null;
+	/** @nullable */
+	latitude: number | null;
+	/** @nullable */
+	longitude: number | null;
 };
 
 export type PostApiInternalCallerRefusalContextBody = {

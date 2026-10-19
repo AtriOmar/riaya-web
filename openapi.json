@@ -107,6 +107,23 @@
                         "nullable": true,
                         "maxLength": 64
                       },
+                      "patientPlaceLabel": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "patientLatitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
+                      "patientLongitude": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -140737488355328,
+                        "maximum": 140737488355327
+                      },
                       "createdAt": {
                         "type": "string",
                         "nullable": true,
@@ -278,6 +295,9 @@
                       "contactPhone",
                       "urgent",
                       "emergencyGroupId",
+                      "patientPlaceLabel",
+                      "patientLatitude",
+                      "patientLongitude",
                       "createdAt",
                       "updatedAt",
                       "patient",
@@ -404,6 +424,23 @@
                       "nullable": true,
                       "maxLength": 64
                     },
+                    "patientPlaceLabel": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "patientLatitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
+                    "patientLongitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
                     "createdAt": {
                       "type": "string",
                       "nullable": true,
@@ -429,6 +466,9 @@
                     "contactPhone",
                     "urgent",
                     "emergencyGroupId",
+                    "patientPlaceLabel",
+                    "patientLatitude",
+                    "patientLongitude",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -571,6 +611,23 @@
                       "nullable": true,
                       "maxLength": 64
                     },
+                    "patientPlaceLabel": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "patientLatitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
+                    "patientLongitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
                     "createdAt": {
                       "type": "string",
                       "nullable": true,
@@ -596,6 +653,9 @@
                     "contactPhone",
                     "urgent",
                     "emergencyGroupId",
+                    "patientPlaceLabel",
+                    "patientLatitude",
+                    "patientLongitude",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -4261,6 +4321,27 @@
                   },
                   "illness": {
                     "type": "string"
+                  },
+                  "patientPlace": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                      },
+                      "lat": {
+                        "type": "number"
+                      },
+                      "long": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "lat",
+                      "long"
+                    ]
                   }
                 },
                 "required": [
@@ -4347,6 +4428,23 @@
                       "nullable": true,
                       "maxLength": 64
                     },
+                    "patientPlaceLabel": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 255
+                    },
+                    "patientLatitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
+                    "patientLongitude": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
                     "createdAt": {
                       "type": "string",
                       "nullable": true,
@@ -4372,6 +4470,9 @@
                     "contactPhone",
                     "urgent",
                     "emergencyGroupId",
+                    "patientPlaceLabel",
+                    "patientLatitude",
+                    "patientLongitude",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -14156,6 +14257,11 @@
                     "type": "number",
                     "nullable": true
                   },
+                  "placeLabel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 255
+                  },
                   "phoneNumber": {
                     "type": "string",
                     "minLength": 1
@@ -14290,6 +14396,23 @@
                             "nullable": true,
                             "maxLength": 64
                           },
+                          "patientPlaceLabel": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 255
+                          },
+                          "patientLatitude": {
+                            "type": "number",
+                            "nullable": true,
+                            "minimum": -140737488355328,
+                            "maximum": 140737488355327
+                          },
+                          "patientLongitude": {
+                            "type": "number",
+                            "nullable": true,
+                            "minimum": -140737488355328,
+                            "maximum": 140737488355327
+                          },
                           "createdAt": {
                             "type": "string",
                             "nullable": true,
@@ -14315,6 +14438,9 @@
                           "contactPhone",
                           "urgent",
                           "emergencyGroupId",
+                          "patientPlaceLabel",
+                          "patientLatitude",
+                          "patientLongitude",
                           "createdAt",
                           "updatedAt"
                         ]
@@ -15369,6 +15495,67 @@
                   },
                   "required": [
                     "people"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/caller/last-place": {
+      "post": {
+        "tags": [
+          "Caller"
+        ],
+        "summary": "Place of the caller's last phone booking (voice service)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "phoneNumber"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The last place this phone line booked from",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "found": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "latitude": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "found",
+                    "label",
+                    "latitude",
+                    "longitude"
                   ]
                 }
               }

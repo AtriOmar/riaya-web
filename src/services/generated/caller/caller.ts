@@ -16,6 +16,8 @@ import type {
 	PostApiInternalCallerAiAppointmentsListBody,
 	PostApiInternalCallerBlocked200,
 	PostApiInternalCallerBlockedBody,
+	PostApiInternalCallerLastPlace200,
+	PostApiInternalCallerLastPlaceBody,
 	PostApiInternalCallerPeople200,
 	PostApiInternalCallerPeopleBody,
 	PostApiInternalCallerRefusalContext200,
@@ -138,6 +140,68 @@ export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
 	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Place of the caller's last phone booking (voice service)
+ */
+export const postApiInternalCallerLastPlace = (
+	postApiInternalCallerLastPlaceBody?: PostApiInternalCallerLastPlaceBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerLastPlace200>(
+		{
+			url: `/api/internal/caller/last-place`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerLastPlaceBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerLastPlaceMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerLastPlaceBody | undefined },
+	) => {
+		return postApiInternalCallerLastPlace(arg, options);
+	};
+};
+export const getPostApiInternalCallerLastPlaceMutationKey = () =>
+	[`/api/internal/caller/last-place`] as const;
+
+export type PostApiInternalCallerLastPlaceMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>
+>;
+
+/**
+ * @summary Place of the caller's last phone booking (voice service)
+ */
+export const usePostApiInternalCallerLastPlace = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>,
+		TError,
+		Key,
+		PostApiInternalCallerLastPlaceBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerLastPlaceMutationKey();
+	const swrFn =
+		getPostApiInternalCallerLastPlaceMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
