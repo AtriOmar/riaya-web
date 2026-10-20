@@ -139,18 +139,18 @@ async function addFamilyMember(
 
 /** Who a phone booking is for, as sent by the voice assistant. */
 export const bookingPatientSchema = z.object({
-	/** Someone already on this phone. Omit to add a new family member. */
+	/** Someone already on this phone. Omit for the phone owner, or add a relationship for a new family member. */
 	personId: z.number().int().positive().optional(),
 	firstName: z.string().trim().min(1),
 	lastName: z.string().trim().optional(),
-	/** Required for a new family member: how they relate to the phone owner. */
+	/** For a new family member: how they relate to the phone owner. */
 	relationship: z.enum(familyRelationships).optional(),
 });
 export type BookingPatient = z.infer<typeof bookingPatientSchema>;
 
 /**
  * The person a phone booking is for: someone already on this phone (must be
- * linked to it), or a new family member under it.
+ * linked to it), a new family member under it, or by default the phone's owner.
  */
 export async function resolveBookingPerson(
 	phone: string,
@@ -168,8 +168,12 @@ export async function resolveBookingPerson(
 		return fillMissingProfile(found, patient);
 	}
 
-	if (!patient.relationship) throw apiError("VALIDATION_ERROR");
-	return addFamilyMember(phoneNumber, patient, patient.relationship, "call");
+	if (patient.relationship) {
+		return addFamilyMember(phoneNumber, patient, patient.relationship, "call");
+	}
+	const owner = await upsertPhoneOwner(phoneNumber, "call");
+	if (!owner) throw apiError("VALIDATION_ERROR");
+	return fillMissingProfile(owner, patient);
 }
 
 /**
