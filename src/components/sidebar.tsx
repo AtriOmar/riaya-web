@@ -21,6 +21,7 @@ import {
 	AiPanelProvider,
 	useAiPanel,
 } from "@/components/dashboard/ai-chat/ai-panel";
+import ReferralExclusionBanner from "@/components/dashboard/referral-exclusion-banner";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Button } from "@/components/ui/button";
@@ -247,6 +248,7 @@ function SidebarShell({ children }: { children: React.ReactNode }) {
 					docked && "xl:mr-[420px]",
 				)}
 			>
+				<ReferralExclusionBanner />
 				{children}
 			</div>
 		</>

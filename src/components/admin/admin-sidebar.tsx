@@ -11,6 +11,7 @@ import {
 	Search,
 	Settings,
 	ShieldAlert,
+	Star,
 	Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -61,6 +62,11 @@ const items1: SidebarItemData[] = [
 		name: "Reported Calls",
 		icon: <ShieldAlert className="size-5" />,
 		path: "/admin/reports",
+	},
+	{
+		name: "Ratings",
+		icon: <Star className="size-5" />,
+		path: "/admin/ratings",
 	},
 	{
 		name: "WhatsApp Config",

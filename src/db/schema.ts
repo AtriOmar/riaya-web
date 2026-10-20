@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
+	check,
 	doublePrecision,
 	index,
 	integer,
@@ -90,6 +91,13 @@ export const doctorProfile = pgTable(
 		// Printed on invoices (Pro). PNG or JPEG on the CDN.
 		logoUrl: varchar("logo_url", { length: 1024 }),
 		stampUrl: varchar("stamp_url", { length: 1024 }),
+		// Admin decision to stop referring patients to this doctor (best-fit,
+		// emergency fan-out, refusal suggestions). Null = listed. The doctor sees the reason.
+		bestFitExcludedAt: timestamp("best_fit_excluded_at"),
+		bestFitExcludedBy: text("best_fit_excluded_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		bestFitExcludedReason: text("best_fit_excluded_reason"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -99,6 +107,11 @@ export const doctorProfile = pgTable(
 		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
 		index("doctor_profile_cin_idx").on(table.cin),
+		// An exclusion always carries the reason shown to the doctor.
+		check(
+			"doctor_profile_best_fit_exclusion_reason",
+			sql`(${table.bestFitExcludedAt} is null) = (${table.bestFitExcludedReason} is null)`,
+		),
 	],
 );
 

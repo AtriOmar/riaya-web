@@ -144,7 +144,10 @@ export const selectDoctorProfileWithRelationsSchema =
 export const selectUserWithDoctorProfileSchema = selectUserSchema.merge(
 	z.object({
 		hasDoctorProfile: z.boolean(),
-		doctorProfile: selectDoctorProfileWithRelationsSchema.nullable(),
+		// Which admin excluded the doctor stays admin-side.
+		doctorProfile: selectDoctorProfileWithRelationsSchema
+			.omit({ bestFitExcludedBy: true })
+			.nullable(),
 	}),
 );
 
@@ -255,6 +258,50 @@ export const doctorDashboardStatsResponseSchema = z.object({
 		}),
 	),
 });
+
+const doctorRatingStatsSchema = z.object({
+	doctorId: z.number(),
+	name: z.string(),
+	firstName: z.string().nullable(),
+	lastName: z.string().nullable(),
+	/** The doctor's profile picture (user.image). */
+	image: z.string().nullable(),
+	cabinetName: z.string().nullable(),
+	speciality: z.string().nullable(),
+	reviewCount: z.number(),
+	/** Submitted in the last 90 days; what `last90DaysAverage` is based on. */
+	reviewCount90d: z.number(),
+	/** Patient-once average; null only without reviews. Under 5 reviews it is too few to judge. */
+	averageRating: z.number().nullable(),
+	last90DaysAverage: z.number().nullable(),
+	/** Reviews that answered the wait-time question; what `longWaitCount` is out of. */
+	waitCount: z.number(),
+	/** Reviews whose wait time was "long". */
+	longWaitCount: z.number(),
+	latestLowRatingAt: z.string().nullable(),
+	exclusion: z
+		.object({ excludedAt: z.string(), reason: z.string() })
+		.nullable(),
+});
+
+export const doctorRatingListItemSchema = doctorRatingStatsSchema;
+
+export const doctorFeedbackResponseSchema = doctorRatingStatsSchema.merge(
+	z.object({
+		reviews: z.array(
+			z.object({
+				id: z.number(),
+				appointmentId: z.number(),
+				rating: z.number().nullable(),
+				waitTime: z.enum(["short", "medium", "long"]).nullable(),
+				comment: z.string().nullable(),
+				submittedAt: z.string().nullable(),
+				appointmentDate: z.string().nullable(),
+				patientName: z.string().nullable(),
+			}),
+		),
+	}),
+);
 
 export const selectConsultationRecordingSchema = createSelectSchema(
 	consultationRecording,

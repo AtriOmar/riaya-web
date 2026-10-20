@@ -7,6 +7,12 @@ import {
 } from "@/lib/doctor-slots";
 import { getDriveLegs } from "@/lib/route-matrix";
 
+/** Doctors Riaya may refer patients to: verified and not excluded by an admin. */
+export const referableDoctor = and(
+	eq(doctorProfile.status, "verified"),
+	isNull(doctorProfile.bestFitExcludedAt),
+);
+
 /** Doctors beyond this radius (km) are excluded — prevents cross-city matches. */
 export const BEST_FIT_MAX_RADIUS_KM = 50;
 
@@ -74,7 +80,7 @@ export async function listFinderDoctors(opts: {
 		.from(doctorProfile)
 		.where(
 			and(
-				eq(doctorProfile.status, "verified"),
+				referableDoctor,
 				specialityId != null
 					? eq(doctorProfile.specialityId, specialityId)
 					: undefined,
@@ -150,10 +156,7 @@ export async function findBestFitDoctors(params: {
 		.select()
 		.from(doctorProfile)
 		.where(
-			and(
-				eq(doctorProfile.status, "verified"),
-				eq(doctorProfile.specialityId, params.specialityId),
-			),
+			and(referableDoctor, eq(doctorProfile.specialityId, params.specialityId)),
 		);
 
 	const withDistance = doctors

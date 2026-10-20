@@ -39,6 +39,14 @@ async function getPractice(
 	};
 }
 
+/** Which admin excluded the doctor stays admin-side. */
+function withoutExcludedBy<T extends { bestFitExcludedBy: string | null }>(
+	profile: T,
+): Omit<T, "bestFitExcludedBy"> {
+	const { bestFitExcludedBy: _excludedBy, ...rest } = profile;
+	return rest;
+}
+
 export async function GET() {
 	try {
 		const session = await requireSession();
@@ -71,7 +79,9 @@ export async function GET() {
 
 		return json({
 			...foundUser,
-			doctorProfile: doctorProfileData ?? null,
+			doctorProfile: doctorProfileData
+				? withoutExcludedBy(doctorProfileData)
+				: null,
 			practice,
 		});
 	} catch (e) {
