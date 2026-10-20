@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { buildRegistrationOtpEmail } from "@/lib/emails/registration-otp";
+import { buildSecretaryInviteEmail } from "@/lib/emails/secretary-invite";
 
 function requireEnv(name: string): string {
 	const value = process.env[name];
@@ -49,5 +50,15 @@ export async function sendRegistrationOtpEmail(params: {
 		otp: params.otp,
 		expiresInMinutes: params.expiresInMinutes,
 	});
+	await sendMail({ to: params.to, subject, text, html });
+}
+
+export async function sendSecretaryInviteEmail(params: {
+	to: string;
+	doctorName: string;
+	inviteUrl: string;
+	expiresInDays: number;
+}) {
+	const { subject, text, html } = buildSecretaryInviteEmail(params);
 	await sendMail({ to: params.to, subject, text, html });
 }

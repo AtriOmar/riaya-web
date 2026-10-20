@@ -3,11 +3,10 @@ import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment } from "@/db/schema";
+import { appointment, patient } from "@/db/schema";
 import {
 	apiError,
 	json,
-	requireDoctorProfile,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
@@ -16,11 +15,14 @@ import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments
 import {
 	cancelEmergencyPendingTimeoutJob,
 	cancelPendingAppointmentTimeoutJob,
+	scheduleRefusalNotification,
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
-import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
-import { reviewQueue } from "@/lib/queue";
+import { personDisplayName } from "@/lib/person-name";
+import { requirePractice } from "@/lib/practice";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { recordRefusal } from "@/lib/refusal-suggestions";
+import { scheduleReviewRequest } from "@/lib/review-scheduling";
 import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
 
 // ─── GET /api/appointments ────────────────────────────────────────────────────
@@ -45,16 +47,16 @@ export async function GET(req: NextRequest) {
 			session.user.accessId >= 3
 		) {
 			const appointments = await db.query.appointment.findMany({
-				with: { patient: true },
+				with: { patient: true, person: true },
 			});
 			return json(appointments);
 		}
 
 		// Doctor's own appointments
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const appointments = await db.query.appointment.findMany({
 			where: eq(appointment.doctorId, profile.id),
-			with: { patient: true },
+			with: { patient: true, person: true },
 		});
 		return json(appointments);
 	} catch (e) {
@@ -75,18 +77,26 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
+		const doctorPatient = await db.query.patient.findFirst({
+			where: and(
+				eq(patient.id, parsed.data.patientId),
+				eq(patient.doctorId, profile.id),
+			),
+		});
+		if (!doctorPatient) return apiError("PATIENT_NOT_FOUND");
+
 		const [created] = await db
 			.insert(appointment)
 			.values({
 				doctorId: profile.id,
-				patientId: parsed.data.patientId,
+				patientId: doctorPatient.id,
+				personId: doctorPatient.personId,
 				start: new Date(parsed.data.start),
 				end: new Date(parsed.data.end),
 				status: "confirmed",
@@ -120,8 +130,7 @@ const updateSchema = z.object({
 
 export async function PUT(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = updateSchema.safeParse(body);
 
@@ -174,8 +183,6 @@ export async function PUT(req: NextRequest) {
 			);
 			if (resolvedPatientId != null) {
 				updateData.patientId = resolvedPatientId;
-				updateData.newPatientName = null;
-				updateData.newPatientPhoneNumber = null;
 			}
 		}
 
@@ -201,6 +208,16 @@ export async function PUT(req: NextRequest) {
 			return apiError("APPOINTMENT_NOT_FOUND");
 		}
 
+		// Confirm or reschedule of a confirmed visit: (re)queue the review request.
+		if (
+			updated.status === "confirmed" &&
+			(fields.status === "confirmed" || fields.end !== undefined)
+		) {
+			void scheduleReviewRequest(updated).catch((err) =>
+				console.error("Failed to schedule review request:", err),
+			);
+		}
+
 		// Cancel sibling urgent requests so only one doctor keeps the patient.
 		if (
 			fields.status === "confirmed" &&
@@ -217,6 +234,29 @@ export async function PUT(req: NextRequest) {
 			updated.source === "ai"
 		) {
 			void cancelPendingAppointmentTimeoutJob(updated.id);
+			// Doctor refused a normal pending request: tell the patient.
+			if (
+				fields.status === "cancelled" &&
+				existing.status === "pending" &&
+				!updated.urgent
+			) {
+				const patientPhone = updated.contactPhone;
+				void (async () => {
+					try {
+						// Record first: the notification job reads this context.
+						if (patientPhone && updated.doctorId != null) {
+							await recordRefusal({
+								patientPhone,
+								doctorId: updated.doctorId,
+								desiredTime: updated.start,
+							});
+						}
+						await scheduleRefusalNotification({ appointmentId: updated.id });
+					} catch (err) {
+						console.error("Failed to queue refusal notification:", err);
+					}
+				})();
+			}
 			if (updated.emergencyGroupId) {
 				// Last pending in a group may have been refused — drop timeout if none left pending.
 				const stillPending = await db.query.appointment.findFirst({
@@ -238,22 +278,19 @@ export async function PUT(req: NextRequest) {
 					const full = await db.query.appointment.findFirst({
 						where: eq(appointment.id, id),
 						with: {
-							patient: { with: { person: true } },
+							patient: true,
+							person: true,
 							doctor: true,
 						},
 					});
 
-					const phone =
-						full?.patient?.phoneNumber ?? full?.newPatientPhoneNumber;
-					const patientName = full?.patient
-						? `${full.patient.firstName ?? ""} ${full.patient.lastName ?? ""}`.trim()
-						: (full?.newPatientName ?? "");
+					const phone = full?.contactPhone ?? full?.patient?.phoneNumber;
+					const patientName =
+						personDisplayName(full?.patient) || personDisplayName(full?.person);
 
 					if (phone && patientName) {
-						const language = await resolvePreferredLanguage({
-							preferredLanguage: full?.patient?.person?.preferredLanguage,
-							phone,
-						});
+						// The message goes to the phone line, so use its owner's language.
+						const language = await resolvePreferredLanguage({ phone });
 						const message = buildAppointmentConfirmationMessage({
 							language,
 							patientName,
@@ -261,47 +298,21 @@ export async function PUT(req: NextRequest) {
 							doctorLastName: full?.doctor?.lastName,
 							start: full?.start,
 						});
-						try {
-							const httpUrl = getRealtimeHttpUrl();
-							if (!httpUrl) {
-								console.error("NEXT_PUBLIC_REALTIME_URL is not set");
-							} else {
-								await assertAndRecordWhatsappSend(profile.id);
-								await axios.post(`${httpUrl}/send-whatsapp`, {
+						// Automatic patient message: always sent, never counted against the plan.
+						const httpUrl = getRealtimeHttpUrl();
+						if (!httpUrl) {
+							console.error("NEXT_PUBLIC_REALTIME_URL is not set");
+						} else {
+							await axios
+								.post(`${httpUrl}/send-whatsapp`, {
 									userId: full?.doctor?.userId,
 									phone,
 									message,
-									quotaConsumed: true,
-								});
-							}
-						} catch (waErr) {
-							if (waErr instanceof Response) {
-								const body = await waErr.json().catch(() => null);
-								console.error(
-									"WhatsApp confirmation skipped (limit or error):",
-									body ?? waErr.status,
+								})
+								.catch((waErr) =>
+									console.error("WhatsApp confirmation failed:", waErr),
 								);
-							} else {
-								throw waErr;
-							}
 						}
-					}
-
-					// Schedule a review request 2 hours after the appointment ends
-					if (updated.end) {
-						const delay = Math.max(
-							0,
-							new Date(updated.end).getTime() + 2 * 60 * 60 * 1000 - Date.now(),
-						);
-						await reviewQueue.add(
-							"sendReview",
-							{
-								appointmentId: updated.id,
-								doctorId: updated.doctorId,
-								patientId: updated.patientId,
-							},
-							{ delay },
-						);
 					}
 				} catch (err) {
 					console.error(
@@ -327,8 +338,7 @@ const deleteSchema = z.object({
 
 export async function DELETE(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const params = Object.fromEntries(req.nextUrl.searchParams);
 		const parsed = deleteSchema.safeParse(params);
 
@@ -353,11 +363,18 @@ export async function DELETE(req: NextRequest) {
 	}
 }
 
-import { selectAppointmentSchema, selectPatientSchema } from "@/db/zod";
+import {
+	selectAppointmentSchema,
+	selectPatientSchema,
+	selectPersonSchema,
+} from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const appointmentWithPatientSchema = selectAppointmentSchema.merge(
-	z.object({ patient: selectPatientSchema.nullable() }),
+	z.object({
+		patient: selectPatientSchema.nullable(),
+		person: selectPersonSchema.nullable(),
+	}),
 );
 
 registry.registerPath({

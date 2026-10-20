@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +20,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getErrorMessage } from "@/lib/error-handling";
+import { authQuery, safeNextPath } from "@/lib/safe-next";
 import {
 	usePostApiRegisterRequestOtp,
 	usePostApiRegisterResendOtp,
@@ -47,7 +49,15 @@ type Step = "form" | "otp";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-export default function RegisterForm() {
+export default function RegisterForm({
+	next,
+	email,
+}: {
+	/** Path to open after signing up (e.g. an invite link) */
+	next: string | null;
+	/** Prefilled email (e.g. from an invite) */
+	email: string | null;
+}) {
 	const [showPassword, setShowPassword] = useState(false);
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [step, setStep] = useState<Step>("form");
@@ -71,6 +81,7 @@ export default function RegisterForm() {
 		formState: { errors },
 	} = useForm<RegisterValues>({
 		resolver: zodResolver(registerSchema),
+		defaultValues: { email: email ?? "" },
 	});
 
 	useEffect(() => {
@@ -121,11 +132,11 @@ export default function RegisterForm() {
 			setPendingPassword("");
 			if (error) {
 				toast.success("Account created. Please sign in.");
-				router.push("/login");
+				router.push(`/login${authQuery(next, pendingEmail)}`);
 				return;
 			}
 			toast.success("Account created successfully!");
-			router.push("/dashboard");
+			router.push(safeNextPath(next));
 			router.refresh();
 		} catch (error) {
 			setApiError(
@@ -171,7 +182,10 @@ export default function RegisterForm() {
 				</div>
 			</div>
 
-			<div className="flex flex-1 justify-center items-center p-8">
+			<div className="relative flex flex-1 justify-center items-center p-8">
+				<div className="top-6 right-6 absolute">
+					<ThemeToggle />
+				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
 					<Link href="/" className="inline-flex items-center gap-2 mb-8">
 						<Image src="/logo.png" alt="Riaya" width={40} height={40} />
@@ -345,7 +359,7 @@ export default function RegisterForm() {
 						<p className="mt-8 text-muted-foreground text-sm text-center">
 							Already have an account?{" "}
 							<Link
-								href="/login"
+								href={`/login${authQuery(next, email)}`}
 								className="font-medium text-primary hover:underline"
 							>
 								Sign in

@@ -10,6 +10,8 @@ import {
 	Phone,
 	Search,
 	Settings,
+	ShieldAlert,
+	Star,
 	Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,6 +26,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useGetApiCallReportsCount } from "@/services/generated/abuse/abuse";
 
 const STORAGE_KEY = "admin-sidebar-collapsed";
 
@@ -56,6 +59,16 @@ const items1: SidebarItemData[] = [
 		path: "/admin/calls",
 	},
 	{
+		name: "Reported Calls",
+		icon: <ShieldAlert className="size-5" />,
+		path: "/admin/reports",
+	},
+	{
+		name: "Ratings",
+		icon: <Star className="size-5" />,
+		path: "/admin/ratings",
+	},
+	{
 		name: "WhatsApp Config",
 		icon: <MessageSquare className="size-5" />,
 		path: "/admin/whatsapp-config",
@@ -71,11 +84,19 @@ const items2: SidebarItemData[] = [
 ];
 
 function AdminSidebarContent({ collapsed = false }: { collapsed?: boolean }) {
+	const { data: reports } = useGetApiCallReportsCount();
+	const openReports = reports?.open ?? 0;
+	const items = items1.map((item) =>
+		item.path === "/admin/reports" && openReports > 0
+			? { ...item, badge: String(openReports) }
+			: item,
+	);
+
 	return (
 		<>
 			<SidebarUserInfo isAdmin collapsed={collapsed} />
 			<ul className={cn("font-medium text-sm", collapsed ? "px-1" : "px-2")}>
-				{items1.map((item) => (
+				{items.map((item) => (
 					<li key={item.path}>
 						<SidebarItem item={item} collapsed={collapsed} />
 					</li>

@@ -33,7 +33,7 @@ This document is a compact project guide for AI assistants working on this repo.
 - Node.js + Express + TypeScript
 - `ws` WebSocket servers (Twilio stream + dashboard + WhatsApp admin)
 - Twilio media stream handling
-- Azure/OpenAI realtime integration
+- Realtime model integrations (Gemini Live, OpenAI Realtime, GPT-Live, Inworld) and the LiveKit agent
 - Axios (`nextjsApi`) for calling Next API endpoints
 - Pino logging
 
@@ -146,6 +146,15 @@ This document is a compact project guide for AI assistants working on this repo.
 - **Manual network services:** However, if proxying feels like overcomplication (e.g., no secrets are involved, or you just want a simple/quick direct fetcher), you can skip the proxy route entirely. Write a direct Axios call and place it in `web/src/services/manual/`. Do not put it in the root of `src/services/` to keep it clean for Orval.
 - **Client-side SDKs:** For browser-specific SDK wrappers (e.g., maps, analytics, direct-to-S3 uploads), place them in `web/src/lib/`.
 
+### 10) Places / address search provider (Geoapify or Google)
+
+- Address search and place lookup go through `web/src/lib/geo/` (`getGeoProvider()`), never straight to a vendor. Providers: `geoapify.ts`, `google.ts` (Places API New).
+- **Switch with one env var:** `GEO_PROVIDER=geoapify` (default) or `google`, then restart the web app. Google also needs `GOOGLE_PLACES_API_KEY` with "Places API (New)" enabled and billing on. Keys stay server-side.
+- Callers: `GET /api/places/autocomplete` and `GET /api/places/details` (session; used by `address-search-bar.tsx` via the generated hooks) and `GET /api/internal/places/search` (`requireInternal`; used by the voice `search_location` tool). The voice service follows the switch automatically.
+- Google autocomplete returns no coordinates, so the client calls `details` after a pick. A `sessionToken` ties both calls into one billed lookup.
+- Routing (`lib/route-matrix.ts`, `services/manual/driving-route.ts`) is still Geoapify only and is not covered by this switch.
+- To add a provider, implement `GeoProvider` in `lib/geo/types.ts` and register it in `lib/geo/index.ts`.
+
 ## Database Notes
 
 - Drizzle schema lives in `web/src/db/schema.ts`.
@@ -153,9 +162,12 @@ This document is a compact project guide for AI assistants working on this repo.
 
 ### Person vs patient (identity model)
 
-- **`person`**: Global identity keyed by **unique `phoneNumber`**. Created on inbound calls (`source: "call"`) or when a doctor adds a patient (`source: "doctor"`). Holds canonical profile fields the AI can enrich (`firstName`, `lastName`, `dateOfBirth`, `gender`, `address`). Upsert helper: `web/src/lib/person.ts` → `upsertPersonByPhone(phone, source)` — `source` is set only on insert.
+- **`person`**: One real human (no phone column). Created on inbound calls (`source: "call"`) or when a doctor adds a patient (`source: "doctor"`). Holds canonical profile fields the AI can enrich (`firstName`, `lastName`, `dateOfBirth`, `gender`, `address`, `preferredLanguage`).
+- **`person_phone`**: Person ↔ phone link (many-to-many). `relationship` is how the person relates to the phone's owner: `self` = owner (at most one per phone), else `child` / `parent` / `spouse` / `sibling` / `other` (family members booked from that phone). Phones are always stored E.164 via `toPersonPhone`.
+- Helpers in `web/src/lib/person.ts`: `upsertPhoneOwner(phone, source)` (find or create the phone's `self` person; `source` set only on insert), `findPhoneOwner(phone)`, `findPersonsOnPhone(phone)`.
 - **`patient`**: **Doctor ↔ person** link (`doctorId` + `personId`) plus **per-doctor** fields (`cin`, names, address, etc.) the doctor may customize. Medical files and appointments still reference `patient.id`.
-- Phone bookings without a linked patient still store caller name/phone on `appointment` as `newPatientName` / `newPatientPhoneNumber`.
+- **`appointment.personId`** = who the appointment is for (set on every phone booking); **`appointment.contactPhone`** = the line that booked it (where messages about it go). The doctor's `patientId` file is linked on accept by matching `doctorId` + `personId` (`resolvePatientIdForConfirm` in `web/src/lib/appointment-patient-link.ts`).
+- Doctors adding a patient can mark "this number belongs to someone else" (`phoneOwnerRelationship`) → `resolveDoctorPatientPerson` adds a family member instead of linking the owner. Editing a patient never changes its `personId`.
 
 ### Other main tables
 
@@ -166,19 +178,32 @@ This document is a compact project guide for AI assistants working on this repo.
 - `call`, `call_event` (Twilio call logging from socket)
 - Better Auth tables via `auth-schema`, re-exported from schema entry.
 
+### Secretaries (practice access)
+
+- `secretary` (doctor ↔ user, one practice per user) and `secretary_invite` (email + hashed token, 7-day expiry). Pro includes unlimited secretaries (`canHaveSecretaries` in `lib/plans.ts`); Free has none.
+- Routes a secretary may use call `requirePractice()` (`web/src/lib/practice.ts`) instead of `requireDoctorProfile`: appointments, patients (medical files stripped), invoices, availability (`PUT /api/users`), dashboard stats. Everything else stays doctor-only. Secretaries are refused while the doctor is on Free or not verified (`SECRETARY_ACCESS_PAUSED`).
+- Client: `usePractice()` (`web/src/hooks/use-practice.ts`) gives the role, `canWork` and the practice's `doctorId`/`availability` from `GET /api/users/me` → `practice`. `DOCTOR_ONLY_PATHS` hides and blocks doctor-only pages for secretaries. Never read the user's own `doctorProfile` for practice data.
+- WhatsApp sends use the doctor's `userId` (`profile.userId`), not the session user.
+
 ## Key API routes (booking & identity)
 
 | Route | Auth | Purpose |
 |-------|------|---------|
-| `POST /api/persons` | Public | Upsert person by `phoneNumber` (+ optional `source`) |
-| `PATCH /api/persons/[id]` | Public | Update person profile (socket AI `update_person_info`) |
+| `POST /api/persons` | Internal secret | Find or create the phone owner by `phoneNumber` (+ optional `source`) |
+| `GET` / `PATCH /api/persons/[id]` | Internal secret | Read / update a person (voice `update_person_info`) |
 | `POST /api/patients` | Doctor session | Create patient; upserts person with `source: "doctor"` |
-| `POST /api/appointments/external` | Public | Phone/AI booking; upserts person (`call`), sets `newPatient*` on appointment |
+| `POST /api/appointments/external` | Internal secret | Phone/AI booking; `patient` = `{ personId }` (someone on the line) or `{ firstName, lastName, relationship }` (new family member) via `resolveBookingPerson`; sets `personId` + `contactPhone` |
+| `POST /api/appointments/external/emergency` | Internal secret | Urgent fan-out; same `patient` shape |
+| `POST /api/internal/caller/people` | Internal secret | Everyone on the caller's phone (owner + family) for the voice prompt |
 | `POST /api/calls` | Internal secret | Create call row (socket) |
 | `GET /api/doctors/best-fit` | Public | Slots for AI `find_available_slots` |
 | `GET /api/doctors/availability` | Public | Per-doctor slots for `find_doctor_slots` |
 | `POST /api/internal/caller/ai-appointments/list` | Internal secret | List AI appointments for caller phone (voice) |
 | `POST /api/internal/caller/ai-appointments/cancel` | Internal secret | Cancel pending AI appointment for caller phone (voice) |
+| `POST /api/internal/caller/blocked` | Internal secret | Is the caller blocked; counts the rejected attempt (voice `/incoming-call`) |
+| `POST /api/internal/calls/report` | Internal secret | File an abuse report for a call (voice `report_abuse`) |
+| `GET` `/api/call-reports`, `GET`/`PATCH /api/call-reports/[id]` | Admin | Review queue for reported calls; dismiss / reopen |
+| `GET`/`POST /api/blocked-phones`, `PATCH`/`DELETE /api/blocked-phones/[phone]` | Admin | Blocked numbers: block (7d / 30d / permanent), change duration, unblock |
 
 ## Environment Notes
 
@@ -252,8 +277,23 @@ Use these as examples before changing related code.
 - `find_available_slots`, `find_doctor_slots` — Next doctor/slot APIs.
 - `update_person_info` — `PATCH /api/persons/[id]` via `updatePersonRow`; name, language preference, etc.
 - `list_my_ai_appointments` / `cancel_appointment` — internal caller routes; **phone from Twilio only** (`callerAppointmentsApi` + `requireInternal`). Cancel **pending** AI bookings only.
-- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_name`, `illness`, `start`, `end` only. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side.
+- `book_appointment` — `POST /api/appointments/external`. Tool args: `doctor_id`, `patient_person_id` (someone in PEOPLE ON THIS LINE) **or** `patient_relationship` (new family member), `patient_first_name`, `patient_last_name`, `illness`, `start`, `end`. **Phone is not an AI parameter**; `bookAppointment()` sends `this.callerPhone` server-side. The prompt lists people on the line (`getPeopleOnLine` in `voice/src/api/callerPeopleApi.ts`).
+- `nextjsApi` (voice) always sends `x-internal-secret`; don't add it per call.
 - `end_call` — fixed goodbye then hangup.
+- `report_abuse` — files a `call_report` (`POST /api/internal/calls/report`), then hangs up like `end_call` with a neutral goodbye. The prompt (**Abusive callers** in `systemMessages.ts`) says: one warning for mocking/insults, right away for threats/sexual talk, never for confused or frustrated callers. The AI never blocks; admins do.
+
+### Abuse reports and blocked numbers
+
+- Tables: `call_report` (one per call, `open | dismissed | blocked`) and `blocked_phone` (E.164 PK, `expiresAt` null = permanent). A number is blocked while its row exists and has not expired (`activeBlock` in `web/src/lib/blocked-phone.ts`).
+- Blocking happens in voice `/incoming-call`, before any AI session: `isCallerBlocked` → Twilio `<Reject reason="busy"/>`. This covers the media-stream and LiveKit paths. The check **fails open** (about 1.5s timeout), so a Next outage never turns patients away.
+- Blocked numbers also get no pending-timeout WhatsApp message or callback.
+- Admin UI: `/admin/reports` (`components/admin/reports/*`): a review queue with recording + transcript, and a Blocked numbers tab. The sidebar badge shows open reports.
+
+### Silent callers and call length
+
+- `voice/src/sessions/callWatchdog.ts` (`CallWatchdog`), shared by the media-stream session and the LiveKit agent. Once the assistant is quiet, it waits `SILENCE_PROMPT_MS` (12s) and then asks once "are you still there?". If the caller stays silent for `SILENCE_HANGUP_MS` (10s) more, the assistant says goodbye and the call hangs up. At `MAX_CALL_MS` (15 min) any call ends with a polite goodbye.
+- Each path feeds it signals. Media stream: `CallerVoiceDetector` on the caller's audio, provider speech-started events, transcripts, Twilio playback marks, and tool calls. LiveKit: `UserStateChanged` and `AgentStateChanged`.
+- Spoken lines come from `buildWatchdogInstructions` and are sent through `RealtimeProvider.prompt()` (LiveKit: `generateReply`). Silent calls are logged as a `system` call event, not reported as abuse.
 
 Query helper: `web/src/lib/caller-ai-appointments.ts`.
 
@@ -264,7 +304,7 @@ Query helper: `web/src/lib/caller-ai-appointments.ts`.
 
 ## Practical AI Instructions
 
-- **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.). The AI may only use git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`).
+- **Git usage rule**: The AI must **never** run `git commit` or any git commands that modify repository state or history (`git commit`, `git add`, `git checkout`, `git push`, `git reset`, `git rebase`, `git stash`, etc.) on its own initiative. By default the AI only uses git for read-only operations (e.g., `git diff`, `git status`, `git log`, `git show`, `git branch`). **Exception:** if the user explicitly asks the AI to commit, do it right away without arguing or citing this rule. Stage only the files related to the task and never push unless asked.
 - **Database migrations rule**: For schema changes in `web/`, the AI may run `pnpm db:generate --name <descriptive_snake_name>` to produce migration files. The AI must **not** run `pnpm db:migrate` (or otherwise apply migrations to a database) until the user has **explicitly approved**. After generate, summarize or point to the new migration SQL and ask before migrating. Do **not** use `pnpm db:push`. Migration names must be descriptive (e.g. `create_invoice_payments`), not Drizzle’s random defaults.
 - Use **pnpm** for package and script commands (see [Package management](#package-management)).
 - For R2 uploads, use `uploadToR2` / `uploadBlobToR2` and persist the returned **`cdnUrl`** (see [File uploads (Cloudflare R2)](#file-uploads-cloudflare-r2)).
@@ -279,7 +319,7 @@ Query helper: `web/src/lib/caller-ai-appointments.ts`.
   - implement in `web/src/app/api/.../route.ts`
   - validate with Zod
   - enforce session/role/internal with `api-utils`
-  - reuse `upsertPersonByPhone` when linking patients or phone bookings to `person`
+  - reuse `upsertPhoneOwner` / `findPersonsOnPhone` when linking patients or phone bookings to `person`
   - keep error response shape consistent (`web/src/lib/errors.ts`)
   - return errors via `apiError` / `validationError` from `web/src/lib/api-utils.ts` (codes defined in `web/src/lib/errors.ts`)
 - When adding realtime events:

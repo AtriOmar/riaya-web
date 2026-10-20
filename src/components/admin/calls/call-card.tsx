@@ -2,6 +2,7 @@
 
 import { Phone, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import type { CallData } from "@/hooks/use-realtime-socket";
 import { decodeUlaw } from "@/lib/ulaw";
 import { cn } from "@/lib/utils";
@@ -137,7 +138,10 @@ export default function CallCard({
 									{duration}
 								</span>
 							</div>
-							<p className="mt-1 text-muted-foreground text-sm">{preview}</p>
+							<p className="mt-1 text-muted-foreground text-sm">
+								{preview.label && <span>{preview.label}: </span>}
+								<bdi>{preview.text}</bdi>
+							</p>
 							<p className="mt-1 font-mono text-muted-foreground text-xs break-all">
 								{call.callSid}
 							</p>
@@ -176,8 +180,12 @@ export default function CallCard({
 						<div className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
 							Recording
 						</div>
-						{/** biome-ignore lint/a11y/useMediaCaption: no captions for call audio */}
-						<audio controls src={call.recordingUrl} className="h-10 w-full" />
+						<AudioWaveformPlayer
+							src={call.recordingUrl}
+							waveformSrc={
+								call.id ? `/api/calls/${call.id}/recording` : undefined
+							}
+						/>
 					</div>
 				)}
 				<CallTranscript

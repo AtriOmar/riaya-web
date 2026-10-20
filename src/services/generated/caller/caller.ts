@@ -14,10 +14,266 @@ import type {
 	PostApiInternalCallerAiAppointmentsCancelBody,
 	PostApiInternalCallerAiAppointmentsList200,
 	PostApiInternalCallerAiAppointmentsListBody,
+	PostApiInternalCallerBlocked200,
+	PostApiInternalCallerBlockedBody,
+	PostApiInternalCallerLastPlace200,
+	PostApiInternalCallerLastPlaceBody,
+	PostApiInternalCallerPeople200,
+	PostApiInternalCallerPeopleBody,
+	PostApiInternalCallerRefusalContext200,
+	PostApiInternalCallerRefusalContextBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Is the caller's number blocked (voice service)
+ */
+export const postApiInternalCallerBlocked = (
+	postApiInternalCallerBlockedBody?: PostApiInternalCallerBlockedBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerBlocked200>(
+		{
+			url: `/api/internal/caller/blocked`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerBlockedBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerBlockedMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerBlockedBody | undefined },
+	) => {
+		return postApiInternalCallerBlocked(arg, options);
+	};
+};
+export const getPostApiInternalCallerBlockedMutationKey = () =>
+	[`/api/internal/caller/blocked`] as const;
+
+export type PostApiInternalCallerBlockedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
+>;
+
+/**
+ * @summary Is the caller's number blocked (voice service)
+ */
+export const usePostApiInternalCallerBlocked = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>,
+		TError,
+		Key,
+		PostApiInternalCallerBlockedBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerBlocked>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerBlockedMutationKey();
+	const swrFn = getPostApiInternalCallerBlockedMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Place of the caller's last phone booking (voice service)
+ */
+export const postApiInternalCallerLastPlace = (
+	postApiInternalCallerLastPlaceBody?: PostApiInternalCallerLastPlaceBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerLastPlace200>(
+		{
+			url: `/api/internal/caller/last-place`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerLastPlaceBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerLastPlaceMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerLastPlaceBody | undefined },
+	) => {
+		return postApiInternalCallerLastPlace(arg, options);
+	};
+};
+export const getPostApiInternalCallerLastPlaceMutationKey = () =>
+	[`/api/internal/caller/last-place`] as const;
+
+export type PostApiInternalCallerLastPlaceMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>
+>;
+
+/**
+ * @summary Place of the caller's last phone booking (voice service)
+ */
+export const usePostApiInternalCallerLastPlace = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>,
+		TError,
+		Key,
+		PostApiInternalCallerLastPlaceBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerLastPlace>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerLastPlaceMutationKey();
+	const swrFn =
+		getPostApiInternalCallerLastPlaceMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const postApiInternalCallerRefusalContext = (
+	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerRefusalContext200>(
+		{
+			url: `/api/internal/caller/refusal-context`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerRefusalContextBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerRefusalContextMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
+	) => {
+		return postApiInternalCallerRefusalContext(arg, options);
+	};
+};
+export const getPostApiInternalCallerRefusalContextMutationKey = () =>
+	[`/api/internal/caller/refusal-context`] as const;
+
+export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+>;
+
+/**
+ * @summary Alternative doctors after a refused request (voice service)
+ */
+export const usePostApiInternalCallerRefusalContext = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
+		TError,
+		Key,
+		PostApiInternalCallerRefusalContextBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
+	const swrFn =
+		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary People on the caller's phone (voice service)
+ */
+export const postApiInternalCallerPeople = (
+	postApiInternalCallerPeopleBody?: PostApiInternalCallerPeopleBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerPeople200>(
+		{
+			url: `/api/internal/caller/people`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerPeopleBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerPeopleMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerPeopleBody | undefined },
+	) => {
+		return postApiInternalCallerPeople(arg, options);
+	};
+};
+export const getPostApiInternalCallerPeopleMutationKey = () =>
+	[`/api/internal/caller/people`] as const;
+
+export type PostApiInternalCallerPeopleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerPeople>>
+>;
+
+/**
+ * @summary People on the caller's phone (voice service)
+ */
+export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerPeople>>,
+		TError,
+		Key,
+		PostApiInternalCallerPeopleBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerPeople>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiInternalCallerPeopleMutationKey();
+	const swrFn = getPostApiInternalCallerPeopleMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Cancel pending AI appointment for caller phone (voice service)
  */

@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/input-group";
 import { PhoneCountryCombobox } from "@/components/ui/phone-country-combobox";
 import {
+	PHONE_COUNTRY_OPTIONS,
+	type PhoneCountryOption,
 	phoneCountryFromValue,
 	phoneNationalInputDisplay,
 	phoneValueFromNationalInput,
@@ -26,6 +28,8 @@ type Props = {
 	disabled?: boolean;
 	className?: string;
 	placeholder?: string;
+	/** Countries in the picker. Pass a module-level constant so the list stays stable. */
+	countries?: PhoneCountryOption[];
 	"aria-invalid"?: boolean;
 };
 
@@ -43,16 +47,19 @@ export function PhoneNumberInput({
 	disabled,
 	className,
 	placeholder = "Phone number",
+	countries = PHONE_COUNTRY_OPTIONS,
 	"aria-invalid": ariaInvalid,
 }: Props) {
 	const countryFieldId = useId();
 	const [country, setCountry] = useState<CountryCode>(() =>
-		phoneCountryFromValue(value),
+		phoneCountryFromValue(value, countries),
 	);
 
 	useEffect(() => {
-		setCountry(phoneCountryFromValue(value));
-	}, [value]);
+		// Keep the picked country while the field is empty.
+		if (!value.trim()) return;
+		setCountry(phoneCountryFromValue(value, countries));
+	}, [value, countries]);
 
 	const nationalDisplay = phoneNationalInputDisplay(value, country);
 
@@ -79,6 +86,7 @@ export function PhoneNumberInput({
 					value={country}
 					onChange={handleCountryChange}
 					disabled={disabled}
+					options={countries}
 				/>
 			</InputGroupAddon>
 			<InputGroupInput

@@ -6,16 +6,13 @@ import { z } from "zod";
 import { db } from "@/db";
 import { invoice } from "@/db/schema";
 import { selectInvoiceWithItemsSchema } from "@/db/zod";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-} from "@/lib/api-utils";
+import { apiError, json } from "@/lib/api-utils";
+import { loadDocumentBranding } from "@/lib/document-branding";
 import { buildInvoicePdf } from "@/lib/invoice-pdf";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
+import { requirePractice } from "@/lib/practice";
 import { uploadBufferToR2 } from "@/lib/r2";
 import { getRealtimeHttpUrl } from "@/lib/realtime";
 import { buildInvoiceWhatsappCaption } from "@/lib/whatsapp-messages";
@@ -30,8 +27,7 @@ export async function POST(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const { id } = await params;
 		const invoiceId = Number(id);
@@ -60,6 +56,8 @@ export async function POST(
 		if (!record.patient.phoneNumber) {
 			return apiError("PATIENT_PHONE_REQUIRED");
 		}
+
+		const branding = await loadDocumentBranding(profile);
 
 		const pdf = await buildInvoicePdf({
 			number: record.number,
@@ -94,6 +92,7 @@ export async function POST(
 				phoneNumber: record.patient.phoneNumber,
 				address: record.patient.address,
 			},
+			branding,
 		});
 
 		const key = `invoices/${randomUUID()}.pdf`;
@@ -120,13 +119,13 @@ export async function POST(
 		try {
 			await assertAndRecordWhatsappSend(profile.id);
 			await axios.post(`${httpUrl}/send-whatsapp`, {
-				userId: session.user.id,
+				// Sent from the doctor's WhatsApp, also when a secretary sends it
+				userId: profile.userId,
 				phone: record.patient.phoneNumber,
 				documentUrl: pdfUrl,
 				fileName: `${record.number}.pdf`,
 				message: caption,
 				mimetype: "application/pdf",
-				quotaConsumed: true,
 			});
 		} catch (err: unknown) {
 			if (err instanceof Response) return err;

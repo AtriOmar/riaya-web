@@ -1,5 +1,5 @@
-import type { AdminDoctorAppointment } from "@/hooks/use-admin-doctor";
 import { cn } from "@/lib/utils";
+import type { GetApiDoctorsId200AppointmentsItem as AdminDoctorAppointment } from "@/services/generated/api.schemas";
 import { appointmentLabel } from "./helpers";
 
 export default function AppointmentChip({

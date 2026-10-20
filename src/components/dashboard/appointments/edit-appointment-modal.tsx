@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Link2, Phone, Trash2, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,20 +25,16 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { splitCallerName } from "@/lib/caller-name";
 import { getErrorMessage } from "@/lib/error-handling";
-import {
-	formatPhoneDisplay,
-	normalizePhoneDigits,
-	normalizePhoneForStorage,
-} from "@/lib/phone";
+import { personDisplayName } from "@/lib/person-name";
+import { formatPhoneDisplay } from "@/lib/phone";
 import {
 	useDeleteApiAppointments,
 	usePutApiAppointments,
 } from "@/services/generated/appointments/appointments";
 import {
 	useGetApiPatients,
-	useGetApiPatientsLookupByPhone,
+	useGetApiPatientsLookupByPerson,
 } from "@/services/generated/patients/patients";
 
 const schema = z.object({
@@ -65,8 +61,14 @@ export type CalendarEvent = {
 		cin?: string | null;
 		address?: string | null;
 	} | null;
-	newPatientName?: string | null;
-	newPatientPhoneNumber?: string | null;
+	/** Who the appointment is for (set on phone bookings). */
+	person?: {
+		id: number;
+		firstName: string | null;
+		lastName: string | null;
+	} | null;
+	/** Phone line that booked it. */
+	contactPhone?: string | null;
 	urgent?: boolean;
 };
 
@@ -115,16 +117,12 @@ export default function EditAppointmentModal({
 
 	const isPending = event?.status === "pending";
 	const isUrgent = event?.urgent === true;
-	const callerPhoneRaw = event?.newPatientPhoneNumber?.trim() ?? "";
-	const callerPhoneStored = normalizePhoneForStorage(callerPhoneRaw);
-	const callerPhoneDigits =
-		normalizePhoneDigits(callerPhoneRaw) ?? callerPhoneRaw.replace(/\D/g, "");
-	const needsPatientLink =
-		isPending && !event?.patientId && callerPhoneDigits.length >= 8;
+	const personId = event?.person?.id ?? null;
+	const needsPatientLink = isPending && !event?.patientId && personId != null;
 
-	const { data: phoneLookup, isLoading: lookupLoading } =
-		useGetApiPatientsLookupByPhone(
-			{ phone: callerPhoneStored ?? callerPhoneDigits },
+	const { data: personLookup, isLoading: lookupLoading } =
+		useGetApiPatientsLookupByPerson(
+			{ personId: personId ?? 0 },
 			{ swr: { enabled: open && needsPatientLink } },
 		);
 
@@ -133,16 +131,12 @@ export default function EditAppointmentModal({
 		{ swr: { enabled: open && needsPatientLink && !createNewPatient } },
 	);
 
-	const matchedPatient = phoneLookup?.matchedPatient ?? null;
+	const matchedPatient = personLookup?.matchedPatient ?? null;
 
-	const callerDisplayName = useMemo(() => {
-		if (!event) return "—";
-		const fromPatient = [event.patient?.firstName, event.patient?.lastName]
-			.filter(Boolean)
-			.join(" ")
-			.trim();
-		return fromPatient || event.newPatientName?.trim() || "—";
-	}, [event]);
+	const patientDisplayName =
+		personDisplayName(event?.patient) ||
+		personDisplayName(event?.person) ||
+		"—";
 
 	useEffect(() => {
 		if (event) {
@@ -150,9 +144,8 @@ export default function EditAppointmentModal({
 			setPendingAction(null);
 			setCreateNewPatient(true);
 			setSelectedPatientId("");
-			const split = splitCallerName(event.newPatientName);
-			setPatientFirstName(split.firstName === "Unknown" ? "" : split.firstName);
-			setPatientLastName(split.lastName === "—" ? "" : split.lastName);
+			setPatientFirstName(event.person?.firstName ?? "");
+			setPatientLastName(event.person?.lastName ?? "");
 		}
 	}, [event, reset]);
 
@@ -341,22 +334,24 @@ export default function EditAppointmentModal({
 					<div className="space-y-3 rounded-lg border bg-muted/30 p-3">
 						<div>
 							<p className="text-sm font-medium text-foreground">
-								Caller details
+								Patient details
 							</p>
 							<p className="mt-1 text-sm text-muted-foreground">
-								{callerDisplayName}
+								{patientDisplayName}
 							</p>
-							<p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-								<Phone className="size-3.5" />
-								<span className="tabular-nums">
-									{formatPhoneDisplay(callerPhoneStored ?? callerPhoneRaw)}
-								</span>
-							</p>
+							{event?.contactPhone && (
+								<p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+									<Phone className="size-3.5" />
+									<span className="tabular-nums">
+										{formatPhoneDisplay(event.contactPhone)}
+									</span>
+								</p>
+							)}
 						</div>
 
 						{lookupLoading ? (
 							<p className="text-sm text-muted-foreground">
-								Looking up patient by phone…
+								Looking for an existing patient file…
 							</p>
 						) : matchedPatient ? (
 							<div className="flex gap-2 rounded-md border border-primary/20 bg-primary/5 p-2.5">
@@ -399,8 +394,8 @@ export default function EditAppointmentModal({
 											Create new patient
 										</p>
 										<p className="text-xs text-muted-foreground">
-											Adds a patient with the phone on this booking. Edit the
-											name below if the caller gave it incorrectly.
+											Adds a patient file for this person. Edit the name below
+											if the caller gave it incorrectly.
 										</p>
 									</div>
 								</label>

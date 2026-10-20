@@ -11,7 +11,7 @@ type AppointmentBookedMessage = {
 	callSid: string;
 	data?: {
 		doctorId?: unknown;
-		newPatientName?: string | null;
+		patientName?: string | null;
 		urgent?: boolean;
 	};
 };
@@ -93,7 +93,7 @@ export default function DoctorAppointmentSocketListener({
 						return;
 					}
 
-					const rawName = msg.data?.newPatientName?.trim();
+					const rawName = msg.data?.patientName?.trim();
 					const patientLabel =
 						rawName && rawName.length > 0 ? rawName : "A patient";
 					const urgent = msg.data?.urgent === true;

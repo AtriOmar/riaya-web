@@ -10,17 +10,26 @@ import {
 	requireInternal,
 	validationError,
 } from "@/lib/api-utils";
+import { isPhoneBlocked } from "@/lib/blocked-phone";
 import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
+import { getRefusalContext } from "@/lib/refusal-suggestions";
 import {
 	buildPendingTimeoutVoiceScript,
 	buildPendingTimeoutWhatsappMessage,
+	buildRefusalVoiceScript,
+	buildRefusalWhatsappMessage,
 } from "@/lib/whatsapp-messages";
 
 const processSchema = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("appointment"),
+		appointmentId: z.number().int().positive(),
+	}),
+	z.object({
+		kind: z.literal("refused"),
 		appointmentId: z.number().int().positive(),
 	}),
 	z.object({
@@ -39,13 +48,10 @@ async function findAdminWhatsappUserId(): Promise<string | null> {
 }
 
 function patientLabel(row: {
-	newPatientName: string | null;
-	newPatientPhoneNumber: string | null;
+	contactPhone: string | null;
+	person: { firstName: string | null; lastName: string | null } | null;
 }): { name: string; phone: string | null } {
-	return {
-		name: row.newPatientName?.trim() || "",
-		phone: row.newPatientPhoneNumber?.trim() || null,
-	};
+	return { name: personDisplayName(row.person), phone: row.contactPhone };
 }
 
 // ─── POST /api/internal/appointments/process-pending-timeout ─────────────────
@@ -63,9 +69,61 @@ export async function POST(req: NextRequest) {
 			process.env.RIAYA_PHONE_NUMBER?.trim() ||
 			null;
 
+		// Doctor refused a normal AI request: row is already cancelled, just notify.
+		if (parsed.data.kind === "refused") {
+			const row = await db.query.appointment.findFirst({
+				where: eq(appointment.id, parsed.data.appointmentId),
+				with: { person: true },
+			});
+
+			if (!row) return json({ success: false, reason: "not_found" });
+			if (row.status !== "cancelled" || row.source !== "ai" || row.urgent) {
+				return json({ success: false, reason: "not_refused_ai_request" });
+			}
+
+			const { name, phone } = patientLabel(row);
+			// Blocked numbers get no WhatsApp message or callback.
+			if (!phone || (await isPhoneBlocked(phone))) {
+				return json({ success: true, cancelled: true, notified: false });
+			}
+
+			const language = await resolvePreferredLanguage({ phone });
+			const adminId = await findAdminWhatsappUserId();
+			const context = await getRefusalContext(phone);
+			const suggestions = (context?.suggestions ?? []).map((s) => ({
+				name: s.name,
+				start: new Date(s.slotStart),
+				cabinetName: s.cabinetName,
+			}));
+			const voice = buildRefusalVoiceScript({
+				language,
+				patientName: name,
+				riayaPhone,
+				suggestions,
+			});
+
+			return json({
+				success: true,
+				cancelled: true,
+				notified: true,
+				phone,
+				adminId,
+				whatsappMessage: buildRefusalWhatsappMessage({
+					language,
+					patientName: name,
+					riayaPhone,
+					suggestions,
+				}),
+				voiceScript: voice.text,
+				twilioLanguage: voice.twilioLanguage,
+				riayaPhone,
+			});
+		}
+
 		if (parsed.data.kind === "appointment") {
 			const row = await db.query.appointment.findFirst({
 				where: eq(appointment.id, parsed.data.appointmentId),
+				with: { person: true },
 			});
 
 			if (!row) {
@@ -88,7 +146,8 @@ export async function POST(req: NextRequest) {
 				);
 
 			const { name, phone } = patientLabel(row);
-			if (!phone) {
+			// Blocked numbers get no WhatsApp message or callback.
+			if (!phone || (await isPhoneBlocked(phone))) {
 				return json({ success: true, cancelled: true, notified: false });
 			}
 
@@ -121,6 +180,7 @@ export async function POST(req: NextRequest) {
 		const groupId = parsed.data.emergencyGroupId;
 		const groupRows = await db.query.appointment.findMany({
 			where: eq(appointment.emergencyGroupId, groupId),
+			with: { person: true },
 		});
 
 		if (groupRows.length === 0) {
@@ -141,7 +201,8 @@ export async function POST(req: NextRequest) {
 
 		const sample = pendingRows[0];
 		const { name, phone } = patientLabel(sample);
-		if (!phone) {
+		// Blocked numbers get no WhatsApp message or callback.
+		if (!phone || (await isPhoneBlocked(phone))) {
 			return json({ success: true, cancelled: true, notified: false });
 		}
 

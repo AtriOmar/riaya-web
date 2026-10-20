@@ -13,9 +13,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { formatRecordingTime } from "@/lib/recording-time";
 
 type BillingInvoice = {
 	id: number;
+	kind: "subscription" | "top_up";
+	creditSeconds: number | null;
 	number: string;
 	status: "open" | "paid" | "cancelled";
 	amountMillimes: number;
@@ -26,6 +29,12 @@ type BillingInvoice = {
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+function invoiceLabel(invoice: BillingInvoice) {
+	return invoice.kind === "top_up"
+		? `${formatRecordingTime(invoice.creditSeconds ?? 0)} recording time`
+		: "Pro plan";
+}
 
 function formatAmount(millimes: number) {
 	return `${(millimes / 1000).toLocaleString("fr-TN", {
@@ -110,8 +119,8 @@ export default function BillingInvoicesList() {
 			<div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-12 text-center">
 				<FileText className="size-8 text-muted-foreground" />
 				<p className="text-sm text-muted-foreground">
-					No billing invoices yet. They appear when your subscription is due for
-					renewal.
+					No billing invoices yet. They appear when your subscription renews or
+					you buy recording hours.
 				</p>
 			</div>
 		);
@@ -132,7 +141,12 @@ export default function BillingInvoicesList() {
 				<TableBody>
 					{invoices.map((invoice) => (
 						<TableRow key={invoice.id}>
-							<TableCell className="font-medium">{invoice.number}</TableCell>
+							<TableCell>
+								<p className="font-medium">{invoice.number}</p>
+								<p className="text-muted-foreground text-xs">
+									{invoiceLabel(invoice)}
+								</p>
+							</TableCell>
 							<TableCell className="text-muted-foreground">
 								{invoice.createdAt
 									? new Date(invoice.createdAt).toLocaleDateString("en-GB", {

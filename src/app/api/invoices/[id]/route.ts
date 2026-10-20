@@ -7,16 +7,11 @@ import {
 	selectInvoiceWithItemsSchema,
 	selectInvoiceWithPatientSchema,
 } from "@/db/zod";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, validationError } from "@/lib/api-utils";
 import { sumItemsCentimes } from "@/lib/invoice";
 import { syncInvoiceFromPayments } from "@/lib/invoice-server";
 import { registry } from "@/lib/openapi";
+import { requirePractice } from "@/lib/practice";
 
 const paramsSchema = z.object({ id: z.string() });
 
@@ -67,8 +62,7 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const { id } = await params;
 		const invoiceId = Number(id);
@@ -91,8 +85,7 @@ export async function PATCH(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const { id } = await params;
 		const invoiceId = Number(id);
@@ -206,8 +199,7 @@ export async function DELETE(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const { id } = await params;
 		const invoiceId = Number(id);

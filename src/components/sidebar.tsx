@@ -13,11 +13,15 @@ import {
 	Receipt,
 	Stethoscope,
 	User,
+	Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 import { useAppContext } from "@/components/contexts/app-provider";
-import { useAuth } from "@/components/contexts/auth-provider";
+import {
+	AiPanelProvider,
+	useAiPanel,
+} from "@/components/dashboard/ai-chat/ai-panel";
+import ReferralExclusionBanner from "@/components/dashboard/referral-exclusion-banner";
 import SidebarItem, { type SidebarItemData } from "@/components/sidebar-item";
 import SidebarUserInfo from "@/components/sidebar-user-info";
 import { Button } from "@/components/ui/button";
@@ -27,8 +31,9 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
 import { cn } from "@/lib/utils";
-import { useGetApiUsersMe } from "@/services/generated/users/users";
+import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 
 const STORAGE_KEY = "dashboard-sidebar-collapsed";
 
@@ -78,6 +83,11 @@ const items2: SidebarItemData[] = [
 		path: "/dashboard/profile",
 	},
 	{
+		name: "Team",
+		icon: <Users className="size-5" />,
+		path: "/dashboard/team",
+	},
+	{
 		name: "WhatsApp",
 		icon: <MessageSquare className="size-5" />,
 		path: "/dashboard/whatsapp-config",
@@ -90,29 +100,32 @@ const items2: SidebarItemData[] = [
 ];
 
 function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
-	const { user } = useAuth();
-	const { data: me } = useGetApiUsersMe({ swr: { enabled: !!user } });
-	const isVerified = me?.doctorProfile?.status === "verified";
-	const { data: billing } = useSWR<{
-		effectivePlanId?: string;
-		isPro?: boolean;
-	}>(isVerified ? "/api/billing/subscription" : null, (url: string) =>
-		fetch(url).then((r) => r.json()),
-	);
+	const { practice, isSecretary, canWork } = usePractice();
+	const { data: billing } = useGetApiBillingSubscription({
+		swr: { enabled: canWork && !isSecretary },
+	});
 
-	const planBadge =
-		billing?.isPro || billing?.effectivePlanId === "pro" ? "Pro" : null;
+	const planBadge = billing?.plan.isPro ? "Pro" : null;
+	// Secretaries only see the pages they can use
+	const visible = (items: SidebarItemData[]) =>
+		isSecretary ? items.filter((i) => !isDoctorOnlyPath(i.path)) : items;
 
 	return (
 		<>
-			<SidebarUserInfo collapsed={collapsed} planBadge={planBadge} />
+			<SidebarUserInfo
+				collapsed={collapsed}
+				planBadge={planBadge}
+				subtitle={
+					isSecretary ? `Secretary · ${practice?.doctorName}` : undefined
+				}
+			/>
 			<ul className={cn("font-medium text-sm", collapsed ? "px-1" : "px-2")}>
-				{items1.map((item) => (
+				{visible(items1).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
 							item={{
 								...item,
-								disabled: !isVerified && item.path !== "/dashboard/profile",
+								disabled: !canWork && item.path !== "/dashboard/profile",
 							}}
 							collapsed={collapsed}
 						/>
@@ -121,12 +134,12 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 				<li>
 					<div className="h-px my-2 bg-border" />
 				</li>
-				{items2.map((item) => (
+				{visible(items2).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
 							item={{
 								...item,
-								disabled: !isVerified && item.path !== "/dashboard/profile",
+								disabled: !canWork && item.path !== "/dashboard/profile",
 								badge:
 									item.path === "/dashboard/subscription" && planBadge
 										? planBadge
@@ -163,8 +176,17 @@ function useCollapsedState() {
 }
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
+	return (
+		<AiPanelProvider>
+			<SidebarShell>{children}</SidebarShell>
+		</AiPanelProvider>
+	);
+}
+
+function SidebarShell({ children }: { children: React.ReactNode }) {
 	const { showMobileSidebar, setShowMobileSidebar, isMobile } = useAppContext();
 	const { collapsed, ready, toggle } = useCollapsedState();
+	const { docked } = useAiPanel();
 
 	return (
 		<>
@@ -222,8 +244,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 				className={cn(
 					"mt-[70px] transition-[margin] duration-200",
 					collapsed ? "md:ml-[98px]" : "md:ml-[260px]",
+					// Room for the docked AI panel (420px wide; the page keeps its own padding)
+					docked && "xl:mr-[420px]",
 				)}
 			>
+				<ReferralExclusionBanner />
 				{children}
 			</div>
 		</>

@@ -1,5 +1,8 @@
+import { recordingTitle } from "@/lib/recording-title";
+import { SPEAKER_ROLE_LABELS, type SpeakerRoles } from "@/lib/speaker-roles";
+
 /**
- * Speaker labels from OpenRouter/Azure diarization are 0-based indexes.
+ * Speaker labels from OpenRouter diarization are 0-based indexes.
  * Missing values stay as a generic "Speaker".
  */
 export function formatSpeakerLabel(speaker: unknown): string {
@@ -16,6 +19,25 @@ export function formatSpeakerLabel(speaker: unknown): string {
 	return text;
 }
 
+/** "Doctor" / "Patient" / "Companion" once roles are known, else "Speaker 1". */
+export function speakerName(
+	speaker: unknown,
+	roles: SpeakerRoles | null | undefined,
+): string {
+	const label = formatSpeakerLabel(speaker);
+	const role = roles?.[label];
+	return role ? SPEAKER_ROLE_LABELS[role] : label;
+}
+
+/** Distinct speaker labels in a transcript, in order of first appearance. */
+export function transcriptSpeakers(transcript: unknown): string[] {
+	const parsed = parseTranscriptPayload(transcript);
+	if (parsed?.kind !== "segments") return [];
+	return [
+		...new Set(parsed.segments.map((s) => formatSpeakerLabel(s.speaker))),
+	];
+}
+
 export function formatTranscriptTimestamp(seconds: number): string {
 	if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
 	const total = Math.floor(seconds);
@@ -25,6 +47,8 @@ export function formatTranscriptTimestamp(seconds: number): string {
 }
 
 export type TranscriptFormatMeta = {
+	/** Shown as Doctor/Patient/Companion instead of Speaker 1, 2… */
+	speakerRoles?: SpeakerRoles | null;
 	title?: string | null;
 	recordedAt?: string | Date | null;
 	patientName?: string | null;
@@ -38,7 +62,8 @@ type RawSegment = {
 	words?: { word?: string }[];
 };
 
-function segmentText(segment: RawSegment): string {
+/** A segment's text, falling back to its words. */
+export function segmentText(segment: RawSegment): string {
 	if (segment.text?.trim()) return segment.text.trim();
 	return (
 		segment.words
@@ -48,7 +73,8 @@ function segmentText(segment: RawSegment): string {
 	);
 }
 
-function parseTranscriptPayload(
+/** Normalizes a stored transcript into segments or plain text. */
+export function parseTranscriptPayload(
 	transcript: unknown,
 ):
 	| { kind: "segments"; segments: RawSegment[] }
@@ -124,7 +150,7 @@ export function formatTranscriptForAiContext(
 		for (const segment of parsed.segments) {
 			const text = segmentText(segment);
 			if (!text) continue;
-			const speaker = formatSpeakerLabel(segment.speaker);
+			const speaker = speakerName(segment.speaker, meta?.speakerRoles);
 			const time = formatTranscriptTimestamp(Number(segment.start ?? 0));
 			lines.push(`## ${speaker} · ${time}`, "", text, "");
 		}
@@ -140,6 +166,7 @@ export function transcriptContextFromRecording(recording: {
 	title?: string | null;
 	createdAt?: string | null;
 	transcript: unknown;
+	speakerRoles?: SpeakerRoles | null;
 	patient?: {
 		firstName?: string | null;
 		lastName?: string | null;
@@ -152,11 +179,15 @@ export function transcriptContextFromRecording(recording: {
 
 	return {
 		recordingId: recording.id,
-		title: recording.title ?? "Untitled",
+		title: recordingTitle({
+			title: recording.title ?? null,
+			createdAt: recording.createdAt ?? null,
+		}),
 		text: formatTranscriptForAiContext(recording.transcript, {
 			title: recording.title,
 			recordedAt: recording.createdAt,
 			patientName,
+			speakerRoles: recording.speakerRoles,
 		}),
 	};
 }

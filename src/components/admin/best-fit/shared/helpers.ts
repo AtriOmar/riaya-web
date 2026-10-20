@@ -1,5 +1,5 @@
 import moment from "moment";
-import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
+import type { BestFitMapDoctor } from "@/hooks/use-best-fit-range";
 import { DEFAULT_MAX_HOUR, DEFAULT_MIN_HOUR } from "./constants";
 
 /** Return the 7 calendar days of the week that contains `anchor`. */
@@ -31,20 +31,20 @@ export function fmtMinutes(minutes: number): string {
 }
 
 /** Short display name: "Dr. Lastname" → "Dr. Firstname" → cabinetName → "#id". */
-export function shortName(d: BestFitRangeDoctor): string {
+export function shortName(d: BestFitMapDoctor): string {
 	if (d.lastName) return `Dr. ${d.lastName}`;
 	if (d.firstName) return `Dr. ${d.firstName}`;
 	return d.cabinetName ?? `#${d.id}`;
 }
 
 /** Full display name: "Dr. First Last" → cabinetName → "#id". */
-export function fullName(d: BestFitRangeDoctor): string {
+export function fullName(d: BestFitMapDoctor): string {
 	const parts = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
 	if (parts) return `Dr. ${parts}`;
 	return d.cabinetName ?? `#${d.id}`;
 }
 
-export function initials(d: BestFitRangeDoctor): string {
+export function initials(d: BestFitMapDoctor): string {
 	const a = d.firstName?.[0]?.toUpperCase() ?? "";
 	const b = d.lastName?.[0]?.toUpperCase() ?? "";
 	return `${a}${b}` || "DR";

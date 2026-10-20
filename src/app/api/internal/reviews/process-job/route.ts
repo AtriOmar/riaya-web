@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment, doctorProfile, patient, review } from "@/db/schema";
+import { appointment, doctorProfile, review } from "@/db/schema";
 import {
 	apiError,
 	json,
@@ -12,7 +12,13 @@ import {
 } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
+import { REVIEW_REQUEST_DELAY_MS } from "@/lib/review-scheduling";
 import { buildReviewWhatsappMessage } from "@/lib/whatsapp-messages";
+
+const REVIEW_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Minimum gap between review requests to one patient for one doctor. */
+const REVIEW_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
 const processJobSchema = z.object({
 	appointmentId: z.number().int().positive(),
@@ -33,41 +39,55 @@ export async function POST(req: NextRequest) {
 		// 1. Fetch appointment
 		const appt = await db.query.appointment.findFirst({
 			where: eq(appointment.id, appointmentId),
+			with: { patient: true, person: true },
 		});
 
-		// Only send if it was not cancelled
-		if (!appt || appt.status === "cancelled") {
-			return json({ success: false, reason: "appointment_cancelled" });
+		if (!appt) {
+			return json({ success: false, reason: "appointment_not_found" });
 		}
 
-		// 2. Check if a review already exists for this patient + doctor (or for this appointment if no patientId)
-		const existingReview = await db.query.review.findFirst({
-			where: patientId
-				? and(eq(review.doctorId, doctorId), eq(review.patientId, patientId))
-				: eq(review.appointmentId, appointmentId),
-		});
+		// Appointments only have pending | confirmed | cancelled (no no-show
+		// status). Only a confirmed one means the visit was accepted and
+		// plausibly happened; pending was never accepted, cancelled never took place.
+		if (appt.status !== "confirmed") {
+			return json({ success: false, reason: "appointment_not_confirmed" });
+		}
 
+		// A rescheduled visit may still be ahead of this (stale) job.
+		if (
+			!appt.end ||
+			appt.end.getTime() + REVIEW_REQUEST_DELAY_MS > Date.now()
+		) {
+			return json({ success: false, reason: "appointment_not_finished" });
+		}
+
+		// 2. One review per appointment.
+		const existingReview = await db.query.review.findFirst({
+			where: eq(review.appointmentId, appointmentId),
+		});
 		if (existingReview) {
 			return json({ success: false, reason: "review_already_exists" });
 		}
 
-		// 3. Get patient phone, language, and doctor info
-		let phone: string | null = null;
-		let patientName = "";
-		let preferredLanguage: string | null = null;
-
+		// Cooldown: don't ask the same patient about the same doctor again soon,
+		// whether or not they answered the earlier request.
 		if (patientId) {
-			const pat = await db.query.patient.findFirst({
-				where: eq(patient.id, patientId),
-				with: { person: true },
+			const recentRequest = await db.query.review.findFirst({
+				where: and(
+					eq(review.doctorId, doctorId),
+					eq(review.patientId, patientId),
+					gte(review.createdAt, new Date(Date.now() - REVIEW_COOLDOWN_MS)),
+				),
 			});
-			phone = pat?.phoneNumber ?? pat?.person?.phoneNumber ?? null;
-			patientName = `${pat?.firstName ?? ""} ${pat?.lastName ?? ""}`.trim();
-			preferredLanguage = pat?.person?.preferredLanguage ?? null;
-		} else {
-			phone = appt.newPatientPhoneNumber ?? null;
-			patientName = appt.newPatientName ?? "";
+			if (recentRequest) {
+				return json({ success: false, reason: "review_recently_requested" });
+			}
 		}
+
+		// 3. Get phone, name, and doctor info. Messages go to the line that booked.
+		const phone = appt.contactPhone ?? appt.patient?.phoneNumber ?? null;
+		const patientName =
+			personDisplayName(appt.patient) || personDisplayName(appt.person);
 
 		const doc = await db.query.doctorProfile.findFirst({
 			where: eq(doctorProfile.id, doctorId),
@@ -78,10 +98,8 @@ export async function POST(req: NextRequest) {
 			return json({ success: false, reason: "no_phone_number" });
 		}
 
-		const language = await resolvePreferredLanguage({
-			preferredLanguage,
-			phone,
-		});
+		// The message goes to the phone line, so use its owner's language.
+		const language = await resolvePreferredLanguage({ phone });
 
 		// 4. Create review row
 		const token = crypto.randomUUID();
@@ -91,6 +109,7 @@ export async function POST(req: NextRequest) {
 			patientId: patientId ?? null,
 			token,
 			status: "pending",
+			expiresAt: new Date(Date.now() + REVIEW_LINK_TTL_MS),
 		});
 
 		const doctorName = doc?.lastName ? `Dr. ${doc.lastName}` : "your doctor";

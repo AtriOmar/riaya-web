@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording, patient } from "@/db/schema";
@@ -10,7 +10,8 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { assertRecordingAllowed } from "@/lib/plan-limits";
+import { getRecordingTime } from "@/lib/plan-limits";
+import { transcribeAndSummarize } from "@/lib/recording-transcription";
 
 // ─── GET /api/recordings ──────────────────────────────────────────────────────
 // Returns recordings for the authenticated doctor, optionally filtered by patient.
@@ -45,6 +46,10 @@ export async function GET(req: NextRequest) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				speakerRoles: consultationRecording.speakerRoles,
+				summary: consultationRecording.summary,
+				summaryStatus: consultationRecording.summaryStatus,
+				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,
 				createdAt: consultationRecording.createdAt,
 				updatedAt: consultationRecording.updatedAt,
 				patient: {
@@ -66,11 +71,20 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── POST /api/recordings ─────────────────────────────────────────────────────
-// Creates a new recording row after the audio has been uploaded to R2.
+// Creates a new recording row after the audio has been uploaded to R2. Saving
+// always works; it's transcribed (and summarized on Pro) in the background
+// only while recording time is left, otherwise it's kept as `skipped` for the
+// doctor to transcribe later.
 
 const createSchema = z.object({
 	audioUrl: z.url(),
-	title: z.string().min(1).max(255),
+	/** Optional: left empty, the recording is named from its transcript */
+	title: z
+		.string()
+		.trim()
+		.max(255)
+		.optional()
+		.transform((t) => t || null),
 	durationSeconds: z.number().int().positive().optional(),
 	patientId: z.number().int().positive().optional(),
 });
@@ -83,8 +97,6 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 		if (!parsed.success) return validationError(parsed.error.issues);
-
-		await assertRecordingAllowed(profile.id);
 
 		// If patientId is provided, verify it belongs to this doctor
 		if (parsed.data.patientId) {
@@ -100,6 +112,9 @@ export async function POST(req: NextRequest) {
 			if (!found) return apiError("PATIENT_NOT_FOUND");
 		}
 
+		const { remainingSeconds } = await getRecordingTime(profile.id);
+		const hasTime = remainingSeconds > 0;
+
 		const [recording] = await db
 			.insert(consultationRecording)
 			.values({
@@ -108,9 +123,11 @@ export async function POST(req: NextRequest) {
 				title: parsed.data.title,
 				audioUrl: parsed.data.audioUrl,
 				durationSeconds: parsed.data.durationSeconds ?? null,
-				transcriptStatus: "pending",
+				transcriptStatus: hasTime ? "processing" : "skipped",
 			})
 			.returning();
+
+		if (hasTime) after(() => transcribeAndSummarize(recording.id));
 
 		return json(recording, 201);
 	} catch (e) {

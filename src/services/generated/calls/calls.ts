@@ -302,3 +302,56 @@ export const usePostApiCallsIdEvents = <TError = unknown>(
 		...query,
 	};
 };
+/**
+ * @summary Stream a call recording (Admin)
+ */
+export const getApiCallsIdRecording = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<Blob>(
+		{ url: `/api/calls/${id}/recording`, method: "GET", responseType: "blob" },
+		options,
+	);
+};
+
+export const getGetApiCallsIdRecordingKey = (id: string) =>
+	[`/api/calls/${id}/recording`] as const;
+
+export type GetApiCallsIdRecordingQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiCallsIdRecording>>
+>;
+
+/**
+ * @summary Stream a call recording (Admin)
+ */
+export const useGetApiCallsIdRecording = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiCallsIdRecording>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiCallsIdRecordingKey(id) : null));
+	const swrFn = () => getApiCallsIdRecording(id, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};

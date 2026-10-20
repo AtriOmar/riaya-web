@@ -1,11 +1,21 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { aiChatPartSchema } from "@/lib/ai-chat-parts";
+import { consultationSummarySchema } from "@/lib/consultation-summary";
+import { PLAN_IDS } from "@/lib/plans";
+import { speakerRolesSchema } from "@/lib/speaker-roles";
 import {
 	aiChatConversation,
 	aiChatMessage,
+	aiChatMessageStatuses,
 	appointment,
+	billingInvoice,
+	blockedPhone,
 	call,
 	callEvent,
+	callReport,
+	callReportCategories,
+	callReportStatuses,
 	cities,
 	consultationRecording,
 	doctorApplication,
@@ -18,12 +28,21 @@ import {
 	person,
 	review,
 	speciality,
+	subscription,
 	user,
 } from "./schema";
 
 export const selectSpecialitySchema = createSelectSchema(speciality);
 export const selectCitiesSchema = createSelectSchema(cities);
-export const selectDoctorProfileSchema = createSelectSchema(doctorProfile);
+/** Weekly opening hours: day "0"-"6" (Mon-Sun) → slots in minutes from midnight. */
+export const availabilitySchema = z.record(
+	z.string(),
+	z.array(z.object({ start: z.number(), end: z.number() })),
+);
+
+export const selectDoctorProfileSchema = createSelectSchema(doctorProfile, {
+	availability: availabilitySchema.nullable(),
+});
 export const selectPersonSchema = createSelectSchema(person);
 export const selectPatientSchema = createSelectSchema(patient);
 export const selectPatientMedicalFileSchema =
@@ -68,10 +87,50 @@ export const selectDoctorApplicationWithRelationsSchema =
 	);
 export const selectCallSchema = createSelectSchema(call);
 export const selectCallEventSchema = createSelectSchema(callEvent);
+export const selectCallReportSchema = createSelectSchema(callReport, {
+	category: z.enum(callReportCategories),
+	status: z.enum(callReportStatuses),
+});
+export const selectBlockedPhoneSchema = createSelectSchema(blockedPhone);
 export const selectCallWithEventsSchema = selectCallSchema.merge(
 	z.object({
 		events: z.array(selectCallEventSchema),
+		report: selectCallReportSchema
+			.pick({ id: true, category: true, status: true })
+			.nullable(),
 	}),
+);
+
+/** What admins see about a reported number across all its calls. */
+export const callReportNumberSchema = z.object({
+	reportCount: z.number().int(),
+	callCount: z.number().int(),
+	blocked: z.boolean(),
+});
+
+export const selectCallReportListItemSchema = selectCallReportSchema.merge(
+	z.object({
+		call: selectCallSchema.pick({
+			id: true,
+			startedAt: true,
+			duration: true,
+			recordingUrl: true,
+		}),
+		number: callReportNumberSchema,
+	}),
+);
+
+export const selectCallReportDetailSchema = selectCallReportSchema.merge(
+	z.object({
+		call: selectCallWithEventsSchema.omit({ report: true }),
+		number: callReportNumberSchema,
+		otherReports: z.array(selectCallReportSchema),
+		block: selectBlockedPhoneSchema.nullable(),
+	}),
+);
+
+export const selectBlockedPhoneListItemSchema = selectBlockedPhoneSchema.merge(
+	z.object({ blockedByName: z.string().nullable() }),
 );
 
 export const selectDoctorProfileWithRelationsSchema =
@@ -85,7 +144,10 @@ export const selectDoctorProfileWithRelationsSchema =
 export const selectUserWithDoctorProfileSchema = selectUserSchema.merge(
 	z.object({
 		hasDoctorProfile: z.boolean(),
-		doctorProfile: selectDoctorProfileWithRelationsSchema.nullable(),
+		// Which admin excluded the doctor stays admin-side.
+		doctorProfile: selectDoctorProfileWithRelationsSchema
+			.omit({ bestFitExcludedBy: true })
+			.nullable(),
 	}),
 );
 
@@ -94,6 +156,11 @@ export const selectBestFitDoctorSchema = selectDoctorProfileSchema
 	.merge(
 		z.object({
 			distance: z.number(),
+			/** Present (true) when beyond the radius and returned as a fallback. */
+			outsideRadius: z.boolean().optional(),
+			/** Road distance (km) and drive time (min); set when routing succeeded. */
+			roadDistanceKm: z.number().optional(),
+			driveMinutes: z.number().optional(),
 			nextSlot: z.object({ start: z.string(), end: z.string() }),
 			/** Additional forward slots around desiredTime for AI alternatives. */
 			nearbySlots: z
@@ -111,6 +178,38 @@ export const statsResponseSchema = z.object({
 	banned: z.number(),
 });
 
+/** A doctor's effective plan, its limits and this month's usage. */
+export const planUsageSchema = z.object({
+	planId: z.enum(PLAN_IDS),
+	isPro: z.boolean(),
+	limits: z.object({
+		whatsappSendsPerMonth: z.number().nullable(),
+		recordingHoursPerMonth: z.number(),
+	}),
+	canBuyRecordingPacks: z.boolean(),
+	canBrandDocuments: z.boolean(),
+	canSummarizeRecordings: z.boolean(),
+	usage: z.object({
+		whatsappSendsThisMonth: z.number(),
+		/** Share of the month's AI assistant budget used, 0–100 */
+		aiPercentUsed: z.number(),
+	}),
+	recordingTime: z.object({
+		includedSeconds: z.number(),
+		usedSeconds: z.number(),
+		extraSeconds: z.number(),
+		remainingSeconds: z.number(),
+	}),
+	usagePeriod: z.object({
+		start: z.string(),
+		end: z.string(),
+		yyyyMm: z.string(),
+	}),
+});
+
+export const selectSubscriptionSchema = createSelectSchema(subscription);
+export const selectBillingInvoiceSchema = createSelectSchema(billingInvoice);
+
 export const doctorDashboardStatsResponseSchema = z.object({
 	counts: z.object({
 		patients: z.number(),
@@ -124,27 +223,7 @@ export const doctorDashboardStatsResponseSchema = z.object({
 		collectedThisMonth: z.number(),
 		outstanding: z.number(),
 	}),
-	plan: z.object({
-		planId: z.enum(["free", "pro"]),
-		isPro: z.boolean(),
-		limits: z.object({
-			aiBookingPatients: z.number().nullable(),
-			whatsappSendsPerMonth: z.number().nullable(),
-			recordingsPerMonth: z.number().nullable(),
-			aiMessagesPerMonth: z.number().nullable(),
-		}),
-		usage: z.object({
-			aiBookingPatients: z.number(),
-			whatsappSendsThisMonth: z.number(),
-			recordingsThisMonth: z.number(),
-			aiMessagesThisMonth: z.number(),
-		}),
-		usagePeriod: z.object({
-			start: z.string(),
-			end: z.string(),
-			yyyyMm: z.string(),
-		}),
-	}),
+	plan: planUsageSchema,
 	charts: z.object({
 		appointmentsByDay: z.array(
 			z.object({
@@ -180,8 +259,56 @@ export const doctorDashboardStatsResponseSchema = z.object({
 	),
 });
 
+const doctorRatingStatsSchema = z.object({
+	doctorId: z.number(),
+	name: z.string(),
+	firstName: z.string().nullable(),
+	lastName: z.string().nullable(),
+	/** The doctor's profile picture (user.image). */
+	image: z.string().nullable(),
+	cabinetName: z.string().nullable(),
+	speciality: z.string().nullable(),
+	reviewCount: z.number(),
+	/** Submitted in the last 90 days; what `last90DaysAverage` is based on. */
+	reviewCount90d: z.number(),
+	/** Patient-once average; null only without reviews. Under 5 reviews it is too few to judge. */
+	averageRating: z.number().nullable(),
+	last90DaysAverage: z.number().nullable(),
+	/** Reviews that answered the wait-time question; what `longWaitCount` is out of. */
+	waitCount: z.number(),
+	/** Reviews whose wait time was "long". */
+	longWaitCount: z.number(),
+	latestLowRatingAt: z.string().nullable(),
+	exclusion: z
+		.object({ excludedAt: z.string(), reason: z.string() })
+		.nullable(),
+});
+
+export const doctorRatingListItemSchema = doctorRatingStatsSchema;
+
+export const doctorFeedbackResponseSchema = doctorRatingStatsSchema.merge(
+	z.object({
+		reviews: z.array(
+			z.object({
+				id: z.number(),
+				appointmentId: z.number(),
+				rating: z.number().nullable(),
+				waitTime: z.enum(["short", "medium", "long"]).nullable(),
+				comment: z.string().nullable(),
+				submittedAt: z.string().nullable(),
+				appointmentDate: z.string().nullable(),
+				patientName: z.string().nullable(),
+			}),
+		),
+	}),
+);
+
 export const selectConsultationRecordingSchema = createSelectSchema(
 	consultationRecording,
+	{
+		summary: consultationSummarySchema.nullable(),
+		speakerRoles: speakerRolesSchema.nullable(),
+	},
 );
 
 export const selectConsultationRecordingWithPatientSchema =
@@ -193,7 +320,10 @@ export const selectConsultationRecordingWithPatientSchema =
 		}),
 	);
 
-export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage);
+export const selectAiChatMessageSchema = createSelectSchema(aiChatMessage, {
+	status: z.enum(aiChatMessageStatuses),
+	parts: z.array(aiChatPartSchema),
+});
 export const selectAiChatConversationSchema =
 	createSelectSchema(aiChatConversation);
 
@@ -201,7 +331,6 @@ export const selectAiChatConversationListItemSchema =
 	selectAiChatConversationSchema.merge(
 		z.object({
 			messageCount: z.number(),
-			preview: z.string().nullable(),
 		}),
 	);
 
@@ -210,7 +339,7 @@ export const selectAiChatConversationWithMessagesSchema =
 		z.object({
 			messages: z.array(selectAiChatMessageSchema),
 			recording: selectConsultationRecordingSchema
-				.pick({ id: true, title: true, transcript: true })
+				.pick({ id: true, title: true, transcript: true, speakerRoles: true })
 				.nullable(),
 		}),
 	);

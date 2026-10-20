@@ -1,11 +1,10 @@
-/** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
-/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: explanation */
+/** biome-ignore-all lint/suspicious/noExplicitAny: explanation */
 "use client";
 
 import {
 	Bot,
 	Check,
-	ChevronLeft,
 	Clock,
 	Loader2,
 	Mic,
@@ -16,20 +15,21 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handling";
-import { formatSpeakerLabel } from "@/lib/transcript";
+import { recordingTitle } from "@/lib/recording-title";
+import { speakerName, transcriptSpeakers } from "@/lib/transcript";
+import { transcriptRefreshInterval } from "@/lib/transcript-polling";
+import { cn } from "@/lib/utils";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
 import {
@@ -37,6 +37,10 @@ import {
 	usePatchApiRecordingsId,
 	usePostApiRecordingsIdTranscribe,
 } from "@/services/generated/recordings/recordings";
+import { DeleteRecordingButton } from "./delete-recording-button";
+import { NotTranscribed } from "./not-transcribed";
+import { RecordingSummary } from "./recording-summary";
+import { SpeakerRolesEditor } from "./speaker-roles-editor";
 
 // ─── Patient picker (reused from new-recording) ───────────────────────────────
 
@@ -137,20 +141,30 @@ function PatientCombobox({
 
 // ─── Recording detail ─────────────────────────────────────────────────────────
 
+function formatTimestamp(seconds: number) {
+	return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
+		.toString()
+		.padStart(2, "0")}`;
+}
+
 export default function RecordingDetail({
 	recordingId,
 	onClose,
+	onDeleted,
 }: {
 	recordingId: number;
-	/** When set (panel mode), replaces the back-to-list navigation. */
+	/** Shows a close button in the header. */
 	onClose?: () => void;
+	/** Called after the recording is deleted (e.g. to close the panel). */
+	onDeleted: () => void;
 }) {
-	const router = useRouter();
 	const {
 		data: recording,
 		isLoading,
 		mutate,
-	} = useGetApiRecordingsId(recordingId.toString());
+	} = useGetApiRecordingsId(recordingId.toString(), {
+		swr: { refreshInterval: transcriptRefreshInterval },
+	});
 	const { data: patients = [] } = useGetApiPatients();
 
 	const { trigger: updateRecording, isMutating: isUpdating } =
@@ -158,17 +172,24 @@ export default function RecordingDetail({
 	const { trigger: transcribe, isMutating: isTranscribing } =
 		usePostApiRecordingsIdTranscribe(recordingId.toString());
 
+	const audioRef = useRef<HTMLAudioElement>(null);
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [titleDraft, setTitleDraft] = useState("");
 	const [isEditingPatient, setIsEditingPatient] = useState(false);
 	const [patientDraft, setPatientDraft] =
 		useState<GetApiPatients200Item | null>(null);
-	const [transcriptExpanded, setTranscriptExpanded] = useState(true);
 
-	const goBack = () => {
-		if (onClose) onClose();
-		else router.push("/dashboard/recordings");
-	};
+	const closeButton = onClose && (
+		<Button
+			variant="ghost"
+			size="icon-sm"
+			className="shrink-0 text-muted-foreground"
+			aria-label="Close recording"
+			onClick={onClose}
+		>
+			<X className="size-4" />
+		</Button>
+	);
 
 	if (isLoading) {
 		return (
@@ -180,12 +201,14 @@ export default function RecordingDetail({
 
 	if (!recording) {
 		return (
-			<div className="flex flex-col items-center gap-3 py-16 text-center">
-				<XCircle className="size-12 text-muted-foreground" />
+			<div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+				<XCircle className="size-10 text-muted-foreground" />
 				<p className="text-muted-foreground">Recording not found.</p>
-				<Button variant="outline" onClick={goBack}>
-					Back to recordings
-				</Button>
+				{onClose && (
+					<Button variant="outline" onClick={onClose}>
+						Close
+					</Button>
+				)}
 			</div>
 		);
 	}
@@ -195,7 +218,7 @@ export default function RecordingDetail({
 			? `${recording.patient.firstName ?? ""} ${recording.patient.lastName ?? ""}`.trim()
 			: null;
 
-	const canTranscribe = recording.transcriptStatus !== "processing";
+	const status = recording.transcriptStatus;
 
 	const handleTranscribe = async () => {
 		try {
@@ -230,23 +253,26 @@ export default function RecordingDetail({
 		}
 	};
 
-	return (
-		<div className="space-y-6 px-4 sm:px-6 pb-6">
-			{!onClose && (
-				<Button
-					variant="ghost"
-					className="gap-1.5 -ml-2 text-muted-foreground"
-					onClick={goBack}
-				>
-					<ChevronLeft className="size-4" />
-					Back to recordings
-				</Button>
-			)}
+	const seekTo = (seconds: number) => {
+		const audio = audioRef.current;
+		if (!audio) return;
+		audio.currentTime = seconds;
+		void audio.play();
+	};
 
-			{/* Header card */}
-			<div className="space-y-4 bg-card p-6 border rounded-xl">
-				{/* Title */}
-				<div>
+	const transcript = recording.transcript as any;
+	const segments: any[] | null =
+		transcript &&
+		typeof transcript === "object" &&
+		Array.isArray(transcript.segments)
+			? transcript.segments
+			: null;
+
+	return (
+		<div className="flex flex-col">
+			{/* Header */}
+			<div className="top-0 z-10 sticky flex items-start gap-3 bg-card px-6 pt-5 pb-4 border-b">
+				<div className="flex-1 min-w-0">
 					{isEditingTitle ? (
 						<div className="flex gap-2">
 							<Input
@@ -259,67 +285,84 @@ export default function RecordingDetail({
 									if (e.key === "Escape") setIsEditingTitle(false);
 								}}
 							/>
-							<Button size="sm" onClick={saveTitle} disabled={isUpdating}>
+							<Button
+								size="icon"
+								onClick={saveTitle}
+								disabled={isUpdating}
+								aria-label="Save title"
+							>
 								{isUpdating ? (
 									<Loader2 className="size-4 animate-spin" />
 								) : (
 									<Check className="size-4" />
 								)}
 							</Button>
-							<Button
-								size="sm"
-								variant="ghost"
-								onClick={() => setIsEditingTitle(false)}
-							>
-								<X className="size-4" />
-							</Button>
 						</div>
 					) : (
-						<div className="group flex items-start gap-2">
-							<h2 className="font-semibold text-xl">
-								{recording.title ?? "Untitled"}
+						<button
+							type="button"
+							className="group flex items-center gap-2 max-w-full text-left"
+							onClick={() => {
+								setTitleDraft(recording.title ?? "");
+								setIsEditingTitle(true);
+							}}
+							aria-label="Edit title"
+						>
+							<h2 className="font-semibold text-lg truncate">
+								{recordingTitle(recording)}
 							</h2>
-							<button
-								type="button"
-								className="opacity-0 group-hover:opacity-100 mt-1 transition-opacity"
-								onClick={() => {
-									setTitleDraft(recording.title ?? "");
-									setIsEditingTitle(true);
-								}}
-								aria-label="Edit title"
-							>
-								<Pencil className="size-4 text-muted-foreground hover:text-foreground" />
-							</button>
-						</div>
+							<Pencil className="size-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+						</button>
 					)}
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-muted-foreground text-sm">
+						{recording.createdAt && (
+							<span className="flex items-center gap-1.5">
+								<Clock className="size-3.5" />
+								{new Date(recording.createdAt).toLocaleDateString("en-GB", {
+									year: "numeric",
+									month: "long",
+									day: "numeric",
+								})}
+							</span>
+						)}
+						{recording.durationSeconds != null && (
+							<span className="flex items-center gap-1.5">
+								<Mic className="size-3.5" />
+								{Math.floor(recording.durationSeconds / 60)}m{" "}
+								{recording.durationSeconds % 60}s
+							</span>
+						)}
+					</div>
 				</div>
+				{isEditingTitle ? (
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="-mr-2 text-muted-foreground"
+						aria-label="Cancel editing title"
+						onClick={() => setIsEditingTitle(false)}
+					>
+						<X className="size-4" />
+					</Button>
+				) : (
+					<div className="-mr-2 flex shrink-0 items-center">
+						<DeleteRecordingButton
+							recordingId={recording.id}
+							onDeleted={onDeleted}
+						/>
+						{closeButton}
+					</div>
+				)}
+			</div>
 
-				{/* Meta */}
-				<div className="flex flex-wrap gap-4 text-muted-foreground text-sm">
-					{recording.createdAt && (
-						<span className="flex items-center gap-1.5">
-							<Clock className="size-4" />
-							{new Date(recording.createdAt).toLocaleDateString("en-GB", {
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
-						</span>
-					)}
-					{recording.durationSeconds && (
-						<span className="flex items-center gap-1.5">
-							<Mic className="size-4" />
-							{Math.floor(recording.durationSeconds / 60)}m{" "}
-							{recording.durationSeconds % 60}s
-						</span>
-					)}
-				</div>
-
+			<div className="space-y-8 px-6 pt-5 pb-8">
 				{/* Patient */}
-				<div>
+				<section className="space-y-2">
+					<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+						Patient
+					</h3>
 					{isEditingPatient ? (
 						<div className="space-y-2">
-							<Label className="text-xs">Assign patient</Label>
 							<PatientCombobox
 								patients={patients}
 								selected={patientDraft}
@@ -327,11 +370,8 @@ export default function RecordingDetail({
 							/>
 							<div className="flex gap-2">
 								<Button size="sm" onClick={savePatient} disabled={isUpdating}>
-									{isUpdating ? (
-										<Loader2 className="size-4 animate-spin" />
-									) : (
-										"Save"
-									)}
+									{isUpdating && <Loader2 className="size-4 animate-spin" />}
+									Save
 								</Button>
 								<Button
 									size="sm"
@@ -343,170 +383,181 @@ export default function RecordingDetail({
 							</div>
 						</div>
 					) : (
-						<div className="flex items-center gap-2">
-							<User className="size-4 text-muted-foreground" />
-							{patientName ? (
-								<Link
-									href={`/dashboard/patients/${recording.patientId}`}
-									className="text-primary text-sm hover:underline"
-									onClick={(e) => e.stopPropagation()}
-								>
-									{patientName}
-								</Link>
-							) : (
-								<span className="text-muted-foreground text-sm">
-									No patient assigned
-								</span>
-							)}
-							<button
-								type="button"
-								className="ml-1 text-muted-foreground hover:text-foreground"
+						<div className="flex justify-between items-center gap-3">
+							<div className="flex items-center gap-2.5 min-w-0">
+								<div className="flex justify-center items-center bg-primary/10 rounded-full size-8 shrink-0">
+									<User className="size-4 text-primary" />
+								</div>
+								{patientName ? (
+									<Link
+										href={`/dashboard/patients/${recording.patientId}`}
+										className="font-medium text-sm hover:underline truncate"
+									>
+										{patientName}
+									</Link>
+								) : (
+									<span className="text-muted-foreground text-sm">
+										No patient assigned
+									</span>
+								)}
+							</div>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="text-muted-foreground"
 								onClick={() => {
 									const currentPatient =
 										patients.find((p) => p.id === recording.patientId) ?? null;
 									setPatientDraft(currentPatient);
 									setIsEditingPatient(true);
 								}}
-								aria-label="Edit patient"
 							>
-								<Pencil className="size-3.5" />
-							</button>
+								{patientName ? "Change" : "Assign"}
+							</Button>
 						</div>
 					)}
-				</div>
-			</div>
+				</section>
 
-			{/* Audio player */}
-			<div className="space-y-3 bg-card p-6 border rounded-xl">
-				<h3 className="font-medium">Audio</h3>
-				{/* biome-ignore lint/a11y/useMediaCaption: doctor-recorded audio */}
-				<audio src={recording.audioUrl} controls className="w-full" />
-			</div>
+				{/* Audio */}
+				<section className="space-y-2">
+					<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+						Audio
+					</h3>
+					<AudioWaveformPlayer src={recording.audioUrl} audioRef={audioRef} />
+				</section>
 
-			{/* Transcript */}
-			<div className="space-y-4 bg-card p-6 border rounded-xl">
-				<div className="flex justify-between items-center">
-					<h3 className="font-medium">Transcript</h3>
-					<div className="flex items-center gap-2">
-						{recording.transcriptStatus === "done" && (
-							<Button variant="outline" size="sm" className="gap-1.5" asChild>
-								<Link href={`/dashboard/ai-chat?transcript=${recordingId}`}>
-									<Bot className="size-3.5" />
-									Chat with AI
-								</Link>
-							</Button>
+				{/* Consultation note (Pro) */}
+				{status === "done" && (
+					<section>
+						<RecordingSummary
+							recording={recording}
+							onChanged={() => mutate()}
+						/>
+					</section>
+				)}
+
+				{/* Transcript */}
+				<section className="space-y-3">
+					<div className="flex justify-between items-center gap-2">
+						<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+							Transcript
+						</h3>
+						{status === "done" && (
+							<div className="flex items-center gap-1">
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									className="text-muted-foreground"
+									onClick={handleTranscribe}
+									disabled={isTranscribing}
+									aria-label="Regenerate transcript"
+									title="Regenerate transcript"
+								>
+									<RefreshCw
+										className={cn("size-3.5", isTranscribing && "animate-spin")}
+									/>
+								</Button>
+								<Button size="sm" className="gap-1.5" asChild>
+									<Link href={`/dashboard/ai-chat?transcript=${recordingId}`}>
+										<Bot className="size-3.5" />
+										Discuss with AI
+									</Link>
+								</Button>
+							</div>
 						)}
-						{canTranscribe && (
-							<Button
-								size="sm"
-								className="gap-1.5"
-								onClick={handleTranscribe}
-								disabled={isTranscribing}
-							>
-								{isTranscribing ? (
-									<Loader2 className="size-3.5 animate-spin" />
-								) : (
+					</div>
+
+					{(status === "processing" || isTranscribing) && (
+						<div className="flex items-center gap-3 py-6 text-muted-foreground text-sm">
+							<Loader2 className="size-4 animate-spin" />
+							Transcribing the conversation. This updates on its own.
+						</div>
+					)}
+
+					{status === "skipped" && !isTranscribing && (
+						<NotTranscribed
+							recordingId={recording.id}
+							durationSeconds={recording.durationSeconds}
+							onTranscribed={() => mutate()}
+						/>
+					)}
+
+					{!isTranscribing &&
+						(status === "pending" || status === "error" || !status) && (
+							<div className="flex flex-col items-start gap-3 py-2">
+								<p
+									className={cn(
+										"text-sm",
+										status === "error"
+											? "text-red-600 dark:text-red-400"
+											: "text-muted-foreground",
+									)}
+								>
+									{status === "error"
+										? "Transcription failed."
+										: "No transcript yet."}
+								</p>
+								<Button
+									size="sm"
+									className="gap-1.5"
+									onClick={handleTranscribe}
+								>
 									<RefreshCw className="size-3.5" />
-								)}
-								{isTranscribing
-									? "Transcribing…"
-									: recording.transcriptStatus === "done"
-										? "Regenerate"
-										: "Generate Transcript"}
-							</Button>
+									{status === "error" ? "Try again" : "Generate transcript"}
+								</Button>
+							</div>
 						)}
-					</div>
-				</div>
 
-				{recording.transcriptStatus === "processing" && (
-					<div className="flex items-center gap-3 text-muted-foreground text-sm">
-						<Loader2 className="size-4 animate-spin" />
-						Generating transcript…
-					</div>
-				)}
-
-				{recording.transcriptStatus === "pending" && (
-					<p className="text-muted-foreground text-sm">
-						No transcript yet. Click "Generate Transcript" to create one.
-					</p>
-				)}
-
-				{recording.transcriptStatus === "error" && (
-					<p className="text-red-600 dark:text-red-400 text-sm">
-						Transcription failed. Please try again.
-					</p>
-				)}
-
-				{recording.transcriptStatus === "done" &&
-					Boolean(recording.transcript) && (
-						<div className="space-y-2">
-							<button
-								type="button"
-								className="text-muted-foreground hover:text-foreground text-xs"
-								onClick={() => setTranscriptExpanded((v) => !v)}
-							>
-								{transcriptExpanded ? "Collapse" : "Expand"}
-							</button>
-							{transcriptExpanded &&
-								(() => {
-									const data = recording.transcript as any;
-									const isStructured =
-										data &&
-										typeof data === "object" &&
-										Array.isArray(data.segments);
-									if (isStructured) {
-										return (
-											<div className="space-y-1 bg-muted/30 p-4 pr-2 border rounded-md max-h-[400px] overflow-y-auto">
-												{data.segments.map((segment: any, idx: number) => (
-													<button
-														key={idx}
-														type="button"
-														onClick={() => {
-															const audioEl = document.querySelector("audio");
-															if (audioEl) {
-																audioEl.currentTime = segment.start;
-																audioEl.play();
-															}
-														}}
-														className="group flex gap-4 hover:bg-muted -mx-2 px-2 py-2 rounded-md w-full text-left transition-colors cursor-pointer"
-													>
-														<span className="mt-1 font-mono text-primary text-xs shrink-0">
-															{Math.floor(segment.start / 60)}:
-															{Math.floor(segment.start % 60)
-																.toString()
-																.padStart(2, "0")}
-														</span>
-														<div>
-															<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-																{formatSpeakerLabel(segment.speaker)}
-															</span>
-															<p className="mt-0.5 text-sm leading-relaxed">
-																{segment.text ||
-																	segment.words
-																		?.map((w: any) => w.word)
-																		.join(" ")}
-															</p>
-														</div>
-													</button>
-												))}
+					{status === "done" &&
+						!isTranscribing &&
+						Boolean(transcript) &&
+						(segments ? (
+							<div className="space-y-3">
+								<SpeakerRolesEditor
+									recordingId={recording.id}
+									speakers={transcriptSpeakers(transcript)}
+									speakerRoles={recording.speakerRoles}
+									onChanged={() => mutate()}
+								/>
+								<div className="-mx-2">
+									{segments.map((segment: any, idx: number) => (
+										<button
+											key={idx}
+											type="button"
+											onClick={() => seekTo(segment.start)}
+											className="flex gap-4 hover:bg-muted/60 px-2 py-2.5 rounded-md w-full text-left transition-colors cursor-pointer"
+										>
+											<span className="mt-0.5 w-9 font-mono tabular-nums text-primary text-xs shrink-0">
+												{formatTimestamp(segment.start)}
+											</span>
+											<div className="min-w-0">
+												<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+													{speakerName(segment.speaker, recording.speakerRoles)}
+												</span>
+												{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
+												<p
+													dir="auto"
+													className="mt-0.5 text-start text-sm leading-relaxed [unicode-bidi:plaintext]"
+												>
+													{segment.text ||
+														segment.words?.map((w: any) => w.word).join(" ")}
+												</p>
 											</div>
-										);
-									}
-									// Legacy or plain text
-									const textValue =
-										typeof data === "string"
-											? data
-											: JSON.stringify(data, null, 2);
-									return (
-										<Textarea
-											readOnly
-											value={textValue}
-											className="min-h-[200px] font-mono text-sm leading-relaxed resize-y"
-										/>
-									);
-								})()}
-						</div>
-					)}
+										</button>
+									))}
+								</div>
+							</div>
+						) : (
+							<p
+								dir="auto"
+								className="text-sm leading-relaxed whitespace-pre-wrap [unicode-bidi:plaintext]"
+							>
+								{typeof transcript === "string"
+									? transcript
+									: JSON.stringify(transcript, null, 2)}
+							</p>
+						))}
+				</section>
 			</div>
 		</div>
 	);

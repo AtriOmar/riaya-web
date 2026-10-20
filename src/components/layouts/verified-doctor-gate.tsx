@@ -1,12 +1,17 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/contexts/auth-provider";
 import DoctorAppointmentSocketListener from "@/components/dashboard/appointments/doctor-appointment-socket-listener";
-import { useGetApiUsersMe } from "@/services/generated/users/users";
+import SecretaryPaused from "@/components/layouts/secretary-paused";
+import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
 
+/**
+ * Lets in a verified doctor, or a secretary of one. Unverified doctors go to
+ * their profile; secretaries can't open doctor-only pages.
+ */
 export default function VerifiedDoctorGate({
 	children,
 }: {
@@ -14,19 +19,17 @@ export default function VerifiedDoctorGate({
 }) {
 	const { user } = useAuth();
 	const router = useRouter();
+	const pathname = usePathname();
+	const { me, isLoading, practice, isSecretary, isPausedSecretary, canWork } =
+		usePractice();
 
-	const { data: me, isLoading } = useGetApiUsersMe({
-		swr: { enabled: !!user },
-	});
-
-	const profile = me?.doctorProfile;
-	const isVerified = profile?.status === "verified";
+	const blockedForSecretary = isSecretary && isDoctorOnlyPath(pathname);
 
 	useEffect(() => {
-		if (!isLoading && me && !isVerified) {
-			router.replace("/dashboard/profile");
-		}
-	}, [isLoading, me, isVerified, router]);
+		if (isLoading || !me || isPausedSecretary) return;
+		if (!canWork) router.replace("/dashboard/profile");
+		else if (blockedForSecretary) router.replace("/dashboard");
+	}, [isLoading, me, isPausedSecretary, canWork, blockedForSecretary, router]);
 
 	if (!user) {
 		return null;
@@ -40,13 +43,17 @@ export default function VerifiedDoctorGate({
 		);
 	}
 
-	if (!isVerified) {
+	if (isPausedSecretary) {
+		return <SecretaryPaused doctorName={practice?.doctorName ?? null} />;
+	}
+
+	if (!canWork || blockedForSecretary || !practice) {
 		return null;
 	}
 
 	return (
 		<>
-			<DoctorAppointmentSocketListener doctorId={profile.id} />
+			<DoctorAppointmentSocketListener doctorId={practice.doctorId} />
 			{children}
 		</>
 	);

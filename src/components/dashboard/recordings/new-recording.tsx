@@ -4,17 +4,18 @@ import { MediaRecorder, register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
 import {
 	Check,
-	ChevronLeft,
 	Loader2,
 	Mic,
-	MicOff,
-	Play,
+	RefreshCw,
 	Square,
+	Trash2,
 	User,
+	X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,12 +25,24 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { getErrorMessage } from "@/lib/error-handling";
+import {
+	clearRecordingDraft,
+	loadRecordingDraft,
+	saveRecordingDraftPiece,
+	setRecordingDraftActive,
+} from "@/lib/recording-draft";
+import { formatRecordingTime } from "@/lib/recording-time";
 import { uploadBlobToR2 } from "@/lib/upload";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
+import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
 import { usePostApiRecordings } from "@/services/generated/recordings/recordings";
 
-type RecordingState = "idle" | "recording" | "stopped" | "saving";
+/** Stopping saves right away; `failed` keeps the audio so nothing is lost. */
+type RecordingState = "idle" | "recording" | "saving" | "failed";
+
+/** Shorter recordings are treated as a mis-tap and not saved. */
+const MIN_RECORDING_SECONDS = 2;
 let isWavEncoderRegistered = false;
 
 function formatDuration(seconds: number) {
@@ -138,16 +151,14 @@ function PatientCombobox({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function NewRecording({
-	onCancel,
+	onClose,
 	onSaved,
 }: {
-	/** Panel mode: close without navigating. */
-	onCancel?: () => void;
-	/** Panel mode: open the saved recording instead of navigating. */
-	onSaved?: (recordingId: number) => void;
+	/** Shows a close button in the header. */
+	onClose?: () => void;
+	/** Called with the new recording's id once it is saved. */
+	onSaved: (recordingId: number) => void;
 }) {
-	const router = useRouter();
-
 	// Form state
 	const [title, setTitle] = useState("");
 	const [selectedPatient, setSelectedPatient] =
@@ -166,8 +177,48 @@ export default function NewRecording({
 	const chunksRef = useRef<Blob[]>([]);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+	// Local backup (see lib/recording-draft): audio not yet copied, the next
+	// piece number, and a chain that keeps the writes in order.
+	const unsavedChunksRef = useRef<Blob[]>([]);
+	const pieceIndexRef = useRef(0);
+	const draftWritesRef = useRef<Promise<void>>(Promise.resolve());
+	const startedAtRef = useRef("");
+	const backupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	// Latest details for the backup, read from inside recorder callbacks
+	const draftDetailsRef = useRef({
+		title: "",
+		patientId: null as number | null,
+		durationSeconds: 0,
+	});
+	draftDetailsRef.current = {
+		title,
+		patientId: selectedPatient?.id ?? null,
+		durationSeconds,
+	};
+
 	const { data: patients = [] } = useGetApiPatients();
 	const { trigger: createRecording } = usePostApiRecordings();
+	const { data: billing, mutate: refreshBilling } =
+		useGetApiBillingSubscription();
+	const recordingTime = billing?.plan.recordingTime;
+	const outOfTime =
+		recordingTime != null && recordingTime.remainingSeconds <= 0;
+
+	/** Copies the audio recorded since the last copy into the local backup. */
+	const backUpAudio = useCallback((mimeType: string) => {
+		if (unsavedChunksRef.current.length === 0) return draftWritesRef.current;
+		const piece = new Blob(unsavedChunksRef.current, { type: mimeType });
+		unsavedChunksRef.current = [];
+		const index = pieceIndexRef.current++;
+		draftWritesRef.current = draftWritesRef.current.then(() =>
+			saveRecordingDraftPiece(index, piece, {
+				startedAt: startedAtRef.current,
+				mimeType,
+				...draftDetailsRef.current,
+			}),
+		);
+		return draftWritesRef.current;
+	}, []);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -177,8 +228,38 @@ export default function NewRecording({
 		};
 	}, [audioUrl]);
 
+	// Leaving the panel mid-recording stops it, which saves it in the background
+	const mountedRef = useRef(true);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+			if (mediaRecorderRef.current?.state === "recording") {
+				mediaRecorderRef.current.stop();
+			}
+		};
+	}, []);
+
+	// Ask before closing the tab while a recording isn't saved yet
+	useEffect(() => {
+		if (recordingState !== "recording" && recordingState !== "saving") return;
+		const warn = (e: BeforeUnloadEvent) => {
+			e.preventDefault();
+			e.returnValue = "";
+		};
+		window.addEventListener("beforeunload", warn);
+		return () => window.removeEventListener("beforeunload", warn);
+	}, [recordingState]);
+
 	const startRecording = useCallback(async () => {
 		setMicError(null);
+		// Never overwrite a recording that wasn't saved last time
+		if (await loadRecordingDraft()) {
+			toast.error(
+				"A previous recording wasn't saved. Save or discard it first (see the top of the list).",
+			);
+			return;
+		}
 		try {
 			if (!isWavEncoderRegistered) {
 				await register(await connect());
@@ -189,16 +270,23 @@ export default function NewRecording({
 			const recorder = new MediaRecorder(stream, { mimeType });
 
 			chunksRef.current = [];
+			unsavedChunksRef.current = [];
+			pieceIndexRef.current = 0;
+			startedAtRef.current = new Date().toISOString();
+			setRecordingDraftActive(true);
 			recorder.ondataavailable = (e) => {
-				if (e.data.size > 0) chunksRef.current.push(e.data);
+				if (e.data.size > 0) {
+					chunksRef.current.push(e.data);
+					unsavedChunksRef.current.push(e.data);
+				}
 			};
 			recorder.onstop = () => {
 				const blob = new Blob(chunksRef.current, { type: mimeType });
-				setAudioBlob(blob);
-				const url = URL.createObjectURL(blob);
-				setAudioUrl(url);
 				// Stop all mic tracks
 				for (const track of stream.getTracks()) track.stop();
+				if (backupTimerRef.current) clearInterval(backupTimerRef.current);
+				// Back up the last seconds too, in case saving fails and the tab closes
+				void backUpAudio(mimeType).then(() => saveRef.current(blob));
 			};
 
 			recorder.start(250); // 250ms timeslices for smoother data
@@ -209,12 +297,15 @@ export default function NewRecording({
 			timerRef.current = setInterval(() => {
 				setDurationSeconds((d) => d + 1);
 			}, 1000);
+			backupTimerRef.current = setInterval(() => {
+				void backUpAudio(mimeType);
+			}, 2000);
 		} catch {
 			setMicError(
 				"Microphone access denied. Please allow microphone access and try again.",
 			);
 		}
-	}, []);
+	}, [backUpAudio]);
 
 	const stopRecording = useCallback(() => {
 		if (timerRef.current) {
@@ -224,10 +315,12 @@ export default function NewRecording({
 		if (mediaRecorderRef.current?.state !== "inactive") {
 			mediaRecorderRef.current?.stop();
 		}
-		setRecordingState("stopped");
+		setRecordingState("saving");
 	}, []);
 
 	const discardRecording = useCallback(() => {
+		void clearRecordingDraft();
+		setRecordingDraftActive(false);
 		if (audioUrl) URL.revokeObjectURL(audioUrl);
 		setAudioBlob(null);
 		setAudioUrl(null);
@@ -235,227 +328,229 @@ export default function NewRecording({
 		setRecordingState("idle");
 	}, [audioUrl]);
 
-	const saveRecording = useCallback(async () => {
-		if (!audioBlob) return;
-		if (!title.trim()) {
-			toast.error("Please give this recording a title");
-			return;
-		}
-
-		setRecordingState("saving");
-		try {
-			// Preflight plan limit before uploading (server still enforces on create)
-			const subRes = await fetch("/api/billing/subscription");
-			if (subRes.ok) {
-				const sub = (await subRes.json()) as {
-					limits?: { recordingsPerMonth?: number | null };
-					usage?: { recordingsThisMonth?: number };
-				};
-				const limit = sub.limits?.recordingsPerMonth;
-				const used = sub.usage?.recordingsThisMonth ?? 0;
-				if (limit != null && used >= limit) {
-					toast.error(
-						"Monthly conversation recording limit reached. It resets next calendar month, or upgrade to Pro for unlimited recordings.",
-					);
-					setRecordingState("stopped");
-					return;
-				}
+	/** Uploads and saves the recording; on failure keeps it for a retry. */
+	const saveRecording = useCallback(
+		async (blob: Blob) => {
+			if (durationSeconds < MIN_RECORDING_SECONDS) {
+				await clearRecordingDraft();
+				setRecordingDraftActive(false);
+				toast.info("Too short to save. Tap the microphone to record again.");
+				setRecordingState("idle");
+				setDurationSeconds(0);
+				return;
 			}
 
-			// 1. Upload audio to R2
-			const ext = "wav";
-			const filename = `recording-${Date.now()}.${ext}`;
-			const cdnUrl = await uploadBlobToR2(audioBlob, filename, "recordings");
+			setAudioBlob(blob);
+			setRecordingState("saving");
+			try {
+				// 1. Upload audio to R2
+				const filename = `recording-${Date.now()}.wav`;
+				const cdnUrl = await uploadBlobToR2(blob, filename, "recordings");
 
-			// 2. Save recording row in DB
-			const recording = await createRecording({
-				audioUrl: cdnUrl,
-				title: title.trim(),
-				durationSeconds,
-				patientId: selectedPatient?.id ?? undefined,
-			});
+				// 2. Save recording row in DB
+				const recording = await createRecording({
+					audioUrl: cdnUrl,
+					title: title.trim() || undefined,
+					durationSeconds,
+					patientId: selectedPatient?.id ?? undefined,
+				});
 
-			toast.success("Recording saved");
-			const id = recording?.id;
-			if (id && onSaved) {
-				onSaved(id);
-			} else if (id) {
-				router.push(`/dashboard/recordings?id=${id}`);
-			} else {
-				router.push("/dashboard/recordings");
+				// Saved: the local copy isn't needed anymore
+				await clearRecordingDraft();
+				setRecordingDraftActive(false);
+				toast.success("Recording saved");
+				void refreshBilling();
+				// Don't pull the doctor back here if they've moved on
+				if (mountedRef.current) onSaved(recording.id);
+			} catch (err) {
+				toast.error(getErrorMessage(err, "Couldn't save the recording."));
+				setAudioUrl((prev) => prev ?? URL.createObjectURL(blob));
+				setRecordingState("failed");
 			}
-		} catch (err) {
-			toast.error(getErrorMessage(err, "Failed to save recording"));
-			setRecordingState("stopped");
-		}
-	}, [
-		audioBlob,
-		title,
-		durationSeconds,
-		selectedPatient,
-		createRecording,
-		router,
-		onSaved,
-	]);
+		},
+		[
+			durationSeconds,
+			title,
+			selectedPatient,
+			createRecording,
+			refreshBilling,
+			onSaved,
+		],
+	);
 
-	const isFormComplete = title.trim().length > 0;
+	// The recorder's onstop is created once; it always calls the latest save
+	const saveRef = useRef(saveRecording);
+	saveRef.current = saveRecording;
 
-	const goBack = () => {
-		if (onCancel) onCancel();
-		else router.push("/dashboard/recordings");
-	};
+	const isSaving = recordingState === "saving";
 
 	return (
-		<div className={onCancel ? "px-4 pb-6 sm:px-6" : "mx-auto max-w-xl"}>
-			{!onCancel && (
-				<Button
-					variant="ghost"
-					className="mb-6 -ml-2 gap-1.5 text-muted-foreground"
-					onClick={goBack}
-				>
-					<ChevronLeft className="size-4" />
-					Back to recordings
-				</Button>
-			)}
-
-			{onCancel && (
-				<div className="mb-4">
-					<h2 className="font-semibold text-lg">New Recording</h2>
-					<p className="text-muted-foreground text-sm">
-						Record a consultation and save it to your library
+		<div className="flex flex-col">
+			{/* Header */}
+			<div className="top-0 z-10 sticky flex items-start gap-3 bg-card px-6 pt-5 pb-4 border-b">
+				<div className="flex-1 min-w-0">
+					<h2 className="font-semibold text-lg">New recording</h2>
+					<p className="mt-1 text-muted-foreground text-sm">
+						Record a consultation. It's saved as soon as you stop, then
+						transcribed automatically.
 					</p>
 				</div>
-			)}
+				{onClose && (
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						className="-mr-2 shrink-0 text-muted-foreground"
+						aria-label="Close"
+						onClick={onClose}
+					>
+						<X className="size-4" />
+					</Button>
+				)}
+			</div>
 
-			<div className="space-y-6 rounded-xl border bg-card p-6">
-				{/* Title */}
+			<div className="space-y-5 px-6 pt-5">
 				<div className="space-y-1.5">
-					<Label htmlFor="title">Recording title</Label>
+					<Label htmlFor="title">
+						Title{" "}
+						<span className="font-normal text-muted-foreground">
+							(optional)
+						</span>
+					</Label>
 					<Input
 						id="title"
-						placeholder="e.g. Initial consultation – Dr. Smith"
+						placeholder="Leave empty to name it automatically"
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
-						disabled={recordingState === "saving"}
+						disabled={isSaving}
 					/>
 				</div>
 
-				{/* Patient */}
 				<div className="space-y-1.5">
-					<Label>Patient (optional)</Label>
+					<Label>
+						Patient{" "}
+						<span className="font-normal text-muted-foreground">
+							(optional)
+						</span>
+					</Label>
 					<PatientCombobox
 						patients={patients}
 						selected={selectedPatient}
 						onSelect={setSelectedPatient}
 					/>
-					<p className="text-muted-foreground text-xs">
-						You can also assign a patient later.
+				</div>
+			</div>
+
+			{/* Recorder */}
+			<div className="flex flex-col items-center gap-4 mt-6 px-6 pt-8 pb-8 border-t text-center">
+				{micError && (
+					<p className="bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-md w-full text-red-700 dark:text-red-300 text-sm">
+						{micError}
 					</p>
-				</div>
+				)}
 
-				{/* Recorder */}
-				<div className="space-y-3">
-					<Label>Audio recording</Label>
-
-					{micError && (
-						<div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-							{micError}
-						</div>
-					)}
-
-					{/* Recording UI */}
-					{recordingState === "idle" && (
-						<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed py-8">
-							<div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-								<Mic className="size-8 text-primary" />
-							</div>
-							<p className="text-muted-foreground text-sm">
-								Press record to start capturing the conversation
-							</p>
-							<Button onClick={startRecording} className="gap-2">
-								<Mic className="size-4" />
-								Start Recording
-							</Button>
-						</div>
-					)}
-
-					{recordingState === "recording" && (
-						<div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50/50 py-8 dark:border-red-900/40 dark:bg-red-900/10">
-							<div className="relative flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-								<Mic className="size-8 text-red-600 dark:text-red-400" />
-								{/* Pulse ring */}
-								<span className="absolute inset-0 animate-ping rounded-full bg-red-400/30" />
-							</div>
-							<div className="text-center">
-								<p className="font-mono text-2xl font-bold text-red-600 dark:text-red-400">
-									{formatDuration(durationSeconds)}
-								</p>
-								<p className="text-muted-foreground text-xs">Recording…</p>
-							</div>
-							<Button
-								variant="destructive"
-								onClick={stopRecording}
-								className="gap-2"
+				{recordingState === "idle" && outOfTime && billing && (
+					<div className="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-left">
+						<p className="font-medium text-amber-900 text-sm dark:text-amber-200">
+							No transcription time left this month
+						</p>
+						<p className="mt-0.5 text-amber-900/80 text-xs dark:text-amber-200/80">
+							You can still record. It's saved to the patient's history and you
+							can transcribe it once you have time again.{" "}
+							<Link
+								href={
+									billing.plan.canBuyRecordingPacks
+										? "/dashboard/subscription?addHours=1"
+										: "/dashboard/subscription"
+								}
+								className="font-medium underline underline-offset-2"
 							>
-								<Square className="size-4" />
-								Stop Recording
+								{billing.plan.canBuyRecordingPacks
+									? "Add hours"
+									: "Upgrade to Pro"}
+							</Link>
+						</p>
+					</div>
+				)}
+
+				{recordingState === "idle" && (
+					<>
+						<button
+							type="button"
+							onClick={startRecording}
+							aria-label="Start recording"
+							className="flex justify-center items-center bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 size-20 text-primary-foreground active:scale-95 transition-all cursor-pointer"
+						>
+							<Mic className="size-8" />
+						</button>
+						<div>
+							<p className="font-medium text-sm">Tap to start recording</p>
+							<p className="text-muted-foreground text-xs">
+								Your browser will ask for microphone access
+							</p>
+							{recordingTime && !outOfTime && (
+								<p className="mt-1 text-muted-foreground text-xs">
+									{formatRecordingTime(recordingTime.remainingSeconds)} of
+									recording left
+								</p>
+							)}
+						</div>
+					</>
+				)}
+
+				{recordingState === "recording" && (
+					<>
+						<button
+							type="button"
+							onClick={stopRecording}
+							aria-label="Stop recording"
+							className="relative flex justify-center items-center bg-red-600 hover:bg-red-700 shadow-md rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/30 size-20 text-white active:scale-95 transition-all cursor-pointer"
+						>
+							<span className="absolute inset-0 bg-red-500/30 rounded-full animate-ping" />
+							<Square className="relative fill-current size-6" />
+						</button>
+						<div>
+							<p className="font-mono font-semibold tabular-nums text-2xl">
+								{formatDuration(durationSeconds)}
+							</p>
+							<p className="flex justify-center items-center gap-1.5 text-muted-foreground text-xs">
+								<span className="bg-red-600 rounded-full size-1.5 animate-pulse" />
+								Recording · tap to stop
+							</p>
+						</div>
+					</>
+				)}
+
+				{isSaving && (
+					<div className="flex items-center gap-2 py-6 text-muted-foreground text-sm">
+						<Loader2 className="size-4 animate-spin" />
+						Saving the recording…
+					</div>
+				)}
+
+				{recordingState === "failed" && audioBlob && audioUrl && (
+					<div className="space-y-3 w-full">
+						<p className="text-red-600 text-sm dark:text-red-400">
+							The recording couldn't be saved. It's still here: try again.
+						</p>
+						<AudioWaveformPlayer src={audioUrl} />
+						<div className="flex gap-2">
+							<Button
+								className="flex-1 gap-2"
+								onClick={() => void saveRecording(audioBlob)}
+							>
+								<RefreshCw className="size-4" />
+								Try again
+							</Button>
+							<Button
+								variant="ghost"
+								className="gap-1.5 text-muted-foreground hover:text-destructive"
+								onClick={discardRecording}
+							>
+								<Trash2 className="size-4" />
+								Discard
 							</Button>
 						</div>
-					)}
-
-					{(recordingState === "stopped" || recordingState === "saving") &&
-						audioUrl && (
-							<div className="space-y-3 rounded-xl border p-4">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2 text-sm">
-										<MicOff className="size-4 text-muted-foreground" />
-										<span className="font-medium">Recording complete</span>
-										<span className="text-muted-foreground">
-											({formatDuration(durationSeconds)})
-										</span>
-									</div>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 px-2 text-muted-foreground text-xs hover:text-destructive"
-										onClick={discardRecording}
-										disabled={recordingState === "saving"}
-									>
-										Discard
-									</Button>
-								</div>
-								{/* Preview */}
-								{/* biome-ignore lint/a11y/useMediaCaption: recording preview */}
-								<audio src={audioUrl} controls className="w-full" />
-								<div className="flex items-center gap-1">
-									<Play className="size-3.5 text-muted-foreground" />
-									<p className="text-muted-foreground text-xs">
-										Listen back before saving
-									</p>
-								</div>
-							</div>
-						)}
-				</div>
-
-				{/* Save */}
-				{(recordingState === "stopped" || recordingState === "saving") && (
-					<Button
-						className="w-full gap-2"
-						onClick={saveRecording}
-						disabled={!isFormComplete || recordingState === "saving"}
-					>
-						{recordingState === "saving" ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Saving…
-							</>
-						) : (
-							<>
-								<Check className="size-4" />
-								Save Recording
-							</>
-						)}
-					</Button>
+					</div>
 				)}
 			</div>
 		</div>

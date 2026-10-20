@@ -1,6 +1,14 @@
 "use client";
 
-import { Copy, Inbox, Search, ShieldAlert, ShieldCheck } from "lucide-react";
+import {
+	ArrowUpDown,
+	Copy,
+	Crown,
+	Inbox,
+	ListFilter,
+	ShieldAlert,
+	ShieldCheck,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,10 +17,13 @@ import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { FilterSearch, FilterSelect } from "@/components/ui/filter-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { GetApiUsers200Item } from "@/services/generated/api.schemas";
+import type {
+	GetApiUsers200Item,
+	GetApiUsersParams,
+} from "@/services/generated/api.schemas";
 import { getApiUsers } from "@/services/generated/users/users";
 
 const ROLES: Record<number, string> = { 1: "Doctor", 3: "Admin", 5: "Owner" };
@@ -89,6 +100,33 @@ const columns: Column<GetApiUsers200Item>[] = [
 		cell: (row) => row.username ?? "—",
 	},
 	{
+		key: "plan",
+		header: "Plan",
+		skeleton: <Skeleton className="h-4 w-14" />,
+		cell: (row) => {
+			if (row.plan === null) return "—";
+			if (row.plan === "pro") {
+				return (
+					<Badge
+						variant="secondary"
+						className="h-5 bg-amber-500/20 px-1.5 py-0 text-[10px] leading-none text-amber-800 hover:bg-amber-500/30 dark:text-amber-400 [&>svg]:size-2.5!"
+					>
+						<Crown />
+						Pro
+					</Badge>
+				);
+			}
+			return (
+				<Badge
+					variant="secondary"
+					className="h-5 px-1.5 py-0 text-[10px] leading-none text-foreground/75"
+				>
+					Free
+				</Badge>
+			);
+		},
+	},
+	{
 		key: "created",
 		header: "Joined",
 		skeleton: <Skeleton className="h-4 w-24" />,
@@ -106,6 +144,9 @@ const columns: Column<GetApiUsers200Item>[] = [
 export default function UsersTable() {
 	const router = useRouter();
 	const [inputValue, setInputValue] = useState("");
+	const [role, setRole] = useState("all");
+	const [status, setStatus] = useState("all");
+	const [sort, setSort] = useState("newest");
 	const search = useDebounce(inputValue, 300);
 	const limit = 20;
 
@@ -114,13 +155,23 @@ export default function UsersTable() {
 		previousPageData: GetApiUsers200Item[] | null,
 	) => {
 		if (previousPageData && !previousPageData.length) return null; // reached the end
-		return ["admin-users", search, pageIndex + 1]; // SWR key
+		return ["admin-users", search, role, status, sort, pageIndex + 1]; // SWR key
 	};
 
 	const { data, size, setSize, isValidating, isLoading } = useSWRInfinite(
 		getKey,
-		([, search, page]) =>
-			getApiUsers({ search: search as string, page: page as number, limit }),
+		([, search, role, status, sort, page]) =>
+			getApiUsers({
+				search: search as string,
+				role: role === "all" ? undefined : (role as GetApiUsersParams["role"]),
+				status:
+					status === "all"
+						? undefined
+						: (status as GetApiUsersParams["status"]),
+				sort: sort as GetApiUsersParams["sort"],
+				page: page as number,
+				limit,
+			}),
 	);
 
 	const users = data ? data.flat() : [];
@@ -134,13 +185,47 @@ export default function UsersTable() {
 
 	return (
 		<div>
-			<div className="relative mb-3 max-w-sm">
-				<Search className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2" />
-				<Input
+			<div className="mb-4 flex flex-wrap items-center gap-2">
+				<FilterSearch
 					placeholder="Search by email or name..."
 					value={inputValue}
-					onChange={(e) => setInputValue(e.target.value)}
-					className="bg-card pl-9 border-border rounded-sm"
+					onChange={setInputValue}
+				/>
+				<FilterSelect
+					icon={ListFilter}
+					label="Filter by role"
+					value={role}
+					onValueChange={setRole}
+					options={[
+						{ value: "all", label: "All roles" },
+						{ value: "doctor", label: "Doctors" },
+						{ value: "admin", label: "Admins" },
+						{ value: "owner", label: "Owners" },
+					]}
+				/>
+				<FilterSelect
+					icon={ListFilter}
+					label="Filter by status"
+					value={status}
+					onValueChange={setStatus}
+					options={[
+						{ value: "all", label: "All statuses" },
+						{ value: "active", label: "Active", dot: "bg-green-500" },
+						{ value: "banned", label: "Banned", dot: "bg-red-500" },
+					]}
+				/>
+				<FilterSelect
+					icon={ArrowUpDown}
+					label="Sort by"
+					value={sort}
+					onValueChange={setSort}
+					options={[
+						{ value: "newest", label: "Newest first" },
+						{ value: "oldest", label: "Oldest first" },
+						{ value: "email_asc", label: "Email A–Z" },
+						{ value: "email_desc", label: "Email Z–A" },
+						{ value: "name_asc", label: "Name A–Z" },
+					]}
 				/>
 			</div>
 			<DataTable

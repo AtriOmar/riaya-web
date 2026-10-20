@@ -1,20 +1,19 @@
-import { and, asc, desc, eq, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, ne, or } from "drizzle-orm";
 import { db } from "@/db";
-import { appointment, patient, person } from "@/db/schema";
+import { appointment } from "@/db/schema";
 import { apiError } from "@/lib/api-utils";
 import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
 import {
 	cancelEmergencyPendingTimeoutJob,
 	cancelPendingAppointmentTimeoutJob,
 } from "@/lib/pending-appointment-timeout";
-import {
-	DEFAULT_PHONE_COUNTRY,
-	normalizePhoneForStorage,
-	phoneStorageVariants,
-} from "@/lib/phone";
+import { findPersonsOnPhone, toPersonPhone } from "@/lib/person";
+import { personDisplayName } from "@/lib/person-name";
 
 export type CallerAiAppointmentItem = {
 	appointmentId: number;
+	/** Who the appointment is for (the caller or a family member on the line). */
+	patientName: string | null;
 	status: string | null;
 	start: string | null;
 	end: string | null;
@@ -28,34 +27,7 @@ export type CallerAiAppointmentItem = {
 
 const RECENT_PAST_DAYS = 30;
 
-function normalizeCallerPhone(phone: string): string | null {
-	return normalizePhoneForStorage(phone, DEFAULT_PHONE_COUNTRY);
-}
-
-async function patientIdsForCallerPhone(normalized: string): Promise<number[]> {
-	const variants = phoneStorageVariants(normalized);
-	const personRow = await db.query.person.findFirst({
-		where: inArray(person.phoneNumber, variants),
-	});
-	if (!personRow) return [];
-	const rows = await db
-		.select({ id: patient.id })
-		.from(patient)
-		.where(eq(patient.personId, personRow.id));
-	return rows.map((r) => r.id);
-}
-
-function callerOwnershipClause(variants: string[], patientIds: number[]) {
-	const parts = [];
-	if (variants.length > 0) {
-		parts.push(inArray(appointment.newPatientPhoneNumber, variants));
-	}
-	if (patientIds.length > 0) {
-		parts.push(inArray(appointment.patientId, patientIds));
-	}
-	if (parts.length === 0) return sql`false`;
-	return parts.length === 1 ? parts[0] : or(...parts);
-}
+const withDoctorAndPerson = { doctor: true, person: true } as const;
 
 function mapRow(row: {
 	id: number;
@@ -65,6 +37,7 @@ function mapRow(row: {
 	name: string | null;
 	description: string | null;
 	urgent: boolean;
+	person: { firstName: string | null; lastName: string | null } | null;
 	doctor: {
 		firstName: string | null;
 		lastName: string | null;
@@ -78,6 +51,7 @@ function mapRow(row: {
 		: "Doctor";
 	return {
 		appointmentId: row.id,
+		patientName: personDisplayName(row.person) || null,
 		status: row.status,
 		start: row.start?.toISOString() ?? null,
 		end: row.end?.toISOString() ?? null,
@@ -90,24 +64,29 @@ function mapRow(row: {
 	};
 }
 
-async function baseCallerFilters(phone: string) {
-	const normalized = normalizeCallerPhone(phone);
-	if (!normalized) return null;
-	const variants = phoneStorageVariants(normalized);
-	const patientIds = await patientIdsForCallerPhone(normalized);
-	return {
-		normalized,
-		variants,
-		patientIds,
-		ownership: callerOwnershipClause(variants, patientIds),
-	};
+/**
+ * The caller's line and everyone on it. An appointment belongs to the caller
+ * when it was booked from this line or is for someone on it.
+ */
+async function callerScope(phone: string) {
+	const phoneNumber = toPersonPhone(phone);
+	if (!phoneNumber) return null;
+	const personIds = (await findPersonsOnPhone(phoneNumber)).map((p) => p.id);
+	const ownership =
+		personIds.length > 0
+			? or(
+					eq(appointment.contactPhone, phoneNumber),
+					inArray(appointment.personId, personIds),
+				)
+			: eq(appointment.contactPhone, phoneNumber);
+	return { phoneNumber, personIds, ownership };
 }
 
 export async function listAiAppointmentsForCaller(
 	phone: string,
 	options?: { includeRecentPast?: boolean },
 ) {
-	const base = await baseCallerFilters(phone);
+	const base = await callerScope(phone);
 	if (!base) {
 		return {
 			upcoming: [] as CallerAiAppointmentItem[],
@@ -131,7 +110,7 @@ export async function listAiAppointmentsForCaller(
 				eq(appointment.status, "confirmed"),
 			),
 		),
-		with: { doctor: true },
+		with: withDoctorAndPerson,
 		orderBy: [asc(appointment.start)],
 		limit: 3,
 	});
@@ -146,7 +125,7 @@ export async function listAiAppointmentsForCaller(
 				lt(appointment.start, now),
 				gte(appointment.start, pastCutoff),
 			),
-			with: { doctor: true },
+			with: withDoctorAndPerson,
 			orderBy: [desc(appointment.start)],
 			limit: 1,
 		});
@@ -162,7 +141,7 @@ export async function assertCallerOwnsAppointment(
 	appointmentId: number,
 	phone: string,
 ) {
-	const base = await baseCallerFilters(phone);
+	const base = await callerScope(phone);
 	if (!base) throw apiError("CALLER_PHONE_REQUIRED");
 
 	const row = await db.query.appointment.findFirst({
@@ -172,14 +151,10 @@ export async function assertCallerOwnsAppointment(
 
 	if (!row) throw apiError("APPOINTMENT_NOT_FOUND");
 
-	const variants = base.variants;
-	const phoneMatch =
-		row.newPatientPhoneNumber != null &&
-		variants.includes(row.newPatientPhoneNumber);
-	const patientMatch =
-		row.patientId != null && base.patientIds.includes(row.patientId);
-
-	if (!phoneMatch && !patientMatch) throw apiError("FORBIDDEN");
+	const ownsByLine = row.contactPhone === base.phoneNumber;
+	const ownsByPerson =
+		row.personId != null && base.personIds.includes(row.personId);
+	if (!ownsByLine && !ownsByPerson) throw apiError("FORBIDDEN");
 
 	return row;
 }

@@ -59,11 +59,8 @@ export default function LocationPreview({
 				zoom={hasPin ? 11 : 6}
 			/>
 			{!hasPin && (
-				<span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-background/55 px-2 text-center">
+				<span className="absolute inset-0 flex items-center justify-center bg-background/55">
 					<MapPin className="size-4 text-muted-foreground" />
-					<span className="text-[10px] font-medium leading-tight text-muted-foreground">
-						Pick on map
-					</span>
 				</span>
 			)}
 		</button>

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const SIZE = 80;
@@ -20,10 +21,19 @@ export function UsageMeter({
 	label,
 	used,
 	limit,
+	format = String,
+	detail,
+	children,
 }: {
 	label: string;
 	used: number;
 	limit: number | null;
+	/** Formats `used` and `limit` for display (e.g. hours). */
+	format?: (n: number) => string;
+	/** Replaces the "x of y" line (e.g. "35% used") */
+	detail?: string;
+	/** Extra lines or actions under the label */
+	children?: ReactNode;
 }) {
 	const tone = usageTone(used, limit);
 	const unlimited = tone === "unlimited";
@@ -72,15 +82,19 @@ export function UsageMeter({
 				</svg>
 				<div className="absolute inset-0 flex items-center justify-center">
 					<span className="text-sm font-semibold tabular-nums leading-none text-foreground">
-						{used}/{unlimited ? "∞" : limit}
+						{unlimited ? "∞" : `${Math.round(ratio * 100)}%`}
 					</span>
 				</div>
 			</div>
-			<div className="min-w-0">
+			<div className="min-w-0 space-y-1">
 				<p className="text-sm font-medium leading-snug">{label}</p>
-				{unlimited && (
-					<p className="mt-0.5 text-sm text-muted-foreground">Unlimited</p>
-				)}
+				<p className="text-sm text-muted-foreground tabular-nums">
+					{detail ??
+						(unlimited
+							? `${format(used)} used · Unlimited`
+							: `${format(used)} of ${format(limit ?? 0)}`)}
+				</p>
+				{children}
 			</div>
 		</div>
 	);

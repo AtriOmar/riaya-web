@@ -1,21 +1,29 @@
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { user as userTable } from "@/db/auth-schema";
-import { doctorProfile } from "@/db/schema";
+import { doctorProfile, subscription } from "@/db/schema";
 import {
 	apiError,
 	json,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { resolvePlanId } from "@/lib/plan-limits";
+import { PLAN_IDS } from "@/lib/plans";
+import { requirePractice } from "@/lib/practice";
 
 // ─── GET /api/users ──────────────────────────────────────────────────────────
 // Admin: search all users
 
 const getSchema = z.object({
 	search: z.string().optional(),
+	role: z.enum(["doctor", "admin", "owner"]).optional(),
+	status: z.enum(["active", "banned"]).optional(),
+	sort: z
+		.enum(["newest", "oldest", "email_asc", "email_desc", "name_asc"])
+		.default("newest"),
 	limit: z.coerce.number().min(1).max(100).default(50),
 	page: z.coerce.number().min(1).default(1),
 });
@@ -32,7 +40,20 @@ export async function GET(req: NextRequest) {
 		const parsed = getSchema.safeParse(params);
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		const { search, limit, page } = parsed.data;
+		const { search, role, status, sort, limit, page } = parsed.data;
+
+		const orderBy = {
+			newest: [desc(userTable.createdAt), desc(userTable.id)],
+			oldest: [asc(userTable.createdAt), asc(userTable.id)],
+			email_asc: [asc(userTable.email), asc(userTable.id)],
+			email_desc: [desc(userTable.email), asc(userTable.id)],
+			name_asc: [
+				sql`lower(coalesce(${userTable.displayName}, ${userTable.name})) asc nulls last`,
+				asc(userTable.id),
+			],
+		}[sort];
+
+		const roleAccessId = { doctor: 1, admin: 3, owner: 5 } as const;
 
 		const users = await db
 			.select({
@@ -46,6 +67,7 @@ export async function GET(req: NextRequest) {
 				active: userTable.active,
 				type: userTable.type,
 				createdAt: userTable.createdAt,
+				subscription: subscription,
 				hasDoctorProfile:
 					sql<boolean>`CASE WHEN ${doctorProfile.id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
 						"hasDoctorProfile",
@@ -53,20 +75,33 @@ export async function GET(req: NextRequest) {
 			})
 			.from(userTable)
 			.leftJoin(doctorProfile, eq(doctorProfile.userId, userTable.id))
+			.leftJoin(subscription, eq(subscription.doctorId, doctorProfile.id))
 			.where(
-				search
-					? or(
-							ilike(userTable.email, `%${search}%`),
-							ilike(userTable.name, `%${search}%`),
-							ilike(userTable.username, `%${search}%`),
-						)
-					: undefined,
+				and(
+					search
+						? or(
+								ilike(userTable.email, `%${search}%`),
+								ilike(userTable.name, `%${search}%`),
+								ilike(userTable.username, `%${search}%`),
+							)
+						: undefined,
+					role ? eq(userTable.accessId, roleAccessId[role]) : undefined,
+					status
+						? (status === "banned" ? eq : ne)(userTable.active, 0)
+						: undefined,
+				),
 			)
-			.orderBy(desc(userTable.createdAt))
+			.orderBy(...orderBy)
 			.limit(limit)
 			.offset((page - 1) * limit);
 
-		return json(users);
+		// Plan only applies to doctors; non-doctor users get null
+		return json(
+			users.map(({ subscription: sub, ...user }) => ({
+				...user,
+				plan: user.hasDoctorProfile ? resolvePlanId(sub) : null,
+			})),
+		);
 	} catch (e) {
 		if (e instanceof Response) return e;
 		return apiError("INTERNAL_ERROR");
@@ -74,7 +109,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── PUT /api/users ──────────────────────────────────────────────────────────
-// Authenticated user updates their own profile (availability)
+// The doctor (or their secretary) updates the practice's availability
 
 const availabilitySlotSchema = z.object({ start: z.number(), end: z.number() });
 
@@ -92,7 +127,7 @@ const updateSchema = z.object({
 
 export async function PUT(req: NextRequest) {
 	try {
-		const session = await requireSession();
+		const { doctor } = await requirePractice();
 		const body = await req.json();
 		const parsed = updateSchema.safeParse(body);
 
@@ -101,7 +136,7 @@ export async function PUT(req: NextRequest) {
 		const [updated] = await db
 			.update(doctorProfile)
 			.set({ availability: parsed.data.availability, updatedAt: new Date() })
-			.where(eq(doctorProfile.userId, session.user.id))
+			.where(eq(doctorProfile.id, doctor.id))
 			.returning();
 
 		if (!updated) return apiError("DOCTOR_PROFILE_NOT_FOUND");
@@ -117,7 +152,10 @@ import { selectUserSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const userRowSchema = selectUserSchema.merge(
-	z.object({ hasDoctorProfile: z.boolean() }),
+	z.object({
+		hasDoctorProfile: z.boolean(),
+		plan: z.enum(PLAN_IDS).nullable(),
+	}),
 );
 
 registry.registerPath({

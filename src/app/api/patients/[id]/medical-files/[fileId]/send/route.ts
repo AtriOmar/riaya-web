@@ -99,7 +99,6 @@ export async function POST(
 						doctorLastName: profile.lastName,
 						title: foundFile.title,
 					}),
-					quotaConsumed: true,
 				});
 
 				for (let i = 0; i < docUrls.length; i++) {
@@ -125,7 +124,6 @@ export async function POST(
 						documentUrl: documentUrl,
 						fileName: fileName,
 						mimetype: mimetype,
-						quotaConsumed: true,
 					});
 				}
 			} else {
@@ -142,7 +140,6 @@ export async function POST(
 					userId: session.user.id,
 					phone: foundPatient.phoneNumber,
 					message: textMessage,
-					quotaConsumed: true,
 				});
 			}
 		} catch (err: unknown) {

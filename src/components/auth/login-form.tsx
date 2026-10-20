@@ -9,11 +9,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { authQuery, safeNextPath } from "@/lib/safe-next";
 
 const loginSchema = z.object({
 	email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -22,7 +24,15 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+export default function LoginForm({
+	next,
+	email,
+}: {
+	/** Path to open after signing in (e.g. an invite link) */
+	next: string | null;
+	/** Prefilled email (e.g. from an invite) */
+	email: string | null;
+}) {
 	const [showPassword, setShowPassword] = useState(false);
 	const [apiError, setApiError] = useState<string | null>(null);
 	const router = useRouter();
@@ -33,6 +43,7 @@ export default function LoginForm() {
 		formState: { errors, isSubmitting },
 	} = useForm<LoginValues>({
 		resolver: zodResolver(loginSchema),
+		defaultValues: { email: email ?? "" },
 	});
 
 	async function onSubmit(values: LoginValues) {
@@ -48,13 +59,16 @@ export default function LoginForm() {
 		}
 
 		toast.success("Logged in successfully");
-		router.push("/dashboard");
+		router.push(safeNextPath(next));
 		router.refresh();
 	}
 
 	return (
 		<div className="flex min-h-screen bg-gradient-hero">
-			<div className="flex flex-1 justify-center items-center p-8">
+			<div className="relative flex flex-1 justify-center items-center p-8">
+				<div className="top-6 right-6 absolute">
+					<ThemeToggle />
+				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
 					<Link href="/" className="inline-flex items-center gap-2 mb-8">
 						<Image
@@ -161,7 +175,7 @@ export default function LoginForm() {
 					<p className="mt-8 text-muted-foreground text-center">
 						New to Riaya?{" "}
 						<Link
-							href="/register"
+							href={`/register${authQuery(next, email)}`}
 							className="font-semibold text-primary hover:underline"
 						>
 							Register your practice

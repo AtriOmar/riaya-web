@@ -17,9 +17,11 @@ const schema = z.object({
 	contentType: z.string().min(1),
 	folder: z.enum([
 		"profile-pictures",
+		"practice-branding",
 		"doctor-applications",
 		"medical-files",
 		"recordings",
+		"test-call-recordings",
 	]),
 });
 

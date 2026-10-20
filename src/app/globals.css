@@ -1,8 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "streamdown/styles.css";
 
-@custom-variant dark (&:is(.dark *));
+@source "../../node_modules/streamdown/dist/*.js";
+
+@custom-variant dark (&:is(.dark, .dark *));
 
 @theme inline {
 	--color-background: var(--background);
@@ -60,6 +63,7 @@
 }
 
 :root {
+	color-scheme: light;
 	--background: hsl(0 0% 100%);
 	--foreground: hsl(150 30% 10%);
 	--card: hsl(0 0% 100%);
@@ -137,38 +141,63 @@
 }
 
 .dark {
-	--background: hsl(148 30% 6%);
+	color-scheme: dark;
+	--background: hsl(150 25% 6%);
 	--foreground: hsl(140 20% 96%);
-	--card: hsl(148 25% 10%);
+	--card: hsl(150 22% 9%);
 	--card-foreground: hsl(140 20% 96%);
-	--popover: hsl(148 25% 10%);
+	--popover: hsl(150 22% 9%);
 	--popover-foreground: hsl(140 20% 96%);
-	--primary: hsl(142 70% 45%);
-	--primary-foreground: hsl(148 30% 6%);
-	--secondary: hsl(148 20% 15%);
+	--primary: hsl(142 70% 40%);
+	--primary-foreground: hsl(150 30% 6%);
+	--secondary: hsl(150 18% 13%);
 	--secondary-foreground: hsl(140 20% 96%);
-	--muted: hsl(148 20% 15%);
-	--muted-foreground: hsl(140 15% 60%);
-	--accent: hsl(148 20% 18%);
+	--muted: hsl(150 18% 13%);
+	--muted-foreground: hsl(140 15% 62%);
+	--accent: hsl(150 18% 16%);
 	--accent-foreground: hsl(140 20% 96%);
 	--destructive: hsl(0 62% 50%);
 	--destructive-foreground: hsl(0 0% 98%);
-	--border: hsl(148 20% 18%);
-	--input: hsl(148 20% 18%);
-	--ring: hsl(142 70% 45%);
+	--border: hsl(150 18% 15%);
+	--input: hsl(150 18% 15%);
+	--ring: hsl(142 70% 40%);
 	--chart-1: oklch(0.871 0.15 154.449);
 	--chart-2: oklch(0.723 0.219 149.579);
 	--chart-3: oklch(0.627 0.194 149.214);
 	--chart-4: oklch(0.527 0.154 150.069);
 	--chart-5: oklch(0.448 0.119 151.328);
-	--sidebar: hsl(0 0% 98%);
-	--sidebar-foreground: hsl(240 5.3% 26.1%);
-	--sidebar-primary: hsl(240 5.9% 10%);
-	--sidebar-primary-foreground: hsl(0 0% 98%);
-	--sidebar-accent: hsl(240 4.8% 95.9%);
-	--sidebar-accent-foreground: hsl(240 5.9% 10%);
-	--sidebar-border: hsl(220 13% 91%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+	--sidebar: hsl(150 22% 8%);
+	--sidebar-foreground: hsl(140 20% 96%);
+	--sidebar-primary: hsl(142 70% 40%);
+	--sidebar-primary-foreground: hsl(150 30% 6%);
+	--sidebar-accent: hsl(150 18% 14%);
+	--sidebar-accent-foreground: hsl(140 20% 96%);
+	--sidebar-border: hsl(150 18% 14%);
+	--sidebar-ring: hsl(142 70% 40%);
+	--gradient-primary: linear-gradient(
+		135deg,
+		hsl(142 70% 40%) 0%,
+		hsl(144 80% 26%) 100%
+	);
+	--gradient-soft: linear-gradient(
+		180deg,
+		hsl(150 22% 9%) 0%,
+		hsl(150 25% 6%) 100%
+	);
+	--gradient-hero: linear-gradient(
+		135deg,
+		hsl(150 25% 10%) 0%,
+		hsl(150 23% 8%) 50%,
+		hsl(150 25% 6%) 100%
+	);
+	--gradient-glass: linear-gradient(
+		135deg,
+		rgb(14 26 18 / 90%) 0%,
+		rgb(11 20 14 / 70%) 100%
+	);
+	--shadow-soft: 0 4px 20px -4px rgb(0 0 0 / 45%);
+	--shadow-medium: 0 8px 30px -8px rgb(0 0 0 / 60%);
+	--shadow-glow: 0 0 40px rgb(34 197 94 / 18%);
 	--scrollbar-thumb: color-mix(in oklab, var(--primary-400) 65%, black 35%);
 	--scrollbar-thumb-hover: color-mix(
 		in oklab,
@@ -302,7 +331,7 @@ html {
 	height: 36px;
 	border-radius: 50%;
 	border: 3px solid transparent;
-	border-top-color: oklch(var(--primary));
+	border-top-color: var(--primary);
 	animation: ring-spin 0.8s linear infinite;
 }
 
@@ -324,7 +353,7 @@ html {
 
 .cube_item {
 	border-radius: 3px;
-	background: hsl(var(--primary));
+	background: var(--primary);
 }
 
 .cube_x {
@@ -460,6 +489,44 @@ html {
 	text-overflow: ellipsis;
 }
 
+.dark .rbc-time-view {
+	border: 1px solid var(--border);
+	background-color: var(--card);
+}
+
+.dark .rbc-header {
+	color: var(--foreground);
+	border-color: var(--border);
+}
+
+.dark .rbc-time-content {
+	border-top: 1px solid var(--border);
+}
+
+.dark .rbc-time-header {
+	border-bottom: 1px solid var(--border);
+}
+
+.dark .rbc-timeslot-group {
+	border-bottom: 1px solid var(--border);
+}
+
+.dark .rbc-day-slot {
+	border-left: 1px solid var(--border);
+}
+
+.dark .rbc-time-slot {
+	border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+
+.dark .rbc-today {
+	background-color: color-mix(in oklab, var(--primary) 8%, transparent);
+}
+
+.dark .rbc-off-range-bg {
+	background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+}
+
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
 /* ---------------------------------- End Calendar Styles ---------------------------------- */
 /* ─── Animations ───────────────────────────────────────────────────────────── */
@@ -477,4 +544,119 @@ html {
 
 .animate-fade-in-up {
 	animation: fade-in-up 0.4s ease-out;
+}
+
+/* ─── AI chat markdown (streamdown) ────────────────────────────────────────── */
+
+.chat-markdown {
+	font-size: 0.9375rem;
+	line-height: 1.7;
+}
+
+.chat-markdown > :first-child {
+	margin-top: 0;
+}
+
+.chat-markdown > :last-child {
+	margin-bottom: 0;
+}
+
+.chat-markdown p {
+	margin-block: 0.625rem;
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4 {
+	margin-top: 1.25rem;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	line-height: 1.35;
+	letter-spacing: -0.01em;
+}
+
+.chat-markdown h1 {
+	font-size: 1.25rem;
+}
+
+.chat-markdown h2 {
+	font-size: 1.125rem;
+}
+
+.chat-markdown h3,
+.chat-markdown h4 {
+	font-size: 1rem;
+}
+
+.chat-markdown [data-streamdown="unordered-list"],
+.chat-markdown [data-streamdown="ordered-list"] {
+	margin-block: 0.625rem;
+	padding-inline-start: 1.25rem;
+	list-style-position: outside;
+}
+
+.chat-markdown [data-streamdown="list-item"] {
+	margin-block: 0.25rem;
+	padding-inline-start: 0.25rem;
+}
+
+.chat-markdown [data-streamdown="list-item"] > p {
+	margin-block: 0;
+}
+
+.chat-markdown [data-streamdown="list-item"]::marker {
+	color: var(--muted-foreground);
+}
+
+.chat-markdown [data-streamdown="strong"] {
+	font-weight: 600;
+}
+
+.chat-markdown [data-streamdown="inline-code"] {
+	border-radius: 0.375rem;
+	background: var(--muted);
+	padding: 0.1rem 0.35rem;
+	font-size: 0.85em;
+}
+
+.chat-markdown [data-streamdown="blockquote"] {
+	margin-block: 0.75rem;
+	border-inline-start: 3px solid
+		color-mix(in oklab, var(--primary) 50%, transparent);
+	padding-inline-start: 0.875rem;
+	color: var(--muted-foreground);
+	font-style: normal;
+}
+
+.chat-markdown [data-streamdown="table-wrapper"] {
+	margin-block: 0.875rem;
+	gap: 0;
+	border: 0;
+	background: transparent;
+	padding: 0;
+}
+
+.chat-markdown [data-streamdown="table-wrapper"] > div {
+	border-radius: 0.75rem;
+}
+
+.chat-markdown [data-streamdown="table-header"] {
+	background: color-mix(in oklab, var(--muted) 70%, transparent);
+}
+
+.chat-markdown [data-streamdown="table-header-cell"],
+.chat-markdown [data-streamdown="table-cell"] {
+	padding: 0.5rem 0.875rem;
+	font-size: 0.8125rem;
+	white-space: normal;
+}
+
+.chat-markdown [data-streamdown="table-header-cell"] {
+	color: var(--muted-foreground);
+	font-weight: 600;
+}
+
+.chat-markdown [data-streamdown="horizontal-rule"] {
+	margin-block: 1.25rem;
 }

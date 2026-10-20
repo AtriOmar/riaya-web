@@ -1,16 +1,23 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
+	check,
 	doublePrecision,
 	index,
 	integer,
 	jsonb,
+	pgEnum,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
+import type { AiChatPart } from "../lib/ai-chat-parts";
+import type { ConsultationSummary } from "../lib/consultation-summary";
+import type { Availability } from "../lib/doctor-slots";
+import type { SpeakerRoles } from "../lib/speaker-roles";
 import { account, session, user } from "./auth-schema";
 
 // Re-export better-auth tables so drizzle-kit picks them up from this single entry point
@@ -73,14 +80,24 @@ export const doctorProfile = pgTable(
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
 		specialityId: integer("speciality_id").references(() => speciality.id),
-		// Stored as JSONB: { [day 0-6]: [{ start: number, end: number }] }
-		availability: jsonb("availability"),
+		// { [day 0-6 = Mon-Sun]: [{ start, end }] } in minutes from midnight
+		availability: jsonb("availability").$type<Availability>(),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		medicalCouncilNumber: varchar("medical_council_number", { length: 100 }),
 		medicalCouncilCertificate: varchar("medical_council_certificate", {
 			length: 255,
 		}),
+		// Printed on invoices (Pro). PNG or JPEG on the CDN.
+		logoUrl: varchar("logo_url", { length: 1024 }),
+		stampUrl: varchar("stamp_url", { length: 1024 }),
+		// Admin decision to stop referring patients to this doctor (best-fit,
+		// emergency fan-out, refusal suggestions). Null = listed. The doctor sees the reason.
+		bestFitExcludedAt: timestamp("best_fit_excluded_at"),
+		bestFitExcludedBy: text("best_fit_excluded_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		bestFitExcludedReason: text("best_fit_excluded_reason"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -90,32 +107,107 @@ export const doctorProfile = pgTable(
 		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
 		index("doctor_profile_cin_idx").on(table.cin),
+		// An exclusion always carries the reason shown to the doctor.
+		check(
+			"doctor_profile_best_fit_exclusion_reason",
+			sql`(${table.bestFitExcludedAt} is null) = (${table.bestFitExcludedReason} is null)`,
+		),
 	],
 );
 
-// ─── Person ───────────────────────────────────────────────────────────────────
-// Phone-number-based identity. Created automatically when someone calls.
+// ─── Secretary ────────────────────────────────────────────────────────────────
+// A user who works in one doctor's practice (Pro). Secretaries manage
+// appointments, patients, invoices and availability, but never see medical
+// files, recordings, AI chat or billing. Access pauses while the doctor is on Free.
 
-export const person = pgTable(
-	"person",
+export const secretary = pgTable(
+	"secretary",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		phoneNumber: varchar("phone_number", { length: 50 }).notNull().unique(),
-		// call = Twilio / external phone booking; doctor = dashboard patient create
-		source: varchar("source", { length: 50 }).notNull().default("call"),
-		firstName: varchar("first_name", { length: 255 }),
-		lastName: varchar("last_name", { length: 255 }),
-		dateOfBirth: timestamp("date_of_birth"),
-		gender: varchar("gender", { length: 50 }),
-		address: text("address"),
-		/** Voice/UI language: en, fr, or ar (Tunisian Derja). Default Arabic. */
-		preferredLanguage: varchar("preferred_language", { length: 8 })
+		doctorId: integer("doctor_id")
 			.notNull()
-			.default("ar"),
-		createdAt: timestamp("created_at").defaultNow(),
-		updatedAt: timestamp("updated_at").defaultNow(),
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.unique()
+			.references(() => user.id, { onDelete: "cascade" }),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
 	},
-	(table) => [index("person_phone_number_idx").on(table.phoneNumber)],
+	(table) => [index("secretary_doctor_id_idx").on(table.doctorId)],
+);
+
+// Emailed link that lets someone join a doctor's practice as a secretary.
+// Only a hash of the token is stored.
+export const secretaryInvite = pgTable(
+	"secretary_invite",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		email: varchar("email", { length: 255 }).notNull(),
+		tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+		expiresAt: timestamp("expires_at").notNull(),
+		acceptedAt: timestamp("accepted_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [index("secretary_invite_doctor_id_idx").on(table.doctorId)],
+);
+
+// ─── Person ───────────────────────────────────────────────────────────────────
+// One real human. Phones live in `person_phone`: a phone can serve several
+// people (a family) and a person can be reached on several phones.
+
+export const person = pgTable("person", {
+	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+	// call = Twilio / external phone booking; doctor = dashboard patient create
+	source: varchar("source", { length: 50 }).notNull().default("call"),
+	firstName: varchar("first_name", { length: 255 }),
+	lastName: varchar("last_name", { length: 255 }),
+	dateOfBirth: timestamp("date_of_birth"),
+	gender: varchar("gender", { length: 50 }),
+	address: text("address"),
+	/** Voice/UI language: en, fr, or ar (Tunisian Derja). Default Arabic. */
+	preferredLanguage: varchar("preferred_language", { length: 8 })
+		.notNull()
+		.default("ar"),
+	createdAt: timestamp("created_at").defaultNow(),
+	updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Person Phone ─────────────────────────────────────────────────────────────
+// Links a person to a phone number (always E.164). `relationship` is how the
+// person relates to the phone's owner: `self` is the owner, at most one per phone.
+
+export const personPhoneRelationships = [
+	"self",
+	"child",
+	"parent",
+	"spouse",
+	"sibling",
+	"other",
+] as const;
+export type PersonPhoneRelationship = (typeof personPhoneRelationships)[number];
+
+export const personPhone = pgTable(
+	"person_phone",
+	{
+		personId: integer("person_id")
+			.notNull()
+			.references(() => person.id, { onDelete: "cascade" }),
+		phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+		relationship: varchar("relationship", { length: 20 })
+			.$type<PersonPhoneRelationship>()
+			.notNull(),
+		createdAt: timestamp("created_at").defaultNow(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.personId, table.phoneNumber] }),
+		index("person_phone_phone_number_idx").on(table.phoneNumber),
+		uniqueIndex("person_phone_one_owner_idx")
+			.on(table.phoneNumber)
+			.where(sql`${table.relationship} = 'self'`),
+	],
 );
 
 // ─── Patient ──────────────────────────────────────────────────────────────────
@@ -132,6 +224,11 @@ export const patient = pgTable(
 		dateOfBirth: timestamp("date_of_birth"),
 		gender: varchar("gender", { length: 50 }),
 		address: text("address"),
+		/**
+		 * The number this doctor uses to reach the patient (WhatsApp, invoices).
+		 * Per-doctor contact data, not identity: who the patient is stays `personId`,
+		 * and a person can be on several phones (`person_phone`).
+		 */
 		phoneNumber: varchar("phone_number", { length: 50 }),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
@@ -175,19 +272,26 @@ export const appointment = pgTable(
 		source: varchar("source", { length: 50 }).notNull().default("dashboard"),
 		name: varchar("name", { length: 255 }),
 		description: text("description"),
-		// Flattened newPatient sub-document
-		newPatientName: varchar("new_patient_name", { length: 255 }),
-		newPatientPhoneNumber: varchar("new_patient_phone_number", { length: 50 }),
+		/** Who the appointment is for. Set on every booking; the doctor's `patientId` file is linked on accept. */
+		personId: integer("person_id").references(() => person.id),
+		/** Phone line that booked it (E.164): where messages about this appointment go. */
+		contactPhone: varchar("contact_phone", { length: 50 }),
 		/** AI emergency fan-out: pending requests shown with an urgent badge. */
 		urgent: boolean("urgent").notNull().default(false),
 		/** Shared id across the top-N pending emergency requests for one call. */
 		emergencyGroupId: varchar("emergency_group_id", { length: 64 }),
+		/** Phone bookings: the place the patient searched from, offered again on their next call. */
+		patientPlaceLabel: varchar("patient_place_label", { length: 255 }),
+		patientLatitude: doublePrecision("patient_latitude"),
+		patientLongitude: doublePrecision("patient_longitude"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
 	(table) => [
 		index("appointment_doctor_id_idx").on(table.doctorId),
 		index("appointment_patient_id_idx").on(table.patientId),
+		index("appointment_person_id_idx").on(table.personId),
+		index("appointment_contact_phone_idx").on(table.contactPhone),
 		index("appointment_status_idx").on(table.status),
 		index("appointment_start_idx").on(table.start),
 		index("appointment_source_idx").on(table.source),
@@ -197,18 +301,35 @@ export const appointment = pgTable(
 
 // ─── Review ───────────────────────────────────────────────────────────────────
 
+export const reviewStatusEnum = pgEnum("review_status", [
+	"pending",
+	"submitted",
+]);
+export const reviewWaitTimeEnum = pgEnum("review_wait_time", [
+	"short",
+	"medium",
+	"long",
+]);
+
 export const review = pgTable(
 	"review",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		appointmentId: integer("appointment_id").references(() => appointment.id),
-		doctorId: integer("doctor_id").references(() => doctorProfile.id),
+		appointmentId: integer("appointment_id")
+			.notNull()
+			.unique()
+			.references(() => appointment.id),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id),
 		patientId: integer("patient_id").references(() => patient.id),
 		token: varchar("token", { length: 255 }).unique().notNull(),
 		rating: integer("rating"),
-		waitTime: varchar("wait_time", { length: 50 }),
+		waitTime: reviewWaitTimeEnum("wait_time"),
 		comment: text("comment"),
-		status: varchar("status", { length: 50 }).default("pending"),
+		status: reviewStatusEnum("status").notNull().default("pending"),
+		/** The magic link stops accepting answers after this time. */
+		expiresAt: timestamp("expires_at").notNull(),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -409,6 +530,71 @@ export const callEvent = pgTable(
 	],
 );
 
+// ─── Call Report ──────────────────────────────────────────────────────────────
+// Filed by the voice AI (`report_abuse`) when a caller is abusive. Admins review
+// it and either dismiss it or block the number (see `blockedPhone`).
+
+export const callReportCategories = [
+	"mocking",
+	"insults",
+	"threats",
+	"sexual",
+	"other",
+] as const;
+export type CallReportCategory = (typeof callReportCategories)[number];
+
+export const callReportStatuses = ["open", "dismissed", "blocked"] as const;
+export type CallReportStatus = (typeof callReportStatuses)[number];
+
+export const callReport = pgTable(
+	"call_report",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callId: integer("call_id")
+			.notNull()
+			.unique()
+			.references(() => call.id, { onDelete: "cascade" }),
+		// The caller's line (E.164). Kept here because on callbacks `call.from` is our number.
+		phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+		category: varchar("category", { length: 20 })
+			.$type<CallReportCategory>()
+			.notNull(),
+		summary: text("summary").notNull(),
+		status: varchar("status", { length: 20 })
+			.$type<CallReportStatus>()
+			.notNull()
+			.default("open"),
+		reviewedBy: text("reviewed_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		reviewedAt: timestamp("reviewed_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("call_report_status_idx").on(table.status),
+		index("call_report_phone_number_idx").on(table.phoneNumber),
+	],
+);
+
+// ─── Blocked Phone ────────────────────────────────────────────────────────────
+// Numbers the voice AI refuses to answer (Twilio <Reject> in /incoming-call).
+// Blocked while a row exists and `expiresAt` is null or in the future.
+
+export const blockedPhone = pgTable("blocked_phone", {
+	phoneNumber: varchar("phone_number", { length: 50 }).primaryKey(),
+	reason: text("reason"),
+	reportId: integer("report_id").references(() => callReport.id, {
+		onDelete: "set null",
+	}),
+	blockedBy: text("blocked_by").references(() => user.id, {
+		onDelete: "set null",
+	}),
+	expiresAt: timestamp("expires_at"),
+	rejectedCallCount: integer("rejected_call_count").notNull().default(0),
+	lastRejectedAt: timestamp("last_rejected_at"),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ─── Doctor Unavailability ────────────────────────────────────────────────────
 
 export const doctorUnavailability = pgTable(
@@ -461,7 +647,8 @@ export const subscription = pgTable(
 );
 
 // ─── Billing Invoice ──────────────────────────────────────────────────────────
-// One row per billing cycle invoice issued to a doctor (distinct from patient `invoice`).
+// Something a doctor pays Riaya for (distinct from patient `invoice`): a plan
+// billing cycle (`subscription`) or a recording-time pack (`top_up`).
 // Payment is handled via Konnect.network.
 
 export const billingInvoice = pgTable(
@@ -471,10 +658,15 @@ export const billingInvoice = pgTable(
 		doctorId: integer("doctor_id")
 			.notNull()
 			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		// subscription | top_up
+		kind: varchar("kind", { length: 50 }).notNull().default("subscription"),
+		// Set on `subscription` invoices only
 		subscriptionId: integer("subscription_id").references(
 			() => subscription.id,
 			{ onDelete: "set null" },
 		),
+		// Recording time bought, on `top_up` invoices only. Granted once paid; never expires.
+		creditSeconds: integer("credit_seconds"),
 		// Sequential invoice number e.g. "INV-2026-001"
 		number: varchar("number", { length: 100 }).notNull().unique(),
 		// open | paid | cancelled
@@ -501,7 +693,7 @@ export const billingInvoice = pgTable(
 
 // ─── Consultation Recording ───────────────────────────────────────────────────
 // Recordings made by the doctor during or after a patient consultation.
-// Linked optionally to a patient. Transcript is generated via Azure AI.
+// Linked optionally to a patient. Transcript is generated via OpenRouter.
 
 export const consultationRecording = pgTable(
 	"consultation_recording",
@@ -517,10 +709,20 @@ export const consultationRecording = pgTable(
 		audioUrl: varchar("audio_url", { length: 1024 }).notNull(),
 		durationSeconds: integer("duration_seconds"),
 		transcript: jsonb("transcript"),
-		// pending | processing | done | error
+		// pending | processing | done | error | skipped (saved with no recording
+		// time left; the doctor can transcribe it later)
 		transcriptStatus: varchar("transcript_status", { length: 50 })
 			.notNull()
 			.default("pending"),
+		// Transcript speaker label ("Speaker 1") → doctor | patient | companion.
+		// Set by the AI after transcription; the doctor can correct it.
+		speakerRoles: jsonb("speaker_roles").$type<SpeakerRoles>(),
+		// Structured note written from the transcript (Pro), editable by the doctor
+		summary: jsonb("summary").$type<ConsultationSummary>(),
+		// processing | done | error; null = no summary asked for
+		summaryStatus: varchar("summary_status", { length: 50 }),
+		// Model cost of the last summary, millionths of a USD (covered by recording hours)
+		summaryCostMicroUsd: integer("summary_cost_micro_usd"),
 		createdAt: timestamp("created_at").defaultNow(),
 		updatedAt: timestamp("updated_at").defaultNow(),
 	},
@@ -528,6 +730,33 @@ export const consultationRecording = pgTable(
 		index("consultation_recording_doctor_id_idx").on(table.doctorId),
 		index("consultation_recording_patient_id_idx").on(table.patientId),
 		index("consultation_recording_created_at_idx").on(table.createdAt),
+	],
+);
+
+// ─── Recording Usage ──────────────────────────────────────────────────────────
+// One row per transcribed recording: the audio time it used. Kept when the
+// recording is deleted so usage can't be reset. The plan's monthly allowance
+// covers it first; `creditSeconds` is the part paid from purchased packs.
+
+export const recordingUsage = pgTable(
+	"recording_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		doctorId: integer("doctor_id")
+			.notNull()
+			.references(() => doctorProfile.id, { onDelete: "cascade" }),
+		recordingId: integer("recording_id")
+			.unique()
+			.references(() => consultationRecording.id, { onDelete: "set null" }),
+		seconds: integer("seconds").notNull(),
+		creditSeconds: integer("credit_seconds").notNull().default(0),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("recording_usage_doctor_created_idx").on(
+			table.doctorId,
+			table.createdAt,
+		),
 	],
 );
 
@@ -556,6 +785,21 @@ export const aiChatConversation = pgTable(
 	],
 );
 
+export const aiChatMessageStatuses = [
+	"streaming",
+	// Stop was asked for; the generator saves the final text and sets `stopped`
+	"stopping",
+	"done",
+	"stopped",
+	"failed",
+] as const;
+export type AiChatMessageStatus = (typeof aiChatMessageStatuses)[number];
+/** A reply that is still being written (polled by the page). */
+export const liveAiChatMessageStatuses: AiChatMessageStatus[] = [
+	"streaming",
+	"stopping",
+];
+
 export const aiChatMessage = pgTable(
 	"ai_chat_message",
 	{
@@ -565,7 +809,20 @@ export const aiChatMessage = pgTable(
 			.references(() => aiChatConversation.id, { onDelete: "cascade" }),
 		// user | assistant
 		role: varchar("role", { length: 20 }).notNull(),
-		content: text("content").notNull(),
+		// Text, tools the assistant ran and actions it proposed (lib/ai-chat-parts.ts)
+		parts: jsonb("parts").$type<AiChatPart[]>().notNull(),
+		// An assistant reply is created as
+		// `streaming` and its content saved as it is written, so it survives the
+		// doctor closing the page. User messages are always `done`.
+		status: varchar("status", { length: 20 })
+			.$type<AiChatMessageStatus>()
+			.notNull()
+			.default("done"),
+		// What generating an assistant reply used (null on user messages)
+		promptTokens: integer("prompt_tokens"),
+		completionTokens: integer("completion_tokens"),
+		// Millionths of a USD, as billed by OpenRouter
+		costMicroUsd: integer("cost_micro_usd"),
 		createdAt: timestamp("created_at").defaultNow(),
 	},
 	(table) => [
@@ -656,7 +913,10 @@ export const doctorProfileRelations = relations(
 		billingInvoices: many(billingInvoice),
 		whatsappUsage: many(whatsappUsage),
 		consultationRecordings: many(consultationRecording),
+		recordingUsage: many(recordingUsage),
 		aiChatConversations: many(aiChatConversation),
+		secretaries: many(secretary),
+		secretaryInvites: many(secretaryInvite),
 	}),
 );
 
@@ -691,6 +951,15 @@ export const whatsappUsageRelations = relations(whatsappUsage, ({ one }) => ({
 
 export const personRelations = relations(person, ({ many }) => ({
 	patients: many(patient),
+	phones: many(personPhone),
+	appointments: many(appointment),
+}));
+
+export const personPhoneRelations = relations(personPhone, ({ one }) => ({
+	person: one(person, {
+		fields: [personPhone.personId],
+		references: [person.id],
+	}),
 }));
 
 export const patientRelations = relations(patient, ({ one, many }) => ({
@@ -729,6 +998,10 @@ export const appointmentRelations = relations(appointment, ({ one, many }) => ({
 		fields: [appointment.patientId],
 		references: [patient.id],
 	}),
+	person: one(person, {
+		fields: [appointment.personId],
+		references: [person.id],
+	}),
 	calls: many(call),
 	reviews: many(review),
 }));
@@ -739,6 +1012,14 @@ export const callRelations = relations(call, ({ one, many }) => ({
 		references: [appointment.id],
 	}),
 	events: many(callEvent),
+	report: one(callReport),
+}));
+
+export const callReportRelations = relations(callReport, ({ one }) => ({
+	call: one(call, {
+		fields: [callReport.callId],
+		references: [call.id],
+	}),
 }));
 
 export const callEventRelations = relations(callEvent, ({ one }) => ({
@@ -832,6 +1113,38 @@ export const consultationRecordingRelations = relations(
 		aiChatConversations: many(aiChatConversation),
 	}),
 );
+
+export const secretaryRelations = relations(secretary, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [secretary.doctorId],
+		references: [doctorProfile.id],
+	}),
+	user: one(user, {
+		fields: [secretary.userId],
+		references: [user.id],
+	}),
+}));
+
+export const secretaryInviteRelations = relations(
+	secretaryInvite,
+	({ one }) => ({
+		doctor: one(doctorProfile, {
+			fields: [secretaryInvite.doctorId],
+			references: [doctorProfile.id],
+		}),
+	}),
+);
+
+export const recordingUsageRelations = relations(recordingUsage, ({ one }) => ({
+	doctor: one(doctorProfile, {
+		fields: [recordingUsage.doctorId],
+		references: [doctorProfile.id],
+	}),
+	recording: one(consultationRecording, {
+		fields: [recordingUsage.recordingId],
+		references: [consultationRecording.id],
+	}),
+}));
 
 export const aiChatConversationRelations = relations(
 	aiChatConversation,

@@ -2,22 +2,23 @@ import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointment, doctorProfile, speciality } from "@/db/schema";
+import { appointment, speciality } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import { BEST_FIT_MAX_RADIUS_KM, calculateHaversineKm } from "@/lib/best-fit";
-import { type Availability, listSlotsForDay } from "@/lib/doctor-slots";
+import { calculateHaversineKm, listFinderDoctors } from "@/lib/best-fit";
+import { listSlotsForDay } from "@/lib/doctor-slots";
 
 // ─── GET /api/doctors/best-fit/range ─────────────────────────────────────────
 // Admin tool endpoint — returns best-fit doctors grouped by day for a date range.
 // Used by the admin "Best Fit Finder" tool to render a month-view calendar heatmap
 // where each day shows which doctors are available on that day.
-
-const MAX_RADIUS_KM = BEST_FIT_MAX_RADIUS_KM;
+// `speciality` and the `lat`/`long` pair are each optional: without a speciality
+// every verified doctor is returned; without a location there is no radius
+// filter and `distance` is null.
 
 const schema = z.object({
-	speciality: z.string().min(1),
-	long: z.coerce.number(),
-	lat: z.coerce.number(),
+	speciality: z.string().min(1).optional(),
+	long: z.coerce.number().optional(),
+	lat: z.coerce.number().optional(),
 	from: z.string(),
 	to: z.string(),
 });
@@ -40,11 +41,16 @@ export async function GET(req: NextRequest) {
 
 		const {
 			speciality: specialitySearchTerm,
-			long,
-			lat,
 			from: fromParam,
 			to: toParam,
 		} = parsed.data;
+		const location =
+			parsed.data.lat != null &&
+			parsed.data.long != null &&
+			Number.isFinite(parsed.data.lat) &&
+			Number.isFinite(parsed.data.long)
+				? { lat: parsed.data.lat, long: parsed.data.long }
+				: null;
 
 		const from = new Date(fromParam);
 		const to = new Date(toParam);
@@ -63,45 +69,27 @@ export async function GET(req: NextRequest) {
 
 		const currentTime = new Date();
 
-		// Find speciality by slug or translated names
-		const specialities = await db
-			.select()
-			.from(speciality)
-			.where(
-				or(
-					eq(speciality.slug, specialitySearchTerm),
-					eq(speciality.enName, specialitySearchTerm),
-					eq(speciality.frName, specialitySearchTerm),
-					eq(speciality.arName, specialitySearchTerm),
-				),
-			);
+		// Find speciality by slug or translated names (only when one is given)
+		let specialityId: number | null = null;
+		if (specialitySearchTerm) {
+			const specialities = await db
+				.select()
+				.from(speciality)
+				.where(
+					or(
+						eq(speciality.slug, specialitySearchTerm),
+						eq(speciality.enName, specialitySearchTerm),
+						eq(speciality.frName, specialitySearchTerm),
+						eq(speciality.arName, specialitySearchTerm),
+					),
+				);
 
-		const specialityData = specialities[0];
-		if (!specialityData) return apiError("SPECIALITY_NOT_FOUND");
+			const specialityData = specialities[0];
+			if (!specialityData) return apiError("SPECIALITY_NOT_FOUND");
+			specialityId = specialityData.id;
+		}
 
-		// Fetch verified doctors with this speciality
-		const allDoctors = await db
-			.select()
-			.from(doctorProfile)
-			.where(
-				and(
-					eq(doctorProfile.status, "verified"),
-					eq(doctorProfile.specialityId, specialityData.id),
-				),
-			);
-
-		// Pre-filter by radius — mirrors the AI /best-fit cap.
-		const doctors = allDoctors
-			.filter((d) => d.cabinetLatitude != null && d.cabinetLongitude != null)
-			.filter(
-				(d) =>
-					calculateHaversineKm(
-						lat,
-						long,
-						d.cabinetLatitude as number,
-						d.cabinetLongitude as number,
-					) <= MAX_RADIUS_KM,
-			);
+		const doctors = await listFinderDoctors({ specialityId, location });
 
 		// Build list of dates in range (inclusive)
 		const days: Date[] = [];
@@ -123,7 +111,7 @@ export async function GET(req: NextRequest) {
 			cabinetLongitude: number | null;
 			specialityId: number | null;
 			address: string | null;
-			distance: number;
+			distance: number | null;
 			slots: SlotDto[];
 		};
 		type DayEntry = { date: string; doctors: DoctorDayResult[] };
@@ -166,14 +154,16 @@ export async function GET(req: NextRequest) {
 		}
 
 		for (const doctor of doctors) {
-			const distance = calculateHaversineKm(
-				lat,
-				long,
-				doctor.cabinetLatitude as number,
-				doctor.cabinetLongitude as number,
-			);
+			const distance = location
+				? calculateHaversineKm(
+						location.lat,
+						location.long,
+						doctor.cabinetLatitude as number,
+						doctor.cabinetLongitude as number,
+					)
+				: null;
 			const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
-			const availability = (doctor.availability as Availability) ?? {};
+			const availability = doctor.availability ?? {};
 
 			for (const day of days) {
 				const slots = listSlotsForDay(
@@ -214,7 +204,7 @@ export async function GET(req: NextRequest) {
 				? (new Date(first.start).getTime() - currentTime.getTime()) /
 					(1000 * 60)
 				: 0;
-			return d.distance + timeDiff / weight;
+			return (d.distance ?? 0) + timeDiff / weight;
 		};
 
 		const result: DayEntry[] = [];
@@ -236,9 +226,10 @@ import { selectBestFitDoctorSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 const bestFitRangeDoctorSchema = selectBestFitDoctorSchema
-	.omit({ nextSlot: true })
+	.omit({ nextSlot: true, distance: true })
 	.merge(
 		z.object({
+			distance: z.number().nullable(),
 			slots: z.array(z.object({ start: z.string(), end: z.string() })),
 		}),
 	);

@@ -12,6 +12,7 @@ import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
+	DeleteApiRecordingsId200,
 	GetApiRecordings200Item,
 	GetApiRecordingsId200,
 	GetApiRecordingsParams,
@@ -19,6 +20,7 @@ import type {
 	PatchApiRecordingsIdBody,
 	PostApiRecordings201,
 	PostApiRecordingsBody,
+	PostApiRecordingsIdSummary200,
 	PostApiRecordingsIdTranscribe200,
 } from "../api.schemas";
 
@@ -249,6 +251,62 @@ export const usePatchApiRecordingsId = <TError = unknown>(
 	};
 };
 /**
+ * @summary Delete recording
+ */
+export const deleteApiRecordingsId = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<DeleteApiRecordingsId200>(
+		{ url: `/api/recordings/${id}`, method: "DELETE" },
+		options,
+	);
+};
+
+export const getDeleteApiRecordingsIdMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return deleteApiRecordingsId(id, options);
+	};
+};
+export const getDeleteApiRecordingsIdMutationKey = (id: string) =>
+	[`/api/recordings/${id}`] as const;
+
+export type DeleteApiRecordingsIdMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteApiRecordingsId>>
+>;
+
+/**
+ * @summary Delete recording
+ */
+export const useDeleteApiRecordingsId = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof deleteApiRecordingsId>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof deleteApiRecordingsId>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getDeleteApiRecordingsIdMutationKey(id);
+	const swrFn = getDeleteApiRecordingsIdMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Transcribe recording
  */
 export const postApiRecordingsIdTranscribe = (
@@ -297,6 +355,66 @@ export const usePostApiRecordingsIdTranscribe = <TError = unknown>(
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiRecordingsIdTranscribeMutationKey(id);
 	const swrFn = getPostApiRecordingsIdTranscribeMutationFetcher(
+		id,
+		requestOptions,
+	);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Write the AI consultation note
+ */
+export const postApiRecordingsIdSummary = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiRecordingsIdSummary200>(
+		{ url: `/api/recordings/${id}/summary`, method: "POST" },
+		options,
+	);
+};
+
+export const getPostApiRecordingsIdSummaryMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return postApiRecordingsIdSummary(id, options);
+	};
+};
+export const getPostApiRecordingsIdSummaryMutationKey = (id: string) =>
+	[`/api/recordings/${id}/summary`] as const;
+
+export type PostApiRecordingsIdSummaryMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiRecordingsIdSummary>>
+>;
+
+/**
+ * @summary Write the AI consultation note
+ */
+export const usePostApiRecordingsIdSummary = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiRecordingsIdSummaryMutationKey(id);
+	const swrFn = getPostApiRecordingsIdSummaryMutationFetcher(
 		id,
 		requestOptions,
 	);

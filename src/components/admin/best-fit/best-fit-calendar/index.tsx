@@ -181,8 +181,17 @@ export default function BestFitCalendar({
 							No doctors available this week
 						</p>
 						<p className="mt-1 text-sm">
-							Try another week or adjust your filters.
+							Nothing left to book in this week. Later weeks may still have
+							openings, or try adjusting your filters.
 						</p>
+						<Button
+							size="lg"
+							className="mt-6 px-6 shadow-md"
+							onClick={goToNext}
+						>
+							Check next week
+							<ChevronRight className="size-4" />
+						</Button>
 					</div>
 				) : hasDoctors ? (
 					<div className="overflow-x-auto">

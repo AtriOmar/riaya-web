@@ -53,11 +53,18 @@ type Props = {
 	onChange: (country: CountryCode) => void;
 	disabled?: boolean;
 	id?: string;
+	options?: PhoneCountryOption[];
 };
 
-export function PhoneCountryCombobox({ value, onChange, disabled, id }: Props) {
+export function PhoneCountryCombobox({
+	value,
+	onChange,
+	disabled,
+	id,
+	options = PHONE_COUNTRY_OPTIONS,
+}: Props) {
 	const [open, setOpen] = useState(false);
-	const items = PHONE_COUNTRY_OPTIONS;
+	const items = options;
 	const selected =
 		items.find((item) => item.code === value) ?? items[0] ?? null;
 

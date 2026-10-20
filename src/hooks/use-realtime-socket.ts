@@ -18,6 +18,8 @@ export type TimelineEntry =
 			role: "patient" | "ai";
 			text: string;
 			timestamp: number;
+			/** Live text still being spoken or generated; replaced by the final text. */
+			partial?: boolean;
 	  }
 	| {
 			id: string;
@@ -51,6 +53,8 @@ export type CallData = {
 	duration?: number | null;
 	status: "active" | "ended";
 	recordingUrl?: string | null;
+	/** The AI reported this caller as abusive (see `report_abuse`). */
+	reported?: boolean;
 	timeline: TimelineEntry[];
 };
 
@@ -83,7 +87,7 @@ type WsMessage =
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function dbEventToTimeline(
+export function dbEventToTimeline(
 	event: GetApiCalls200ItemEventsItem,
 ): TimelineEntry | null {
 	const timestamp = event.timestamp
@@ -157,8 +161,46 @@ function dbCallToData(row: GetApiCalls200Item): CallData {
 		duration: row.duration ?? null,
 		status: row.status === "in-progress" ? "active" : "ended",
 		recordingUrl: row.recordingUrl ?? null,
+		reported: row.report != null,
 		timeline,
 	};
+}
+
+/** Content key used to tell whether a live entry is the same as a saved one. */
+function entryKey(e: TimelineEntry): string {
+	switch (e.kind) {
+		case "transcript":
+			return `t|${e.role}|${e.text.trim()}`;
+		case "function_call":
+			return `f|${e.name}|${e.status}`;
+		default:
+			return `${e.kind}|${e.text.trim()}`;
+	}
+}
+
+/**
+ * Live entries get random ids, so once the DB has saved them they would show
+ * twice (live copy + `db-` copy). Drop each live entry that matches a saved
+ * one by content, one-to-one so repeated lines like "Yes" stay correct.
+ * Partial transcripts are still being spoken and are always kept.
+ */
+function liveEntriesNotInDb(
+	live: TimelineEntry[],
+	fromDb: TimelineEntry[],
+): TimelineEntry[] {
+	const dbCounts = new Map<string, number>();
+	for (const e of fromDb) {
+		const key = entryKey(e);
+		dbCounts.set(key, (dbCounts.get(key) ?? 0) + 1);
+	}
+	return live.filter((e) => {
+		if (e.kind === "transcript" && e.partial) return true;
+		const key = entryKey(e);
+		const left = dbCounts.get(key) ?? 0;
+		if (left === 0) return true;
+		dbCounts.set(key, left - 1);
+		return false;
+	});
 }
 
 /**
@@ -184,6 +226,34 @@ function appendTimeline(
 		}
 	}
 	return [...existing, next];
+}
+
+/**
+ * Live transcripts arrive as partial updates (`isFinal: false`, text so far)
+ * followed by one final message. Partials only live in the browser timeline:
+ * the voice server persists final messages only.
+ */
+function upsertTranscript(
+	existing: TimelineEntry[],
+	role: "patient" | "ai",
+	text: string,
+	isFinal: boolean,
+): TimelineEntry[] {
+	const idx = existing.findLastIndex(
+		(e) => e.kind === "transcript" && e.role === role && e.partial === true,
+	);
+	const entry: TimelineEntry = {
+		id: `live-${Date.now()}-${Math.random()}`,
+		kind: "transcript",
+		role,
+		text,
+		timestamp: Date.now(),
+		...(isFinal ? {} : { partial: true }),
+	};
+	if (idx < 0) return [...existing, entry];
+	const copy = existing.slice();
+	copy[idx] = entry;
+	return copy;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -221,7 +291,16 @@ export default function useRealtimeSocket() {
 				}
 				// Merge: keep live timeline entries we already have that aren't in DB yet.
 				const dbIds = new Set(fromDb.timeline.map((t) => t.id));
-				const extraLive = existing.timeline.filter((t) => !dbIds.has(t.id));
+				const existingIds = new Set(existing.timeline.map((t) => t.id));
+				// Only DB rows we haven't shown yet can be the saved copy of a live
+				// entry; older ones already matched or are separate lines.
+				const newlySaved = fromDb.timeline.filter(
+					(t) => !existingIds.has(t.id),
+				);
+				const extraLive = liveEntriesNotInDb(
+					existing.timeline.filter((t) => !dbIds.has(t.id)),
+					newlySaved,
+				);
 				next.set(row.callSid, {
 					...fromDb,
 					// Live status wins if we already marked it active
@@ -285,6 +364,11 @@ export default function useRealtimeSocket() {
 								...call,
 								status: "ended",
 								endTime: msg.timestamp,
+								timeline: call.timeline.map((e) =>
+									e.kind === "transcript" && e.partial
+										? { ...e, partial: false }
+										: e,
+								),
 							});
 						}
 						return next;
@@ -300,42 +384,36 @@ export default function useRealtimeSocket() {
 					break;
 
 				case "patient_transcript":
-					if (!msg.isFinal) break;
 					setCalls((prev) => {
 						const next = new Map(prev);
 						const call = next.get(msg.callSid);
 						if (!call) return prev;
-						const entry: TimelineEntry = {
-							id: `live-${Date.now()}-${Math.random()}`,
-							kind: "transcript",
-							role: "patient",
-							text: msg.text,
-							timestamp: Date.now(),
-						};
 						next.set(msg.callSid, {
 							...call,
-							timeline: appendTimeline(call.timeline, entry),
+							timeline: upsertTranscript(
+								call.timeline,
+								"patient",
+								msg.text,
+								msg.isFinal,
+							),
 						});
 						return next;
 					});
 					break;
 
 				case "ai_transcript":
-					if (!msg.isFinal) break;
 					setCalls((prev) => {
 						const next = new Map(prev);
 						const call = next.get(msg.callSid);
 						if (!call) return prev;
-						const entry: TimelineEntry = {
-							id: `live-${Date.now()}-${Math.random()}`,
-							kind: "transcript",
-							role: "ai",
-							text: msg.text,
-							timestamp: Date.now(),
-						};
 						next.set(msg.callSid, {
 							...call,
-							timeline: appendTimeline(call.timeline, entry),
+							timeline: upsertTranscript(
+								call.timeline,
+								"ai",
+								msg.text,
+								msg.isFinal,
+							),
 						});
 						return next;
 					});
@@ -364,6 +442,7 @@ export default function useRealtimeSocket() {
 						};
 						next.set(msg.callSid, {
 							...call,
+							reported: call.reported || msg.name === "report_abuse",
 							timeline: appendTimeline(call.timeline, entry),
 						});
 						return next;

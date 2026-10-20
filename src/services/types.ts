@@ -1,9 +1,6 @@
 // ─── Availability ─────────────────────────────────────────────────────────────
 
-export type AvailabilitySlot = { start: number; end: number };
-export type Availability = Partial<
-	Record<0 | 1 | 2 | 3 | 4 | 5 | 6, AvailabilitySlot[]>
->;
+export type { Availability, AvailabilitySlot } from "@/lib/doctor-slots";
 
 // ─── Calls ────────────────────────────────────────────────────────────────────
 

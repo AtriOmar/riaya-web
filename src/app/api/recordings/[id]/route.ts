@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { consultationRecording, patient } from "@/db/schema";
@@ -10,6 +10,9 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { consultationSummarySchema } from "@/lib/consultation-summary";
+import { deleteFromR2ByUrl } from "@/lib/r2";
+import { speakerRolesSchema } from "@/lib/speaker-roles";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -34,6 +37,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 				durationSeconds: consultationRecording.durationSeconds,
 				transcript: consultationRecording.transcript,
 				transcriptStatus: consultationRecording.transcriptStatus,
+				speakerRoles: consultationRecording.speakerRoles,
+				summary: consultationRecording.summary,
+				summaryStatus: consultationRecording.summaryStatus,
+				summaryCostMicroUsd: consultationRecording.summaryCostMicroUsd,
 				createdAt: consultationRecording.createdAt,
 				updatedAt: consultationRecording.updatedAt,
 				patient: {
@@ -60,16 +67,57 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 	}
 }
 
+// ─── DELETE /api/recordings/[id] ──────────────────────────────────────────────
+// Deletes the recording and its audio file. Recording time it already used
+// stays used (the transcription was paid for). AI chats about it are kept.
+
+export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+	try {
+		const session = await requireSession();
+		const profile = await requireDoctorProfile(session.user.id);
+
+		const { id } = await params;
+		const recordingId = Number(id);
+		if (Number.isNaN(recordingId)) return apiError("INVALID_ID");
+
+		const [deleted] = await db
+			.delete(consultationRecording)
+			.where(
+				and(
+					eq(consultationRecording.id, recordingId),
+					eq(consultationRecording.doctorId, profile.id),
+				),
+			)
+			.returning({ audioUrl: consultationRecording.audioUrl });
+		if (!deleted) return apiError("RECORDING_NOT_FOUND");
+
+		after(() => deleteFromR2ByUrl(deleted.audioUrl));
+		return json({ ok: true });
+	} catch (e) {
+		if (e instanceof Response) return e;
+		return apiError("INTERNAL_ERROR");
+	}
+}
+
 // ─── PATCH /api/recordings/[id] ───────────────────────────────────────────────
 
 const patchSchema = z
 	.object({
 		title: z.string().min(1).max(255).optional(),
 		patientId: z.number().int().positive().nullable().optional(),
+		/** The doctor's edits to the AI consultation note */
+		summary: consultationSummarySchema.optional(),
+		/** The doctor's corrections to who each speaker is */
+		speakerRoles: speakerRolesSchema.optional(),
 	})
-	.refine((d) => d.title !== undefined || d.patientId !== undefined, {
-		message: "At least one field to update is required",
-	});
+	.refine(
+		(d) =>
+			d.title !== undefined ||
+			d.patientId !== undefined ||
+			d.summary !== undefined ||
+			d.speakerRoles !== undefined,
+		{ message: "At least one field to update is required" },
+	);
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
 	try {
@@ -116,6 +164,13 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 		if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
 		if (parsed.data.patientId !== undefined)
 			updateData.patientId = parsed.data.patientId;
+		if (parsed.data.speakerRoles !== undefined) {
+			updateData.speakerRoles = parsed.data.speakerRoles;
+		}
+		if (parsed.data.summary !== undefined) {
+			updateData.summary = parsed.data.summary;
+			updateData.summaryStatus = "done";
+		}
 
 		const [updated] = await db
 			.update(consultationRecording)
@@ -170,6 +225,22 @@ registry.registerPath({
 			description: "Updated recording",
 			content: {
 				"application/json": { schema: selectConsultationRecordingSchema },
+			},
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/recordings/{id}",
+	tags: ["Recordings"],
+	summary: "Delete recording",
+	request: { params: paramsSchema },
+	responses: {
+		200: {
+			description: "Recording deleted",
+			content: {
+				"application/json": { schema: z.object({ ok: z.boolean() }) },
 			},
 		},
 	},

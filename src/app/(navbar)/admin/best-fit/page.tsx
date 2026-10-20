@@ -9,10 +9,9 @@ import DoctorsMap from "@/components/admin/best-fit/doctors-map";
 import BestFitFilterBar, {
 	type BestFitFilters,
 } from "@/components/admin/best-fit/filter-bar";
-import BestFitFiltersPrompt from "@/components/admin/best-fit/filters-prompt";
 import AdminLayout from "@/components/layouts/admin-layout";
-import type { BestFitRangeDoctor } from "@/hooks/use-best-fit-range";
 import { useBestFitRange } from "@/hooks/use-best-fit-range";
+import { useGetApiDoctorsBestFitMap } from "@/services/generated/doctors/doctors";
 import {
 	useGetApiCities,
 	useGetApiSpecialities,
@@ -139,20 +138,17 @@ export default function AdminBestFitPage() {
 
 	const rangeAnchor = selectedDay ?? currentDate;
 	const { start, end } = useMemo(() => weekWindow(rangeAnchor), [rangeAnchor]);
-	const filtersReady =
-		filters.specialitySlug != null &&
-		filters.lat != null &&
-		filters.long != null;
-
-	const rangeParams = filtersReady
-		? {
-				speciality: filters.specialitySlug as string,
-				lat: filters.lat as number,
-				long: filters.long as number,
-				from: start.toISOString(),
-				to: end.toISOString(),
-			}
-		: null;
+	const hasSpeciality = filters.specialitySlug != null;
+	const hasLocation = filters.lat != null && filters.long != null;
+	// Every filter is optional: with none set, all doctors are listed.
+	const rangeParams = {
+		...(hasSpeciality ? { speciality: filters.specialitySlug as string } : {}),
+		...(hasLocation
+			? { lat: filters.lat as number, long: filters.long as number }
+			: {}),
+		from: start.toISOString(),
+		to: end.toISOString(),
+	};
 
 	const { data, isLoading } = useBestFitRange(rangeParams);
 
@@ -162,22 +158,19 @@ export default function AdminBestFitPage() {
 		return data.find((d) => d.date === key)?.doctors ?? [];
 	}, [selectedDay, data]);
 
-	const mapDoctors: BestFitRangeDoctor[] = useMemo(() => {
-		if (selectedDay) return selectedDayDoctors;
-		if (!data) return [];
-		return data.flatMap((d) => d.doctors);
-	}, [selectedDay, selectedDayDoctors, data]);
-
-	const mapScopeLabel = useMemo(() => {
-		if (selectedDay) {
-			return selectedDay.toLocaleDateString("en-GB", {
-				weekday: "short",
-				day: "2-digit",
-				month: "short",
-			});
-		}
-		return "this week";
-	}, [selectedDay]);
+	// The map ignores dates: it lists the speciality's doctors near the location.
+	const { data: mapDoctors = [], isLoading: mapLoading } =
+		useGetApiDoctorsBestFitMap(
+			{
+				...(hasSpeciality
+					? { speciality: filters.specialitySlug as string }
+					: {}),
+				...(hasLocation
+					? { lat: filters.lat as number, long: filters.long as number }
+					: {}),
+			},
+			{ swr: { enabled: viewMode === "map", keepPreviousData: true } },
+		);
 
 	const scheduleDate = selectedDay ?? currentDate;
 
@@ -195,7 +188,7 @@ export default function AdminBestFitPage() {
 		updateUrl({ day: toDateOnly(date) });
 	}
 
-	function goToDoctor(doctorId: number, date: Date) {
+	function doctorHref(doctorId: number, date: Date) {
 		const params = new URLSearchParams();
 		params.set("from", toDateOnly(date));
 		if (filters.specialityId)
@@ -206,7 +199,11 @@ export default function AdminBestFitPage() {
 		// Preserve day-view only when already on a day (not week calendar).
 		if (urlDay) params.set("day", urlDay);
 		if (viewMode === "map") params.set("view", "map");
-		router.push(`/admin/best-fit/doctor/${doctorId}?${params.toString()}`);
+		return `/admin/best-fit/doctor/${doctorId}?${params.toString()}`;
+	}
+
+	function goToDoctor(doctorId: number, date: Date) {
+		router.push(doctorHref(doctorId, date));
 	}
 
 	return (
@@ -218,9 +215,7 @@ export default function AdminBestFitPage() {
 				onViewChange={(next) => updateUrl({ view: next })}
 			/>
 
-			{!filtersReady ? (
-				<BestFitFiltersPrompt filters={filters} viewMode={viewMode} />
-			) : viewMode === "map" ? (
+			{viewMode === "map" ? (
 				<DoctorsMap
 					patient={
 						filters.lat != null && filters.long != null
@@ -228,9 +223,8 @@ export default function AdminBestFitPage() {
 							: null
 					}
 					doctors={mapDoctors}
-					isLoading={isLoading}
-					scopeLabel={mapScopeLabel}
-					onSelectDoctor={(id) => goToDoctor(id, scheduleDate)}
+					isLoading={mapLoading}
+					getDoctorHref={(id) => doctorHref(id, scheduleDate)}
 				/>
 			) : selectedDay ? (
 				<DayCalendar

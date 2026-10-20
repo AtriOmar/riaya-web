@@ -31,8 +31,9 @@ export async function requireAdmin() {
  * Validates a shared secret header used for server-to-server calls (e.g. from
  * the realtime socket service). The secret is expected in the `x-internal-secret`
  * header and must match process.env.INTERNAL_API_SECRET.
+ * Synchronous on purpose: it throws even if a caller forgets `await`.
  */
-export async function requireInternal(req: Request) {
+export function requireInternal(req: Request): void {
 	const expected = process.env.INTERNAL_API_SECRET;
 	const provided = req.headers.get("x-internal-secret");
 	if (!expected || !provided || provided !== expected) {

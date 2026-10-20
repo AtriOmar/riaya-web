@@ -8,44 +8,46 @@ import {
 	consultationRecording,
 } from "@/db/schema";
 import { buildAssistantInstructions } from "@/lib/ai-assistant-prompt";
+import type { ReplyEvent } from "@/lib/ai-chat-parts";
+import {
+	buildModelHistory,
+	expireStaleReplies,
+	generateAssistantReply,
+	hasReplyInProgress,
+} from "@/lib/ai-chat-reply";
 import {
 	apiError,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { streamChatText } from "@/lib/azure-ai";
-import { assertAiMessageAllowed } from "@/lib/plan-limits";
+import { assertAiAllowed } from "@/lib/plan-limits";
 
 // ─── POST /api/ai-chat ────────────────────────────────────────────────────────
-// Streams a chat completion from OpenRouter (DeepSeek) and persists the turn.
+// Starts an assistant reply (see lib/ai-chat-reply.ts) and streams it back.
+// The reply is saved even if the client disconnects.
 //
 // Body:
-//   messages: ChatMessage[]          — full history including the new user message
+//   message: string                  — the doctor's new message
 //   conversationId?: number          — existing conversation (created if omitted)
 //   recordingId?: number             — optional recording link when creating
 //   transcriptContext?: string       — optional transcript injected as system context
+//   page?: string                    — dashboard path the side panel was opened on
 //
-// Response: plain text stream of the assistant reply.
+// The history comes from the saved conversation, not from the client.
+// Response: one JSON `ReplyEvent` per line while the reply is written.
 // Header: X-Conversation-Id — the conversation id (new or existing).
 
-const messageSchema = z.object({
-	role: z.enum(["user", "assistant"]),
-	content: z.string(),
-});
-
 const bodySchema = z.object({
-	messages: z.array(messageSchema).min(1),
+	message: z.string().trim().min(1),
 	conversationId: z.number().int().positive().optional(),
 	recordingId: z.number().int().positive().optional(),
 	transcriptContext: z.string().optional(),
+	/** The dashboard path the side panel was opened on. */
+	page: z.string().max(300).optional(),
 });
 
-function titleFromFirstUserMessage(
-	messages: { role: string; content: string }[],
-) {
-	const first = messages.find((m) => m.role === "user");
-	if (!first) return "New conversation";
-	const trimmed = first.content.trim().replace(/\s+/g, " ");
+function titleFromMessage(message: string) {
+	const trimmed = message.replace(/\s+/g, " ");
 	return trimmed.length > 60 ? `${trimmed.slice(0, 57)}…` : trimmed;
 }
 
@@ -63,18 +65,10 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const { messages, transcriptContext } = parsed.data;
+		const { message, transcriptContext, page } = parsed.data;
 		let conversationId = parsed.data.conversationId ?? null;
 
-		const lastUser = [...messages].reverse().find((m) => m.role === "user");
-		if (!lastUser) {
-			return Response.json(
-				{ error: "VALIDATION_ERROR", issues: [{ message: "No user message" }] },
-				{ status: 400 },
-			);
-		}
-
-		await assertAiMessageAllowed(profile.id);
+		await assertAiAllowed(profile.id);
 
 		// Resolve / create conversation
 		if (conversationId) {
@@ -107,65 +101,88 @@ export async function POST(req: NextRequest) {
 				.insert(aiChatConversation)
 				.values({
 					doctorId: profile.id,
-					title: titleFromFirstUserMessage(messages),
+					title: titleFromMessage(message),
 					recordingId,
 				})
 				.returning();
 			conversationId = created.id;
 		}
 
-		// Persist the user turn
+		await expireStaleReplies(conversationId);
+		if (await hasReplyInProgress(conversationId)) {
+			return apiError("AI_REPLY_IN_PROGRESS");
+		}
+
+		// Persist the user turn, then the reply as `streaming`
 		await db.insert(aiChatMessage).values({
 			conversationId,
 			role: "user",
-			content: lastUser.content,
+			parts: [{ type: "text", text: message }],
 		});
+		const [reply] = await db
+			.insert(aiChatMessage)
+			.values({
+				conversationId,
+				role: "assistant",
+				parts: [],
+				status: "streaming",
+			})
+			.returning({ id: aiChatMessage.id });
 		await db
 			.update(aiChatConversation)
 			.set({ updatedAt: new Date() })
 			.where(eq(aiChatConversation.id, conversationId));
 
-		const clientStream = streamChatText({
-			instructions: buildAssistantInstructions(transcriptContext),
-			messages,
-			maxOutputTokens: 2048,
-		});
-
+		// The reply is generated on its own and keeps going if the doctor leaves;
+		// this response only mirrors it while the page is open.
 		const encoder = new TextEncoder();
-		const savedConversationId = conversationId;
-
-		const readable = new ReadableStream({
-			async start(controller) {
-				let assistantText = "";
-				try {
-					for await (const delta of clientStream) {
-						assistantText += delta;
-						controller.enqueue(encoder.encode(delta));
-					}
-
-					if (assistantText.trim()) {
-						await db.insert(aiChatMessage).values({
-							conversationId: savedConversationId,
-							role: "assistant",
-							content: assistantText,
-						});
-						await db
-							.update(aiChatConversation)
-							.set({ updatedAt: new Date() })
-							.where(eq(aiChatConversation.id, savedConversationId));
-					}
-				} catch (err) {
-					console.error("AI chat stream error:", err);
-					controller.error(err);
-					return;
-				}
-				controller.close();
+		let client: ReadableStreamDefaultController<Uint8Array> | null = null;
+		const readable = new ReadableStream<Uint8Array>({
+			start(controller) {
+				client = controller;
+			},
+			cancel() {
+				client = null;
 			},
 		});
 
+		const savedConversationId = conversationId;
+		const send = (event: ReplyEvent) => {
+			try {
+				client?.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+			} catch {
+				client = null;
+			}
+		};
+		void generateAssistantReply({
+			messageId: reply.id,
+			conversationId,
+			doctorId: profile.id,
+			instructions: buildAssistantInstructions(transcriptContext, page),
+			history: await buildModelHistory(conversationId, reply.id),
+			onEvent: send,
+		}).then(
+			(status) => {
+				try {
+					if (status === "failed") client?.error(new Error("Reply failed"));
+					else client?.close();
+				} catch {
+					// The page already went away
+				}
+			},
+			(err) => {
+				console.error("AI chat reply error:", err);
+				try {
+					client?.error(err);
+				} catch {
+					// The page already went away
+				}
+			},
+		);
+
 		return new Response(readable, {
 			headers: {
-				"Content-Type": "text/plain; charset=utf-8",
+				"Content-Type": "application/x-ndjson; charset=utf-8",
 				"Cache-Control": "no-cache, no-transform",
 				"X-Accel-Buffering": "no",
 				"X-Content-Type-Options": "nosniff",
@@ -182,4 +199,4 @@ export async function POST(req: NextRequest) {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Streaming endpoint — not registered in OpenAPI (plain text stream).
+// Streaming endpoint — not registered in OpenAPI (JSON lines stream).

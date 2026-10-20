@@ -4,10 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appointment, doctorProfile } from "@/db/schema";
 import { apiError, json, validationError } from "@/lib/api-utils";
-import {
-	type Availability,
-	listAvailableSlotsForDoctor,
-} from "@/lib/doctor-slots";
+import { listAvailableSlotsForDoctor } from "@/lib/doctor-slots";
 
 const schema = z.object({
 	doctor_id: z.coerce.number().int().positive(),
@@ -97,7 +94,7 @@ export async function GET(req: NextRequest) {
 					or(isNull(appointment.status), ne(appointment.status, "cancelled")),
 				),
 			);
-		const availability = (doctorData.availability as Availability) ?? {};
+		const availability = doctorData.availability ?? {};
 		const slots = listAvailableSlotsForDoctor(
 			availability,
 			appointments,

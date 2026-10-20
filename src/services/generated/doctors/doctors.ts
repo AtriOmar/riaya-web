@@ -19,15 +19,23 @@ import type {
 	GetApiDoctorsAvailability200,
 	GetApiDoctorsAvailabilityParams,
 	GetApiDoctorsBestFit200Item,
+	GetApiDoctorsBestFitMap200Item,
+	GetApiDoctorsBestFitMapParams,
 	GetApiDoctorsBestFitParams,
 	GetApiDoctorsBestFitRange200Item,
 	GetApiDoctorsBestFitRangeParams,
 	GetApiDoctorsId200,
 	GetApiDoctorsIdParams,
+	GetApiDoctorsSearch200,
+	GetApiDoctorsSearchParams,
+	PatchApiDoctorsIdLocation200,
+	PatchApiDoctorsIdLocationBody,
 	PostApiDoctorApplications201,
 	PostApiDoctorApplicationsBody,
 	PutApiDoctorApplicationsId200,
 	PutApiDoctorApplicationsIdBody,
+	PutApiDoctorsMeBranding200,
+	PutApiDoctorsMeBrandingBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -317,6 +325,63 @@ export const useGetApiDoctorApplicationsMe = <TError = unknown>(options?: {
 	};
 };
 /**
+ * @summary Get doctor profile with appointments (Admin)
+ */
+export const getApiDoctorsId = (
+	id: string,
+	params?: GetApiDoctorsIdParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsId200>(
+		{ url: `/api/doctors/${id}`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsIdKey = (
+	id: string,
+	params?: GetApiDoctorsIdParams,
+) => [`/api/doctors/${id}`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsId>>
+>;
+
+/**
+ * @summary Get doctor profile with appointments (Admin)
+ */
+export const useGetApiDoctorsId = <TError = unknown>(
+	id: string,
+	params?: GetApiDoctorsIdParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsId>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsIdKey(id, params) : null));
+	const swrFn = () => getApiDoctorsId(id, params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Get doctor availability
  */
 export const getApiDoctorsAvailability = (
@@ -357,6 +422,58 @@ export const useGetApiDoctorsAvailability = <TError = unknown>(
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiDoctorsAvailabilityKey(params) : null));
 	const swrFn = () => getApiDoctorsAvailability(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Search verified doctors by name
+ */
+export const getApiDoctorsSearch = (
+	params: GetApiDoctorsSearchParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsSearch200>(
+		{ url: `/api/doctors/search`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsSearchKey = (params: GetApiDoctorsSearchParams) =>
+	[`/api/doctors/search`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsSearchQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsSearch>>
+>;
+
+/**
+ * @summary Search verified doctors by name
+ */
+export const useGetApiDoctorsSearch = <TError = unknown>(
+	params: GetApiDoctorsSearchParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiDoctorsSearch>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorsSearchKey(params) : null));
+	const swrFn = () => getApiDoctorsSearch(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
@@ -423,37 +540,160 @@ export const useGetApiDoctorsBestFit = <TError = unknown>(
 	};
 };
 /**
- * @summary Get doctor profile with appointments (Admin)
+ * @summary Update a doctor's cabinet coordinates (Admin)
  */
-export const getApiDoctorsId = (
+export const patchApiDoctorsIdLocation = (
 	id: string,
-	params?: GetApiDoctorsIdParams,
+	patchApiDoctorsIdLocationBody?: PatchApiDoctorsIdLocationBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<GetApiDoctorsId200>(
-		{ url: `/api/doctors/${id}`, method: "GET", params },
+	return customInstance<PatchApiDoctorsIdLocation200>(
+		{
+			url: `/api/doctors/${id}/location`,
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			data: patchApiDoctorsIdLocationBody,
+		},
 		options,
 	);
 };
 
-export const getGetApiDoctorsIdKey = (
+export const getPatchApiDoctorsIdLocationMutationFetcher = (
 	id: string,
-	params?: GetApiDoctorsIdParams,
-) => [`/api/doctors/${id}`, ...(params ? [params] : [])] as const;
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PatchApiDoctorsIdLocationBody | undefined },
+	) => {
+		return patchApiDoctorsIdLocation(id, arg, options);
+	};
+};
+export const getPatchApiDoctorsIdLocationMutationKey = (id: string) =>
+	[`/api/doctors/${id}/location`] as const;
 
-export type GetApiDoctorsIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiDoctorsId>>
+export type PatchApiDoctorsIdLocationMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchApiDoctorsIdLocation>>
 >;
 
 /**
- * @summary Get doctor profile with appointments (Admin)
+ * @summary Update a doctor's cabinet coordinates (Admin)
  */
-export const useGetApiDoctorsId = <TError = unknown>(
+export const usePatchApiDoctorsIdLocation = <TError = unknown>(
 	id: string,
-	params?: GetApiDoctorsIdParams,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof patchApiDoctorsIdLocation>>,
+			TError,
+			Key,
+			PatchApiDoctorsIdLocationBody | undefined,
+			Awaited<ReturnType<typeof patchApiDoctorsIdLocation>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPatchApiDoctorsIdLocationMutationKey(id);
+	const swrFn = getPatchApiDoctorsIdLocationMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Set the logo and stamp printed on invoices
+ */
+export const putApiDoctorsMeBranding = (
+	putApiDoctorsMeBrandingBody?: PutApiDoctorsMeBrandingBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsMeBranding200>(
+		{
+			url: `/api/doctors/me/branding`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsMeBrandingBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsMeBrandingMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PutApiDoctorsMeBrandingBody | undefined },
+	) => {
+		return putApiDoctorsMeBranding(arg, options);
+	};
+};
+export const getPutApiDoctorsMeBrandingMutationKey = () =>
+	[`/api/doctors/me/branding`] as const;
+
+export type PutApiDoctorsMeBrandingMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsMeBranding>>
+>;
+
+/**
+ * @summary Set the logo and stamp printed on invoices
+ */
+export const usePutApiDoctorsMeBranding = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof putApiDoctorsMeBranding>>,
+		TError,
+		Key,
+		PutApiDoctorsMeBrandingBody | undefined,
+		Awaited<ReturnType<typeof putApiDoctorsMeBranding>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsMeBrandingMutationKey();
+	const swrFn = getPutApiDoctorsMeBrandingMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Doctors for the Best Fit map, regardless of availability (Admin)
+ */
+export const getApiDoctorsBestFitMap = (
+	params?: GetApiDoctorsBestFitMapParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorsBestFitMap200Item[]>(
+		{ url: `/api/doctors/best-fit/map`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiDoctorsBestFitMapKey = (
+	params?: GetApiDoctorsBestFitMapParams,
+) => [`/api/doctors/best-fit/map`, ...(params ? [params] : [])] as const;
+
+export type GetApiDoctorsBestFitMapQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorsBestFitMap>>
+>;
+
+/**
+ * @summary Doctors for the Best Fit map, regardless of availability (Admin)
+ */
+export const useGetApiDoctorsBestFitMap = <TError = unknown>(
+	params?: GetApiDoctorsBestFitMapParams,
 	options?: {
 		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiDoctorsId>>,
+			Awaited<ReturnType<typeof getApiDoctorsBestFitMap>>,
 			TError
 		> & { swrKey?: Key; enabled?: boolean };
 		request?: SecondParameter<typeof customInstance>;
@@ -461,12 +701,11 @@ export const useGetApiDoctorsId = <TError = unknown>(
 ) => {
 	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
-	const isEnabled =
-		swrOptions?.enabled !== false && id !== null && id !== undefined;
+	const isEnabled = swrOptions?.enabled !== false;
 	const swrKey =
 		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiDoctorsIdKey(id, params) : null));
-	const swrFn = () => getApiDoctorsId(id, params, requestOptions);
+		(() => (isEnabled ? getGetApiDoctorsBestFitMapKey(params) : null));
+	const swrFn = () => getApiDoctorsBestFitMap(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,

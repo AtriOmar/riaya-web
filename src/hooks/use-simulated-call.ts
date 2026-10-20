@@ -22,7 +22,19 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	type RecordingStatus,
+	useCallRecording,
+} from "@/hooks/use-call-recording";
+import {
+	type TranscriptLine,
+	useCallTranscript,
+} from "@/hooks/use-call-transcript";
+import type { CallSettings } from "@/lib/call-settings-schema";
 import { decodeUlaw, encodeUlawToBase64 } from "@/lib/ulaw";
+import { usePostApiTestCallSettings } from "@/services/generated/test-call/test-call";
+
+export type { TranscriptLine };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,19 +46,21 @@ export type SimulatedCallStatus =
 	| "ended"
 	| "error";
 
-export type TranscriptLine = {
-	id: string;
-	role: "patient" | "ai";
-	text: string;
-	isFinal: boolean;
-};
-
 export type SimulatedCallState = {
 	status: SimulatedCallStatus;
 	callSid: string | null;
 	error: string | null;
 	transcript: TranscriptLine[];
-	startCall: (phoneNumber: string) => Promise<void>;
+	/** Local playable URL of the call recording, once the call has ended. */
+	recordingUrl: string | null;
+	recordingStatus: RecordingStatus;
+	retryRecordingSave: () => void;
+	startCall: (
+		phoneNumber: string,
+		settings?: CallSettings,
+		/** Answered callback: the AI opens the call, as if Riaya had called the patient. */
+		callbackReason?: "refused" | "timeout",
+	) => Promise<void>;
 	hangUp: () => void;
 };
 
@@ -65,12 +79,24 @@ export function useSimulatedCall(): SimulatedCallState {
 	const [status, setStatus] = useState<SimulatedCallStatus>("idle");
 	const [callSid, setCallSid] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+	const {
+		transcript,
+		connect: connectDashboard,
+		disconnect: disconnectDashboard,
+		reset: resetTranscript,
+	} = useCallTranscript();
+	const {
+		recordingUrl,
+		recordingStatus,
+		start: startRecording,
+		addStream: addRecordingStream,
+		stop: stopRecording,
+		reset: resetRecording,
+		retrySave: retryRecordingSave,
+	} = useCallRecording();
 
 	// WebSocket to /media-stream
 	const wsRef = useRef<WebSocket | null>(null);
-	// Dashboard WebSocket to /dashboard (for transcripts)
-	const dashWsRef = useRef<WebSocket | null>(null);
 	// Current callSid in a ref so closures can read it without stale state
 	const callSidRef = useRef<string | null>(null);
 
@@ -82,6 +108,16 @@ export function useSimulatedCall(): SimulatedCallState {
 	// Audio playback (AI voice)
 	const playCtxRef = useRef<AudioContext | null>(null);
 	const nextPlayTimeRef = useRef(0);
+	// Tap on the AI voice for the call recording, and the chunks still scheduled
+	// (so barge-in can cut them without closing the context the tap lives in).
+	const playDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+	const scheduledRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+	// Marks waiting for their audio to finish playing. Twilio only echoes a mark
+	// once the media before it has played; the server relies on that to know the
+	// caller is still hearing the reply (and so whether barge-in must clear it).
+	const pendingMarksRef = useRef<
+		Map<ReturnType<typeof setTimeout>, () => void>
+	>(new Map());
 
 	// Outgoing media timestamp counter (ms)
 	const timestampRef = useRef(0);
@@ -110,10 +146,14 @@ export function useSimulatedCall(): SimulatedCallState {
 	}, []);
 
 	const stopPlayback = useCallback(() => {
+		for (const timer of pendingMarksRef.current.keys()) clearTimeout(timer);
+		pendingMarksRef.current.clear();
 		try {
 			playCtxRef.current?.close();
 		} catch {}
 		playCtxRef.current = null;
+		playDestRef.current = null;
+		scheduledRef.current.clear();
 		nextPlayTimeRef.current = 0;
 	}, []);
 
@@ -130,6 +170,8 @@ export function useSimulatedCall(): SimulatedCallState {
 		if (!playCtxRef.current || playCtxRef.current.state === "closed") {
 			const ctx = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
 			playCtxRef.current = ctx;
+			playDestRef.current = ctx.createMediaStreamDestination();
+			scheduledRef.current.clear();
 			nextPlayTimeRef.current = ctx.currentTime;
 		}
 		return playCtxRef.current;
@@ -152,6 +194,10 @@ export function useSimulatedCall(): SimulatedCallState {
 				const source = ctx.createBufferSource();
 				source.buffer = buffer;
 				source.connect(ctx.destination);
+				if (playDestRef.current) source.connect(playDestRef.current);
+				const scheduled = scheduledRef.current;
+				scheduled.add(source);
+				source.onended = () => scheduled.delete(source);
 				const now = ctx.currentTime;
 				if (nextPlayTimeRef.current < now) nextPlayTimeRef.current = now;
 				source.start(nextPlayTimeRef.current);
@@ -164,12 +210,15 @@ export function useSimulatedCall(): SimulatedCallState {
 	);
 
 	const flushPlaybackQueue = useCallback(() => {
-		// Close and recreate the AudioContext to abort all scheduled audio
-		try {
-			playCtxRef.current?.close();
-		} catch {}
-		playCtxRef.current = null;
-		nextPlayTimeRef.current = 0;
+		// Stop every scheduled chunk but keep the context alive: the recording
+		// tap is attached to it.
+		for (const source of scheduledRef.current) {
+			try {
+				source.stop();
+			} catch {}
+		}
+		scheduledRef.current.clear();
+		nextPlayTimeRef.current = playCtxRef.current?.currentTime ?? 0;
 	}, []);
 
 	// ─── Send helpers ──────────────────────────────────────────────────────────
@@ -255,75 +304,16 @@ export function useSimulatedCall(): SimulatedCallState {
 		[sendMediaFrame],
 	);
 
-	// ─── Dashboard WS (transcripts) ───────────────────────────────────────────
-
-	const connectDashboard = useCallback((sid: string) => {
-		const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
-		if (!realtimeUrl) {
-			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
-			return;
-		}
-
-		const dashWs = new WebSocket(`${realtimeUrl}/dashboard`);
-		dashWsRef.current = dashWs;
-
-		dashWs.onmessage = (evt) => {
-			try {
-				const msg = JSON.parse(evt.data as string) as Record<string, unknown>;
-				if (msg.callSid !== sid) return;
-
-				if (
-					msg.type === "patient_transcript" &&
-					msg.isFinal &&
-					typeof msg.text === "string"
-				) {
-					setTranscript((prev) => [
-						...prev.filter((l) => !(l.role === "patient" && !l.isFinal)),
-						{
-							id: `p-${Date.now()}`,
-							role: "patient",
-							text: msg.text as string,
-							isFinal: true,
-						},
-					]);
-				}
-
-				if (msg.type === "ai_transcript" && typeof msg.text === "string") {
-					const isFinal = Boolean(msg.isFinal);
-					setTranscript((prev) => {
-						// Update or append AI line
-						const existingIdx = prev.findLastIndex(
-							(l) => l.role === "ai" && !l.isFinal,
-						);
-						const entry: TranscriptLine = {
-							id: existingIdx >= 0 ? prev[existingIdx].id : `a-${Date.now()}`,
-							role: "ai",
-							text: msg.text as string,
-							isFinal,
-						};
-						if (existingIdx >= 0) {
-							const next = [...prev];
-							next[existingIdx] = entry;
-							return next;
-						}
-						return [...prev, entry];
-					});
-				}
-			} catch {
-				// ignore
-			}
-		};
-
-		dashWs.onerror = () => {};
-		dashWs.onclose = () => {
-			dashWsRef.current = null;
-		};
-	}, []);
-
 	// ─── Main connect / disconnect ─────────────────────────────────────────────
 
+	const { trigger: saveSettings } = usePostApiTestCallSettings();
+
 	const startCall = useCallback(
-		async (phoneNumber: string) => {
+		async (
+			phoneNumber: string,
+			settings?: CallSettings,
+			callbackReason?: "refused" | "timeout",
+		) => {
 			if (status !== "idle" && status !== "ended" && status !== "error") return;
 
 			const trimmedPhone = phoneNumber.trim();
@@ -338,7 +328,8 @@ export function useSimulatedCall(): SimulatedCallState {
 			}
 
 			setError(null);
-			setTranscript([]);
+			resetTranscript();
+			resetRecording();
 
 			// 1. Request microphone
 			setStatus("requesting-mic");
@@ -366,9 +357,29 @@ export function useSimulatedCall(): SimulatedCallState {
 			setCallSid(sid);
 			callSidRef.current = sid;
 
+			// Per-call model choices go to Redis first; the voice server reads
+			// them (by `?cs=`) when the stream connects.
+			if (settings) {
+				try {
+					await saveSettings({ callSid: sid, settings });
+				} catch (err) {
+					for (const track of stream.getTracks()) track.stop();
+					micStreamRef.current = null;
+					setError(
+						err instanceof Error
+							? `Could not save model settings: ${err.message}`
+							: "Could not save model settings",
+					);
+					setStatus("error");
+					return;
+				}
+			}
+
 			// 2. Open WebSocket to /media-stream
 			setStatus("connecting");
-			const wsUrl = `${realtimeUrl}/media-stream`;
+			const wsUrl = settings
+				? `${realtimeUrl}/media-stream?cs=${encodeURIComponent(sid)}`
+				: `${realtimeUrl}/media-stream`;
 
 			const ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
@@ -402,6 +413,9 @@ export function useSimulatedCall(): SimulatedCallState {
 							customParameters: {
 								callerPhone: trimmedPhone,
 								simulated: "true",
+								...(callbackReason
+									? { callMode: "callback", callbackReason }
+									: {}),
 							},
 						},
 					}),
@@ -411,6 +425,12 @@ export function useSimulatedCall(): SimulatedCallState {
 
 				// 4. Start mic capture and stream media frames
 				startCapture(stream, streamSid);
+
+				// Record the caller (mic) and the AI voice (playback tap) together.
+				ensurePlayContext();
+				startRecording();
+				addRecordingStream(stream);
+				if (playDestRef.current) addRecordingStream(playDestRef.current.stream);
 
 				// Also subscribe to the dashboard for transcripts
 				connectDashboard(sid);
@@ -433,28 +453,49 @@ export function useSimulatedCall(): SimulatedCallState {
 							}
 							break;
 
-						case "clear":
-							// Barge-in: flush scheduled AI audio
+						case "clear": {
+							// Barge-in: flush scheduled AI audio. Twilio answers a clear by
+							// returning every pending mark immediately.
 							flushPlaybackQueue();
+							const pending = [...pendingMarksRef.current];
+							pendingMarksRef.current.clear();
+							for (const [timer, echo] of pending) {
+								clearTimeout(timer);
+								echo();
+							}
 							break;
+						}
 
-						case "mark":
-							// Echo mark back so TwilioSession's mark queue stays consistent
-							if (
-								ws.readyState === WebSocket.OPEN &&
-								msg.streamSid &&
-								msg.mark
-							) {
+						case "mark": {
+							// Echo the mark only after the audio before it has played.
+							const { streamSid, mark } = msg;
+							if (!streamSid || !mark) break;
+							const echo = () => {
+								if (ws.readyState !== WebSocket.OPEN) return;
 								ws.send(
 									JSON.stringify({
 										event: "mark",
 										sequenceNumber: "0",
-										streamSid: msg.streamSid,
-										mark: { name: msg.mark.name },
+										streamSid,
+										mark: { name: mark.name },
 									}),
 								);
+							};
+							const ctx = playCtxRef.current;
+							const delayMs = ctx
+								? Math.max(0, nextPlayTimeRef.current - ctx.currentTime) * 1000
+								: 0;
+							if (delayMs <= 0) {
+								echo();
+								break;
 							}
+							const timer = setTimeout(() => {
+								pendingMarksRef.current.delete(timer);
+								echo();
+							}, delayMs);
+							pendingMarksRef.current.set(timer, echo);
 							break;
+						}
 
 						default:
 							break;
@@ -465,16 +506,18 @@ export function useSimulatedCall(): SimulatedCallState {
 			};
 
 			ws.onclose = () => {
+				stopRecording(callSidRef.current);
 				stopCapture();
 				stopPlayback();
 				setStatus("ended");
 				wsRef.current = null;
-				closeWs(dashWsRef.current);
+				disconnectDashboard();
 			};
 
 			ws.onerror = () => {
 				setError("WebSocket connection failed. Is the voice server running?");
 				setStatus("error");
+				resetRecording();
 				stopCapture();
 				stopPlayback();
 				for (const t of stream.getTracks()) t.stop();
@@ -482,8 +525,16 @@ export function useSimulatedCall(): SimulatedCallState {
 		},
 		[
 			status,
+			saveSettings,
+			resetTranscript,
+			resetRecording,
+			startRecording,
+			addRecordingStream,
+			stopRecording,
+			ensurePlayContext,
 			startCapture,
 			connectDashboard,
+			disconnectDashboard,
 			playAiChunk,
 			flushPlaybackQueue,
 			stopCapture,
@@ -512,12 +563,13 @@ export function useSimulatedCall(): SimulatedCallState {
 			ws.close();
 		}
 
+		stopRecording(callSidRef.current);
 		stopCapture();
 		stopPlayback();
-		closeWs(dashWsRef.current);
+		disconnectDashboard();
 
 		setStatus("ended");
-	}, [stopCapture, stopPlayback, closeWs]);
+	}, [stopRecording, stopCapture, stopPlayback, disconnectDashboard]);
 
 	// ─── Cleanup on unmount ────────────────────────────────────────────────────
 
@@ -526,9 +578,18 @@ export function useSimulatedCall(): SimulatedCallState {
 			stopCapture();
 			stopPlayback();
 			closeWs(wsRef.current);
-			closeWs(dashWsRef.current);
 		};
 	}, [stopCapture, stopPlayback, closeWs]);
 
-	return { status, callSid, error, transcript, startCall, hangUp };
+	return {
+		status,
+		callSid,
+		error,
+		transcript,
+		recordingUrl,
+		recordingStatus,
+		retryRecordingSave,
+		startCall,
+		hangUp,
+	};
 }

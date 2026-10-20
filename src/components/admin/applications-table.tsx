@@ -1,20 +1,13 @@
 "use client";
 
-import { Inbox, Search } from "lucide-react";
+import { Inbox, ListFilter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import DataTable, { type Column } from "@/components/data-table";
 import InfiniteScrollTrigger from "@/components/infinite-scroll-trigger";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { FilterSearch, FilterSelect } from "@/components/ui/filter-controls";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { GetApiDoctorApplications200Item } from "@/services/generated/api.schemas";
 import { getApiDoctorApplications } from "@/services/generated/doctors/doctors";
@@ -91,27 +84,24 @@ export default function ApplicationsTable() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex gap-4">
-				<div className="relative w-full max-w-sm">
-					<Search className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2" />
-					<Input
-						placeholder="Search by email or name..."
-						value={inputValue}
-						onChange={(e) => setInputValue(e.target.value)}
-						className="bg-card pl-9 border-border rounded-sm"
-					/>
-				</div>
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
-					<SelectTrigger className="rounded-sm w-[180px]">
-						<SelectValue placeholder="Filter by status" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All</SelectItem>
-						<SelectItem value="pending">Pending</SelectItem>
-						<SelectItem value="verified">Verified</SelectItem>
-						<SelectItem value="rejected">Rejected</SelectItem>
-					</SelectContent>
-				</Select>
+			<div className="flex flex-wrap items-center gap-2">
+				<FilterSearch
+					placeholder="Search by email or name..."
+					value={inputValue}
+					onChange={setInputValue}
+				/>
+				<FilterSelect
+					icon={ListFilter}
+					label="Filter by status"
+					value={statusFilter}
+					onValueChange={setStatusFilter}
+					options={[
+						{ value: "all", label: "All statuses" },
+						{ value: "pending", label: "Pending", dot: "bg-yellow-500" },
+						{ value: "verified", label: "Verified", dot: "bg-green-500" },
+						{ value: "rejected", label: "Rejected", dot: "bg-red-500" },
+					]}
+				/>
 			</div>
 			<DataTable
 				columns={columns}

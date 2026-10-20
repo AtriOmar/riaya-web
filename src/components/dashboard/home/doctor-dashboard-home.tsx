@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePractice } from "@/hooks/use-practice";
 import { formatTnd } from "@/lib/money";
+import { formatRecordingTime } from "@/lib/recording-time";
 import { cn } from "@/lib/utils";
 import { useGetApiDashboardStats } from "@/services/generated/dashboard/dashboard";
 
@@ -24,9 +26,13 @@ function usagePercent(used: number, limit: number | null) {
 	return Math.min(100, Math.round((used / limit) * 100));
 }
 
-function formatUsage(used: number, limit: number | null) {
-	if (limit == null) return `${used} / ∞`;
-	return `${used} / ${limit}`;
+function formatUsage(
+	used: number,
+	limit: number | null,
+	format: (n: number) => string = String,
+) {
+	if (limit == null) return `${format(used)} / ∞`;
+	return `${format(used)} / ${format(limit)}`;
 }
 
 function statusVariant(
@@ -79,10 +85,17 @@ function UsageBar({
 	label,
 	used,
 	limit,
+	format,
+	display,
+	hint,
 }: {
 	label: string;
 	used: number;
 	limit: number | null;
+	format?: (n: number) => string;
+	/** Replaces the "used / limit" text (e.g. "35% used") */
+	display?: string;
+	hint?: string;
 }) {
 	const pct = usagePercent(used, limit);
 	const nearLimit = limit != null && pct >= 80;
@@ -97,7 +110,7 @@ function UsageBar({
 						nearLimit && "text-amber-700",
 					)}
 				>
-					{formatUsage(used, limit)}
+					{display ?? formatUsage(used, limit, format)}
 				</span>
 			</div>
 			<div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -110,6 +123,7 @@ function UsageBar({
 					style={{ width: limit == null ? "12%" : `${Math.max(pct, 2)}%` }}
 				/>
 			</div>
+			{hint && <p className="text-xs text-muted-foreground">{hint}</p>}
 		</div>
 	);
 }
@@ -257,6 +271,8 @@ function DashboardSkeleton() {
 
 export default function DoctorDashboardHome() {
 	const { data, isLoading, error } = useGetApiDashboardStats();
+	// The plan card is the doctor's business, not their secretary's
+	const { isSecretary } = usePractice();
 
 	if (isLoading) return <DashboardSkeleton />;
 
@@ -348,7 +364,7 @@ export default function DoctorDashboardHome() {
 			</section>
 
 			<section className="grid gap-4 lg:grid-cols-3">
-				<Card className="lg:col-span-2">
+				<Card className={isSecretary ? "lg:col-span-3" : "lg:col-span-2"}>
 					<CardHeader className="pb-2">
 						<CardTitle className="text-base">
 							Appointments · last 14 days
@@ -359,48 +375,69 @@ export default function DoctorDashboardHome() {
 					</CardContent>
 				</Card>
 
-				<Card>
-					<CardHeader className="pb-2">
-						<div className="flex items-center justify-between gap-2">
-							<CardTitle className="text-base">Plan usage</CardTitle>
-							{data.plan.isPro ? (
-								<ProPlanBadge compact />
-							) : (
-								<Badge variant="secondary">Free</Badge>
+				{!isSecretary && (
+					<Card>
+						<CardHeader className="pb-2">
+							<div className="flex items-center justify-between gap-2">
+								<CardTitle className="text-base">Plan usage</CardTitle>
+								{data.plan.isPro ? (
+									<ProPlanBadge compact />
+								) : (
+									<Badge variant="secondary">Free</Badge>
+								)}
+							</div>
+							{resetsOn && (
+								<p className="text-xs text-muted-foreground">
+									Resets {resetsOn}
+								</p>
 							)}
-						</div>
-						{resetsOn && (
-							<p className="text-xs text-muted-foreground">Resets {resetsOn}</p>
-						)}
-					</CardHeader>
-					<CardContent className="space-y-5">
-						<UsageBar
-							label="AI booking patients"
-							used={data.plan.usage.aiBookingPatients}
-							limit={data.plan.limits.aiBookingPatients}
-						/>
-						<UsageBar
-							label="WhatsApp sends"
-							used={data.plan.usage.whatsappSendsThisMonth}
-							limit={data.plan.limits.whatsappSendsPerMonth}
-						/>
-						<UsageBar
-							label="Conversation recordings"
-							used={data.plan.usage.recordingsThisMonth}
-							limit={data.plan.limits.recordingsPerMonth}
-						/>
-						<UsageBar
-							label="AI assistant messages"
-							used={data.plan.usage.aiMessagesThisMonth}
-							limit={data.plan.limits.aiMessagesPerMonth}
-						/>
-						{!data.plan.isPro && (
-							<Button asChild variant="outline" size="sm" className="w-full">
-								<Link href="/dashboard/subscription">Upgrade to Pro</Link>
-							</Button>
-						)}
-					</CardContent>
-				</Card>
+						</CardHeader>
+						<CardContent className="space-y-5">
+							<UsageBar
+								label="WhatsApp sends"
+								used={data.plan.usage.whatsappSendsThisMonth}
+								limit={data.plan.limits.whatsappSendsPerMonth}
+							/>
+							<UsageBar
+								label="Recording time"
+								used={data.plan.recordingTime.usedSeconds}
+								limit={data.plan.recordingTime.includedSeconds}
+								format={formatRecordingTime}
+								hint={
+									data.plan.recordingTime.extraSeconds > 0
+										? `+ ${formatRecordingTime(data.plan.recordingTime.extraSeconds)} extra`
+										: undefined
+								}
+							/>
+							<UsageBar
+								label="AI assistant"
+								used={data.plan.usage.aiPercentUsed}
+								limit={100}
+								display={`${data.plan.usage.aiPercentUsed}% used`}
+							/>
+							{!data.plan.isPro ? (
+								<Button asChild variant="outline" size="sm" className="w-full">
+									<Link href="/dashboard/subscription">Upgrade to Pro</Link>
+								</Button>
+							) : (
+								data.plan.canBuyRecordingPacks &&
+								data.plan.recordingTime.remainingSeconds <
+									data.plan.recordingTime.includedSeconds * 0.2 && (
+									<Button
+										asChild
+										variant="outline"
+										size="sm"
+										className="w-full"
+									>
+										<Link href="/dashboard/subscription?addHours=1">
+											Add recording hours
+										</Link>
+									</Button>
+								)
+							)}
+						</CardContent>
+					</Card>
+				)}
 			</section>
 
 			<section className="grid gap-4 lg:grid-cols-2">

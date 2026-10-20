@@ -1,15 +1,30 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import UserDetail from "@/components/admin/user-detail";
+import AdminLayout from "@/components/layouts/admin-layout";
+import { Button } from "@/components/ui/button";
 
-export default function AdminUserPage() {
-	const params = useParams<{ id: string }>();
+export default async function AdminUserPage({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}) {
+	const { id } = await params;
 
 	return (
-		<div className="pr-2 md:pr-10 pb-20 pl-2">
-			<h3 className="mb-4 font-bold text-2xl">User Details</h3>
-			<UserDetail userId={params.id} />
-		</div>
+		<AdminLayout
+			title={
+				<span className="flex items-center gap-2">
+					<Button variant="ghost" size="icon" asChild>
+						<Link href="/admin/users" aria-label="Back to users">
+							<ArrowLeft />
+						</Link>
+					</Button>
+					User details
+				</span>
+			}
+		>
+			<UserDetail userId={id} />
+		</AdminLayout>
 	);
 }

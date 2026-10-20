@@ -294,6 +294,144 @@ export function buildPendingTimeoutVoiceScript(params: {
 	};
 }
 
+export type RefusalMessageSuggestion = {
+	name: string;
+	start: Date;
+	cabinetName?: string | null;
+};
+
+const SUGGESTION_INTRO: Record<PersonPreferredLanguage, string> = {
+	en: "These doctors are available soon:",
+	fr: "Ces médecins sont disponibles prochainement :",
+	ar: "هؤلاء الأطباء متاحون قريباً:",
+};
+
+function suggestionLines(
+	language: PersonPreferredLanguage,
+	suggestions: RefusalMessageSuggestion[],
+): string[] {
+	return suggestions.map((s) => {
+		const doctor = titledDoctor(language, s.name, {
+			en: "Doctor",
+			fr: "Médecin",
+			ar: "طبيب",
+		});
+		const date = formatAppointmentDate(language, s.start);
+		const place = s.cabinetName?.trim() ? ` (${s.cabinetName.trim()})` : "";
+		return `${doctor}: ${date}${place}`;
+	});
+}
+
+function refusalCallLine(
+	language: PersonPreferredLanguage,
+	phone: string | undefined,
+	hasSuggestions: boolean,
+): string {
+	if (language === "fr") {
+		const to = phone ? ` au ${phone}` : "";
+		return hasSuggestions
+			? ` Rappelez Riaya${to} et dites-nous quel médecin vous préférez.`
+			: ` Merci de rappeler Riaya${to} pour choisir un autre médecin.`;
+	}
+	if (language === "en") {
+		const to = phone ? ` at ${phone}` : "";
+		return hasSuggestions
+			? ` Call Riaya${to} and tell us which doctor you prefer.`
+			: ` Please call Riaya${to} to book with another doctor.`;
+	}
+	const to = phone ? ` على ${phone}` : "";
+	return hasSuggestions
+		? ` اتصل برعاية${to} وقل لنا أي طبيب تفضل.`
+		: ` الرجاء الاتصال برعاية${to} لحجز موعد مع طبيب آخر.`;
+}
+
+/** WhatsApp copy when the doctor refused an AI pending request. */
+export function buildRefusalWhatsappMessage(params: {
+	language?: string | null;
+	patientName: string;
+	riayaPhone?: string | null;
+	suggestions?: RefusalMessageSuggestion[];
+}): string {
+	const language = lang(params.language);
+	const name = params.patientName.trim();
+	const phone = params.riayaPhone?.trim() || undefined;
+	const suggestions = params.suggestions ?? [];
+
+	const hello =
+		language === "fr"
+			? name
+				? `Bonjour ${name}`
+				: "Bonjour"
+			: language === "en"
+				? name
+					? `Hello ${name}`
+					: "Hello"
+				: name
+					? `مرحباً ${name}`
+					: "مرحباً";
+	const refused =
+		language === "fr"
+			? "le médecin n'a malheureusement pas pu accepter votre demande de rendez-vous."
+			: language === "en"
+				? "unfortunately the doctor could not accept your appointment request."
+				: "للأسف لم يتمكن الطبيب من قبول طلب موعدك.";
+	const sep = language === "ar" ? "،" : ",";
+	const head = `${hello}${sep} ${refused}`;
+
+	const list =
+		suggestions.length > 0
+			? `\n\n${SUGGESTION_INTRO[language]}\n${suggestionLines(
+					language,
+					suggestions,
+				)
+					.map((l) => `• ${l}`)
+					.join("\n")}\n`
+			: "";
+	return `${head}${list}${refusalCallLine(language, phone, suggestions.length > 0)}`.trim();
+}
+
+/** Short Twilio <Say> script when the doctor refused. */
+export function buildRefusalVoiceScript(params: {
+	language?: string | null;
+	patientName: string;
+	riayaPhone?: string | null;
+	suggestions?: RefusalMessageSuggestion[];
+}): { text: string; twilioLanguage: string } {
+	const language = lang(params.language);
+	const name = params.patientName.trim();
+	const phone = params.riayaPhone?.trim() || undefined;
+	const suggestions = params.suggestions ?? [];
+
+	const hello =
+		language === "fr"
+			? name
+				? `Bonjour ${name}.`
+				: "Bonjour."
+			: language === "en"
+				? name
+					? `Hello ${name}.`
+					: "Hello."
+				: name
+					? `مرحباً ${name}.`
+					: "مرحباً.";
+	const refused =
+		language === "fr"
+			? "Le médecin n'a malheureusement pas pu accepter votre demande de rendez-vous."
+			: language === "en"
+				? "Unfortunately the doctor could not accept your appointment request."
+				: "للأسف لم يتمكن الطبيب من قبول طلب موعدك.";
+	const list =
+		suggestions.length > 0
+			? ` ${SUGGESTION_INTRO[language]} ${suggestionLines(language, suggestions).join(". ")}.`
+			: "";
+
+	return {
+		text: `${hello} ${refused}${list}${refusalCallLine(language, phone, suggestions.length > 0)}`,
+		twilioLanguage:
+			language === "fr" ? "fr-FR" : language === "en" ? "en-US" : "ar-XA",
+	};
+}
+
 function fallbackMedicalTitle(language: PersonPreferredLanguage): string {
 	if (language === "fr") return "Dossier médical";
 	if (language === "en") return "Medical File";

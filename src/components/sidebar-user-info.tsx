@@ -8,11 +8,14 @@ export default function SidebarUserInfo({
 	isAdmin = false,
 	collapsed = false,
 	planBadge,
+	subtitle,
 }: {
 	isAdmin?: boolean;
 	collapsed?: boolean;
 	/** e.g. "Pro" — shown for subscribers */
 	planBadge?: string | null;
+	/** Line under the name, e.g. whose practice a secretary works in */
+	subtitle?: string | null;
 }) {
 	const { user } = useAuth();
 	const initials = (user?.username ?? user?.name ?? "U")
@@ -41,9 +44,9 @@ export default function SidebarUserInfo({
 
 	return (
 		<>
-			<div className="after:z-[-1] isolate after:absolute relative after:inset-0 h-[100px] bg-[url(/sidebar-background.jpg)] after:bg-primary/50 bg-cover bg-center">
+			<div className="after:z-[-1] isolate after:absolute relative after:inset-0 h-[100px] bg-[url(/sidebar-background.jpg)] after:bg-primary/50 dark:after:bg-primary-800/60 bg-cover bg-center">
 				{isAdmin && (
-					<div className="absolute flex items-center gap-1 px-2 py-1 rounded-br-lg bg-primary/90 shadow-md text-primary-foreground">
+					<div className="absolute flex items-center gap-1 px-2 py-1 rounded-br-lg bg-primary/90 shadow-md text-primary-foreground dark:text-primary-950">
 						<span className="font-medium text-xs">Admin</span>
 					</div>
 				)}
@@ -61,6 +64,11 @@ export default function SidebarUserInfo({
 			<h4 className="mt-8 font-semibold text-lg text-center capitalize">
 				{user?.username ?? user?.name}
 			</h4>
+			{subtitle && (
+				<p className="px-3 text-center text-muted-foreground text-xs">
+					{subtitle}
+				</p>
+			)}
 		</>
 	);
 }

@@ -22,6 +22,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { personDisplayName } from "@/lib/person-name";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "./edit-appointment-modal";
@@ -35,24 +36,22 @@ type Props = {
 	disabled?: boolean;
 };
 
+/** The doctor's patient file name, else the name from the phone booking. */
+function namedSource(event: CalendarEvent) {
+	return event.patient && personDisplayName(event.patient)
+		? event.patient
+		: event.person;
+}
+
 function patientDisplayName(event: CalendarEvent): string {
-	const fromPatient = [event.patient?.firstName, event.patient?.lastName]
-		.filter(Boolean)
-		.join(" ")
-		.trim();
-	return fromPatient || event.newPatientName?.trim() || "Unknown patient";
+	return personDisplayName(namedSource(event)) || "Unknown patient";
 }
 
 function patientInitials(event: CalendarEvent): string {
-	const a = event.patient?.firstName?.[0]?.toUpperCase() ?? "";
-	const b = event.patient?.lastName?.[0]?.toUpperCase() ?? "";
-	if (a || b) return `${a}${b}`;
-	const fallback = event.newPatientName?.trim();
-	if (fallback) {
-		const parts = fallback.split(/\s+/);
-		return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase() || "?";
-	}
-	return "?";
+	const source = namedSource(event);
+	const a = source?.firstName?.[0]?.toUpperCase() ?? "";
+	const b = source?.lastName?.[0]?.toUpperCase() ?? "";
+	return `${a}${b}` || "?";
 }
 
 function resolvePatientId(event: CalendarEvent): number | null {
@@ -87,14 +86,12 @@ export default function AppointmentHoverCard({
 	const name = patientDisplayName(event);
 	const patientId = resolvePatientId(event);
 	const phone =
-		event.patient?.phoneNumber?.trim() ||
-		event.newPatientPhoneNumber?.trim() ||
-		null;
+		event.contactPhone?.trim() || event.patient?.phoneNumber?.trim() || null;
 	const cin = event.patient?.cin?.trim() || null;
 	const description = event.description?.trim() || null;
 	const isPending = event.status === "pending";
 	const isUrgent = event.urgent === true;
-	const isNewPatient = !patientId && !!event.newPatientName;
+	const isNewPatient = !patientId && !!event.person;
 
 	function clearCloseTimer() {
 		if (closeTimer.current) {

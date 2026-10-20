@@ -7,6 +7,7 @@ import {
 	aiChatMessage,
 	consultationRecording,
 } from "@/db/schema";
+import { expireStaleReplies } from "@/lib/ai-chat-reply";
 import {
 	apiError,
 	json,
@@ -40,6 +41,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 					id: consultationRecording.id,
 					title: consultationRecording.title,
 					transcript: consultationRecording.transcript,
+					speakerRoles: consultationRecording.speakerRoles,
 				},
 			})
 			.from(aiChatConversation)
@@ -56,6 +58,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
 		if (!conversation) return apiError("CONVERSATION_NOT_FOUND");
 
+		await expireStaleReplies(conversationId);
 		const messages = await db
 			.select()
 			.from(aiChatMessage)

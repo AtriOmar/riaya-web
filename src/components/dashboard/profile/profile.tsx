@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
+import { usePractice } from "@/hooks/use-practice";
 import { useGetApiDoctorApplicationsMe } from "@/services/generated/doctors/doctors";
 import {
 	useGetApiCities,
@@ -9,6 +10,7 @@ import {
 } from "@/services/generated/miscellaneous/miscellaneous";
 import { useGetApiUsersMe } from "@/services/generated/users/users";
 import DoctorApplicationForm from "./doctor-application";
+import DocumentBranding from "./document-branding";
 import ProfilePicture from "./picture";
 import UserInfoReadOnly from "./user-info-readonly";
 
@@ -28,6 +30,7 @@ export default function Profile() {
 
 	const { data: cities } = useGetApiCities();
 
+	const { practice } = usePractice();
 	const profile = me?.doctorProfile ?? null;
 	/** Prefer doctor profile status; fall back to application when there is no profile row yet. */
 	const status = profile?.status ?? application?.status ?? "none";
@@ -43,6 +46,30 @@ export default function Profile() {
 		void mutateApp();
 	};
 
+	// Secretaries have no doctor profile: show who they work for instead
+	if (practice?.role === "secretary") {
+		return (
+			<div>
+				<ProfilePicture />
+				<div className="mt-6 space-y-4">
+					<h3 className="font-semibold text-xl">Your account</h3>
+					<div>
+						<p className="font-medium text-muted-foreground text-sm">Email</p>
+						<p className="mt-1 rounded-sm border border-border/50 bg-muted px-3 py-1.5 font-medium text-sm">
+							{user?.email}
+						</p>
+					</div>
+					<div>
+						<p className="font-medium text-muted-foreground text-sm">Role</p>
+						<p className="mt-1 rounded-sm border border-border/50 bg-muted px-3 py-1.5 font-medium text-sm">
+							Secretary for {practice.doctorName}
+						</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div>
 			<ApplicationStatus
@@ -52,6 +79,14 @@ export default function Profile() {
 			<ProfilePicture />
 
 			{showReadOnly && readOnlyInfo && <UserInfoReadOnly info={readOnlyInfo} />}
+
+			{status === "verified" && profile && (
+				<DocumentBranding
+					logoUrl={profile.logoUrl}
+					stampUrl={profile.stampUrl}
+					onSaved={() => void mutateMe()}
+				/>
+			)}
 
 			{showBanned && (
 				<div className="mt-5">

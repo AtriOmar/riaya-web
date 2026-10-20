@@ -17,7 +17,7 @@ const APP_URL =
 
 export async function POST(req: Request) {
 	try {
-		await requireInternal(req);
+		requireInternal(req);
 
 		const now = new Date();
 		const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);

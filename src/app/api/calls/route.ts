@@ -18,6 +18,7 @@ export async function GET() {
 				events: {
 					orderBy: (e, { asc }) => [asc(e.timestamp)],
 				},
+				report: { columns: { id: true, category: true, status: true } },
 			},
 		});
 
@@ -83,7 +84,7 @@ async function startTwilioRecording(callSid: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
 	try {
-		// await requireInternal(req);
+		// requireInternal(req);
 
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);

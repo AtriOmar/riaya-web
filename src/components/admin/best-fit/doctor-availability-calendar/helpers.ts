@@ -1,4 +1,4 @@
-import type { AdminDoctorAppointment } from "@/hooks/use-admin-doctor";
+import type { GetApiDoctorsId200AppointmentsItem as AdminDoctorAppointment } from "@/services/generated/api.schemas";
 import type { Availability } from "@/services/types";
 
 /** JS `getDay()` is Sun=0; availability keys are Mon=0 … Sun=6. */
@@ -17,7 +17,7 @@ export function buildAvailabilityByDay(avail: Availability | null | undefined) {
 }
 
 export function appointmentLabel(a: AdminDoctorAppointment): string {
-	return a.name?.trim() || a.newPatientName?.trim() || "Appointment";
+	return a.name?.trim() || a.patientName?.trim() || "Appointment";
 }
 
 export function isAvailableAt(

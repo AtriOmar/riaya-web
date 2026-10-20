@@ -1,28 +1,37 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { selectAppointmentSchema } from "@/db/zod";
-import { apiError, json, validationError } from "@/lib/api-utils";
+import {
+	apiError,
+	json,
+	requireInternal,
+	validationError,
+} from "@/lib/api-utils";
 import { bookEmergencyAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { scheduleEmergencyPendingTimeout } from "@/lib/pending-appointment-timeout";
-import { upsertPersonByPhone } from "@/lib/person";
+import { bookingPatientSchema, resolveBookingPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 
 // ─── POST /api/appointments/external/emergency ───────────────────────────────
-// Public — fan-out urgent pending appointments to the top ASAP best-fit doctors.
+// Internal (voice assistant) — fan-out urgent pending appointments to the top ASAP best-fit doctors.
 // When one doctor accepts, siblings in the same emergencyGroupId are cancelled.
 
 const emergencySchema = z.object({
 	speciality: z.string().min(1),
 	lat: z.coerce.number(),
 	long: z.coerce.number(),
-	name: z.string().min(1),
+	/** Name of the place at `lat`/`long`, kept on the bookings for the next call. */
+	placeLabel: z.string().max(255).nullable().optional(),
+	/** The calling phone line. */
 	phoneNumber: z.string().min(1, "Phone number is required"),
+	patient: bookingPatientSchema,
 	illness: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
 	try {
+		requireInternal(req);
 		const body = await req.json();
 		const parsed = emergencySchema.safeParse(body);
 		if (!parsed.success) return validationError(parsed.error.issues);
@@ -34,14 +43,18 @@ export async function POST(req: NextRequest) {
 			]);
 		}
 
-		void upsertPersonByPhone(normalizedPhone, "call");
+		const patientPerson = await resolveBookingPerson(
+			normalizedPhone,
+			parsed.data.patient,
+		);
 
 		const result = await bookEmergencyAppointments({
 			speciality: parsed.data.speciality,
 			lat: parsed.data.lat,
 			long: parsed.data.long,
-			name: parsed.data.name,
-			phoneNumber: normalizedPhone,
+			placeLabel: parsed.data.placeLabel ?? null,
+			personId: patientPerson.id,
+			contactPhone: normalizedPhone,
 			illness: parsed.data.illness,
 		});
 

@@ -1,47 +1,15 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { patient, person } from "@/db/schema";
 import { apiError } from "@/lib/api-utils";
-import { splitCallerName } from "@/lib/caller-name";
-import { upsertPersonByPhone } from "@/lib/person";
-import {
-	DEFAULT_PHONE_COUNTRY,
-	normalizePhoneForStorage,
-	phoneStorageVariants,
-} from "@/lib/phone";
 
-/** Doctor-scoped patient match by phone (person link or patient.phoneNumber). */
-export async function findDoctorPatientByPhone(
+/** The doctor's patient file for this person, if they have one. */
+export async function findDoctorPatientByPerson(
 	doctorId: number,
-	phoneNumber: string,
+	personId: number,
 ) {
-	const normalized = normalizePhoneForStorage(
-		phoneNumber,
-		DEFAULT_PHONE_COUNTRY,
-	);
-	if (!normalized) return null;
-
-	const variants = phoneStorageVariants(normalized);
-
-	const personRow = await db.query.person.findFirst({
-		where: inArray(person.phoneNumber, variants),
-	});
-
-	if (personRow) {
-		const byPerson = await db.query.patient.findFirst({
-			where: and(
-				eq(patient.doctorId, doctorId),
-				eq(patient.personId, personRow.id),
-			),
-		});
-		if (byPerson) return byPerson;
-	}
-
 	return db.query.patient.findFirst({
-		where: and(
-			eq(patient.doctorId, doctorId),
-			inArray(patient.phoneNumber, variants),
-		),
+		where: and(eq(patient.doctorId, doctorId), eq(patient.personId, personId)),
 	});
 }
 
@@ -53,37 +21,37 @@ async function assertDoctorPatient(doctorId: number, patientId: number) {
 	return row.id;
 }
 
-export async function createMinimalPatientForCaller(
+/** Create the doctor's file for a person, named from the person unless overridden. */
+async function createPatientForPerson(
 	doctorId: number,
-	phoneNumber: string,
-	callerName: string | null | undefined,
-	nameOverride?: { firstName?: string; lastName?: string },
+	personId: number,
+	contactPhone: string | null,
+	nameOverride: { firstName?: string; lastName?: string },
 ) {
-	const normalized = normalizePhoneForStorage(
-		phoneNumber,
-		DEFAULT_PHONE_COUNTRY,
-	);
-	if (!normalized) throw apiError("PATIENT_PHONE_REQUIRED");
-
-	const personRow = await upsertPersonByPhone(normalized, "call");
-	if (!personRow) throw apiError("VALIDATION_ERROR");
-
-	const existing = await findDoctorPatientByPhone(doctorId, normalized);
+	const existing = await findDoctorPatientByPerson(doctorId, personId);
 	if (existing) return existing.id;
 
-	const fallback = splitCallerName(callerName);
-	const firstName = nameOverride?.firstName?.trim() || fallback.firstName;
-	const lastName = nameOverride?.lastName?.trim() || fallback.lastName;
+	const personRow = await db.query.person.findFirst({
+		where: eq(person.id, personId),
+	});
+	if (!personRow) throw apiError("VALIDATION_ERROR");
+
+	// The doctor's edited name wins over the one the assistant captured.
+	const overrideFirst = nameOverride.firstName?.trim();
+	const firstName = overrideFirst || personRow.firstName;
+	const lastName = overrideFirst
+		? nameOverride.lastName?.trim() || null
+		: personRow.lastName;
 	if (!firstName) throw apiError("VALIDATION_ERROR");
 
 	const [created] = await db
 		.insert(patient)
 		.values({
-			personId: personRow.id,
+			personId,
 			doctorId,
 			firstName,
 			lastName,
-			phoneNumber: normalized,
+			phoneNumber: contactPhone,
 		})
 		.returning();
 
@@ -92,16 +60,16 @@ export async function createMinimalPatientForCaller(
 
 type AppointmentForLink = {
 	patientId: number | null;
-	newPatientPhoneNumber: string | null;
-	newPatientName: string | null;
+	personId: number | null;
+	contactPhone: string | null;
 };
 
 /**
- * Resolve which patient to attach when confirming an unlinked appointment.
- * - Existing appointment.patientId → unchanged
- * - Phone matches a doctor patient → link automatically
- * - Else patientId in input → link that patient
- * - Else createPatient → create minimal patient from caller fields
+ * Resolve which patient file to attach when the doctor accepts an appointment.
+ * - Already linked → unchanged
+ * - Doctor picked a file → that file
+ * - The doctor already has a file for the appointment's person → that file
+ * - createPatient → new file for the person
  */
 export async function resolvePatientIdForConfirm(
 	doctorId: number,
@@ -115,31 +83,17 @@ export async function resolvePatientIdForConfirm(
 ): Promise<number | null> {
 	if (appt.patientId) return appt.patientId;
 
-	const phone = normalizePhoneForStorage(
-		appt.newPatientPhoneNumber,
-		DEFAULT_PHONE_COUNTRY,
-	);
-	if (!phone) {
-		if (input.patientId != null) {
-			return assertDoctorPatient(doctorId, input.patientId);
-		}
-		return null;
-	}
-
-	const matched = await findDoctorPatientByPhone(doctorId, phone);
-	if (matched) {
-		if (input.patientId != null && input.patientId !== matched.id) {
-			return assertDoctorPatient(doctorId, input.patientId);
-		}
-		return matched.id;
-	}
-
 	if (input.patientId != null) {
 		return assertDoctorPatient(doctorId, input.patientId);
 	}
 
+	if (appt.personId == null) return null;
+
+	const matched = await findDoctorPatientByPerson(doctorId, appt.personId);
+	if (matched) return matched.id;
+
 	if (input.createPatient) {
-		return createMinimalPatientForCaller(doctorId, phone, appt.newPatientName, {
+		return createPatientForPerson(doctorId, appt.personId, appt.contactPhone, {
 			firstName: input.patientFirstName,
 			lastName: input.patientLastName,
 		});

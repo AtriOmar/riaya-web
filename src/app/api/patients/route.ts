@@ -1,4 +1,3 @@
-import { and, eq, ilike, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -6,12 +5,13 @@ import { patient } from "@/db/schema";
 import {
 	apiError,
 	json,
-	requireDoctorProfile,
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
-import { upsertPersonByPhone } from "@/lib/person";
+import { searchPatients } from "@/lib/patients";
+import { familyRelationships, resolveDoctorPatientPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
+import { requirePractice } from "@/lib/practice";
 
 // ─── GET /api/patients ────────────────────────────────────────────────────────
 // Returns patients for the authenticated doctor (with optional search)
@@ -41,29 +41,8 @@ export async function GET(req: NextRequest) {
 		}
 
 		// Doctor's own patients
-		const profile = await requireDoctorProfile(session.user.id);
-		const search = parsed.data.search;
-
-		const patients = await db
-			.select({
-				id: patient.id,
-				firstName: patient.firstName,
-				lastName: patient.lastName,
-				cin: patient.cin,
-				dateOfBirth: patient.dateOfBirth,
-			})
-			.from(patient)
-			.where(
-				search
-					? and(
-							eq(patient.doctorId, profile.id),
-							or(
-								ilike(patient.firstName, `%${search}%`),
-								ilike(patient.lastName, `%${search}%`),
-							),
-						)
-					: eq(patient.doctorId, profile.id),
-			);
+		const { doctor: profile } = await requirePractice();
+		const patients = await searchPatients(profile.id, parsed.data.search);
 
 		return json(patients);
 	} catch (e) {
@@ -82,12 +61,13 @@ const createSchema = z.object({
 	gender: z.string().min(1),
 	address: z.string(),
 	phoneNumber: z.string().min(1),
+	/** Set when the number belongs to someone else (e.g. a parent): how the patient relates to them. */
+	phoneOwnerRelationship: z.enum(familyRelationships).optional(),
 });
 
 export async function POST(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);
 
@@ -99,8 +79,16 @@ export async function POST(req: NextRequest) {
 				{ message: "Invalid phone number", path: ["phoneNumber"] },
 			]);
 
-		const personRow = await upsertPersonByPhone(phone, "doctor");
-		if (!personRow) return apiError("VALIDATION_ERROR");
+		const personRow = await resolveDoctorPatientPerson(
+			phone,
+			{
+				firstName: parsed.data.firstName,
+				lastName: parsed.data.lastName,
+				dateOfBirth: new Date(parsed.data.dateOfBirth),
+				gender: parsed.data.gender,
+			},
+			parsed.data.phoneOwnerRelationship,
+		);
 
 		const [created] = await db
 			.insert(patient)

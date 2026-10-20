@@ -45,7 +45,7 @@ function PricingCard({
 					"relative flex h-full flex-col rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2",
 					plan.popular
 						? "bg-linear-to-br from-primary to-primary-700 text-primary-foreground shadow-glow"
-						: "border border-primary/15 bg-linear-to-br from-primary-50 to-background shadow-soft",
+						: "border border-primary/15 bg-linear-to-br from-primary-50 dark:from-card to-background shadow-soft",
 					isCurrent &&
 						(plan.popular
 							? "ring-2 ring-primary-foreground/80"
@@ -185,7 +185,7 @@ function PricingCard({
 									"border-primary-foreground bg-primary-foreground text-primary hover:bg-primary-foreground hover:text-primary",
 								!isCurrent &&
 									!plan.popular &&
-									"border-0 bg-primary-100 text-primary hover:bg-primary-100 hover:text-primary",
+									"border-0 bg-primary-100 text-primary hover:bg-primary-100 hover:text-primary dark:bg-primary-950/60 dark:text-primary-300 dark:hover:bg-primary-950/60",
 							)}
 							size="lg"
 							disabled

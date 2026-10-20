@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const r2 = new S3Client({
@@ -41,4 +45,23 @@ export async function uploadBufferToR2(
 	);
 	const cdn = (process.env.CDN_URL ?? "").replace(/\/$/, "");
 	return `${cdn}/${key}`;
+}
+
+/**
+ * Deletes a file we uploaded, by its public CDN URL. URLs outside our CDN are
+ * ignored. Never throws: a leftover file is better than a failed delete.
+ */
+export async function deleteFromR2ByUrl(url: string): Promise<void> {
+	const cdn = (process.env.CDN_URL ?? "").replace(/\/$/, "");
+	if (!cdn || !url.startsWith(`${cdn}/`)) return;
+	try {
+		await r2.send(
+			new DeleteObjectCommand({
+				Bucket: process.env.R2_BUCKET_NAME ?? "",
+				Key: url.slice(cdn.length + 1),
+			}),
+		);
+	} catch (err) {
+		console.error("R2 delete failed:", url, err);
+	}
 }

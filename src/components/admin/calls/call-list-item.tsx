@@ -57,6 +57,11 @@ export default function CallListItem({ call, selected, onSelect }: Props) {
 							{isActive ? "Active" : "Ended"}
 						</span>
 						<span className="truncate font-medium text-sm">{callerLabel}</span>
+						{call.reported && (
+							<span className="shrink-0 rounded-full bg-destructive/10 px-1.5 py-0.5 font-medium text-[10px] text-destructive uppercase tracking-wide">
+								Reported
+							</span>
+						)}
 						<span className="ml-auto shrink-0 font-mono text-muted-foreground text-xs tabular-nums">
 							{duration}
 						</span>
@@ -65,7 +70,8 @@ export default function CallListItem({ call, selected, onSelect }: Props) {
 						{callDateLabel}
 					</p>
 					<p className="mt-1 line-clamp-2 text-muted-foreground text-xs leading-snug">
-						{preview}
+						{preview.label && <span>{preview.label}: </span>}
+						<bdi>{preview.text}</bdi>
 					</p>
 				</div>
 			</div>

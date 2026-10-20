@@ -7,16 +7,11 @@ import {
 	selectInvoiceWithItemsSchema,
 	selectInvoiceWithPatientSchema,
 } from "@/db/zod";
-import {
-	apiError,
-	json,
-	requireDoctorProfile,
-	requireSession,
-	validationError,
-} from "@/lib/api-utils";
+import { apiError, json, validationError } from "@/lib/api-utils";
 import { sumItemsCentimes } from "@/lib/invoice";
 import { nextInvoiceNumber } from "@/lib/invoice-server";
 import { registry } from "@/lib/openapi";
+import { requirePractice } from "@/lib/practice";
 
 const itemSchema = z.object({
 	description: z.string().min(1),
@@ -40,8 +35,7 @@ const listQuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const params = Object.fromEntries(req.nextUrl.searchParams);
 		const parsed = listQuerySchema.safeParse(params);
@@ -86,8 +80,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
 	try {
-		const session = await requireSession();
-		const profile = await requireDoctorProfile(session.user.id);
+		const { doctor: profile } = await requirePractice();
 
 		const body = await req.json();
 		const parsed = createSchema.safeParse(body);

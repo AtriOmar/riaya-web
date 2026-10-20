@@ -1,20 +1,27 @@
 import { and, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { consultationRecording } from "@/db/schema";
+import { consultationRecording, recordingUsage } from "@/db/schema";
 import {
 	apiError,
 	json,
 	requireDoctorProfile,
 	requireSession,
 } from "@/lib/api-utils";
-import { transcribeAudio } from "@/lib/azure-ai";
+import { getRecordingTime } from "@/lib/plan-limits";
+import { summarizeRecording } from "@/lib/recording-summary";
+import {
+	shouldSummarize,
+	transcribeRecording,
+} from "@/lib/recording-transcription";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 // ─── POST /api/recordings/[id]/transcribe ─────────────────────────────────────
-// Triggers transcription for a recording via `transcribeAudio` in azure-ai.ts.
+// Transcribes a recording: a retry, or one saved while no recording time was
+// left. A recording's time is only charged once, so retries are free; a first
+// transcription needs time left. On Pro the AI note follows in the background.
 
 export async function POST(_req: NextRequest, { params }: RouteContext) {
 	try {
@@ -38,55 +45,27 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 
 		if (!recording) return apiError("RECORDING_NOT_FOUND");
 
-		// Mark as processing
-		await db
-			.update(consultationRecording)
-			.set({ transcriptStatus: "processing", updatedAt: new Date() })
-			.where(eq(consultationRecording.id, recordingId));
-
-		// Fetch the audio from the CDN
-		const audioResponse = await fetch(recording.audioUrl);
-		if (!audioResponse.ok) {
-			await db
-				.update(consultationRecording)
-				.set({ transcriptStatus: "error", updatedAt: new Date() })
-				.where(eq(consultationRecording.id, recordingId));
-			return apiError("TRANSCRIPTION_FAILED");
+		const [charged] = await db
+			.select({ id: recordingUsage.id })
+			.from(recordingUsage)
+			.where(eq(recordingUsage.recordingId, recordingId));
+		if (!charged) {
+			const { remainingSeconds } = await getRecordingTime(profile.id);
+			if (remainingSeconds <= 0) return apiError("RECORDING_LIMIT_REACHED");
 		}
 
-		const arrayBuffer = await audioResponse.arrayBuffer();
-		// Use arrayBuffer directly to avoid Node.js nested-Blob serialization issues
-		const contentType = audioResponse.headers.get("content-type") ?? "";
-		const audioMime = contentType.startsWith("audio/")
-			? contentType
-			: "audio/webm";
-		const audioBlob = new Blob([arrayBuffer], { type: audioMime });
-		const ext = recording.audioUrl.split(".").pop() ?? "webm";
-		const filename = `recording-${recordingId}.${ext}`;
+		const transcribed = await transcribeRecording(recordingId);
+		if (!transcribed) return apiError("TRANSCRIPTION_FAILED");
 
-		let transcript: any;
-		try {
-			transcript = await transcribeAudio(audioBlob, filename);
-		} catch (err) {
-			await db
-				.update(consultationRecording)
-				.set({ transcriptStatus: "error", updatedAt: new Date() })
-				.where(eq(consultationRecording.id, recordingId));
-			console.error("Transcription error:", err);
-			return apiError("TRANSCRIPTION_FAILED");
-		}
+		if (!(await shouldSummarize(profile.id))) return json(transcribed);
 
-		// Save transcript
+		// Mark it now so the page starts polling, then write the note after responding
 		const [updated] = await db
 			.update(consultationRecording)
-			.set({
-				transcript,
-				transcriptStatus: "done",
-				updatedAt: new Date(),
-			})
+			.set({ summaryStatus: "processing" })
 			.where(eq(consultationRecording.id, recordingId))
 			.returning();
-
+		after(() => summarizeRecording(recordingId));
 		return json(updated);
 	} catch (e) {
 		if (e instanceof Response) return e;

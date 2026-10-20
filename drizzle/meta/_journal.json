@@ -71,6 +71,118 @@
       "when": 1789715296943,
       "tag": "0009_convert_transcript_to_jsonb",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792248375837,
+      "tag": "0010_create_person_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792249999518,
+      "tag": "0011_drop_appointment_new_patient_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792250000313,
+      "tag": "0012_add_appointment_person_and_contact_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792256379830,
+      "tag": "0013_create_call_reports_and_blocked_phones",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792260774893,
+      "tag": "0014_recording_hours_and_top_up_invoices",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792283732764,
+      "tag": "0015_add_doctor_logo_and_stamp",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792284125215,
+      "tag": "0016_create_secretaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792285386769,
+      "tag": "0017_add_ai_chat_message_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792286691155,
+      "tag": "0018_add_ai_chat_message_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792291682651,
+      "tag": "0019_add_recording_summaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792294502089,
+      "tag": "0020_add_recording_speaker_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792295448291,
+      "tag": "0021_ai_chat_message_parts",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792385547781,
+      "tag": "0022_add_appointment_patient_place",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792386154449,
+      "tag": "0023_review_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792386473257,
+      "tag": "0024_review_unique_appointment",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792387887301,
+      "tag": "0025_doctor_best_fit_exclusion",
+      "breakpoints": true
     }
   ]
 }

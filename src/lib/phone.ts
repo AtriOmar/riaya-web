@@ -18,13 +18,31 @@ export const PHONE_COUNTRY_OPTIONS: PhoneCountryOption[] = [
 	{ code: "TN", label: "Tunisia" },
 ];
 
+/** Test-call simulator: dashboard countries plus American (US) numbers. */
+export const TEST_CALL_PHONE_COUNTRY_OPTIONS: PhoneCountryOption[] = [
+	...PHONE_COUNTRY_OPTIONS,
+	{ code: "US", label: "United States" },
+];
+
 export function phoneCountryFromValue(
 	stored: string | null | undefined,
-	fallback: CountryCode = DEFAULT_PHONE_COUNTRY,
+	countries: PhoneCountryOption[] = PHONE_COUNTRY_OPTIONS,
 ): CountryCode {
-	if (stored == null || !stored.trim()) return fallback;
-	const parsed = parsePhoneNumberFromString(stored.trim(), fallback);
-	return parsed?.country ?? fallback;
+	if (stored == null || !stored.trim()) return DEFAULT_PHONE_COUNTRY;
+	const trimmed = stored.trim();
+	const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_PHONE_COUNTRY);
+	if (parsed?.country && countries.some((c) => c.code === parsed.country)) {
+		return parsed.country;
+	}
+	// Partial numbers (e.g. "+1415") have no country yet, so match the calling code.
+	if (trimmed.startsWith("+")) {
+		const international = trimmed.slice(1).replace(/\D/g, "");
+		const match = countries.find((c) =>
+			international.startsWith(getCountryCallingCode(c.code)),
+		);
+		if (match) return match.code;
+	}
+	return DEFAULT_PHONE_COUNTRY;
 }
 
 function nationalDigitsFromStored(

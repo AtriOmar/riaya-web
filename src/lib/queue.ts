@@ -2,7 +2,7 @@ import { Queue } from "bullmq";
 import Redis from "ioredis";
 
 // Use the REDIS_URL environment variable if provided, otherwise default to local development
-const connection = new Redis(
+export const connection = new Redis(
 	process.env.REDIS_URL || "redis://localhost:6379",
 	{
 		maxRetriesPerRequest: null,
