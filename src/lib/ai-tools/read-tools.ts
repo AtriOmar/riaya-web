@@ -18,8 +18,8 @@ import { getDoctorDashboardStats } from "@/lib/dashboard-stats";
 import { listSlotsForDay } from "@/lib/doctor-slots";
 import { searchPatients } from "@/lib/patients";
 import { personDisplayName } from "@/lib/person-name";
+import { fromPracticeTime } from "@/lib/practice-time";
 import { findDoctorPatient, type ToolContext, toAiAppointment } from "./shared";
-import { fromPracticeTime } from "./time";
 
 type ReadTool<N extends ReadToolName> = {
 	description: string;

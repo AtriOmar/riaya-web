@@ -8,10 +8,10 @@ import {
 	type ReadToolName,
 	readToolSchemas,
 } from "@/lib/ai-chat-parts";
+import { toPracticeTime } from "@/lib/practice-time";
 import { actionTools } from "./action-tools";
 import { readTools } from "./read-tools";
 import { type ToolContext, ToolError } from "./shared";
-import { toPracticeTime } from "./time";
 
 export type { ToolContext } from "./shared";
 

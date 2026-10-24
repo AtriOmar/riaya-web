@@ -1,10 +1,13 @@
+import {
+	atPracticeMinutes,
+	practiceDayIndex,
+	practiceMinutes,
+} from "@/lib/practice-time";
+
+/** Opening hours in minutes after midnight, Tunis time. */
 export type AvailabilitySlot = { start: number; end: number };
 /** Weekly opening hours by day index (0-6 = Mon-Sun); a missing day is closed. */
 export type Availability = Partial<Record<number, AvailabilitySlot[]>>;
-function normalizeDayIndex(date: Date): number {
-	const day = date.getDay();
-	return day === 0 ? 6 : day - 1;
-}
 function roundToNearest30(minutes: number): number {
 	return Math.ceil(minutes / 30) * 30;
 }
@@ -30,8 +33,8 @@ export function findNextAvailableSlot(
 	currentTime: Date,
 	desiredTime: Date,
 ): { start: Date; end: Date } | null {
-	const dayOfWeek = normalizeDayIndex(desiredTime);
-	const desiredMinutes = desiredTime.getHours() * 60 + desiredTime.getMinutes();
+	const dayOfWeek = practiceDayIndex(desiredTime);
+	const desiredMinutes = practiceMinutes(desiredTime);
 	let slotFromRight: { start: Date; end: Date } | null = null;
 	let slotFromLeft: { start: Date; end: Date } | null = null;
 	for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -43,10 +46,10 @@ export function findNextAvailableSlot(
 				dayOffset === 0 ? roundToNearest30(desiredMinutes) : slot.start,
 			);
 			while (start + 30 <= slot.end) {
-				const slotStart = new Date(
-					desiredTime.getTime() + dayOffset * 24 * 60 * 60 * 1000,
+				const slotStart = atPracticeMinutes(
+					new Date(desiredTime.getTime() + dayOffset * 24 * 60 * 60 * 1000),
+					start,
 				);
-				slotStart.setHours(Math.floor(start / 60), start % 60, 0, 0);
 				const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
 				if (
 					slotStart >= currentTime &&
@@ -69,10 +72,10 @@ export function findNextAvailableSlot(
 				dayOffset === 0 ? roundToNearest30(desiredMinutes) - 30 : slot.end,
 			);
 			while (start >= slot.start) {
-				const slotStart = new Date(
-					desiredTime.getTime() - dayOffset * 24 * 60 * 60 * 1000,
+				const slotStart = atPracticeMinutes(
+					new Date(desiredTime.getTime() - dayOffset * 24 * 60 * 60 * 1000),
+					start,
 				);
-				slotStart.setHours(Math.floor(start / 60), start % 60, 0, 0);
 				const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
 				if (
 					slotStart >= currentTime &&
@@ -109,8 +112,8 @@ export function listAvailableSlotsForDoctor(
 	limit = 5,
 ): { start: Date; end: Date }[] {
 	const results: { start: Date; end: Date }[] = [];
-	const anchorDay = normalizeDayIndex(anchorTime);
-	const anchorMinutes = anchorTime.getHours() * 60 + anchorTime.getMinutes();
+	const anchorDay = practiceDayIndex(anchorTime);
+	const anchorMinutes = practiceMinutes(anchorTime);
 	for (
 		let dayOffset = 0;
 		dayOffset < 7 && results.length < limit;
@@ -124,10 +127,10 @@ export function listAvailableSlotsForDoctor(
 				startMinutes = Math.max(slot.start, roundToNearest30(anchorMinutes));
 			}
 			while (startMinutes + 30 <= slot.end && results.length < limit) {
-				const start = new Date(
-					anchorTime.getTime() + dayOffset * 24 * 60 * 60 * 1000,
+				const start = atPracticeMinutes(
+					new Date(anchorTime.getTime() + dayOffset * 24 * 60 * 60 * 1000),
+					startMinutes,
 				);
-				start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
 				const end = new Date(start.getTime() + 30 * 60 * 1000);
 				if (
 					start >= currentTime &&
@@ -155,13 +158,12 @@ export function listSlotsForDay(
 	day: Date,
 ): { start: Date; end: Date }[] {
 	const results: { start: Date; end: Date }[] = [];
-	const dayIndex = normalizeDayIndex(day);
+	const dayIndex = practiceDayIndex(day);
 	const slots = availability[dayIndex] || [];
 	for (const slot of slots) {
 		let startMinutes = slot.start;
 		while (startMinutes + 30 <= slot.end) {
-			const start = new Date(day);
-			start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+			const start = atPracticeMinutes(day, startMinutes);
 			const end = new Date(start.getTime() + 30 * 60 * 1000);
 			if (start >= currentTime && isSlotAvailable(start, end, appointments)) {
 				results.push({ start, end });

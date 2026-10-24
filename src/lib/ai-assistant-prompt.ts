@@ -6,8 +6,8 @@
  * Plan numbers are imported from `plans.ts` so limits stay in sync.
  */
 
-import { practiceNow } from "@/lib/ai-tools/time";
 import { approxAiQuestions, PLANS, RECORDING_PACK_LIST } from "@/lib/plans";
+import { practiceNow } from "@/lib/practice-time";
 
 const FREE = PLANS.free;
 const PRO = PLANS.pro;

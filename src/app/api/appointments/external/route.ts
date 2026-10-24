@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, lt, lte, or } from "drizzle-orm";
+import { and, eq, gt, gte, isNull, lt, lte, ne, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -12,6 +12,7 @@ import {
 import { schedulePendingAppointmentTimeout } from "@/lib/pending-appointment-timeout";
 import { bookingPatientSchema, resolveBookingPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
+import { practiceDayIndex, practiceMinutes } from "@/lib/practice-time";
 import { clearRefusalContext } from "@/lib/refusal-suggestions";
 
 // ─── POST /api/appointments/external ─────────────────────────────────────────
@@ -64,15 +65,14 @@ export async function POST(req: NextRequest) {
 
 		if (startDate >= endDate) return apiError("INVALID_TIME_RANGE");
 
-		// Check availability
-		let dayOfWeek = startDate.getDay();
-		dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-		const availability = doctor.availability?.[dayOfWeek] ?? [];
+		// Check availability (opening hours are Tunis wall-clock times)
+		const availability =
+			doctor.availability?.[practiceDayIndex(startDate)] ?? [];
 
 		if (!availability.length) return apiError("DOCTOR_UNAVAILABLE_DAY");
 
-		const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
-		const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
+		const startMinutes = practiceMinutes(startDate);
+		const endMinutes = practiceMinutes(endDate);
 
 		const isWithinAvailability = availability.some(
 			(slot) => startMinutes >= slot.start && endMinutes <= slot.end,
@@ -80,13 +80,14 @@ export async function POST(req: NextRequest) {
 
 		if (!isWithinAvailability) return apiError("DOCTOR_UNAVAILABLE_TIME");
 
-		// Check for overlapping appointments
+		// Check for overlapping appointments (a refused or cancelled one frees its slot)
 		const overlapping = await db
 			.select({ id: appointment.id })
 			.from(appointment)
 			.where(
 				and(
 					eq(appointment.doctorId, data.doctorId),
+					or(isNull(appointment.status), ne(appointment.status, "cancelled")),
 					or(
 						and(
 							lt(appointment.start, startDate),
