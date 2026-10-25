@@ -7532,6 +7532,33 @@ export type PostApiRegisterVerifyOtp200 = {
 	email: string;
 };
 
+export type GetApiReviewsToken200Status =
+	(typeof GetApiReviewsToken200Status)[keyof typeof GetApiReviewsToken200Status];
+
+export const GetApiReviewsToken200Status = {
+	pending: "pending",
+	submitted: "submitted",
+	expired: "expired",
+} as const;
+
+export type GetApiReviewsToken200 = {
+	status: GetApiReviewsToken200Status;
+	/** @nullable */
+	patientFirstName: string | null;
+	/** @nullable */
+	doctorName: string | null;
+	/** @nullable */
+	speciality: string | null;
+	/** @nullable */
+	cabinetName: string | null;
+	/** @nullable */
+	city: string | null;
+	/** @nullable */
+	start: string | null;
+	/** @nullable */
+	end: string | null;
+};
+
 export type PostApiReviewsSubmitBodyWaitTime =
 	(typeof PostApiReviewsSubmitBodyWaitTime)[keyof typeof PostApiReviewsSubmitBodyWaitTime];
 
