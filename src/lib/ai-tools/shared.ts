@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { appointment, doctorProfile, patient, type person } from "@/db/schema";
 import type { AiAppointment } from "@/lib/ai-chat-parts";
 import { personDisplayName } from "@/lib/person-name";
-import { PRACTICE_TIME_ZONE, toPracticeTime } from "./time";
+import { PRACTICE_TIME_ZONE, toPracticeTime } from "@/lib/practice-time";
 
 export type ToolContext = { doctorId: number };
 

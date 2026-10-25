@@ -1,28 +1,50 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { doctorProfile } from "@/db/schema";
+import { type appointment, doctorProfile, person } from "@/db/schema";
 import { findBestFitDoctors } from "@/lib/best-fit";
 import { DEFAULT_PHONE_COUNTRY, normalizePhoneForStorage } from "@/lib/phone";
 import { connection } from "@/lib/queue";
 
 /**
- * When a doctor refuses an AI request we remember what the patient asked for
- * (speciality, area, time, doctors who already said no). The refusal message and
- * the next phone call both use it to suggest other doctors with fresh slots.
+ * When a doctor refuses an AI request, or nobody accepts it in time, we remember
+ * what the patient asked for (speciality, the patient's area, time, who it was
+ * for and why, doctors already asked). The callback and the next phone call use
+ * it to suggest other doctors with fresh slots and rebook without asking again.
  * Stored in Redis with a short TTL, so no schema change is needed.
  */
 
 const REFUSAL_CONTEXT_TTL_SECONDS = 24 * 60 * 60;
 export const MAX_REFUSAL_SUGGESTIONS = 3;
 
+/** Why the request was not accepted. */
+export type UnacceptedReason = "refused" | "timeout";
+
 type StoredRefusal = {
+	/** Missing on contexts stored before timeouts were recorded: those were refusals. */
+	reason?: UnacceptedReason;
 	specialityId: number;
+	/** Where to search: the patient's place, else the refusing doctor's cabinet. */
 	lat: number;
 	long: number;
 	desiredTime: string;
 	refusedDoctorIds: number[];
 	lastRefusedDoctorName: string;
+	/** Who the refused request was for, and why. Missing on contexts stored before. */
+	personId?: number | null;
+	illness?: string | null;
 };
+
+/** The refused request, as the appointment row holds it. */
+type RefusedAppointment = Pick<
+	typeof appointment.$inferSelect,
+	| "contactPhone"
+	| "doctorId"
+	| "start"
+	| "patientLatitude"
+	| "patientLongitude"
+	| "personId"
+	| "description"
+>;
 
 export type RefusalSuggestion = {
 	doctorId: number;
@@ -35,8 +57,18 @@ export type RefusalSuggestion = {
 };
 
 export type RefusalContext = {
+	reason: UnacceptedReason;
+	/** The doctor who refused or did not answer (for a timeout, one of them). */
 	refusedDoctorName: string;
 	suggestions: RefusalSuggestion[];
+	/** Who the refused request was for (someone on the calling phone). */
+	patient: {
+		personId: number;
+		firstName: string | null;
+		lastName: string | null;
+	} | null;
+	/** The reason for the visit given in the refused request. */
+	illness: string | null;
 };
 
 function keyForPhone(phone: string): string | null {
@@ -64,39 +96,49 @@ async function readStored(key: string): Promise<StoredRefusal | null> {
 	}
 }
 
-/** Remember a refused request for this patient phone. Never throws. */
-export async function recordRefusal(params: {
-	patientPhone: string;
-	doctorId: number;
-	desiredTime: Date | null;
-}): Promise<void> {
+/**
+ * Remember a request that was not accepted, for the phone that booked it.
+ * `alsoAsked` adds other doctors of the same request (an urgent group), so
+ * they are not suggested again. Never throws.
+ */
+export async function recordRefusal(
+	refused: RefusedAppointment,
+	options: { reason?: UnacceptedReason; alsoAsked?: number[] } = {},
+): Promise<void> {
 	try {
-		const key = keyForPhone(params.patientPhone);
-		if (!key) return;
+		const key = refused.contactPhone ? keyForPhone(refused.contactPhone) : null;
+		if (!key || refused.doctorId == null) return;
 
 		const doctor = await db.query.doctorProfile.findFirst({
-			where: eq(doctorProfile.id, params.doctorId),
+			where: eq(doctorProfile.id, refused.doctorId),
 		});
-		if (
-			!doctor ||
-			doctor.specialityId == null ||
-			doctor.cabinetLatitude == null ||
-			doctor.cabinetLongitude == null
-		) {
-			return;
-		}
+		if (!doctor || doctor.specialityId == null) return;
+
+		// Search around the patient, not the doctor who refused; the cabinet is
+		// only a fallback for bookings made before the patient's place was kept.
+		const place =
+			refused.patientLatitude != null && refused.patientLongitude != null
+				? { lat: refused.patientLatitude, long: refused.patientLongitude }
+				: doctor.cabinetLatitude != null && doctor.cabinetLongitude != null
+					? { lat: doctor.cabinetLatitude, long: doctor.cabinetLongitude }
+					: null;
+		if (!place) return;
 
 		const previous = await readStored(key);
 		const refusedDoctorIds = new Set(previous?.refusedDoctorIds ?? []);
 		refusedDoctorIds.add(doctor.id);
+		for (const id of options.alsoAsked ?? []) refusedDoctorIds.add(id);
 
 		const stored: StoredRefusal = {
+			reason: options.reason ?? "refused",
 			specialityId: doctor.specialityId,
-			lat: doctor.cabinetLatitude,
-			long: doctor.cabinetLongitude,
-			desiredTime: (params.desiredTime ?? new Date()).toISOString(),
+			lat: place.lat,
+			long: place.long,
+			desiredTime: (refused.start ?? new Date()).toISOString(),
 			refusedDoctorIds: [...refusedDoctorIds],
 			lastRefusedDoctorName: doctorFullName(doctor.firstName, doctor.lastName),
+			personId: refused.personId,
+			illness: refused.description,
 		};
 		await connection.set(
 			key,
@@ -142,9 +184,26 @@ export async function getRefusalContext(
 				slotEnd: d.nextSlot.end.toISOString(),
 			}));
 
+		const patient =
+			stored.personId != null
+				? ((await db.query.person.findFirst({
+						where: eq(person.id, stored.personId),
+						columns: { id: true, firstName: true, lastName: true },
+					})) ?? null)
+				: null;
+
 		return {
+			reason: stored.reason ?? "refused",
 			refusedDoctorName: stored.lastRefusedDoctorName,
 			suggestions,
+			patient: patient
+				? {
+						personId: patient.id,
+						firstName: patient.firstName,
+						lastName: patient.lastName,
+					}
+				: null,
+			illness: stored.illness ?? null,
 		};
 	} catch (err) {
 		console.error("[refusal-suggestions] read failed", err);

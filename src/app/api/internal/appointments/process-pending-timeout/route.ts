@@ -11,11 +11,11 @@ import {
 	validationError,
 } from "@/lib/api-utils";
 import { isPhoneBlocked } from "@/lib/blocked-phone";
-import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments";
+import { advanceEmergencyGroup } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
-import { getRefusalContext } from "@/lib/refusal-suggestions";
+import { getRefusalContext, recordRefusal } from "@/lib/refusal-suggestions";
 import {
 	buildPendingTimeoutVoiceScript,
 	buildPendingTimeoutWhatsappMessage,
@@ -35,6 +35,8 @@ const processSchema = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("emergency"),
 		emergencyGroupId: z.string().min(1),
+		/** The wave this timeout was scheduled for; missing on jobs queued before waves. */
+		wave: z.number().int().positive().optional(),
 	}),
 ]);
 
@@ -55,7 +57,7 @@ function patientLabel(row: {
 }
 
 // ─── POST /api/internal/appointments/process-pending-timeout ─────────────────
-// Called by the pending-timeout BullMQ worker after ~10 minutes unanswered.
+// Called by the pending-timeout BullMQ worker when a request (or a wave of urgent ones) goes unanswered.
 
 export async function POST(req: NextRequest) {
 	try {
@@ -144,6 +146,8 @@ export async function POST(req: NextRequest) {
 				.where(
 					and(eq(appointment.id, row.id), eq(appointment.status, "pending")),
 				);
+			// The callback offers other doctors for the same request, without asking again.
+			await recordRefusal(row, { reason: "timeout" });
 
 			const { name, phone } = patientLabel(row);
 			// Blocked numbers get no WhatsApp message or callback.
@@ -176,31 +180,29 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
-		// Emergency group: cancel only if nobody accepted yet.
-		const groupId = parsed.data.emergencyGroupId;
-		const groupRows = await db.query.appointment.findMany({
-			where: eq(appointment.emergencyGroupId, groupId),
-			with: { person: true },
+		// Emergency group: nobody in this wave accepted, so ask the next doctors.
+		// The patient is told only once there is no next wave.
+		const advance = await advanceEmergencyGroup({
+			emergencyGroupId: parsed.data.emergencyGroupId,
+			wave: parsed.data.wave,
 		});
-
-		if (groupRows.length === 0) {
-			return json({ success: false, reason: "not_found" });
+		if (advance.status === "skipped") {
+			return json({ success: false, reason: advance.reason });
+		}
+		if (advance.status === "next_wave") {
+			return json({
+				success: true,
+				cancelled: true,
+				notified: false,
+				nextWave: advance.wave,
+			});
 		}
 
-		const anyConfirmed = groupRows.some((r) => r.status === "confirmed");
-		if (anyConfirmed) {
-			return json({ success: false, reason: "already_accepted" });
-		}
-
-		const pendingRows = groupRows.filter((r) => r.status === "pending");
-		if (pendingRows.length === 0) {
-			return json({ success: false, reason: "not_pending" });
-		}
-
-		await cancelEmergencySiblingAppointments({ emergencyGroupId: groupId });
-
-		const sample = pendingRows[0];
-		const { name, phone } = patientLabel(sample);
+		await recordRefusal(advance.patientRow, {
+			reason: "timeout",
+			alsoAsked: advance.askedDoctorIds,
+		});
+		const { name, phone } = patientLabel(advance.patientRow);
 		// Blocked numbers get no WhatsApp message or callback.
 		if (!phone || (await isPhoneBlocked(phone))) {
 			return json({ success: true, cancelled: true, notified: false });
@@ -228,7 +230,6 @@ export async function POST(req: NextRequest) {
 			voiceScript: voice.text,
 			twilioLanguage: voice.twilioLanguage,
 			riayaPhone,
-			cancelledIds: pendingRows.map((r) => r.id),
 		});
 	} catch (e) {
 		if (e instanceof Response) return e;

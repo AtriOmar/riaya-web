@@ -4,6 +4,8 @@ import {
 	GeoProviderError,
 	type LatLng,
 	type PlaceResult,
+	ROUTE_TIMEOUT_MS,
+	type RouteLeg,
 } from "./types";
 
 // Google Places API (New). Needs "Places API (New)" enabled on the project.
@@ -91,6 +93,76 @@ function rectangle(center: LatLng, radiusM: number) {
 	};
 }
 
+// Google Routes API: needs "Routes API" enabled on the same project and key.
+const ROUTE_MATRIX =
+	"https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
+
+/** One origin–destination pair. Zero values are left out, so a missing index means 0. */
+type MatrixElement = {
+	destinationIndex?: number;
+	condition?: "ROUTE_EXISTS" | "ROUTE_NOT_FOUND";
+	distanceMeters?: number;
+	/** Seconds as a string, e.g. "1234s". */
+	duration?: string;
+};
+
+const waypoint = (p: LatLng) => ({
+	waypoint: { location: { latLng: { latitude: p.lat, longitude: p.lng } } },
+});
+
+/**
+ * Compute Route Matrix with traffic ignored (the Essentials tier): one origin,
+ * every target in one request. Elements come back in any order.
+ */
+async function driveLegs({
+	origin,
+	targets,
+}: {
+	origin: LatLng;
+	targets: LatLng[];
+}): Promise<RouteLeg[] | null> {
+	if (targets.length === 0) return null;
+	try {
+		const res = await fetch(ROUTE_MATRIX, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-Goog-Api-Key": apiKey(),
+				"X-Goog-FieldMask":
+					"destinationIndex,condition,distanceMeters,duration",
+			},
+			body: JSON.stringify({
+				origins: [waypoint(origin)],
+				destinations: targets.map(waypoint),
+				travelMode: "DRIVE",
+				routingPreference: "TRAFFIC_UNAWARE",
+			}),
+			signal: AbortSignal.timeout(ROUTE_TIMEOUT_MS),
+		});
+		if (!res.ok) return null;
+		const elements = (await res.json()) as MatrixElement[];
+		const legs: RouteLeg[] = targets.map(() => null);
+		for (const e of elements) {
+			const i = e.destinationIndex ?? 0;
+			const seconds = Number.parseFloat(e.duration ?? "");
+			if (
+				e.condition === "ROUTE_EXISTS" &&
+				e.distanceMeters != null &&
+				Number.isFinite(seconds) &&
+				i < legs.length
+			) {
+				legs[i] = {
+					distanceKm: e.distanceMeters / 1000,
+					minutes: seconds / 60,
+				};
+			}
+		}
+		return legs;
+	} catch {
+		return null;
+	}
+}
+
 export const googleProvider: GeoProvider = {
 	name: "google",
 
@@ -163,4 +235,6 @@ export const googleProvider: GeoProvider = {
 		);
 		return (data.places ?? []).map(toResult);
 	},
+
+	driveLegs,
 };

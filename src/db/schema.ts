@@ -280,6 +280,8 @@ export const appointment = pgTable(
 		urgent: boolean("urgent").notNull().default(false),
 		/** Shared id across the top-N pending emergency requests for one call. */
 		emergencyGroupId: varchar("emergency_group_id", { length: 64 }),
+		/** Emergency fan-out: which wave of doctors this request went to (1 = first). */
+		emergencyWave: integer("emergency_wave"),
 		/** Phone bookings: the place the patient searched from, offered again on their next call. */
 		patientPlaceLabel: varchar("patient_place_label", { length: 255 }),
 		patientLatitude: doublePrecision("patient_latitude"),

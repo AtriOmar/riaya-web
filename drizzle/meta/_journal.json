@@ -183,6 +183,13 @@
       "when": 1792387887301,
       "tag": "0025_doctor_best_fit_exclusion",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792906170059,
+      "tag": "0026_emergency_waves",
+      "breakpoints": true
     }
   ]
 }

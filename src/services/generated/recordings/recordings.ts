@@ -307,66 +307,6 @@ export const useDeleteApiRecordingsId = <TError = unknown>(
 	};
 };
 /**
- * @summary Transcribe recording
- */
-export const postApiRecordingsIdTranscribe = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiRecordingsIdTranscribe200>(
-		{ url: `/api/recordings/${id}/transcribe`, method: "POST" },
-		options,
-	);
-};
-
-export const getPostApiRecordingsIdTranscribeMutationFetcher = (
-	id: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (_: Key, __: { arg: Arguments }) => {
-		return postApiRecordingsIdTranscribe(id, options);
-	};
-};
-export const getPostApiRecordingsIdTranscribeMutationKey = (id: string) =>
-	[`/api/recordings/${id}/transcribe`] as const;
-
-export type PostApiRecordingsIdTranscribeMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>
->;
-
-/**
- * @summary Transcribe recording
- */
-export const usePostApiRecordingsIdTranscribe = <TError = unknown>(
-	id: string,
-	options?: {
-		swr?: SWRMutationConfiguration<
-			Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>,
-			TError,
-			Key,
-			Arguments,
-			Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>
-		> & { swrKey?: string };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiRecordingsIdTranscribeMutationKey(id);
-	const swrFn = getPostApiRecordingsIdTranscribeMutationFetcher(
-		id,
-		requestOptions,
-	);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Write the AI consultation note
  */
 export const postApiRecordingsIdSummary = (
@@ -415,6 +355,66 @@ export const usePostApiRecordingsIdSummary = <TError = unknown>(
 	const swrKey =
 		swrOptions?.swrKey ?? getPostApiRecordingsIdSummaryMutationKey(id);
 	const swrFn = getPostApiRecordingsIdSummaryMutationFetcher(
+		id,
+		requestOptions,
+	);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Transcribe recording
+ */
+export const postApiRecordingsIdTranscribe = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiRecordingsIdTranscribe200>(
+		{ url: `/api/recordings/${id}/transcribe`, method: "POST" },
+		options,
+	);
+};
+
+export const getPostApiRecordingsIdTranscribeMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, __: { arg: Arguments }) => {
+		return postApiRecordingsIdTranscribe(id, options);
+	};
+};
+export const getPostApiRecordingsIdTranscribeMutationKey = (id: string) =>
+	[`/api/recordings/${id}/transcribe`] as const;
+
+export type PostApiRecordingsIdTranscribeMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>
+>;
+
+/**
+ * @summary Transcribe recording
+ */
+export const usePostApiRecordingsIdTranscribe = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>,
+			TError,
+			Key,
+			Arguments,
+			Awaited<ReturnType<typeof postApiRecordingsIdTranscribe>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPostApiRecordingsIdTranscribeMutationKey(id);
+	const swrFn = getPostApiRecordingsIdTranscribeMutationFetcher(
 		id,
 		requestOptions,
 	);

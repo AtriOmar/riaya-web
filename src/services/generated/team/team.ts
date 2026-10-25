@@ -188,59 +188,6 @@ export const usePostApiSecretariesInvites = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Look up a secretary invite
- */
-export const getApiSecretaryInvitesToken = (
-	token: string,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiSecretaryInvitesToken200>(
-		{ url: `/api/secretary-invites/${token}`, method: "GET" },
-		options,
-	);
-};
-
-export const getGetApiSecretaryInvitesTokenKey = (token: string) =>
-	[`/api/secretary-invites/${token}`] as const;
-
-export type GetApiSecretaryInvitesTokenQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiSecretaryInvitesToken>>
->;
-
-/**
- * @summary Look up a secretary invite
- */
-export const useGetApiSecretaryInvitesToken = <TError = unknown>(
-	token: string,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiSecretaryInvitesToken>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled =
-		swrOptions?.enabled !== false && token !== null && token !== undefined;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiSecretaryInvitesTokenKey(token) : null));
-	const swrFn = () => getApiSecretaryInvitesToken(token, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Cancel a secretary invite
  */
 export const deleteApiSecretariesInvitesId = (
@@ -294,6 +241,59 @@ export const useDeleteApiSecretariesInvitesId = <TError = unknown>(
 	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Look up a secretary invite
+ */
+export const getApiSecretaryInvitesToken = (
+	token: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiSecretaryInvitesToken200>(
+		{ url: `/api/secretary-invites/${token}`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiSecretaryInvitesTokenKey = (token: string) =>
+	[`/api/secretary-invites/${token}`] as const;
+
+export type GetApiSecretaryInvitesTokenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiSecretaryInvitesToken>>
+>;
+
+/**
+ * @summary Look up a secretary invite
+ */
+export const useGetApiSecretaryInvitesToken = <TError = unknown>(
+	token: string,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiSecretaryInvitesToken>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && token !== null && token !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiSecretaryInvitesTokenKey(token) : null));
+	const swrFn = () => getApiSecretaryInvitesToken(token, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

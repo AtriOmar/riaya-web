@@ -10,6 +10,7 @@ import type {
 import { findDoctorPatientByPerson } from "@/lib/appointment-patient-link";
 import { tndToMillimes } from "@/lib/money";
 import { personDisplayName } from "@/lib/person-name";
+import { fromPracticeTime } from "@/lib/practice-time";
 import {
 	findDoctorAppointment,
 	findDoctorPatient,
@@ -18,7 +19,6 @@ import {
 	ToolError,
 	toAiAppointment,
 } from "./shared";
-import { fromPracticeTime } from "./time";
 
 // Action tools only prepare a proposal: they check ownership and add what the
 // card needs (names, totals, warnings) but change nothing. The doctor's
