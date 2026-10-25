@@ -4,9 +4,54 @@ import {
 	GeoProviderError,
 	type LatLng,
 	type PlaceResult,
+	ROUTE_TIMEOUT_MS,
+	type RouteLeg,
 } from "./types";
 
 const BASE = "https://api.geoapify.com/v1/geocode";
+const ROUTE_MATRIX = "https://api.geoapify.com/v1/routematrix";
+
+type RouteMatrixResponse = {
+	sources_to_targets?: {
+		distance?: number | null;
+		time?: number | null;
+	}[][];
+};
+
+/** Geoapify Route Matrix: one source row, distances in metres, times in seconds. */
+async function driveLegs({
+	origin,
+	targets,
+}: {
+	origin: LatLng;
+	targets: LatLng[];
+}): Promise<RouteLeg[] | null> {
+	const key = process.env.GEOAPIFY_API_KEY;
+	if (!key || targets.length === 0) return null;
+	try {
+		const res = await fetch(`${ROUTE_MATRIX}?apiKey=${key}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				mode: "drive",
+				sources: [{ location: [origin.lng, origin.lat] }],
+				targets: targets.map((t) => ({ location: [t.lng, t.lat] })),
+			}),
+			signal: AbortSignal.timeout(ROUTE_TIMEOUT_MS),
+		});
+		if (!res.ok) return null;
+		const row = ((await res.json()) as RouteMatrixResponse)
+			.sources_to_targets?.[0];
+		if (!row || row.length !== targets.length) return null;
+		return row.map((cell) =>
+			cell.distance == null || cell.time == null
+				? null
+				: { distanceKm: cell.distance / 1000, minutes: cell.time / 60 },
+		);
+	} catch {
+		return null;
+	}
+}
 
 type GeoapifyFeature = {
 	properties: {
@@ -82,4 +127,6 @@ export const geoapifyProvider: GeoProvider = {
 					: "countrycode:tn",
 			...(near ? { bias: proximity(near) } : {}),
 		}),
+
+	driveLegs,
 };

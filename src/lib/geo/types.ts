@@ -16,10 +16,12 @@ export const placeResultSchema = z.object({
 export type PlaceResult = z.infer<typeof placeResultSchema>;
 export type LatLng = { lat: number; lng: number };
 export type GeoProviderName = "geoapify" | "google";
+/** Driving from the origin to one target; null when no route was found. */
+export type RouteLeg = { distanceKm: number; minutes: number } | null;
 
 /**
- * Everything the app needs from a places/geocoding service. Add a provider by
- * implementing this and registering it in `./index.ts`.
+ * Everything the app needs from a places/geocoding and routing service. Add a
+ * provider by implementing this and registering it in `./index.ts`.
  */
 export interface GeoProvider {
 	readonly name: GeoProviderName;
@@ -40,6 +42,14 @@ export interface GeoProvider {
 		near?: LatLng;
 		radiusM?: number;
 	}): Promise<PlaceResult[]>;
+	/**
+	 * Road distance and drive time from one origin to each target, in target
+	 * order, in one request. Never throws: null means routing failed as a whole.
+	 */
+	driveLegs(input: {
+		origin: LatLng;
+		targets: LatLng[];
+	}): Promise<RouteLeg[] | null>;
 }
 
 export class GeoProviderError extends Error {
@@ -53,3 +63,5 @@ export class GeoProviderError extends Error {
 }
 
 export const GEO_TIMEOUT_MS = 6000;
+/** Routing is a ranking polish, so it gives up early and the straight-line order stays. */
+export const ROUTE_TIMEOUT_MS = 3000;
