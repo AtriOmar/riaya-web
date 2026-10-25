@@ -32,6 +32,25 @@ export const BEST_FIT_NEARBY_SLOTS_LIMIT = 3;
 /** Weight: TIME_WEIGHT minutes of |slot − preferred| ≈ 1 km of distance. */
 export const BEST_FIT_TIME_WEIGHT = 10;
 
+/** Minutes the patient needs at the cabinet before the slot (parking, check-in). */
+export const BEST_FIT_ARRIVAL_BUFFER_MIN = 10;
+
+/**
+ * Drive minutes per straight-line km, used to rank doctors before the real drive
+ * time is known. Kept optimistic (about the fastest real trips seen), so the
+ * estimate never pushes a doctor out of the routed head; their real drive time
+ * then sets the slots the patient hears.
+ */
+export const BEST_FIT_ESTIMATED_MIN_PER_KM = 1;
+
+/** Earliest slot start the patient can make, leaving now and driving `driveMinutes`. */
+function earliestArrival(currentTime: Date, driveMinutes: number): Date {
+	return new Date(
+		currentTime.getTime() +
+			(driveMinutes + BEST_FIT_ARRIVAL_BUFFER_MIN) * 60 * 1000,
+	);
+}
+
 export function calculateHaversineKm(
 	lat1: number,
 	lon1: number,
@@ -133,8 +152,9 @@ export type BestFitDoctorResult = {
 /**
  * Rank verified doctors for a speciality near (lat, long) around desiredTime.
  * Applies the 50 km radius filter and scores by
- * distance + |slot − desiredTime| / TIME_WEIGHT. If nobody inside the radius
- * has a slot, falls back to the nearest few doctors beyond it.
+ * distance + |slot − desiredTime| / TIME_WEIGHT. Slots start no earlier than the
+ * patient can arrive (drive time + buffer). If nobody inside the radius has a
+ * slot, falls back to the nearest few doctors beyond it.
  */
 export async function findBestFitDoctors(params: {
 	specialityId: number;
@@ -144,6 +164,8 @@ export async function findBestFitDoctors(params: {
 	currentTime?: Date;
 	maxRadiusKm?: number;
 	nearbySlotsLimit?: number;
+	/** Doctors to leave out (e.g. already asked in an urgent group), before ranking. */
+	excludeDoctorIds?: ReadonlySet<number>;
 }): Promise<BestFitDoctorResult[]> {
 	const currentTime = params.currentTime ?? new Date();
 	const maxRadiusKm = params.maxRadiusKm ?? BEST_FIT_MAX_RADIUS_KM;
@@ -160,7 +182,12 @@ export async function findBestFitDoctors(params: {
 		);
 
 	const withDistance = doctors
-		.filter((d) => d.cabinetLatitude != null && d.cabinetLongitude != null)
+		.filter(
+			(d) =>
+				d.cabinetLatitude != null &&
+				d.cabinetLongitude != null &&
+				!params.excludeDoctorIds?.has(d.id),
+		)
 		.map((d) => ({
 			...d,
 			distance: calculateHaversineKm(
@@ -211,29 +238,44 @@ export async function findBestFitDoctors(params: {
 		apptsByDoctor.set(appt.doctorId, list);
 	}
 
+	const candidateById = new Map(candidates.map((d) => [d.id, d]));
+
+	/** The doctor's best slot and the next few, starting no earlier than the patient can arrive. */
+	function slotsFor(
+		doctor: (typeof withDistance)[number],
+		driveMinutes: number,
+	) {
+		const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
+		const availability = doctor.availability ?? {};
+		const arrival = earliestArrival(currentTime, driveMinutes);
+		const nextSlot = findNextAvailableSlot(
+			availability,
+			doctorAppts,
+			arrival,
+			desiredTime,
+		);
+		if (!nextSlot) return null;
+		const nearbySlots = listAvailableSlotsForDoctor(
+			availability,
+			doctorAppts,
+			arrival,
+			desiredTime,
+			nearbySlotsLimit,
+		);
+		return { nextSlot, nearbySlots };
+	}
+
 	function process(
 		list: typeof withDistance,
 		outsideRadius: boolean,
 	): BestFitDoctorResult[] {
 		const out: BestFitDoctorResult[] = [];
 		for (const doctor of list) {
-			const doctorAppts = apptsByDoctor.get(doctor.id) ?? [];
-			const availability = doctor.availability ?? {};
-			const nextSlotRaw = findNextAvailableSlot(
-				availability,
-				doctorAppts,
-				currentTime,
-				desiredTime,
+			const slots = slotsFor(
+				doctor,
+				doctor.distance * BEST_FIT_ESTIMATED_MIN_PER_KM,
 			);
-			if (!nextSlotRaw) continue;
-
-			const nearbySlotsRaw = listAvailableSlotsForDoctor(
-				availability,
-				doctorAppts,
-				currentTime,
-				desiredTime,
-				nearbySlotsLimit,
-			);
+			if (!slots) continue;
 
 			out.push({
 				id: doctor.id,
@@ -248,8 +290,8 @@ export async function findBestFitDoctors(params: {
 				address: doctor.address ?? null,
 				distance: doctor.distance,
 				...(outsideRadius ? { outsideRadius: true } : {}),
-				nextSlot: nextSlotRaw,
-				nearbySlots: nearbySlotsRaw,
+				nextSlot: slots.nextSlot,
+				nearbySlots: slots.nearbySlots,
 			});
 		}
 		return out;
@@ -278,14 +320,24 @@ export async function findBestFitDoctors(params: {
 		);
 		if (!legs) return list;
 
-		head.forEach((d, i) => {
+		// With the real drive time, the slots the patient can make are exact.
+		const routed = head.flatMap((d, i) => {
 			const leg = legs[i];
-			if (!leg) return;
-			d.roadDistanceKm = leg.distanceKm;
-			d.driveMinutes = leg.minutes;
+			if (!leg) return [d];
+			const doctor = candidateById.get(d.id);
+			const slots = doctor && slotsFor(doctor, leg.minutes);
+			if (!slots) return [];
+			return [
+				{
+					...d,
+					...slots,
+					roadDistanceKm: leg.distanceKm,
+					driveMinutes: leg.minutes,
+				},
+			];
 		});
-		head.sort((a, b) => score(a) - score(b));
-		return [...head, ...list.slice(BEST_FIT_ROUTE_CANDIDATES)];
+		routed.sort((a, b) => score(a) - score(b));
+		return [...routed, ...list.slice(BEST_FIT_ROUTE_CANDIDATES)];
 	}
 
 	const processed = process(inRadius, false);
