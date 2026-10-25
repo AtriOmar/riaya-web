@@ -94,7 +94,7 @@
 		"lint-staged": "^16.3.2",
 		"orval": "^8.26.0",
 		"tailwindcss": "^4",
-		"tsx": "^4.21.0",
+		"tsx": "^4.23.15",
 		"typescript": "^5"
 	},
 	"lint-staged": {
