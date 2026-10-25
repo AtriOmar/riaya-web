@@ -174,7 +174,10 @@ export async function cancelPendingAiAppointmentForCaller(
 		await cancelEmergencySiblingAppointments({
 			emergencyGroupId: row.emergencyGroupId,
 		});
-		void cancelEmergencyPendingTimeoutJob(row.emergencyGroupId);
+		void cancelEmergencyPendingTimeoutJob({
+			emergencyGroupId: row.emergencyGroupId,
+			wave: row.emergencyWave ?? 1,
+		});
 		const refreshed = await db.query.appointment.findFirst({
 			where: eq(appointment.id, appointmentId),
 		});

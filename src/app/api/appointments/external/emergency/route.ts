@@ -9,13 +9,12 @@ import {
 } from "@/lib/api-utils";
 import { bookEmergencyAppointments } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
-import { scheduleEmergencyPendingTimeout } from "@/lib/pending-appointment-timeout";
 import { bookingPatientSchema, resolveBookingPerson } from "@/lib/person";
 import { normalizePhoneForStorage } from "@/lib/phone";
 
 // ─── POST /api/appointments/external/emergency ───────────────────────────────
-// Internal (voice assistant) — fan-out urgent pending appointments to the top ASAP best-fit doctors.
-// When one doctor accepts, siblings in the same emergencyGroupId are cancelled.
+// Internal (voice assistant) — fan-out urgent pending appointments to the best doctors who can see
+// the patient soon, in waves. When one doctor accepts, siblings in the same emergencyGroupId are cancelled.
 
 const emergencySchema = z.object({
 	speciality: z.string().min(1),
@@ -64,21 +63,11 @@ export async function POST(req: NextRequest) {
 			return json(
 				{
 					found: false,
-					message: "No nearby doctors with available slots were found.",
+					message:
+						"No nearby doctor has a free slot in the next few hours, so no urgent request was sent.",
 					appointments: [],
 				},
 				200,
-			);
-		}
-
-		if (result.emergencyGroupId) {
-			void scheduleEmergencyPendingTimeout({
-				emergencyGroupId: result.emergencyGroupId,
-			}).catch((err) =>
-				console.error(
-					"[appointments/external/emergency] schedule pending timeout",
-					err,
-				),
 			);
 		}
 
@@ -88,7 +77,7 @@ export async function POST(req: NextRequest) {
 				emergencyGroupId: result.emergencyGroupId,
 				appointments: result.created,
 				doctors: result.doctors,
-				message: `Created ${result.created.length} urgent pending appointment(s). The first doctor to accept keeps the booking; the others are cancelled automatically.`,
+				message: `Sent urgent requests to ${result.created.length} nearby doctor(s) who can see the patient within a few hours. The first to accept keeps the booking; the others are cancelled automatically. If none accepts within a few minutes, more doctors are asked.`,
 			},
 			201,
 		);

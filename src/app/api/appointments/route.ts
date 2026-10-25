@@ -15,6 +15,7 @@ import { cancelEmergencySiblingAppointments } from "@/lib/emergency-appointments
 import {
 	cancelEmergencyPendingTimeoutJob,
 	cancelPendingAppointmentTimeoutJob,
+	expediteEmergencyPendingTimeout,
 	scheduleRefusalNotification,
 } from "@/lib/pending-appointment-timeout";
 import { resolvePreferredLanguage } from "@/lib/person";
@@ -228,7 +229,10 @@ export async function PUT(req: NextRequest) {
 				emergencyGroupId: updated.emergencyGroupId,
 				exceptAppointmentId: updated.id,
 			});
-			void cancelEmergencyPendingTimeoutJob(updated.emergencyGroupId);
+			void cancelEmergencyPendingTimeoutJob({
+				emergencyGroupId: updated.emergencyGroupId,
+				wave: updated.emergencyWave ?? 1,
+			});
 		} else if (
 			(fields.status === "confirmed" || fields.status === "cancelled") &&
 			updated.source === "ai"
@@ -258,7 +262,7 @@ export async function PUT(req: NextRequest) {
 				})();
 			}
 			if (updated.emergencyGroupId) {
-				// Last pending in a group may have been refused — drop timeout if none left pending.
+				// Every doctor in this wave refused: send the next wave now instead of waiting.
 				const stillPending = await db.query.appointment.findFirst({
 					where: and(
 						eq(appointment.emergencyGroupId, updated.emergencyGroupId),
@@ -266,7 +270,10 @@ export async function PUT(req: NextRequest) {
 					),
 				});
 				if (!stillPending) {
-					void cancelEmergencyPendingTimeoutJob(updated.emergencyGroupId);
+					void expediteEmergencyPendingTimeout({
+						emergencyGroupId: updated.emergencyGroupId,
+						wave: updated.emergencyWave ?? 1,
+					});
 				}
 			}
 		}
