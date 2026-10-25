@@ -5,60 +5,60 @@ import {
 	ClipboardCheck,
 	FileText,
 	MapPin,
+	Mic,
 	Phone,
-	Truck,
-	Upload,
-	Users,
+	Receipt,
+	Sparkles,
 } from "lucide-react";
 
 const features = [
 	{
 		icon: Phone,
-		title: "AI Phone Intake",
+		title: "AI Phone Booking",
 		description:
-			"Patients call Riaya, and our AI collects symptoms, urgency, and location—then creates a pending appointment for you to review.",
+			"Patients call Riaya and talk to an AI assistant in Tunisian Derja, French, or English. It asks for the reason, the area, and a preferred time.",
 	},
 	{
 		icon: MapPin,
-		title: "Smart Doctor Matching",
+		title: "Nearby Doctors First",
 		description:
-			"The AI matches patients to the most suitable doctor based on specialty, location, and availability. You only see relevant appointments.",
-	},
-	{
-		icon: CalendarDays,
-		title: "Schedule Management",
-		description:
-			"Manage your availability with a powerful calendar. View, accept, or decline AI-generated appointments, or create them manually.",
+			"The AI offers the patient the closest doctors of the right specialty who have a free slot. The patient picks one and you get the request.",
 	},
 	{
 		icon: ClipboardCheck,
-		title: "Accept or Decline",
+		title: "Accept or Refuse",
 		description:
-			"Review incoming AI appointments and accept or decline with one click. You stay in control of your schedule at all times.",
+			"Phone bookings arrive live on your calendar as pending requests. Accept or refuse in one click, and Riaya tells the patient on WhatsApp.",
+	},
+	{
+		icon: CalendarDays,
+		title: "Calendar & Availability",
+		description:
+			"Set your weekly working hours and manage every appointment on one calendar. Add walk-ins and returning patients yourself.",
 	},
 	{
 		icon: FileText,
-		title: "Consultation Notes & Prescriptions",
+		title: "Patient Files",
 		description:
-			"Write consultation notes, issue digital prescriptions, and maintain complete patient records within the platform.",
+			"Keep each patient's history, consultations, prescriptions, and lab reports in one place, and send them to the patient on WhatsApp.",
 	},
 	{
-		icon: Upload,
-		title: "Document Management",
+		icon: Mic,
+		title: "Consultation Recordings",
 		description:
-			"Attach X-rays, lab reports, and medical scans to patient profiles for easy access during consultations.",
+			"Record a consultation and get a transcript. On Pro, Riaya also writes a consultation note from it.",
 	},
 	{
-		icon: Users,
-		title: "Patient Management",
+		icon: Receipt,
+		title: "Invoices & Payments",
 		description:
-			"View patient history, manage recurring appointments, and build lasting patient relationships through your dashboard.",
+			"Create invoices, record cash or transfer payments, and send the PDF to your patient on WhatsApp.",
 	},
 	{
-		icon: Truck,
-		title: "Patient Transport Coordination",
+		icon: Sparkles,
+		title: "AI Assistant",
 		description:
-			"Riaya arranges transportation for patients who need it—especially valuable for elderly patients or those with mobility challenges.",
+			"Ask questions about your practice, your schedule, or a transcript. The assistant is one shortcut away on every page.",
 	},
 ];
 

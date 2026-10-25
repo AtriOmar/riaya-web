@@ -47,8 +47,9 @@ export default function Footer() {
 							<span className="font-bold text-primary-50 text-2xl">Riaya</span>
 						</Link>
 						<p className="max-w-sm mb-6 text-primary-300">
-							Your AI-powered healthcare companion. Book appointments, manage
-							your health, and connect with doctors seamlessly in Tunisia.
+							AI phone booking and practice management for doctors in Tunisia.
+							Patients book with a phone call, and you run your practice from
+							one dashboard.
 						</p>
 						<div className="flex gap-4">
 							{socialLinks.map((social) => {

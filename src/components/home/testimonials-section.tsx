@@ -24,7 +24,7 @@ const testimonials = [
 	},
 	{
 		content:
-			"The transport coordination is invaluable for my elderly patients. They get to their appointments safely, and I can focus on providing care instead of logistics.",
+			"I record my consultations and the transcript is waiting when I'm done. I spend less time writing notes and more time with my patients.",
 		author: "Dr. Fatma Khelifi",
 		role: "Family Medicine, Sousse",
 		avatar: doctor1,

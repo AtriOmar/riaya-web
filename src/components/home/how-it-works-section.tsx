@@ -1,6 +1,12 @@
 "use client";
 
-import { Bot, Car, CheckCircle, Phone, UserCheck } from "lucide-react";
+import {
+	Bot,
+	CheckCircle,
+	MessageCircle,
+	Phone,
+	UserCheck,
+} from "lucide-react";
 
 const steps = [
 	{
@@ -8,35 +14,35 @@ const steps = [
 		step: "01",
 		title: "Patient Calls Riaya",
 		description:
-			"A patient dials the Riaya phone number. No app needed—just a simple phone call to get started.",
+			"A patient dials the Riaya phone number. No app and no account, just a phone call in Derja, French, or English.",
 	},
 	{
 		icon: Bot,
 		step: "02",
-		title: "AI Collects Information",
+		title: "AI Asks the Basics",
 		description:
-			"Our AI assistant gathers symptoms, urgency level, preferred location, and availability from the patient.",
+			"The AI assistant asks for the reason for the visit, where the patient is, and when they would like to come.",
 	},
 	{
 		icon: UserCheck,
 		step: "03",
-		title: "Doctor is Matched",
+		title: "Patient Picks a Doctor",
 		description:
-			"Based on specialty, location, and availability, the AI selects the most suitable doctor and creates a pending appointment.",
+			"The AI offers the best nearby doctors with a free slot. The patient picks one, and a pending request reaches that doctor.",
 	},
 	{
 		icon: CheckCircle,
 		step: "04",
-		title: "Doctor Accepts or Declines",
+		title: "Doctor Accepts or Refuses",
 		description:
-			"You review the appointment details in your dashboard and accept or decline with one click. You're always in control.",
+			"You see the request live on your calendar and accept or refuse it with one click. You're always in control.",
 	},
 	{
-		icon: Car,
+		icon: MessageCircle,
 		step: "05",
-		title: "Patient Transport (Optional)",
+		title: "Patient Hears Back",
 		description:
-			"If needed, Riaya arranges transportation to bring the patient to your cabinet safely—ideal for elderly patients.",
+			"An accepted visit is confirmed on WhatsApp. If you refuse, or nobody answers in 10 minutes, Riaya contacts the patient to book with another doctor.",
 	},
 ];
 

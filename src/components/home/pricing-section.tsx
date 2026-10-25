@@ -16,8 +16,8 @@ export default function PricingSection() {
 						<span className="text-gradient">every practice</span>
 					</h2>
 					<p className="text-muted-foreground text-lg">
-						Start free with full practice tools. Upgrade to Pro when you want
-						unlimited AI booking and WhatsApp.
+						AI phone booking is unlimited on every plan. Upgrade to Pro for
+						unlimited WhatsApp, more recording time, and secretary accounts.
 					</p>
 				</div>
 
