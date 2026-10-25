@@ -7,10 +7,13 @@ async function main() {
 	console.log("Generating OpenAPI document...");
 
 	// Find all route.ts files in the api directory
-	const routeFiles = await fg("src/app/api/**/route.ts", {
-		cwd: path.join(__dirname, ".."),
-		absolute: true,
-	});
+	// Sorted so the routes register in the same order on every run.
+	const routeFiles = (
+		await fg("src/app/api/**/route.ts", {
+			cwd: path.join(__dirname, ".."),
+			absolute: true,
+		})
+	).sort();
 
 	console.log(`Found ${routeFiles.length} API routes. Loading...`);
 
@@ -23,8 +26,17 @@ async function main() {
 		}
 	}
 
-	// Generate the document
-	const document = generateOpenApiDocument();
+	// Generate the document, with paths in a stable order so a regeneration
+	// only shows real API changes (and orval's client does not reshuffle).
+	const generated = generateOpenApiDocument();
+	const document = {
+		...generated,
+		paths: Object.fromEntries(
+			Object.entries(generated.paths ?? {}).sort(([a], [b]) =>
+				a.localeCompare(b),
+			),
+		),
+	};
 
 	// Write to openapi.json
 	const outputPath = path.join(__dirname, "..", "openapi.json");

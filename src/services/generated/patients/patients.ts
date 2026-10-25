@@ -140,59 +140,6 @@ export const usePostApiPatients = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Find the doctor's patient file for a person
- */
-export const getApiPatientsLookupByPerson = (
-	params: GetApiPatientsLookupByPersonParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiPatientsLookupByPerson200>(
-		{ url: `/api/patients/lookup-by-person`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiPatientsLookupByPersonKey = (
-	params: GetApiPatientsLookupByPersonParams,
-) => [`/api/patients/lookup-by-person`, ...(params ? [params] : [])] as const;
-
-export type GetApiPatientsLookupByPersonQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>
->;
-
-/**
- * @summary Find the doctor's patient file for a person
- */
-export const useGetApiPatientsLookupByPerson = <TError = unknown>(
-	params: GetApiPatientsLookupByPersonParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiPatientsLookupByPersonKey(params) : null));
-	const swrFn = () => getApiPatientsLookupByPerson(params, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary Get patient by ID
  */
 export const getApiPatientsId = (
@@ -574,6 +521,59 @@ export const usePostApiPatientsIdMedicalFilesFileIdSend = <TError = unknown>(
 	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Find the doctor's patient file for a person
+ */
+export const getApiPatientsLookupByPerson = (
+	params: GetApiPatientsLookupByPersonParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPatientsLookupByPerson200>(
+		{ url: `/api/patients/lookup-by-person`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiPatientsLookupByPersonKey = (
+	params: GetApiPatientsLookupByPersonParams,
+) => [`/api/patients/lookup-by-person`, ...(params ? [params] : [])] as const;
+
+export type GetApiPatientsLookupByPersonQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>
+>;
+
+/**
+ * @summary Find the doctor's patient file for a person
+ */
+export const useGetApiPatientsLookupByPerson = <TError = unknown>(
+	params: GetApiPatientsLookupByPersonParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiPatientsLookupByPerson>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiPatientsLookupByPersonKey(params) : null));
+	const swrFn = () => getApiPatientsLookupByPerson(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

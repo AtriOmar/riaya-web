@@ -27,6 +27,137 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * @summary Cancel pending AI appointment for caller phone (voice service)
+ */
+export const postApiInternalCallerAiAppointmentsCancel = (
+	postApiInternalCallerAiAppointmentsCancelBody?: PostApiInternalCallerAiAppointmentsCancelBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerAiAppointmentsCancel200>(
+		{
+			url: `/api/internal/caller/ai-appointments/cancel`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerAiAppointmentsCancelBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerAiAppointmentsCancelMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerAiAppointmentsCancelBody | undefined },
+	) => {
+		return postApiInternalCallerAiAppointmentsCancel(arg, options);
+	};
+};
+export const getPostApiInternalCallerAiAppointmentsCancelMutationKey = () =>
+	[`/api/internal/caller/ai-appointments/cancel`] as const;
+
+export type PostApiInternalCallerAiAppointmentsCancelMutationResult =
+	NonNullable<
+		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>
+	>;
+
+/**
+ * @summary Cancel pending AI appointment for caller phone (voice service)
+ */
+export const usePostApiInternalCallerAiAppointmentsCancel = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>,
+		TError,
+		Key,
+		PostApiInternalCallerAiAppointmentsCancelBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ??
+		getPostApiInternalCallerAiAppointmentsCancelMutationKey();
+	const swrFn =
+		getPostApiInternalCallerAiAppointmentsCancelMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary List AI appointments for caller phone (voice service)
+ */
+export const postApiInternalCallerAiAppointmentsList = (
+	postApiInternalCallerAiAppointmentsListBody?: PostApiInternalCallerAiAppointmentsListBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PostApiInternalCallerAiAppointmentsList200>(
+		{
+			url: `/api/internal/caller/ai-appointments/list`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiInternalCallerAiAppointmentsListBody,
+		},
+		options,
+	);
+};
+
+export const getPostApiInternalCallerAiAppointmentsListMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiInternalCallerAiAppointmentsListBody | undefined },
+	) => {
+		return postApiInternalCallerAiAppointmentsList(arg, options);
+	};
+};
+export const getPostApiInternalCallerAiAppointmentsListMutationKey = () =>
+	[`/api/internal/caller/ai-appointments/list`] as const;
+
+export type PostApiInternalCallerAiAppointmentsListMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>
+>;
+
+/**
+ * @summary List AI appointments for caller phone (voice service)
+ */
+export const usePostApiInternalCallerAiAppointmentsList = <
+	TError = unknown,
+>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>,
+		TError,
+		Key,
+		PostApiInternalCallerAiAppointmentsListBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ??
+		getPostApiInternalCallerAiAppointmentsListMutationKey();
+	const swrFn =
+		getPostApiInternalCallerAiAppointmentsListMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Is the caller's number blocked (voice service)
  */
 export const postApiInternalCallerBlocked = (
@@ -150,70 +281,6 @@ export const usePostApiInternalCallerLastPlace = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Alternative doctors after a refused request (voice service)
- */
-export const postApiInternalCallerRefusalContext = (
-	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiInternalCallerRefusalContext200>(
-		{
-			url: `/api/internal/caller/refusal-context`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerRefusalContextBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiInternalCallerRefusalContextMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
-	) => {
-		return postApiInternalCallerRefusalContext(arg, options);
-	};
-};
-export const getPostApiInternalCallerRefusalContextMutationKey = () =>
-	[`/api/internal/caller/refusal-context`] as const;
-
-export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
->;
-
-/**
- * @summary Alternative doctors after a refused request (voice service)
- */
-export const usePostApiInternalCallerRefusalContext = <
-	TError = unknown,
->(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
-		TError,
-		Key,
-		PostApiInternalCallerRefusalContextBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
-	const swrFn =
-		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
  * @summary People on the caller's phone (voice service)
  */
 export const postApiInternalCallerPeople = (
@@ -275,128 +342,61 @@ export const usePostApiInternalCallerPeople = <TError = unknown>(options?: {
 	};
 };
 /**
- * @summary Cancel pending AI appointment for caller phone (voice service)
+ * @summary Alternative doctors after a refused request (voice service)
  */
-export const postApiInternalCallerAiAppointmentsCancel = (
-	postApiInternalCallerAiAppointmentsCancelBody?: PostApiInternalCallerAiAppointmentsCancelBody,
+export const postApiInternalCallerRefusalContext = (
+	postApiInternalCallerRefusalContextBody?: PostApiInternalCallerRefusalContextBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return customInstance<PostApiInternalCallerAiAppointmentsCancel200>(
+	return customInstance<PostApiInternalCallerRefusalContext200>(
 		{
-			url: `/api/internal/caller/ai-appointments/cancel`,
+			url: `/api/internal/caller/refusal-context`,
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerAiAppointmentsCancelBody,
+			data: postApiInternalCallerRefusalContextBody,
 		},
 		options,
 	);
 };
 
-export const getPostApiInternalCallerAiAppointmentsCancelMutationFetcher = (
+export const getPostApiInternalCallerRefusalContextMutationFetcher = (
 	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return (
 		_: Key,
-		{ arg }: { arg: PostApiInternalCallerAiAppointmentsCancelBody | undefined },
+		{ arg }: { arg: PostApiInternalCallerRefusalContextBody | undefined },
 	) => {
-		return postApiInternalCallerAiAppointmentsCancel(arg, options);
+		return postApiInternalCallerRefusalContext(arg, options);
 	};
 };
-export const getPostApiInternalCallerAiAppointmentsCancelMutationKey = () =>
-	[`/api/internal/caller/ai-appointments/cancel`] as const;
+export const getPostApiInternalCallerRefusalContextMutationKey = () =>
+	[`/api/internal/caller/refusal-context`] as const;
 
-export type PostApiInternalCallerAiAppointmentsCancelMutationResult =
-	NonNullable<
-		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>
-	>;
-
-/**
- * @summary Cancel pending AI appointment for caller phone (voice service)
- */
-export const usePostApiInternalCallerAiAppointmentsCancel = <
-	TError = unknown,
->(options?: {
-	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>,
-		TError,
-		Key,
-		PostApiInternalCallerAiAppointmentsCancelBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsCancel>>
-	> & { swrKey?: string };
-	request?: SecondParameter<typeof customInstance>;
-}) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const swrKey =
-		swrOptions?.swrKey ??
-		getPostApiInternalCallerAiAppointmentsCancelMutationKey();
-	const swrFn =
-		getPostApiInternalCallerAiAppointmentsCancelMutationFetcher(requestOptions);
-
-	const query = useSWRMutation(swrKey, swrFn, swrOptions);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary List AI appointments for caller phone (voice service)
- */
-export const postApiInternalCallerAiAppointmentsList = (
-	postApiInternalCallerAiAppointmentsListBody?: PostApiInternalCallerAiAppointmentsListBody,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<PostApiInternalCallerAiAppointmentsList200>(
-		{
-			url: `/api/internal/caller/ai-appointments/list`,
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			data: postApiInternalCallerAiAppointmentsListBody,
-		},
-		options,
-	);
-};
-
-export const getPostApiInternalCallerAiAppointmentsListMutationFetcher = (
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return (
-		_: Key,
-		{ arg }: { arg: PostApiInternalCallerAiAppointmentsListBody | undefined },
-	) => {
-		return postApiInternalCallerAiAppointmentsList(arg, options);
-	};
-};
-export const getPostApiInternalCallerAiAppointmentsListMutationKey = () =>
-	[`/api/internal/caller/ai-appointments/list`] as const;
-
-export type PostApiInternalCallerAiAppointmentsListMutationResult = NonNullable<
-	Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>
+export type PostApiInternalCallerRefusalContextMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
 >;
 
 /**
- * @summary List AI appointments for caller phone (voice service)
+ * @summary Alternative doctors after a refused request (voice service)
  */
-export const usePostApiInternalCallerAiAppointmentsList = <
+export const usePostApiInternalCallerRefusalContext = <
 	TError = unknown,
 >(options?: {
 	swr?: SWRMutationConfiguration<
-		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>,
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>,
 		TError,
 		Key,
-		PostApiInternalCallerAiAppointmentsListBody | undefined,
-		Awaited<ReturnType<typeof postApiInternalCallerAiAppointmentsList>>
+		PostApiInternalCallerRefusalContextBody | undefined,
+		Awaited<ReturnType<typeof postApiInternalCallerRefusalContext>>
 	> & { swrKey?: string };
 	request?: SecondParameter<typeof customInstance>;
 }) => {
 	const { swr: swrOptions, request: requestOptions } = options ?? {};
 
 	const swrKey =
-		swrOptions?.swrKey ??
-		getPostApiInternalCallerAiAppointmentsListMutationKey();
+		swrOptions?.swrKey ?? getPostApiInternalCallerRefusalContextMutationKey();
 	const swrFn =
-		getPostApiInternalCallerAiAppointmentsListMutationFetcher(requestOptions);
+		getPostApiInternalCallerRefusalContextMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

@@ -21,6 +21,59 @@ import type {
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * @summary Place lookup by text (voice service)
+ */
+export const getApiInternalPlacesSearch = (
+	params: GetApiInternalPlacesSearchParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiInternalPlacesSearch200Item[]>(
+		{ url: `/api/internal/places/search`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiInternalPlacesSearchKey = (
+	params: GetApiInternalPlacesSearchParams,
+) => [`/api/internal/places/search`, ...(params ? [params] : [])] as const;
+
+export type GetApiInternalPlacesSearchQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiInternalPlacesSearch>>
+>;
+
+/**
+ * @summary Place lookup by text (voice service)
+ */
+export const useGetApiInternalPlacesSearch = <TError = unknown>(
+	params: GetApiInternalPlacesSearchParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiInternalPlacesSearch>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiInternalPlacesSearchKey(params) : null));
+	const swrFn = () => getApiInternalPlacesSearch(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Address suggestions from the active geo provider
  */
 export const getApiPlacesAutocomplete = (
@@ -113,59 +166,6 @@ export const useGetApiPlacesDetails = <TError = unknown>(
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPlacesDetailsKey(params) : null));
 	const swrFn = () => getApiPlacesDetails(params, requestOptions);
-
-	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
-		swrKey,
-		swrFn,
-		swrOptions,
-	);
-
-	return {
-		swrKey,
-		...query,
-	};
-};
-/**
- * @summary Place lookup by text (voice service)
- */
-export const getApiInternalPlacesSearch = (
-	params: GetApiInternalPlacesSearchParams,
-	options?: SecondParameter<typeof customInstance>,
-) => {
-	return customInstance<GetApiInternalPlacesSearch200Item[]>(
-		{ url: `/api/internal/places/search`, method: "GET", params },
-		options,
-	);
-};
-
-export const getGetApiInternalPlacesSearchKey = (
-	params: GetApiInternalPlacesSearchParams,
-) => [`/api/internal/places/search`, ...(params ? [params] : [])] as const;
-
-export type GetApiInternalPlacesSearchQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getApiInternalPlacesSearch>>
->;
-
-/**
- * @summary Place lookup by text (voice service)
- */
-export const useGetApiInternalPlacesSearch = <TError = unknown>(
-	params: GetApiInternalPlacesSearchParams,
-	options?: {
-		swr?: SWRConfiguration<
-			Awaited<ReturnType<typeof getApiInternalPlacesSearch>>,
-			TError
-		> & { swrKey?: Key; enabled?: boolean };
-		request?: SecondParameter<typeof customInstance>;
-	},
-) => {
-	const { swr: swrOptions, request: requestOptions } = options ?? {};
-
-	const isEnabled = swrOptions?.enabled !== false;
-	const swrKey =
-		swrOptions?.swrKey ??
-		(() => (isEnabled ? getGetApiInternalPlacesSearchKey(params) : null));
-	const swrFn = () => getApiInternalPlacesSearch(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,
