@@ -13,6 +13,11 @@ const schema = z.object({
 	long: z.coerce.number(),
 	lat: z.coerce.number(),
 	time: z.string().optional(),
+	/** Doctor ids to leave out, comma-separated (doctors already offered to the patient). */
+	exclude: z
+		.string()
+		.regex(/^\d+(,\d+)*$/, "Comma-separated doctor ids")
+		.optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -27,6 +32,7 @@ export async function GET(req: NextRequest) {
 			long,
 			lat,
 			time: desiredTimeParam,
+			exclude,
 		} = parsed.data;
 		const currentTime = new Date();
 		let desiredTime: Date;
@@ -48,6 +54,9 @@ export async function GET(req: NextRequest) {
 			long,
 			desiredTime,
 			currentTime,
+			...(exclude
+				? { excludeDoctorIds: new Set(exclude.split(",").map(Number)) }
+				: {}),
 		});
 
 		const processedDoctors = ranked.map((doc) => ({
