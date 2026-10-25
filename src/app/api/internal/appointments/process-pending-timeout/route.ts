@@ -15,7 +15,7 @@ import { advanceEmergencyGroup } from "@/lib/emergency-appointments";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
-import { getRefusalContext } from "@/lib/refusal-suggestions";
+import { getRefusalContext, recordRefusal } from "@/lib/refusal-suggestions";
 import {
 	buildPendingTimeoutVoiceScript,
 	buildPendingTimeoutWhatsappMessage,
@@ -146,6 +146,8 @@ export async function POST(req: NextRequest) {
 				.where(
 					and(eq(appointment.id, row.id), eq(appointment.status, "pending")),
 				);
+			// The callback offers other doctors for the same request, without asking again.
+			await recordRefusal(row, { reason: "timeout" });
 
 			const { name, phone } = patientLabel(row);
 			// Blocked numbers get no WhatsApp message or callback.
@@ -196,6 +198,10 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
+		await recordRefusal(advance.patientRow, {
+			reason: "timeout",
+			alsoAsked: advance.askedDoctorIds,
+		});
 		const { name, phone } = patientLabel(advance.patientRow);
 		// Blocked numbers get no WhatsApp message or callback.
 		if (!phone || (await isPhoneBlocked(phone))) {

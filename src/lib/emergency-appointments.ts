@@ -240,5 +240,12 @@ export async function advanceEmergencyGroup(params: {
 		}
 	}
 
-	return { status: "exhausted" as const, patientRow: sample };
+	return {
+		status: "exhausted" as const,
+		patientRow: sample,
+		/** Every doctor asked in this group, so a callback does not suggest them again. */
+		askedDoctorIds: rows.flatMap((r) =>
+			r.doctorId != null ? [r.doctorId] : [],
+		),
+	};
 }

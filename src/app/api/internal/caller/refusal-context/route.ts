@@ -25,6 +25,8 @@ const suggestionSchema = z.object({
 
 const responseSchema = z.object({
 	found: z.boolean(),
+	/** Why the request was not accepted: a doctor refused it, or nobody answered in time. */
+	reason: z.enum(["refused", "timeout"]).nullable(),
 	refusedDoctorName: z.string().nullable(),
 	suggestions: z.array(suggestionSchema),
 	/** Who the refused request was for: someone on the calling phone. */
@@ -40,8 +42,8 @@ const responseSchema = z.object({
 });
 
 // ─── POST /api/internal/caller/refusal-context ────────────────────────────────
-// Voice service: did a doctor recently refuse this caller's request? If so,
-// return other doctors (fresh slots) to offer on the call.
+// Voice service: was this caller's request recently refused or left unanswered?
+// If so, return other doctors (fresh slots) to offer on the call.
 
 export async function POST(req: NextRequest) {
 	try {
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
 		if (!context) {
 			return json({
 				found: false,
+				reason: null,
 				refusedDoctorName: null,
 				suggestions: [],
 				patient: null,
@@ -61,6 +64,7 @@ export async function POST(req: NextRequest) {
 		}
 		return json({
 			found: true,
+			reason: context.reason,
 			refusedDoctorName: context.refusedDoctorName || null,
 			suggestions: context.suggestions,
 			patient: context.patient,

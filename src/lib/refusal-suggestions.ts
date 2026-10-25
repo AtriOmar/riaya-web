@@ -6,17 +6,22 @@ import { DEFAULT_PHONE_COUNTRY, normalizePhoneForStorage } from "@/lib/phone";
 import { connection } from "@/lib/queue";
 
 /**
- * When a doctor refuses an AI request we remember what the patient asked for
- * (speciality, the patient's area, time, who it was for and why, doctors who
- * already said no). The refusal message and the next phone call both use it to
- * suggest other doctors with fresh slots and rebook without asking again.
+ * When a doctor refuses an AI request, or nobody accepts it in time, we remember
+ * what the patient asked for (speciality, the patient's area, time, who it was
+ * for and why, doctors already asked). The callback and the next phone call use
+ * it to suggest other doctors with fresh slots and rebook without asking again.
  * Stored in Redis with a short TTL, so no schema change is needed.
  */
 
 const REFUSAL_CONTEXT_TTL_SECONDS = 24 * 60 * 60;
 export const MAX_REFUSAL_SUGGESTIONS = 3;
 
+/** Why the request was not accepted. */
+export type UnacceptedReason = "refused" | "timeout";
+
 type StoredRefusal = {
+	/** Missing on contexts stored before timeouts were recorded: those were refusals. */
+	reason?: UnacceptedReason;
 	specialityId: number;
 	/** Where to search: the patient's place, else the refusing doctor's cabinet. */
 	lat: number;
@@ -52,6 +57,8 @@ export type RefusalSuggestion = {
 };
 
 export type RefusalContext = {
+	reason: UnacceptedReason;
+	/** The doctor who refused or did not answer (for a timeout, one of them). */
 	refusedDoctorName: string;
 	suggestions: RefusalSuggestion[];
 	/** Who the refused request was for (someone on the calling phone). */
@@ -89,9 +96,14 @@ async function readStored(key: string): Promise<StoredRefusal | null> {
 	}
 }
 
-/** Remember a refused request for the phone that booked it. Never throws. */
+/**
+ * Remember a request that was not accepted, for the phone that booked it.
+ * `alsoAsked` adds other doctors of the same request (an urgent group), so
+ * they are not suggested again. Never throws.
+ */
 export async function recordRefusal(
 	refused: RefusedAppointment,
+	options: { reason?: UnacceptedReason; alsoAsked?: number[] } = {},
 ): Promise<void> {
 	try {
 		const key = refused.contactPhone ? keyForPhone(refused.contactPhone) : null;
@@ -115,8 +127,10 @@ export async function recordRefusal(
 		const previous = await readStored(key);
 		const refusedDoctorIds = new Set(previous?.refusedDoctorIds ?? []);
 		refusedDoctorIds.add(doctor.id);
+		for (const id of options.alsoAsked ?? []) refusedDoctorIds.add(id);
 
 		const stored: StoredRefusal = {
+			reason: options.reason ?? "refused",
 			specialityId: doctor.specialityId,
 			lat: place.lat,
 			long: place.long,
@@ -179,6 +193,7 @@ export async function getRefusalContext(
 				: null;
 
 		return {
+			reason: stored.reason ?? "refused",
 			refusedDoctorName: stored.lastRefusedDoctorName,
 			suggestions,
 			patient: patient
