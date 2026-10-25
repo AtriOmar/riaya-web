@@ -244,17 +244,10 @@ export async function PUT(req: NextRequest) {
 				existing.status === "pending" &&
 				!updated.urgent
 			) {
-				const patientPhone = updated.contactPhone;
 				void (async () => {
 					try {
 						// Record first: the notification job reads this context.
-						if (patientPhone && updated.doctorId != null) {
-							await recordRefusal({
-								patientPhone,
-								doctorId: updated.doctorId,
-								desiredTime: updated.start,
-							});
-						}
+						await recordRefusal(updated);
 						await scheduleRefusalNotification({ appointmentId: updated.id });
 					} catch (err) {
 						console.error("Failed to queue refusal notification:", err);

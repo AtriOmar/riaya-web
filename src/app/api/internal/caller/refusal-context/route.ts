@@ -27,6 +27,16 @@ const responseSchema = z.object({
 	found: z.boolean(),
 	refusedDoctorName: z.string().nullable(),
 	suggestions: z.array(suggestionSchema),
+	/** Who the refused request was for: someone on the calling phone. */
+	patient: z
+		.object({
+			personId: z.number().int(),
+			firstName: z.string().nullable(),
+			lastName: z.string().nullable(),
+		})
+		.nullable(),
+	/** The reason for the visit given in the refused request. */
+	illness: z.string().nullable(),
 });
 
 // ─── POST /api/internal/caller/refusal-context ────────────────────────────────
@@ -41,12 +51,20 @@ export async function POST(req: NextRequest) {
 
 		const context = await getRefusalContext(parsed.data.phoneNumber);
 		if (!context) {
-			return json({ found: false, refusedDoctorName: null, suggestions: [] });
+			return json({
+				found: false,
+				refusedDoctorName: null,
+				suggestions: [],
+				patient: null,
+				illness: null,
+			});
 		}
 		return json({
 			found: true,
 			refusedDoctorName: context.refusedDoctorName || null,
 			suggestions: context.suggestions,
+			patient: context.patient,
+			illness: context.illness,
 		});
 	} catch (e) {
 		if (e instanceof Response) return e;
