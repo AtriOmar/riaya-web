@@ -4,6 +4,9 @@
 import { getAppUrl } from "@/lib/app-url";
 import type { PaymentDetails } from "@/lib/konnect";
 
+/** Same 60-minute lifespan we ask the real Konnect for in initPayment. */
+export const DEV_PAYMENT_LIFESPAN_MS = 60 * 60 * 1000;
+
 export function isBillingDevBypass(): boolean {
 	return process.env.BILLING_DEV_BYPASS === "true";
 }
