@@ -1,6 +1,7 @@
 // Temporary fake Konnect gateway — only active when BILLING_DEV_BYPASS=true.
 // Mimics: init payment → pay page → webhook GET ?payment_ref=
 
+import { getAppUrl } from "@/lib/app-url";
 import type { PaymentDetails } from "@/lib/konnect";
 
 export function isBillingDevBypass(): boolean {
@@ -32,10 +33,6 @@ function store(): Map<string, DevPayment> {
 	return globalStore.__riayaDevKonnectPayments;
 }
 
-const APP_URL =
-	process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-	"http://localhost:3000";
-
 export function createDevPayment(params: {
 	amountMillimes: number;
 	description: string;
@@ -56,7 +53,7 @@ export function createDevPayment(params: {
 
 	return {
 		paymentRef,
-		payUrl: `${APP_URL}/dev/pay?payment_ref=${encodeURIComponent(paymentRef)}`,
+		payUrl: `${getAppUrl()}/dev/pay?payment_ref=${encodeURIComponent(paymentRef)}`,
 	};
 }
 

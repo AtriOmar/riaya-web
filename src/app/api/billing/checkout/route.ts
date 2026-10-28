@@ -14,14 +14,11 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { getAppUrl } from "@/lib/app-url";
 import { nextBillingInvoiceNumber, upgradeOrderId } from "@/lib/billing";
 import { apiError } from "@/lib/errors";
 import { initPayment } from "@/lib/konnect";
 import { PLANS } from "@/lib/plans";
-
-const APP_URL =
-	process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-	"http://localhost:3000";
 
 const bodySchema = z.object({
 	planId: z.enum(["pro"]).default("pro"),
@@ -76,7 +73,7 @@ export async function POST(req: Request) {
 			const payment = await initPayment({
 				amountMillimes: plan.priceTnd * 1000,
 				description: `Riaya ${plan.name}`,
-				webhookUrl: `${APP_URL}/api/webhooks/konnect`,
+				webhookUrl: `${getAppUrl()}/api/webhooks/konnect`,
 				firstName: firstName || undefined,
 				lastName: lastName || undefined,
 				email: docUser?.email ?? undefined,
@@ -133,7 +130,7 @@ export async function POST(req: Request) {
 		const payment = await initPayment({
 			amountMillimes: invoice.amountMillimes,
 			description: `Riaya ${plan.name} – ${invoice.number}`,
-			webhookUrl: `${APP_URL}/api/webhooks/konnect`,
+			webhookUrl: `${getAppUrl()}/api/webhooks/konnect`,
 			firstName: firstName || undefined,
 			lastName: lastName || undefined,
 			email: docUser?.email ?? undefined,

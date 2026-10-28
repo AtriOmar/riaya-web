@@ -15,6 +15,7 @@ import type {
 	ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
 import { z } from "zod";
+import { getAppUrl } from "@/lib/app-url";
 import {
 	type ConsultationSummary,
 	consultationSummarySchema,
@@ -44,7 +45,7 @@ export function createChatClient(): OpenAI {
 		apiKey: requireOpenRouterApiKey(),
 		baseURL: OPENROUTER_BASE_URL,
 		defaultHeaders: {
-			"HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "https://riaya.app",
+			"HTTP-Referer": getAppUrl(),
 			"X-Title": "Riaya",
 		},
 	});
