@@ -65,7 +65,7 @@ export type ChatUsage = {
  */
 const NO_DATA_RETENTION = {
 	provider: { zdr: true, data_collection: "deny" },
-} as Record<string, unknown>;
+} as { provider: Record<string, unknown> } & Record<string, unknown>;
 
 export type ChatMessage = ChatCompletionMessageParam;
 export type ChatTool = ChatCompletionFunctionTool;
@@ -335,6 +335,7 @@ export async function transcribeAudio(
 			response_format: "verbose_json",
 			timestamp_granularities: ["segment", "word"],
 			provider: {
+				...NO_DATA_RETENTION.provider,
 				options: {
 					azure: {
 						diarization: { enabled: true },

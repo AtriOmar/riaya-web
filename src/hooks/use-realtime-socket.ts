@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 import type {
 	GetApiCalls200Item,
 	GetApiCalls200ItemEventsItem,
@@ -506,17 +507,23 @@ export default function useRealtimeSocket() {
 		}, delay);
 	}, []);
 
-	const connect = useCallback(() => {
+	const connect = useCallback(async () => {
 		const url = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
-		console.log("-------------------- url --------------------");
-		console.log(url);
 		if (!url) {
 			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 			return;
 		}
 
+		const ticket = await fetchRealtimeTicket("dashboard");
+		if (!ticket) {
+			scheduleReconnect();
+			return;
+		}
+
 		try {
-			const ws = new WebSocket(`${url}/dashboard`);
+			const ws = new WebSocket(
+				`${url}/dashboard?ticket=${encodeURIComponent(ticket)}`,
+			);
 			wsRef.current = ws;
 
 			ws.onopen = () => {

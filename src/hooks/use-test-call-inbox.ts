@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 
 export type IncomingTestCall = {
 	reason: "refused" | "timeout";
@@ -23,9 +24,15 @@ export function useTestCallInbox(phone: string | null) {
 		let retry: ReturnType<typeof setTimeout> | undefined;
 		let stopped = false;
 
-		const connect = () => {
+		const connect = async () => {
+			const ticket = await fetchRealtimeTicket("test-call");
+			if (stopped) return;
+			if (!ticket) {
+				retry = setTimeout(connect, 3000);
+				return;
+			}
 			ws = new WebSocket(
-				`${realtimeUrl}/test-call-inbox?phone=${encodeURIComponent(phone)}`,
+				`${realtimeUrl}/test-call-inbox?phone=${encodeURIComponent(phone)}&ticket=${encodeURIComponent(ticket)}`,
 			);
 			wsRef.current = ws;
 			ws.onmessage = (event) => {

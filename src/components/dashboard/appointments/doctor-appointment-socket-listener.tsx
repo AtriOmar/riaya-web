@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000];
 
@@ -56,15 +57,23 @@ export default function DoctorAppointmentSocketListener({
 
 	const connectRef = useRef<() => void>(() => {});
 
-	const connect = useCallback(() => {
+	const connect = useCallback(async () => {
 		const url = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
 		if (!url) {
 			console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 			return;
 		}
 
+		const ticket = await fetchRealtimeTicket("dashboard");
+		if (!ticket) {
+			scheduleReconnect();
+			return;
+		}
+
 		try {
-			const ws = new WebSocket(`${url.replace(/\/$/, "")}/dashboard`);
+			const ws = new WebSocket(
+				`${url.replace(/\/$/, "")}/dashboard?ticket=${encodeURIComponent(ticket)}`,
+			);
 			wsRef.current = ws;
 
 			ws.onopen = () => {

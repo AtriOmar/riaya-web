@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 
 export type TranscriptLine = {
 	id: string;
@@ -33,7 +34,7 @@ export function useCallTranscript() {
 	const reset = useCallback(() => setTranscript([]), []);
 
 	const connect = useCallback(
-		(sid: string) => {
+		async (sid: string) => {
 			const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
 			if (!realtimeUrl) {
 				console.error("NEXT_PUBLIC_REALTIME_URL is not set");
@@ -41,7 +42,11 @@ export function useCallTranscript() {
 			}
 
 			disconnect();
-			const dashWs = new WebSocket(`${realtimeUrl}/dashboard`);
+			const ticket = await fetchRealtimeTicket("dashboard");
+			if (!ticket) return;
+			const dashWs = new WebSocket(
+				`${realtimeUrl}/dashboard?ticket=${encodeURIComponent(ticket)}`,
+			);
 			dashWsRef.current = dashWs;
 
 			dashWs.onmessage = (evt) => {

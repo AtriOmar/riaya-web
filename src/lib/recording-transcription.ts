@@ -7,6 +7,7 @@ import {
 	transcribeAudio,
 } from "@/lib/ai";
 import { chargeRecordingUsage, getEffectivePlan } from "@/lib/plan-limits";
+import { fetchStoredFile } from "@/lib/r2";
 import { summarizeRecording } from "@/lib/recording-summary";
 import {
 	formatTranscriptForAiContext,
@@ -86,7 +87,7 @@ export async function transcribeRecording(recordingId: number) {
 	await setStatus(recordingId, "processing");
 
 	try {
-		const audioResponse = await fetch(recording.audioUrl);
+		const audioResponse = await fetchStoredFile(recording.audioUrl);
 		if (!audioResponse.ok) {
 			throw new Error(`Audio fetch failed: ${audioResponse.status}`);
 		}

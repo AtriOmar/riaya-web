@@ -1,4 +1,3 @@
-import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
@@ -12,7 +11,7 @@ import {
 } from "@/lib/api-utils";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
-import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { getRealtimeHttpUrl, sendWhatsapp } from "@/lib/realtime";
 import {
 	buildMedicalFileWhatsappCaption,
 	buildMedicalFileWhatsappText,
@@ -89,7 +88,7 @@ export async function POST(
 			});
 
 			if (docUrls.length > 0) {
-				await axios.post(`${httpUrl}/send-whatsapp`, {
+				await sendWhatsapp(httpUrl, {
 					userId: session.user.id,
 					phone: foundPatient.phoneNumber,
 					message: buildMedicalFileWhatsappCaption({
@@ -118,7 +117,7 @@ export async function POST(
 						: `Document ${i + 1}`;
 					const fileName = `${baseName}.${ext}`;
 
-					await axios.post(`${httpUrl}/send-whatsapp`, {
+					await sendWhatsapp(httpUrl, {
 						userId: session.user.id,
 						phone: foundPatient.phoneNumber,
 						documentUrl: documentUrl,
@@ -136,7 +135,7 @@ export async function POST(
 					title: foundFile.title,
 					description: foundFile.description,
 				});
-				await axios.post(`${httpUrl}/send-whatsapp`, {
+				await sendWhatsapp(httpUrl, {
 					userId: session.user.id,
 					phone: foundPatient.phoneNumber,
 					message: textMessage,
