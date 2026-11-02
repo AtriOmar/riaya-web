@@ -1,12 +1,11 @@
+import { getAppUrl } from "@/lib/app-url";
 export type RegistrationOtpEmailParams = {
 	otp: string;
 	expiresInMinutes: number;
 };
 
 export function buildRegistrationOtpEmail(params: RegistrationOtpEmailParams) {
-	const appUrl = (
-		process.env.NEXT_PUBLIC_APP_URL ?? "https://riaya.omaratri.com"
-	).replace(/\/$/, "");
+	const appUrl = getAppUrl();
 	const logoUrl = `${appUrl}/logo.png`;
 
 	const subject = "Your Riaya verification code";

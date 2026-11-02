@@ -1,3 +1,4 @@
+import { getAppUrl } from "@/lib/app-url";
 export type SecretaryInviteEmailParams = {
 	doctorName: string;
 	inviteUrl: string;
@@ -13,9 +14,7 @@ function escapeHtml(text: string): string {
 }
 
 export function buildSecretaryInviteEmail(params: SecretaryInviteEmailParams) {
-	const appUrl = (
-		process.env.NEXT_PUBLIC_APP_URL ?? "https://riaya.omaratri.com"
-	).replace(/\/$/, "");
+	const appUrl = getAppUrl();
 	const logoUrl = `${appUrl}/logo.png`;
 	const doctor = escapeHtml(params.doctorName);
 

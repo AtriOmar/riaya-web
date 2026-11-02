@@ -69,9 +69,9 @@ export default function HeroSection() {
 							className="gap-8 grid grid-cols-3 mt-12"
 						>
 							{[
-								{ value: "500+", label: "Doctors" },
-								{ value: "50K+", label: "Patients Matched" },
-								{ value: "98%", label: "Acceptance Rate" },
+								{ value: "24/7", label: "Phone Booking" },
+								{ value: "3", label: "Languages" },
+								{ value: "0 TND", label: "To Get Started" },
 							].map((stat) => (
 								<div key={stat.label} className="lg:text-left text-center">
 									<div className="font-bold text-gradient text-2xl md:text-3xl">

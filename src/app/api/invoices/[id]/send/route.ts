@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
@@ -14,7 +13,7 @@ import { resolvePreferredLanguage } from "@/lib/person";
 import { assertAndRecordWhatsappSend } from "@/lib/plan-limits";
 import { requirePractice } from "@/lib/practice";
 import { uploadBufferToR2 } from "@/lib/r2";
-import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { getRealtimeHttpUrl, sendWhatsapp } from "@/lib/realtime";
 import { buildInvoiceWhatsappCaption } from "@/lib/whatsapp-messages";
 
 const paramsSchema = z.object({ id: z.string() });
@@ -118,7 +117,7 @@ export async function POST(
 
 		try {
 			await assertAndRecordWhatsappSend(profile.id);
-			await axios.post(`${httpUrl}/send-whatsapp`, {
+			await sendWhatsapp(httpUrl, {
 				// Sent from the doctor's WhatsApp, also when a secretary sends it
 				userId: profile.userId,
 				phone: record.patient.phoneNumber,

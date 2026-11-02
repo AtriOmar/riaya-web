@@ -5,17 +5,73 @@
  * Internal and Public APIs for Riaya Healthcare Platform
  * OpenAPI spec version: 1.0.0
  */
-import type { Key } from "swr";
+
+import type { Key, SWRConfiguration } from "swr";
+import useSwr from "swr";
 import type { SWRMutationConfiguration } from "swr/mutation";
 import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
+	GetApiReviewsToken200,
 	PostApiReviewsSubmit200,
 	PostApiReviewsSubmitBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * @summary Get the visit a review link is for
+ */
+export const getApiReviewsToken = (
+	token: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiReviewsToken200>(
+		{ url: `/api/reviews/${token}`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiReviewsTokenKey = (token: string) =>
+	[`/api/reviews/${token}`] as const;
+
+export type GetApiReviewsTokenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiReviewsToken>>
+>;
+
+/**
+ * @summary Get the visit a review link is for
+ */
+export const useGetApiReviewsToken = <TError = unknown>(
+	token: string,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiReviewsToken>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled =
+		swrOptions?.enabled !== false && token !== null && token !== undefined;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiReviewsTokenKey(token) : null));
+	const swrFn = () => getApiReviewsToken(token, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
 /**
  * @summary Submit a review via magic link
  */

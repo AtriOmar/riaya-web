@@ -10,6 +10,7 @@ import {
 	requireInternal,
 	validationError,
 } from "@/lib/api-utils";
+import { getAppUrl } from "@/lib/app-url";
 import { registry } from "@/lib/openapi";
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
@@ -113,9 +114,7 @@ export async function POST(req: NextRequest) {
 		});
 
 		const doctorName = doc?.lastName ? `Dr. ${doc.lastName}` : "your doctor";
-		const appUrl =
-			process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-			"http://localhost:3000";
+		const appUrl = getAppUrl();
 		const message = buildReviewWhatsappMessage({
 			language,
 			patientName,

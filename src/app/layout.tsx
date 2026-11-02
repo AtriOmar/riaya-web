@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { Providers } from "@/components/contexts/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { getAppUrl } from "@/lib/app-url";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +23,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "رعاية",
 	description: "Riaya, the AI powered doctor appointments platform",
-	metadataBase: new URL(
-		process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-	),
+	metadataBase: new URL(getAppUrl()),
 	openGraph: {
 		title: "رعاية",
 		description: "Riaya, the AI powered doctor appointments platform",
-		url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+		url: getAppUrl(),
 		siteName: "رعاية",
 	},
 };

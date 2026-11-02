@@ -16631,6 +16631,86 @@
         }
       }
     },
+    "/api/reviews/{token}": {
+      "get": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Get the visit a review link is for",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The visit and whether the review can still be submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "submitted",
+                        "expired"
+                      ]
+                    },
+                    "patientFirstName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "doctorName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "speciality": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "cabinetName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "start": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "patientFirstName",
+                    "doctorName",
+                    "speciality",
+                    "cabinetName",
+                    "city",
+                    "start",
+                    "end"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/reviews/submit": {
       "post": {
         "tags": [

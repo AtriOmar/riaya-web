@@ -31,6 +31,7 @@ import {
 	useCallTranscript,
 } from "@/hooks/use-call-transcript";
 import type { CallSettings } from "@/lib/call-settings-schema";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 import { decodeUlaw, encodeUlawToBase64 } from "@/lib/ulaw";
 import { usePostApiTestCallSettings } from "@/services/generated/test-call/test-call";
 
@@ -377,9 +378,17 @@ export function useSimulatedCall(): SimulatedCallState {
 
 			// 2. Open WebSocket to /media-stream
 			setStatus("connecting");
+			const ticket = await fetchRealtimeTicket("test-call");
+			if (!ticket) {
+				for (const track of stream.getTracks()) track.stop();
+				micStreamRef.current = null;
+				setError("Could not get access to the voice server");
+				setStatus("error");
+				return;
+			}
 			const wsUrl = settings
-				? `${realtimeUrl}/media-stream?cs=${encodeURIComponent(sid)}`
-				: `${realtimeUrl}/media-stream`;
+				? `${realtimeUrl}/media-stream?ticket=${encodeURIComponent(ticket)}&cs=${encodeURIComponent(sid)}`
+				: `${realtimeUrl}/media-stream?ticket=${encodeURIComponent(ticket)}`;
 
 			const ws = new WebSocket(wsUrl);
 			wsRef.current = ws;

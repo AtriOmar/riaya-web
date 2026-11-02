@@ -9,44 +9,44 @@ import {
 
 const faqs = [
 	{
-		question: "How does the AI assign patients to me?",
+		question: "How do patients reach me through Riaya?",
 		answer:
-			"When a patient calls Riaya, our AI collects their symptoms, location, and urgency level. Based on your specialty, availability, and proximity to the patient, the AI matches them to the most suitable doctor. You'll receive a pending appointment with all the details.",
+			"When a patient calls Riaya, the AI asks for the reason for the visit, where they are, and when they would like to come. It then offers the closest doctors of the right specialty who have a free slot. If the patient picks you, you receive a pending request with the patient, the reason, and the time.",
 	},
 	{
-		question: "Can I decline appointments?",
+		question: "Can I refuse a request?",
 		answer:
-			"Absolutely. Every AI-generated appointment arrives as a pending request. You can review the patient details, symptoms, and timing—then accept or decline with one click. You're always in control of your schedule.",
+			"Yes. Every phone booking arrives as a pending request, and you accept or refuse it with one click. If you refuse, or don't answer within 10 minutes, the request is cancelled and Riaya contacts the patient to book with another doctor.",
 	},
 	{
 		question: "Do patients need to use an app?",
 		answer:
-			"No. Patients interact with Riaya entirely through phone calls. They simply dial our number, speak with the AI assistant, and receive confirmation of their appointment. No app download or account creation required.",
+			"No. Patients only use the phone and WhatsApp. They call our number and speak with the AI assistant in Tunisian Derja, French, or English. Once you accept, they get a confirmation on WhatsApp. No app download or account needed.",
 	},
 	{
-		question: "Can I create appointments manually?",
+		question: "What about urgent cases?",
 		answer:
-			"Yes. While Riaya excels at AI-generated appointments, you can also create appointments manually through the large calendar in your dashboard. This is useful for walk-ins or returning patients who contact you directly.",
+			"For signs of a life-threatening emergency, the AI first tells the patient to call the SAMU at 190. For urgent cases, it can send a request to up to 3 nearby doctors at once. They are marked urgent on your calendar, and the first doctor to accept keeps the appointment.",
 	},
 	{
-		question: "How does patient transport work?",
+		question: "Can I create appointments myself?",
 		answer:
-			"When a patient needs transportation to your cabinet, Riaya coordinates the logistics. This is especially valuable for elderly patients or those with mobility challenges. You'll see transport status in the appointment details.",
+			"Yes. You can add appointments directly on your calendar, for walk-ins or returning patients who contact you directly. They are confirmed right away.",
 	},
 	{
-		question: "Is my patient data secure?",
+		question: "Who can see my patients' files?",
 		answer:
-			"Riaya uses enterprise-grade encryption and complies with healthcare data protection regulations. All patient records, consultation notes, and documents are stored securely and accessible only to authorized healthcare providers.",
+			"Only you. If you add secretaries on the Pro plan, they can manage your appointments, patients, and invoices, but they never see medical files or recordings.",
 	},
 	{
-		question: "What documents can I attach to patient profiles?",
+		question: "What can I attach to a patient's file?",
 		answer:
-			"You can upload X-rays, lab reports, prescriptions, medical scans, and other relevant files. Supported formats include PDF, JPG, PNG, and DICOM for medical imaging. All documents are organized by patient for easy access.",
+			"Consultations, prescriptions, and lab reports, each with up to 10 documents (PDF, images, or Word) of up to 20 MB. You can send a file to the patient on WhatsApp in one click.",
 	},
 	{
 		question: "How do I manage my availability?",
 		answer:
-			"Your dashboard includes a powerful calendar where you set your working hours, block off time, and manage your availability. The AI only assigns patients when you're available, respecting your schedule preferences.",
+			"Set your weekly working hours on the Availability page: which days you work and your hours on each day. The AI only offers patients times inside those hours that are still free on your calendar.",
 	},
 ];
 

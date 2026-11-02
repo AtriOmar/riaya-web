@@ -6,13 +6,10 @@ import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import { billingInvoice, subscription } from "@/db/schema";
 import { getDoctorProfile, json, requireSession } from "@/lib/api-utils";
+import { getAppUrl } from "@/lib/app-url";
 import { apiError } from "@/lib/errors";
 import { initPayment } from "@/lib/konnect";
 import { PLANS, type PlanId } from "@/lib/plans";
-
-const APP_URL =
-	process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-	"http://localhost:3000";
 
 export async function POST(
 	req: NextRequest,
@@ -81,7 +78,7 @@ export async function POST(
 		const payment = await initPayment({
 			amountMillimes: invoice.amountMillimes,
 			description: `Riaya ${planName} – ${invoice.number}`,
-			webhookUrl: `${APP_URL}/api/webhooks/konnect`,
+			webhookUrl: `${getAppUrl()}/api/webhooks/konnect`,
 			firstName: firstName || undefined,
 			lastName: lastName || undefined,
 			email: docUser?.email ?? undefined,

@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { secretaryInvite } from "@/db/schema";
+import { getAppUrl } from "@/lib/app-url";
 import { personDisplayName } from "@/lib/person-name";
 
 export const SECRETARY_INVITE_TTL_DAYS = 7;
@@ -16,7 +17,7 @@ export function newInviteToken(): { token: string; tokenHash: string } {
 }
 
 export function inviteUrl(token: string): string {
-	const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+	const appUrl = getAppUrl();
 	return `${appUrl}/join/${token}`;
 }
 

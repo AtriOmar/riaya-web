@@ -1,4 +1,5 @@
 import { getEffectivePlan } from "@/lib/plan-limits";
+import { fetchStoredFile } from "@/lib/r2";
 
 /** Logo and stamp printed on a doctor's invoices. `null` = Riaya footer (Free). */
 export type DocumentBranding = {
@@ -31,7 +32,7 @@ function isPngOrJpeg(bytes: Buffer): boolean {
 async function loadImage(url: string | null): Promise<Buffer | null> {
 	if (!url || !isCdnUrl(url)) return null;
 	try {
-		const res = await fetch(url, {
+		const res = await fetchStoredFile(url, {
 			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 		});
 		if (!res.ok) return null;

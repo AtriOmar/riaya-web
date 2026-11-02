@@ -12,6 +12,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { fetchRealtimeTicket } from "@/lib/realtime-client";
 
 // NEXT_PUBLIC_REALTIME_URL is a ws:// or wss:// URL.
 // We derive the HTTP base by swapping the protocol so we can call GET /whatsapp-status.
@@ -51,9 +52,11 @@ export default function WhatsappConfig({ userId }: Props) {
 			try {
 				const base = getSocketHttpBase();
 				if (!base) return;
-				const res = await fetch(
-					`${base}/whatsapp-status?userId=${encodeURIComponent(userId)}`,
-				);
+				const ticket = await fetchRealtimeTicket("whatsapp", userId);
+				if (!ticket) return;
+				const res = await fetch(`${base}/whatsapp-status`, {
+					headers: { Authorization: `Bearer ${ticket}` },
+				});
 				if (res.ok) {
 					const data = (await res.json()) as {
 						connected: boolean;
@@ -79,7 +82,9 @@ export default function WhatsappConfig({ userId }: Props) {
 				console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 				return;
 			}
-			const wsUrl = `${wsBase}/whatsapp?userId=${encodeURIComponent(userId)}`;
+			const ticket = await fetchRealtimeTicket("whatsapp", userId);
+			if (!ticket || cancelled) return;
+			const wsUrl = `${wsBase}/whatsapp?ticket=${encodeURIComponent(ticket)}`;
 			ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
 
@@ -131,10 +136,14 @@ export default function WhatsappConfig({ userId }: Props) {
 				setLoggingOut(false);
 				return;
 			}
+			const ticket = await fetchRealtimeTicket("whatsapp", userId);
+			if (!ticket) {
+				setLoggingOut(false);
+				return;
+			}
 			const res = await fetch(`${base}/whatsapp-logout`, {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ userId }),
+				headers: { Authorization: `Bearer ${ticket}` },
 			});
 			if (!res.ok) setLoggingOut(false);
 		} catch {

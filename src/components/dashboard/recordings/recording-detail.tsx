@@ -530,7 +530,7 @@ export default function RecordingDetail({
 											<span className="mt-0.5 w-9 font-mono tabular-nums text-primary text-xs shrink-0">
 												{formatTimestamp(segment.start)}
 											</span>
-											<div className="min-w-0">
+											<div className="flex-1 min-w-0">
 												<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 													{speakerName(segment.speaker, recording.speakerRoles)}
 												</span>

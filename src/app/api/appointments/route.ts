@@ -1,4 +1,3 @@
-import axios from "axios";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
@@ -21,7 +20,7 @@ import {
 import { resolvePreferredLanguage } from "@/lib/person";
 import { personDisplayName } from "@/lib/person-name";
 import { requirePractice } from "@/lib/practice";
-import { getRealtimeHttpUrl } from "@/lib/realtime";
+import { getRealtimeHttpUrl, sendWhatsapp } from "@/lib/realtime";
 import { recordRefusal } from "@/lib/refusal-suggestions";
 import { scheduleReviewRequest } from "@/lib/review-scheduling";
 import { buildAppointmentConfirmationMessage } from "@/lib/whatsapp-messages";
@@ -303,15 +302,13 @@ export async function PUT(req: NextRequest) {
 						if (!httpUrl) {
 							console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 						} else {
-							await axios
-								.post(`${httpUrl}/send-whatsapp`, {
-									userId: full?.doctor?.userId,
-									phone,
-									message,
-								})
-								.catch((waErr) =>
-									console.error("WhatsApp confirmation failed:", waErr),
-								);
+							await sendWhatsapp(httpUrl, {
+								userId: full?.doctor?.userId,
+								phone,
+								message,
+							}).catch((waErr) =>
+								console.error("WhatsApp confirmation failed:", waErr),
+							);
 						}
 					}
 				} catch (err) {

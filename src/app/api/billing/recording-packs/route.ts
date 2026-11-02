@@ -13,15 +13,12 @@ import {
 	requireSession,
 	validationError,
 } from "@/lib/api-utils";
+import { getAppUrl } from "@/lib/app-url";
 import { nextBillingInvoiceNumber } from "@/lib/billing";
 import { apiError } from "@/lib/errors";
 import { initPayment } from "@/lib/konnect";
 import { getEffectivePlan } from "@/lib/plan-limits";
 import { RECORDING_PACK_IDS, RECORDING_PACKS } from "@/lib/plans";
-
-const APP_URL =
-	process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-	"http://localhost:3000";
 
 const bodySchema = z.object({
 	packId: z.enum(RECORDING_PACK_IDS),
@@ -85,7 +82,7 @@ export async function POST(req: Request) {
 		const payment = await initPayment({
 			amountMillimes,
 			description: `Riaya ${pack.hours} h recording time – ${invoice.number}`,
-			webhookUrl: `${APP_URL}/api/webhooks/konnect`,
+			webhookUrl: `${getAppUrl()}/api/webhooks/konnect`,
 			firstName: firstName || undefined,
 			lastName: rest.join(" ") || undefined,
 			email: docUser?.email ?? undefined,

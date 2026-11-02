@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { call } from "@/db/schema";
+import { getAppUrl } from "@/lib/app-url";
 import { uploadBufferToR2 } from "@/lib/r2";
 
 // ─── POST /api/calls/recording-webhook ───────────────────────────────────────
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
 	const signature = req.headers.get("x-twilio-signature") ?? "";
 
 	// Reconstruct the full URL Twilio signed (respecting the public app URL).
-	const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+	const appUrl = getAppUrl();
 	const fullUrl = `${appUrl}/api/calls/recording-webhook`;
 
 	if (!validateTwilioSignature(authToken, fullUrl, formParams, signature)) {

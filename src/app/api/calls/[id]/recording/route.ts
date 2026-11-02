@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { call } from "@/db/schema";
 import { apiError, requireAdmin } from "@/lib/api-utils";
+import { fetchStoredFile } from "@/lib/r2";
 
 // ─── GET /api/calls/[id]/recording ───────────────────────────────────────────
 // Admin-only. Same-origin passthrough of the call's recording bytes so the
@@ -27,7 +28,7 @@ export async function GET(
 			.where(eq(call.id, callId));
 		if (!row?.recordingUrl) return apiError("CALL_NOT_FOUND");
 
-		const upstream = await fetch(row.recordingUrl);
+		const upstream = await fetchStoredFile(row.recordingUrl);
 		if (!upstream.ok || !upstream.body) return apiError("INTERNAL_ERROR");
 
 		return new Response(upstream.body, {
