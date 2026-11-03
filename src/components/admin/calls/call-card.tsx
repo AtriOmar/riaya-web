@@ -6,7 +6,7 @@ import { AudioWaveformPlayer } from "@/components/ui/audio-waveform-player";
 import type { CallData } from "@/hooks/use-realtime-socket";
 import { decodeUlaw } from "@/lib/ulaw";
 import { cn } from "@/lib/utils";
-import { getTimelinePreview, useCallDuration } from "./call-helpers";
+import { useCallDuration } from "./call-helpers";
 import CallMap from "./call-map";
 import CallTranscript from "./call-transcript";
 
@@ -31,7 +31,6 @@ export default function CallCard({
 	const isDrawer = variant === "drawer";
 	const duration = useCallDuration(call.startTime, call.endTime, call.duration);
 	const isActive = call.status === "active";
-	const preview = getTimelinePreview(call.timeline);
 	const callerLabel = call.callerName || call.from || "Unknown caller";
 
 	const audioContextRef = useRef<AudioContext | null>(null);
@@ -139,10 +138,6 @@ export default function CallCard({
 									{duration}
 								</span>
 							</div>
-							<p className="mt-1 text-muted-foreground text-sm">
-								{preview.label && <span>{preview.label}: </span>}
-								<bdi>{preview.text}</bdi>
-							</p>
 							<p className="mt-1 font-mono text-muted-foreground text-xs break-all">
 								{call.callSid}
 							</p>
