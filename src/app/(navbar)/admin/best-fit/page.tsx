@@ -1,6 +1,5 @@
 "use client";
 
-import { SearchX } from "lucide-react";
 import moment from "moment";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -141,9 +140,7 @@ export default function AdminBestFitPage() {
 	const { start, end } = useMemo(() => weekWindow(rangeAnchor), [rangeAnchor]);
 	const hasSpeciality = filters.specialitySlug != null;
 	const hasLocation = filters.lat != null && filters.long != null;
-	// Listing every doctor is too slow, so nothing loads until a speciality or a
-	// location is chosen.
-	const hasFilter = hasSpeciality || hasLocation;
+	// Every filter is optional: the server caps the unfiltered list per speciality.
 	const rangeParams = {
 		...(hasSpeciality ? { speciality: filters.specialitySlug as string } : {}),
 		...(hasLocation
@@ -153,7 +150,7 @@ export default function AdminBestFitPage() {
 		to: end.toISOString(),
 	};
 
-	const { data, isLoading } = useBestFitRange(hasFilter ? rangeParams : null);
+	const { data, isLoading } = useBestFitRange(rangeParams);
 
 	const selectedDayDoctors = useMemo(() => {
 		if (!selectedDay || !data) return [];
@@ -172,12 +169,7 @@ export default function AdminBestFitPage() {
 					? { lat: filters.lat as number, long: filters.long as number }
 					: {}),
 			},
-			{
-				swr: {
-					enabled: hasFilter && viewMode === "map",
-					keepPreviousData: true,
-				},
-			},
+			{ swr: { enabled: viewMode === "map", keepPreviousData: true } },
 		);
 
 	const scheduleDate = selectedDay ?? currentDate;
@@ -223,17 +215,7 @@ export default function AdminBestFitPage() {
 				onViewChange={(next) => updateUrl({ view: next })}
 			/>
 
-			{!hasFilter ? (
-				<div className="flex flex-col items-center justify-center py-24 text-center text-muted-foreground">
-					<SearchX className="mb-3 size-10 opacity-40" />
-					<p className="font-semibold text-foreground">
-						Pick a speciality or a location
-					</p>
-					<p className="mt-1 max-w-sm text-sm">
-						Doctors load once at least one filter is set.
-					</p>
-				</div>
-			) : viewMode === "map" ? (
+			{viewMode === "map" ? (
 				<DoctorsMap
 					patient={
 						filters.lat != null && filters.long != null
