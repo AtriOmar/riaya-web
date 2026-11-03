@@ -4,6 +4,7 @@ import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mutate as mutateGlobal } from "swr";
+import RejectApplicationDialog from "@/components/admin/reject-application-dialog";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,8 +15,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 import {
 	getGetApiDoctorApplicationsCountKey,
@@ -36,7 +35,6 @@ export default function ApplicationDetail({
 
 	const [approveOpen, setApproveOpen] = useState(false);
 	const [rejectOpen, setRejectOpen] = useState(false);
-	const [rejectReasons, setRejectReasons] = useState("");
 
 	if (isLoading) {
 		return (
@@ -63,12 +61,8 @@ export default function ApplicationDetail({
 		}
 	}
 
-	async function handleReject() {
+	async function handleReject(reasons: string[]) {
 		try {
-			const reasons = rejectReasons
-				.split("\n")
-				.map((r) => r.trim())
-				.filter(Boolean);
 			await updateApplication({
 				status: "rejected",
 				rejectionReasons: reasons,
@@ -104,35 +98,12 @@ export default function ApplicationDetail({
 				</DialogContent>
 			</Dialog>
 
-			{/* Reject Dialog */}
-			<Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Reject Application</DialogTitle>
-					</DialogHeader>
-					<div className="space-y-3">
-						<Label>Rejection Reasons (one per line)</Label>
-						<Textarea
-							value={rejectReasons}
-							onChange={(e) => setRejectReasons(e.target.value)}
-							rows={4}
-							placeholder="Reason 1&#10;Reason 2"
-						/>
-						<div className="flex justify-end gap-2">
-							<Button variant="outline" onClick={() => setRejectOpen(false)}>
-								Cancel
-							</Button>
-							<Button
-								variant="destructive"
-								onClick={handleReject}
-								disabled={saving}
-							>
-								Reject
-							</Button>
-						</div>
-					</div>
-				</DialogContent>
-			</Dialog>
+			<RejectApplicationDialog
+				open={rejectOpen}
+				onOpenChange={setRejectOpen}
+				saving={saving}
+				onConfirm={handleReject}
+			/>
 
 			{/* Application Status Banner */}
 			<Alert
