@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useGetApiCallReportsCount } from "@/services/generated/abuse/abuse";
+import { useGetApiDoctorApplicationsCount } from "@/services/generated/doctors/doctors";
 
 const STORAGE_KEY = "admin-sidebar-collapsed";
 
@@ -85,10 +86,14 @@ const items2: SidebarItemData[] = [
 
 function AdminSidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 	const { data: reports } = useGetApiCallReportsCount();
-	const openReports = reports?.open ?? 0;
+	const { data: applications } = useGetApiDoctorApplicationsCount();
+	const badges: Record<string, number> = {
+		"/admin/reports": reports?.open ?? 0,
+		"/admin/doctor-applications": applications?.pending ?? 0,
+	};
 	const items = items1.map((item) =>
-		item.path === "/admin/reports" && openReports > 0
-			? { ...item, badge: String(openReports) }
+		badges[item.path] > 0
+			? { ...item, badge: String(badges[item.path]) }
 			: item,
 	);
 

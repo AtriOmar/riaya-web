@@ -13,6 +13,7 @@ import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
 	GetApiDoctorApplications200Item,
+	GetApiDoctorApplicationsCount200,
 	GetApiDoctorApplicationsId200,
 	GetApiDoctorApplicationsMe200,
 	GetApiDoctorApplicationsParams,
@@ -270,6 +271,54 @@ export const usePutApiDoctorApplicationsId = <TError = unknown>(
 	);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Count pending doctor applications (Admin)
+ */
+export const getApiDoctorApplicationsCount = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorApplicationsCount200>(
+		{ url: `/api/doctor-applications/count`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiDoctorApplicationsCountKey = () =>
+	[`/api/doctor-applications/count`] as const;
+
+export type GetApiDoctorApplicationsCountQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorApplicationsCount>>
+>;
+
+/**
+ * @summary Count pending doctor applications (Admin)
+ */
+export const useGetApiDoctorApplicationsCount = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<
+		Awaited<ReturnType<typeof getApiDoctorApplicationsCount>>,
+		TError
+	> & { swrKey?: Key; enabled?: boolean };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorApplicationsCountKey() : null));
+	const swrFn = () => getApiDoctorApplicationsCount(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
 
 	return {
 		swrKey,

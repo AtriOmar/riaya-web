@@ -3,6 +3,7 @@
 import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { mutate as mutateGlobal } from "swr";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
+	getGetApiDoctorApplicationsCountKey,
 	useGetApiDoctorApplicationsId,
 	usePutApiDoctorApplicationsId,
 } from "@/services/generated/doctors/doctors";
@@ -55,6 +57,7 @@ export default function ApplicationDetail({
 			toast.success("Application approved");
 			setApproveOpen(false);
 			mutate();
+			mutateGlobal(getGetApiDoctorApplicationsCountKey());
 		} catch {
 			toast.error("Failed to approve application");
 		}
@@ -73,6 +76,7 @@ export default function ApplicationDetail({
 			toast.success("Application rejected");
 			setRejectOpen(false);
 			mutate();
+			mutateGlobal(getGetApiDoctorApplicationsCountKey());
 		} catch {
 			toast.error("Failed to reject application");
 		}

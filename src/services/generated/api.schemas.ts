@@ -3356,6 +3356,10 @@ export type PutApiDoctorApplicationsId200 = {
 	message: string;
 };
 
+export type GetApiDoctorApplicationsCount200 = {
+	pending: number;
+};
+
 /**
  * @nullable
  */

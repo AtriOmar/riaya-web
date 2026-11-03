@@ -7904,6 +7904,34 @@
         }
       }
     },
+    "/api/doctor-applications/count": {
+      "get": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Count pending doctor applications (Admin)",
+        "responses": {
+          "200": {
+            "description": "Number of pending applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctor-applications/me": {
       "get": {
         "tags": [
