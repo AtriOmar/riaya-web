@@ -12,7 +12,6 @@ import { z } from "zod";
 import GoogleButton, { OrDivider } from "@/components/auth/google-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
@@ -156,16 +155,6 @@ export default function LoginForm({
 									{errors.password.message}
 								</p>
 							)}
-						</div>
-
-						<div className="flex items-center gap-2">
-							<Checkbox id="remember" />
-							<Label
-								htmlFor="remember"
-								className="font-normal text-sm cursor-pointer"
-							>
-								Remember me for 30 days
-							</Label>
 						</div>
 
 						<Button
