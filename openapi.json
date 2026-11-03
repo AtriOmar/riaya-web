@@ -19586,6 +19586,35 @@
           }
         }
       }
+    },
+    "/api/whatsapp/status": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Whether the practice's WhatsApp is connected",
+        "responses": {
+          "200": {
+            "description": "Connection state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connected": {
+                      "type": "boolean",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "connected"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

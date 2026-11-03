@@ -3,6 +3,7 @@
 import { CheckCircle2, Loader2, LogOut, WifiOff } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { mutate } from "swr";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { fetchRealtimeTicket } from "@/lib/realtime-client";
+import { getGetApiWhatsappStatusKey } from "@/services/generated/whats-app/whats-app";
 
 // NEXT_PUBLIC_REALTIME_URL is a ws:// or wss:// URL.
 // We derive the HTTP base by swapping the protocol so we can call GET /whatsapp-status.
@@ -43,6 +45,13 @@ export default function WhatsappConfig({ userId }: Props) {
 	const [loggingOut, setLoggingOut] = useState(false);
 	const wsRef = useRef<WebSocket | null>(null);
 
+	// Keeps the sidebar alert and the send buttons in step with this page
+	useEffect(() => {
+		if (status.type === "connected" || status.type === "disconnected") {
+			void mutate(getGetApiWhatsappStatusKey());
+		}
+	}, [status.type]);
+
 	useEffect(() => {
 		let ws: WebSocket;
 		let cancelled = false;
@@ -62,12 +71,11 @@ export default function WhatsappConfig({ userId }: Props) {
 						connected: boolean;
 						phone?: string;
 					};
-					if (!cancelled) {
-						setStatus(
-							data.connected
-								? { type: "connected", phone: data.phone }
-								: { type: "disconnected" },
-						);
+					// Not connected only means the service hasn't started yet: it
+					// starts when the WS opens and then sends the QR. Showing
+					// "disconnected" here would flash before the QR code.
+					if (!cancelled && data.connected) {
+						setStatus({ type: "connected", phone: data.phone });
 					}
 				}
 			} catch {

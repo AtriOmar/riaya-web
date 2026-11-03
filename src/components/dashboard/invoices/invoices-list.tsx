@@ -14,6 +14,7 @@ import DataTable, { type Column } from "@/components/data-table";
 import { CubeLoader } from "@/components/loaders";
 import { Button } from "@/components/ui/button";
 import { FilterSelect } from "@/components/ui/filter-controls";
+import WhatsappGate from "@/components/whatsapp/whatsapp-gate";
 import { getErrorMessage } from "@/lib/error-handling";
 import type { InvoiceStatus, PaymentMethod } from "@/lib/invoice";
 import { INVOICE_STATUSES } from "@/lib/invoice";
@@ -129,23 +130,27 @@ export default function InvoicesList() {
 			cell: (row) =>
 				row.status !== "cancelled" ? (
 					<div className="flex flex-wrap justify-end gap-1">
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							disabled={sendingId === row.id}
-							onClick={(e) => {
-								e.stopPropagation();
-								void onSendWhatsapp(row);
-							}}
-						>
-							<MessageSquare className="size-4" />
-							{sendingId === row.id
-								? "Sending…"
-								: row.sentViaWhatsapp
-									? "Resend"
-									: "WhatsApp"}
-						</Button>
+						<WhatsappGate>
+							{(whatsappOff) => (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={whatsappOff || sendingId === row.id}
+									onClick={(e) => {
+										e.stopPropagation();
+										void onSendWhatsapp(row);
+									}}
+								>
+									<MessageSquare className="size-4" />
+									{sendingId === row.id
+										? "Sending…"
+										: row.sentViaWhatsapp
+											? "Resend"
+											: "WhatsApp"}
+								</Button>
+							)}
+						</WhatsappGate>
 						<Button
 							type="button"
 							variant="outline"

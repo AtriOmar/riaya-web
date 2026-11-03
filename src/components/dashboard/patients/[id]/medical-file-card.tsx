@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import WhatsappGate from "@/components/whatsapp/whatsapp-gate";
 import { isLikelyImageUrl } from "@/lib/document-file";
 import { cn } from "@/lib/utils";
 import type { GetApiPatientsId200MedicalFilesItem } from "@/services/generated/api.schemas";
@@ -302,30 +303,34 @@ export function MedicalFileCard({
 
 			{!isEditing && (
 				<div className="absolute top-3 right-3 flex gap-0.5">
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						className={cn(
-							"h-7 px-2 text-xs",
-							file.sentViaWhatsapp
-								? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-								: "text-muted-foreground hover:text-green-600",
+					<WhatsappGate>
+						{(whatsappOff) => (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className={cn(
+									"h-7 px-2 text-xs",
+									file.sentViaWhatsapp
+										? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+										: "text-muted-foreground hover:text-green-600",
+								)}
+								onClick={handleSendClick}
+								disabled={whatsappOff || isSending}
+								aria-label="Send via WhatsApp"
+								title="Send via WhatsApp"
+							>
+								{isSending ? (
+									<Loader2 className="mr-1.5 size-3.5 animate-spin" />
+								) : file.sentViaWhatsapp ? (
+									<CheckCircle2 className="mr-1.5 size-3.5" />
+								) : (
+									<MessageSquare className="mr-1.5 size-3.5" />
+								)}
+								{file.sentViaWhatsapp ? "Sent" : "Send"}
+							</Button>
 						)}
-						onClick={handleSendClick}
-						disabled={isSending}
-						aria-label="Send via WhatsApp"
-						title="Send via WhatsApp"
-					>
-						{isSending ? (
-							<Loader2 className="mr-1.5 size-3.5 animate-spin" />
-						) : file.sentViaWhatsapp ? (
-							<CheckCircle2 className="mr-1.5 size-3.5" />
-						) : (
-							<MessageSquare className="mr-1.5 size-3.5" />
-						)}
-						{file.sentViaWhatsapp ? "Sent" : "Send"}
-					</Button>
+					</WhatsappGate>
 					<Button
 						type="button"
 						variant="ghost"

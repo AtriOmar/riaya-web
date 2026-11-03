@@ -32,6 +32,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
+import { useWhatsappStatus } from "@/hooks/use-whatsapp-status";
 import { cn } from "@/lib/utils";
 import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 
@@ -105,6 +106,8 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 		swr: { enabled: canWork && !isSecretary },
 	});
 
+	const { notConnected: whatsappOff } = useWhatsappStatus();
+
 	const planBadge = billing?.plan.isPro ? "Pro" : null;
 	// Secretaries only see the pages they can use
 	const visible = (items: SidebarItemData[]) =>
@@ -143,6 +146,10 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 								badge:
 									item.path === "/dashboard/subscription" && planBadge
 										? planBadge
+										: undefined,
+								alert:
+									item.path === "/dashboard/whatsapp-config" && whatsappOff
+										? "not connected"
 										: undefined,
 							}}
 							collapsed={collapsed}

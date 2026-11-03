@@ -9027,3 +9027,8 @@ export type PostApiUsersPicture200 = {
 	createdAt: string;
 	updatedAt: string;
 };
+
+export type GetApiWhatsappStatus200 = {
+	/** @nullable */
+	connected: boolean | null;
+};
