@@ -172,7 +172,7 @@ export default function ApplicationDetail({
 
 			{/* Application Info */}
 			<div>
-				<UserInfoReadOnly info={app} title="" />
+				<UserInfoReadOnly info={app} />
 			</div>
 
 			{/* Actions */}

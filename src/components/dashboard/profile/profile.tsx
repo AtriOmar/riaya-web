@@ -90,8 +90,7 @@ export default function Profile() {
 
 			{showBanned && (
 				<div className="mt-5">
-					<h3 className="font-semibold text-xl">Your Information</h3>
-					<div className="mt-4">
+					<div>
 						<p className="font-medium text-muted-foreground text-sm">Email</p>
 						<p className="px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm">
 							{user?.email}

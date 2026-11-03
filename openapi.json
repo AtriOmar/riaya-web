@@ -19482,7 +19482,7 @@
       }
     },
     "/api/users/picture": {
-      "post": {
+      "put": {
         "tags": [
           "Users"
         ],

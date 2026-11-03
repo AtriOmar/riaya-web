@@ -41,7 +41,7 @@ import { selectUserSchema } from "@/db/zod";
 import { registry } from "@/lib/openapi";
 
 registry.registerPath({
-	method: "post",
+	method: "put",
 	path: "/api/users/picture",
 	tags: ["Users"],
 	summary: "Update profile picture",

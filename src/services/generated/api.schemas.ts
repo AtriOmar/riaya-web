@@ -8985,11 +8985,11 @@ export type GetApiUsersMe200 = {
 	practice: GetApiUsersMe200Practice;
 };
 
-export type PostApiUsersPictureBody = {
+export type PutApiUsersPictureBody = {
 	pictureUrl: string;
 };
 
-export type PostApiUsersPicture200 = {
+export type PutApiUsersPicture200 = {
 	id: string;
 	name: string;
 	email: string;

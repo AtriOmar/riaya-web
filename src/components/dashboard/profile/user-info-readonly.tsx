@@ -17,7 +17,6 @@ type Props = {
 		| GetApiDoctorApplicationsMe200
 		| GetApiUsersId200DoctorProfile
 		| GetApiUsersMe200DoctorProfile;
-	title?: string;
 };
 
 function InfoField({
@@ -37,10 +36,7 @@ function InfoField({
 	);
 }
 
-export default function UserInfoReadOnly({
-	info,
-	title = "Your Information",
-}: Props) {
+export default function UserInfoReadOnly({ info }: Props) {
 	if (!info) return null;
 
 	const cabinetCityName =
@@ -54,8 +50,6 @@ export default function UserInfoReadOnly({
 
 	return (
 		<div className="space-y-8 mt-4">
-			{title && <h3 className="font-semibold text-xl">{title}</h3>}
-
 			{/* 1. Personal Information */}
 			<div>
 				<h4 className="font-semibold text-lg border-b pb-2 mb-4">
