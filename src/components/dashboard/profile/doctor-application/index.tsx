@@ -1,12 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { Check } from "lucide-react";
+import { type FormEvent, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { uploadToR2 } from "@/lib/upload";
+import { cn } from "@/lib/utils";
 import type {
 	GetApiCities200Item,
 	GetApiSpecialities200Item,
@@ -15,7 +18,7 @@ import { usePostApiDoctorApplications } from "@/services/generated/doctors/docto
 import BusinessInfo from "./business-info";
 import PersonalInfo from "./personal-info";
 import ProfessionalInfo from "./professional-info";
-import { type FormValues, schema } from "./schema";
+import { type FormValues, firstIncompleteStep, schema, steps } from "./schema";
 
 type Props = {
 	specialities: GetApiSpecialities200Item[];
@@ -28,14 +31,7 @@ export default function DoctorApplicationForm({
 	cities,
 	onApplicationSubmitted,
 }: Props) {
-	const [cinRecto, setCinRecto] = useState<File | null>(null);
-	const [cinVerso, setCinVerso] = useState<File | null>(null);
-	const [cinRectoError, setCinRectoError] = useState<string | null>(null);
-	const [cinVersoError, setCinVersoError] = useState<string | null>(null);
-	const [medicalCouncilCertificate, setMedicalCouncilCertificate] =
-		useState<File | null>(null);
-	const [medicalCouncilCertificateError, setMedicalCouncilCertificateError] =
-		useState<string | null>(null);
+	const [step, setStep] = useState(0);
 	const { trigger: createDoctorApplication, isMutating: sending } =
 		usePostApiDoctorApplications();
 
@@ -44,92 +40,51 @@ export default function DoctorApplicationForm({
 		defaultValues: {
 			firstName: "",
 			lastName: "",
-			cabinetName: "",
-			cabinetCityId: "",
 			specialityId: "",
-			tin: "",
 			medicalCouncilNumber: "",
+			cabinetName: "",
+			tin: "",
+			cabinetCityId: "",
 		},
 	});
 
-	const { handleSubmit, watch, reset } = methods;
+	const { handleSubmit, watch, reset, trigger } = methods;
 
-	const { clearDraft } = useFormDraft({
+	const { isRestored, clearDraft } = useFormDraft({
 		draftKey: "doctor_application_draft",
 		watch,
 		reset,
-		files: {
-			cinRecto,
-			cinVerso,
-			medicalCouncilCertificate,
-		},
-		setFiles: {
-			cinRecto: setCinRecto,
-			cinVerso: setCinVerso,
-			medicalCouncilCertificate: setMedicalCouncilCertificate,
+		onRestored: (values) => {
+			if (values) setStep(firstIncompleteStep(values));
 		},
 	});
 
-	const handleCinFile = (side: "recto" | "verso", file: File) => {
-		const MAX_FILE_SIZE = 5 * 1024 * 1024;
-		if (file.size > MAX_FILE_SIZE) {
-			if (side === "recto") {
-				setCinRectoError("File size exceeds 5MB");
-			} else {
-				setCinVersoError("File size exceeds 5MB");
-			}
-			return;
-		}
+	const isLastStep = step === steps.length - 1;
 
-		if (side === "recto") {
-			setCinRecto(file);
-			setCinRectoError(null);
-		} else {
-			setCinVerso(file);
-			setCinVersoError(null);
+	const goNext = async () => {
+		if (await trigger(steps[step].fields, { shouldFocus: true })) {
+			setStep((s) => s + 1);
 		}
-	};
-
-	const handleMedicalCouncilCertificateFile = (file: File) => {
-		const MAX_FILE_SIZE = 5 * 1024 * 1024;
-		if (file.size > MAX_FILE_SIZE) {
-			setMedicalCouncilCertificateError("File size exceeds 5MB");
-			return;
-		}
-		setMedicalCouncilCertificate(file);
-		setMedicalCouncilCertificateError(null);
 	};
 
 	const onSubmit = async (data: FormValues) => {
-		if (!cinRecto) {
-			setCinRectoError("CIN Recto is required");
-			return;
-		}
-		if (!cinVerso) {
-			setCinVersoError("CIN Verso is required");
-			return;
-		}
-		if (!medicalCouncilCertificate) {
-			setMedicalCouncilCertificateError(
-				"Medical Council Certificate is required",
-			);
-			return;
-		}
-
 		try {
-			const cinRectoUrl = await uploadToR2(cinRecto, "doctor-applications");
-			const cinVersoUrl = await uploadToR2(cinVerso, "doctor-applications");
-			const certUrl = await uploadToR2(
-				medicalCouncilCertificate,
-				"doctor-applications",
-			);
+			const [cinRectoUrl, cinVersoUrl, certUrl] = await Promise.all([
+				uploadToR2(data.cinRecto, "doctor-applications"),
+				uploadToR2(data.cinVerso, "doctor-applications"),
+				uploadToR2(data.medicalCouncilCertificate, "doctor-applications"),
+			]);
 
 			await createDoctorApplication({
-				...data,
-				cabinetCityId: data.cabinetCityId
-					? Number.parseInt(data.cabinetCityId)
-					: undefined,
-				specialityId: Number.parseInt(data.specialityId),
+				firstName: data.firstName,
+				lastName: data.lastName,
+				cabinetName: data.cabinetName,
+				cabinetLatitude: data.cabinetLatitude,
+				cabinetLongitude: data.cabinetLongitude,
+				tin: data.tin,
+				medicalCouncilNumber: data.medicalCouncilNumber,
+				cabinetCityId: Number.parseInt(data.cabinetCityId, 10),
+				specialityId: Number.parseInt(data.specialityId, 10),
 				medicalCouncilCertificate: certUrl,
 				cinRecto: cinRectoUrl,
 				cinVerso: cinVersoUrl,
@@ -144,32 +99,102 @@ export default function DoctorApplicationForm({
 		}
 	};
 
+	// Enter in a field moves to the next step instead of submitting the whole form
+	const onFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+		if (isLastStep) return handleSubmit(onSubmit)(e);
+		e.preventDefault();
+		goNext();
+	};
+
+	if (!isRestored) {
+		return <Skeleton className="mt-6 w-full h-96" />;
+	}
+
 	return (
 		<FormProvider {...methods}>
-			<form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-				<PersonalInfo
-					cinRecto={cinRecto}
-					setCinRecto={setCinRecto}
-					cinRectoError={cinRectoError}
-					cinVerso={cinVerso}
-					setCinVerso={setCinVerso}
-					cinVersoError={cinVersoError}
-					handleCinFile={handleCinFile}
-				/>
-				<ProfessionalInfo
-					specialities={specialities}
-					medicalCouncilCertificate={medicalCouncilCertificate}
-					setMedicalCouncilCertificate={setMedicalCouncilCertificate}
-					medicalCouncilCertificateError={medicalCouncilCertificateError}
-					handleMedicalCouncilCertificateFile={
-						handleMedicalCouncilCertificateFile
-					}
-				/>
-				<BusinessInfo cities={cities} />
-				<Button type="submit" className="mt-4 w-full" disabled={sending}>
-					{sending ? "Submitting..." : "Apply For Verification"}
-				</Button>
+			<form onSubmit={onFormSubmit} className="space-y-4 mt-4">
+				<StepIndicator current={step} onSelect={setStep} />
+
+				{step === 0 && <PersonalInfo />}
+				{step === 1 && <ProfessionalInfo specialities={specialities} />}
+				{step === 2 && <BusinessInfo cities={cities} />}
+
+				<div className="flex gap-3 mt-6">
+					{step > 0 && (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setStep((s) => s - 1)}
+							disabled={sending}
+						>
+							Back
+						</Button>
+					)}
+					<Button type="submit" className="flex-1" disabled={sending}>
+						{isLastStep
+							? sending
+								? "Submitting..."
+								: "Apply For Verification"
+							: "Continue"}
+					</Button>
+				</div>
 			</form>
 		</FormProvider>
+	);
+}
+
+function StepIndicator({
+	current,
+	onSelect,
+}: {
+	current: number;
+	onSelect: (step: number) => void;
+}) {
+	return (
+		<ol className="flex justify-center items-center gap-2 mt-5">
+			{steps.map((s, i) => {
+				const done = i < current;
+				const active = i === current;
+				return (
+					<li key={s.title} className="flex items-center gap-2">
+						<button
+							type="button"
+							// Only completed steps are reachable directly; forward goes through Continue
+							disabled={!done}
+							onClick={() => onSelect(i)}
+							className="flex items-center gap-2 disabled:cursor-default"
+							aria-current={active ? "step" : undefined}
+						>
+							<span
+								className={cn(
+									"flex justify-center items-center rounded-full size-7 font-medium text-sm shrink-0",
+									done && "bg-primary text-primary-foreground",
+									active && "ring-2 ring-primary text-primary",
+									!done && !active && "bg-muted text-muted-foreground",
+								)}
+							>
+								{done ? <Check className="size-4" /> : i + 1}
+							</span>
+							<span
+								className={cn(
+									"hidden sm:inline font-medium text-sm",
+									active ? "text-foreground" : "text-muted-foreground",
+								)}
+							>
+								{s.title}
+							</span>
+						</button>
+						{i < steps.length - 1 && (
+							<div
+								className={cn(
+									"w-8 sm:w-12 h-px",
+									done ? "bg-primary" : "bg-border",
+								)}
+							/>
+						)}
+					</li>
+				);
+			})}
+		</ol>
 	);
 }

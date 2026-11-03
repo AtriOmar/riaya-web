@@ -60,8 +60,7 @@ export default function BusinessInfo({ cities }: Props) {
 
 	return (
 		<div>
-			<div className="bg-border my-6 h-px" />
-			<h3 className="font-semibold text-xl">Cabinet Information</h3>
+			<h3 className="mt-6 font-semibold text-xl">Cabinet Information</h3>
 
 			<div className="space-y-2 mt-4">
 				<Label htmlFor="cabinetName">

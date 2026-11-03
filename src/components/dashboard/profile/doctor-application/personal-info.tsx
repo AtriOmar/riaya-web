@@ -26,38 +26,22 @@ function CinPlaceholder({ src }: { src: string }) {
 	);
 }
 
-type Props = {
-	cinRecto: File | null;
-	setCinRecto: (f: File | null) => void;
-	cinRectoError: string | null;
-	cinVerso: File | null;
-	setCinVerso: (f: File | null) => void;
-	cinVersoError: string | null;
-	handleCinFile: (side: "recto" | "verso", file: File) => void;
-};
-
-export default function PersonalInfo({
-	cinRecto,
-	setCinRecto,
-	cinRectoError,
-	cinVerso,
-	setCinVerso,
-	cinVersoError,
-	handleCinFile,
-}: Props) {
+export default function PersonalInfo() {
 	const {
 		register,
 		formState: { errors },
+		watch,
+		setValue,
 	} = useFormContext<FormValues>();
 	const { user } = useAuth();
+	const cinRecto = watch("cinRecto");
+	const cinVerso = watch("cinVerso");
 	const cinRectoRef = useRef<HTMLInputElement>(null);
 	const cinVersoRef = useRef<HTMLInputElement>(null);
 
 	return (
 		<div>
-			<h3 className="mt-5 font-semibold text-xl">Your Information</h3>
-
-			<div className="space-y-2 mt-4">
+			<div className="space-y-2 mt-6">
 				<Label>Email</Label>
 				<div className="bg-muted px-3 py-1.5 rounded-md text-muted-foreground text-sm">
 					{user?.email}
@@ -101,7 +85,7 @@ export default function PersonalInfo({
 						className="hidden"
 						onChange={(e) => {
 							const f = e.target.files?.[0];
-							if (f) handleCinFile("recto", f);
+							if (f) setValue("cinRecto", f, { shouldValidate: true });
 						}}
 					/>
 					<div className="relative mt-2 w-full max-w-[300px] group overflow-hidden rounded-lg border-2 border-dashed hover:border-primary transition">
@@ -130,7 +114,7 @@ export default function PersonalInfo({
 										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-red-500/40 border border-red-500/50 text-red-100 hover:bg-red-500/60 hover:text-white"
 										onClick={(e) => {
 											e.stopPropagation();
-											setCinRecto(null);
+											setValue("cinRecto", undefined as never);
 											if (cinRectoRef.current) cinRectoRef.current.value = "";
 										}}
 									>
@@ -150,8 +134,10 @@ export default function PersonalInfo({
 							</button>
 						)}
 					</div>
-					{cinRectoError && (
-						<p className="mt-1 text-destructive text-sm">{cinRectoError}</p>
+					{errors.cinRecto && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.cinRecto.message}
+						</p>
 					)}
 				</div>
 				<div className="space-y-2">
@@ -165,7 +151,7 @@ export default function PersonalInfo({
 						className="hidden"
 						onChange={(e) => {
 							const f = e.target.files?.[0];
-							if (f) handleCinFile("verso", f);
+							if (f) setValue("cinVerso", f, { shouldValidate: true });
 						}}
 					/>
 					<div className="relative mt-2 w-full max-w-[300px] group overflow-hidden rounded-lg border-2 border-dashed hover:border-primary transition">
@@ -194,7 +180,7 @@ export default function PersonalInfo({
 										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-red-500/40 border border-red-500/50 text-red-100 hover:bg-red-500/60 hover:text-white"
 										onClick={(e) => {
 											e.stopPropagation();
-											setCinVerso(null);
+											setValue("cinVerso", undefined as never);
 											if (cinVersoRef.current) cinVersoRef.current.value = "";
 										}}
 									>
@@ -214,8 +200,10 @@ export default function PersonalInfo({
 							</button>
 						)}
 					</div>
-					{cinVersoError && (
-						<p className="mt-1 text-destructive text-sm">{cinVersoError}</p>
+					{errors.cinVerso && (
+						<p className="mt-1 text-destructive text-sm">
+							{errors.cinVerso.message}
+						</p>
 					)}
 				</div>
 			</div>
