@@ -1,20 +1,20 @@
 import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
+import { BEST_FIT_MAX_RADIUS_KM } from "@/lib/best-fit-radius";
 import {
 	findNextAvailableSlot,
 	listAvailableSlotsForDoctor,
 } from "@/lib/doctor-slots";
 import { getDriveLegs } from "@/lib/route-matrix";
 
+export { BEST_FIT_MAX_RADIUS_KM };
+
 /** Doctors Riaya may refer patients to: verified and not excluded by an admin. */
 export const referableDoctor = and(
 	eq(doctorProfile.status, "verified"),
 	isNull(doctorProfile.bestFitExcludedAt),
 );
-
-/** Doctors beyond this radius (km) are excluded — prevents cross-city matches. */
-export const BEST_FIT_MAX_RADIUS_KM = 50;
 
 /**
  * When no doctor inside the radius has a slot, the nearest doctors beyond it

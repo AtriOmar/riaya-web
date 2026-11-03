@@ -7,6 +7,7 @@ import type { CallData } from "@/hooks/use-realtime-socket";
 import { decodeUlaw } from "@/lib/ulaw";
 import { cn } from "@/lib/utils";
 import { getTimelinePreview, useCallDuration } from "./call-helpers";
+import CallMap from "./call-map";
 import CallTranscript from "./call-transcript";
 
 type Props = {
@@ -168,6 +169,14 @@ export default function CallCard({
 					)}
 				</div>
 			</div>
+
+			<CallMap
+				call={call}
+				className={cn(
+					"shrink-0 border-b",
+					isDrawer ? "px-4 py-3" : "px-5 py-3",
+				)}
+			/>
 
 			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 				{!isActive && call.recordingUrl && (
