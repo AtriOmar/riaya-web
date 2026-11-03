@@ -14,6 +14,8 @@ import {
 import Image from "next/image";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import ExcludeDoctorDialog from "@/components/admin/ratings/exclude-doctor-dialog";
+import { revalidateRatingsData } from "@/components/admin/ratings/rating-labels";
 import { useAuth } from "@/components/contexts/auth-provider";
 import CabinetAddressField from "@/components/dashboard/profile/cabinet-address-field";
 import CabinetLocationMap from "@/components/dashboard/profile/doctor-application/cabinet-location-map";
@@ -44,6 +46,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { getErrorMessage } from "@/lib/error-handling";
 import type {
 	GetApiUsersId200,
@@ -51,6 +54,7 @@ import type {
 	PutApiUsersIdBody,
 } from "@/services/generated/api.schemas";
 import { putApiDoctorsIdAddress } from "@/services/generated/doctors/doctors";
+import { useDeleteApiDoctorsIdBestFitExclusion } from "@/services/generated/ratings/ratings";
 import {
 	useGetApiUsersId,
 	usePutApiUsersId,
@@ -159,6 +163,13 @@ export default function UserDetail({ userId }: { userId: string }) {
 
 				<div className="space-y-6 lg:sticky lg:top-6">
 					<ManageCard user={user} onUpdated={(next) => mutate(next, false)} />
+					{profile && (
+						<ReferralsCard
+							user={user}
+							profile={profile}
+							onChanged={() => mutate()}
+						/>
+					)}
 				</div>
 			</div>
 		</div>
@@ -391,6 +402,79 @@ function DocumentsCard({ profile }: { profile: DoctorProfile }) {
 				)}
 			</CardContent>
 		</Card>
+	);
+}
+
+// ─── Referrals ──────────────────────────────────────────────────────────────
+
+function ReferralsCard({
+	user,
+	profile,
+	onChanged,
+}: {
+	user: GetApiUsersId200;
+	profile: DoctorProfile;
+	onChanged: () => void;
+}) {
+	const [excludeOpen, setExcludeOpen] = useState(false);
+	const { trigger: allow, isMutating } = useDeleteApiDoctorsIdBestFitExclusion(
+		String(profile.id),
+	);
+	const excludedAt = profile.bestFitExcludedAt;
+	const name =
+		[profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+		(user.displayName ?? user.name ?? user.email);
+
+	async function allowReferrals() {
+		try {
+			await allow();
+			toast.success(`Dr ${name} receives referrals again`);
+			await revalidateRatingsData();
+			onChanged();
+		} catch (e) {
+			toast.error(getErrorMessage(e));
+		}
+	}
+
+	return (
+		<>
+			<Card className={excludedAt ? "border-yellow-500/40" : undefined}>
+				<CardHeader>
+					<div className="flex items-center justify-between gap-4">
+						<CardTitle>Referrals</CardTitle>
+						<Switch
+							checked={!excludedAt}
+							disabled={isMutating}
+							onCheckedChange={(on) =>
+								on ? allowReferrals() : setExcludeOpen(true)
+							}
+							aria-label="Receives referrals"
+						/>
+					</div>
+					<CardDescription>
+						{excludedAt
+							? `Excluded since ${format(new Date(excludedAt), "MMM d, yyyy")}. Riaya doesn't suggest this doctor to callers.`
+							: "Riaya can suggest this doctor to callers, including for emergencies."}
+					</CardDescription>
+				</CardHeader>
+				{excludedAt && profile.bestFitExcludedReason && (
+					<CardContent>
+						<p className="text-sm">
+							<span className="font-medium">Reason:</span>{" "}
+							{profile.bestFitExcludedReason}
+						</p>
+					</CardContent>
+				)}
+			</Card>
+
+			<ExcludeDoctorDialog
+				open={excludeOpen}
+				onOpenChange={setExcludeOpen}
+				doctorId={profile.id}
+				doctorName={name}
+				onExcluded={onChanged}
+			/>
+		</>
 	);
 }
 
