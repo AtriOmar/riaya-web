@@ -24,7 +24,7 @@ export default function ProfilePicture() {
 				<Avatar className="w-[150px] h-[150px] ring-2 ring-primary shadow-lg">
 					<AvatarImage src={user?.image ?? undefined} alt={user?.name ?? ""} />
 					<AvatarFallback className="text-3xl">
-						{(user?.username ?? user?.name ?? "U").slice(0, 2).toUpperCase()}
+						{(user?.name ?? user?.username ?? "U").slice(0, 2).toUpperCase()}
 					</AvatarFallback>
 				</Avatar>
 				<div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/15 transition" />

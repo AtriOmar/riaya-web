@@ -33,12 +33,12 @@ export default function UserDropdown({ user }: Props) {
 					<Avatar className="w-8 h-8">
 						<AvatarImage src={user.image ?? undefined} alt={user.name} />
 						<AvatarFallback className="text-xs">
-							{(user.username ?? user.name ?? "U").slice(0, 2).toUpperCase()}
+							{(user.name ?? user.username ?? "U").slice(0, 2).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
 
 					<span className="hidden sm:block font-medium text-sm">
-						{user.username ?? user.name ?? "User"}
+						{user.name ?? user.username ?? "User"}
 					</span>
 
 					<ChevronDown
