@@ -71,7 +71,10 @@ export default function LoginForm({
 					<ThemeToggle />
 				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
-					<Link href="/" className="inline-flex items-center gap-2 mb-8">
+					<Link
+						href="/"
+						className="flex justify-center items-center gap-2 mb-8"
+					>
 						<Image
 							src="/logo.png"
 							alt="Riaya"
@@ -82,7 +85,7 @@ export default function LoginForm({
 						<span className="font-bold text-gradient text-2xl">رعاية</span>
 					</Link>
 
-					<div className="mb-8">
+					<div className="mb-8 text-center">
 						<h1 className="mb-2 font-bold text-foreground text-3xl">
 							Welcome back, Doctor
 						</h1>

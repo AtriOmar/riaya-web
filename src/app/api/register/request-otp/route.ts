@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { apiError, json, validationError } from "@/lib/api-utils";
 import { registry } from "@/lib/openapi";
+import { passwordSchema } from "@/lib/password-rules";
 import {
 	createAndSendRegistrationOtp,
 	findUserByEmail,
@@ -10,10 +11,7 @@ import {
 
 const requestOtpSchema = z.object({
 	email: z.string().email(),
-	password: z
-		.string()
-		.min(8, "Password must be at least 8 characters")
-		.regex(/(?=.*[a-zA-Z])(?=.*[0-9])/, "Must contain letters and numbers"),
+	password: passwordSchema,
 });
 
 const requestOtpResponseSchema = z.object({

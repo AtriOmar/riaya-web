@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import GoogleButton, { OrDivider } from "@/components/auth/google-button";
+import PasswordRequirements from "@/components/auth/password-requirements";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getErrorMessage } from "@/lib/error-handling";
+import { passwordSchema } from "@/lib/password-rules";
 import { authQuery, safeNextPath } from "@/lib/safe-next";
 import {
 	usePostApiRegisterRequestOtp,
@@ -34,10 +36,7 @@ const registerSchema = z
 			.string()
 			.min(1, "Email is required")
 			.email("Invalid email address"),
-		password: z
-			.string()
-			.min(8, "Password must be at least 8 characters")
-			.regex(/(?=.*[a-zA-Z])(?=.*[0-9])/, "Must contain letters and numbers"),
+		password: passwordSchema,
 		confirmPassword: z.string(),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
@@ -79,11 +78,13 @@ export default function RegisterForm({
 	const {
 		register,
 		handleSubmit,
+		watch,
 		formState: { errors },
 	} = useForm<RegisterValues>({
 		resolver: zodResolver(registerSchema),
 		defaultValues: { email: email ?? "" },
 	});
+	const passwordValue = watch("password") ?? "";
 
 	useEffect(() => {
 		if (resendSeconds <= 0) return;
@@ -188,12 +189,15 @@ export default function RegisterForm({
 					<ThemeToggle />
 				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
-					<Link href="/" className="inline-flex items-center gap-2 mb-8">
+					<Link
+						href="/"
+						className="flex justify-center items-center gap-2 mb-8"
+					>
 						<Image src="/logo.png" alt="Riaya" width={40} height={40} />
 						<span className="font-bold text-gradient text-2xl">رعاية</span>
 					</Link>
 
-					<div className="mb-8">
+					<div className="mb-8 text-center">
 						<h1 className="mb-2 font-bold text-foreground text-3xl">
 							{step === "form" ? "Create your account" : "Verify your email"}
 						</h1>
@@ -261,11 +265,7 @@ export default function RegisterForm({
 										)}
 									</button>
 								</div>
-								{errors.password && (
-									<p className="text-destructive text-sm">
-										{errors.password.message}
-									</p>
-								)}
+								<PasswordRequirements password={passwordValue} />
 							</div>
 
 							<div className="space-y-2">
@@ -300,7 +300,9 @@ export default function RegisterForm({
 					) : (
 						<div className="space-y-5">
 							<div className="space-y-3">
-								<Label htmlFor="otp">Verification code</Label>
+								<Label htmlFor="otp" className="justify-center">
+									Verification code
+								</Label>
 								<InputOTP
 									id="otp"
 									maxLength={6}
