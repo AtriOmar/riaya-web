@@ -7,11 +7,8 @@ import {
 	resolveSpeciality,
 } from "@/lib/best-fit";
 import { scheduleEmergencyPendingTimeout } from "@/lib/pending-appointment-timeout";
+import { getPlatformSettings } from "@/lib/platform-settings";
 
-/** Doctors who get an urgent request in each wave. */
-export const EMERGENCY_FANOUT_COUNT = 3;
-/** Waves sent before the patient is told that no doctor answered. */
-export const EMERGENCY_MAX_WAVES = 3;
 /** A doctor counts for an urgent request only if their first free slot starts this soon. */
 export const EMERGENCY_SLOT_WINDOW_MS = 6 * 60 * 60 * 1000;
 
@@ -56,6 +53,7 @@ async function pickEmergencyDoctors(params: {
 	long: number;
 	excludeDoctorIds?: ReadonlySet<number>;
 }): Promise<BestFitDoctorResult[]> {
+	const { emergencyFanoutCount } = await getPlatformSettings();
 	const now = new Date();
 	const latestStart = now.getTime() + EMERGENCY_SLOT_WINDOW_MS;
 	const ranked = await findBestFitDoctors({
@@ -70,7 +68,7 @@ async function pickEmergencyDoctors(params: {
 		.filter(
 			(d) => !d.outsideRadius && d.nextSlot.start.getTime() <= latestStart,
 		)
-		.slice(0, EMERGENCY_FANOUT_COUNT);
+		.slice(0, emergencyFanoutCount);
 }
 
 /** What the patient asked for; the same in every wave of a group. */
@@ -203,11 +201,12 @@ export async function advanceEmergencyGroup(params: {
 		emergencyGroupId: params.emergencyGroupId,
 	});
 
+	const { emergencyMaxWaves } = await getPlatformSettings();
 	const sample = rows[0];
 	const specialityId = rows.find((r) => r.doctor?.specialityId != null)?.doctor
 		?.specialityId;
 	if (
-		currentWave < EMERGENCY_MAX_WAVES &&
+		currentWave < emergencyMaxWaves &&
 		specialityId != null &&
 		sample.personId != null &&
 		sample.patientLatitude != null &&

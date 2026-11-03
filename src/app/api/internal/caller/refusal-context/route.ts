@@ -28,6 +28,8 @@ const responseSchema = z.object({
 	/** Why the request was not accepted: a doctor refused it, or nobody answered in time. */
 	reason: z.enum(["refused", "timeout"]).nullable(),
 	refusedDoctorName: z.string().nullable(),
+	/** How many doctors the request went to; null when unknown. */
+	doctorsAsked: z.number().int().nullable(),
 	suggestions: z.array(suggestionSchema),
 	/** Who the refused request was for: someone on the calling phone. */
 	patient: z
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
 				found: false,
 				reason: null,
 				refusedDoctorName: null,
+				doctorsAsked: null,
 				suggestions: [],
 				patient: null,
 				illness: null,
@@ -66,6 +69,7 @@ export async function POST(req: NextRequest) {
 			found: true,
 			reason: context.reason,
 			refusedDoctorName: context.refusedDoctorName || null,
+			doctorsAsked: context.doctorsAsked,
 			suggestions: context.suggestions,
 			patient: context.patient,
 			illness: context.illness,

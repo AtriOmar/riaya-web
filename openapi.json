@@ -10613,6 +10613,10 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "doctorsAsked": {
+                      "type": "integer",
+                      "nullable": true
+                    },
                     "suggestions": {
                       "type": "array",
                       "items": {
@@ -10684,6 +10688,7 @@
                     "found",
                     "reason",
                     "refusedDoctorName",
+                    "doctorsAsked",
                     "suggestions",
                     "patient",
                     "illness"
@@ -15249,6 +15254,137 @@
                     "city",
                     "state",
                     "street"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform-settings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get the platform settings (Admin)",
+        "responses": {
+          "200": {
+            "description": "Settings in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 120
+                    },
+                    "emergencyWaveTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 30
+                    },
+                    "emergencyFanoutCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "emergencyMaxWaves": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    }
+                  },
+                  "required": [
+                    "pendingTimeoutMinutes",
+                    "emergencyWaveTimeoutMinutes",
+                    "emergencyFanoutCount",
+                    "emergencyMaxWaves"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update the platform settings (Admin)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pendingTimeoutMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 120
+                  },
+                  "emergencyWaveTimeoutMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30
+                  },
+                  "emergencyFanoutCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "emergencyMaxWaves": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "pendingTimeoutMinutes",
+                  "emergencyWaveTimeoutMinutes",
+                  "emergencyFanoutCount",
+                  "emergencyMaxWaves"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 120
+                    },
+                    "emergencyWaveTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 30
+                    },
+                    "emergencyFanoutCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "emergencyMaxWaves": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    }
+                  },
+                  "required": [
+                    "pendingTimeoutMinutes",
+                    "emergencyWaveTimeoutMinutes",
+                    "emergencyFanoutCount",
+                    "emergencyMaxWaves"
                   ]
                 }
               }

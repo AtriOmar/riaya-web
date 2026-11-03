@@ -4644,6 +4644,8 @@ export type PostApiInternalCallerRefusalContext200 = {
 	reason: PostApiInternalCallerRefusalContext200Reason;
 	/** @nullable */
 	refusedDoctorName: string | null;
+	/** @nullable */
+	doctorsAsked: number | null;
 	suggestions: PostApiInternalCallerRefusalContext200SuggestionsItem[];
 	/** @nullable */
 	patient: PostApiInternalCallerRefusalContext200Patient;
@@ -6915,6 +6917,75 @@ export type GetApiPlacesDetails200 = {
 	state: string | null;
 	/** @nullable */
 	street: string | null;
+};
+
+export type GetApiPlatformSettings200 = {
+	/**
+	 * @minimum 1
+	 * @maximum 120
+	 */
+	pendingTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 30
+	 */
+	emergencyWaveTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyFanoutCount: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyMaxWaves: number;
+};
+
+export type PutApiPlatformSettingsBody = {
+	/**
+	 * @minimum 1
+	 * @maximum 120
+	 */
+	pendingTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 30
+	 */
+	emergencyWaveTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyFanoutCount: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyMaxWaves: number;
+};
+
+export type PutApiPlatformSettings200 = {
+	/**
+	 * @minimum 1
+	 * @maximum 120
+	 */
+	pendingTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 30
+	 */
+	emergencyWaveTimeoutMinutes: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyFanoutCount: number;
+	/**
+	 * @minimum 1
+	 * @maximum 10
+	 */
+	emergencyMaxWaves: number;
 };
 
 export type GetApiRecordingsParams = {

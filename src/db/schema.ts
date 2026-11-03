@@ -597,6 +597,54 @@ export const blockedPhone = pgTable("blocked_phone", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ─── Platform Settings ────────────────────────────────────────────────────────
+// One row (id = 1) of admin-editable values. A missing row means the defaults
+// in `lib/platform-settings.ts`; the first save creates it.
+
+export const platformSettings = pgTable(
+	"platform_settings",
+	{
+		id: integer("id").primaryKey().default(1),
+		/** How long an AI pending request waits for the doctor before auto-cancel. */
+		pendingTimeoutMinutes: integer("pending_timeout_minutes")
+			.notNull()
+			.default(10),
+		/** How long one wave of urgent requests waits before the next wave. */
+		emergencyWaveTimeoutMinutes: integer("emergency_wave_timeout_minutes")
+			.notNull()
+			.default(4),
+		/** Doctors who get an urgent request in each wave. */
+		emergencyFanoutCount: integer("emergency_fanout_count")
+			.notNull()
+			.default(3),
+		/** Waves sent before the patient is told that no doctor answered. */
+		emergencyMaxWaves: integer("emergency_max_waves").notNull().default(3),
+		updatedBy: text("updated_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [
+		check("platform_settings_single_row", sql`${table.id} = 1`),
+		check(
+			"platform_settings_pending_timeout_range",
+			sql`${table.pendingTimeoutMinutes} between 1 and 120`,
+		),
+		check(
+			"platform_settings_wave_timeout_range",
+			sql`${table.emergencyWaveTimeoutMinutes} between 1 and 30`,
+		),
+		check(
+			"platform_settings_fanout_range",
+			sql`${table.emergencyFanoutCount} between 1 and 10`,
+		),
+		check(
+			"platform_settings_max_waves_range",
+			sql`${table.emergencyMaxWaves} between 1 and 10`,
+		),
+	],
+);
+
 // ─── Doctor Unavailability ────────────────────────────────────────────────────
 
 export const doctorUnavailability = pgTable(

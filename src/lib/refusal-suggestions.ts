@@ -29,6 +29,8 @@ type StoredRefusal = {
 	desiredTime: string;
 	refusedDoctorIds: number[];
 	lastRefusedDoctorName: string;
+	/** Doctors asked for this one request (several for an urgent group). Missing on contexts stored before. */
+	doctorsAsked?: number;
 	/** Who the refused request was for, and why. Missing on contexts stored before. */
 	personId?: number | null;
 	illness?: string | null;
@@ -60,6 +62,8 @@ export type RefusalContext = {
 	reason: UnacceptedReason;
 	/** The doctor who refused or did not answer (for a timeout, one of them). */
 	refusedDoctorName: string;
+	/** How many doctors the request went to; null on contexts stored before this was kept. */
+	doctorsAsked: number | null;
 	suggestions: RefusalSuggestion[];
 	/** Who the refused request was for (someone on the calling phone). */
 	patient: {
@@ -137,6 +141,7 @@ export async function recordRefusal(
 			desiredTime: (refused.start ?? new Date()).toISOString(),
 			refusedDoctorIds: [...refusedDoctorIds],
 			lastRefusedDoctorName: doctorFullName(doctor.firstName, doctor.lastName),
+			doctorsAsked: new Set([doctor.id, ...(options.alsoAsked ?? [])]).size,
 			personId: refused.personId,
 			illness: refused.description,
 		};
@@ -195,6 +200,7 @@ export async function getRefusalContext(
 		return {
 			reason: stored.reason ?? "refused",
 			refusedDoctorName: stored.lastRefusedDoctorName,
+			doctorsAsked: stored.doctorsAsked ?? null,
 			suggestions,
 			patient: patient
 				? {
