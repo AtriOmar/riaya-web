@@ -1,3 +1,5 @@
+import { appendFile, mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import {
 	GEO_TIMEOUT_MS,
 	type GeoProvider,
@@ -32,6 +34,42 @@ function apiKey() {
 	return key;
 }
 
+const LOG_FILE = join(process.cwd(), "logs", "google-places.log");
+const RULE = "=".repeat(80);
+
+/**
+ * Every request counts against the Google quota, so each one is appended to
+ * `logs/google-places.log` as its own block: the query sent, then what came back.
+ */
+async function logRequest(entry: {
+	endpoint: string;
+	body?: unknown;
+	status: number;
+	response?: unknown;
+	error?: string;
+}) {
+	const json = (v: unknown) => JSON.stringify(v, null, 2);
+	const block = [
+		RULE,
+		`${new Date().toISOString()}  ${entry.endpoint}  HTTP ${entry.status}`,
+		RULE,
+		"",
+		"QUERY SENT",
+		entry.body === undefined ? "(none)" : json(entry.body),
+		"",
+		entry.error ? "ERROR" : "RESPONSE",
+		entry.error ?? json(entry.response),
+		"",
+		"",
+	].join("\n");
+	try {
+		await mkdir(dirname(LOG_FILE), { recursive: true });
+		await appendFile(LOG_FILE, block);
+	} catch (e) {
+		console.error("google-places log write failed:", e);
+	}
+}
+
 async function request<T>(
 	path: string,
 	init: { method: "GET" | "POST"; body?: unknown; fieldMask?: string },
@@ -48,12 +86,25 @@ async function request<T>(
 	});
 	if (!res.ok) {
 		const detail = (await res.text()).slice(0, 200);
+		await logRequest({
+			endpoint: path,
+			body: init.body,
+			status: res.status,
+			error: detail,
+		});
 		throw new GeoProviderError(
 			`Google Places failed (${res.status}): ${detail}`,
 			"google",
 		);
 	}
-	return (await res.json()) as T;
+	const data = (await res.json()) as T;
+	await logRequest({
+		endpoint: path,
+		body: init.body,
+		status: res.status,
+		response: data,
+	});
+	return data;
 }
 
 const component = (p: GooglePlace, type: string) =>
