@@ -4,10 +4,7 @@ import { Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
-import { useAuth } from "@/components/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
-import { uploadBlobToR2 } from "@/lib/upload";
-import { usePutApiUsersPicture } from "@/services/generated/users/users";
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 	const image = new Image();
@@ -46,17 +43,24 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 
 type Props = {
 	imageUrl: string;
-	onDone: () => void;
+	aspect: number;
+	/** Receives the cropped image. Throw to keep the cropper open. */
+	onSave: (blob: Blob) => Promise<void>;
 	onCancel: () => void;
+	errorMessage?: string;
 };
 
-export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
+export default function ImageCropper({
+	imageUrl,
+	aspect,
+	onSave,
+	onCancel,
+	errorMessage = "Failed to save the image",
+}: Props) {
 	const [crop, setCrop] = useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-	const { trigger: updateProfilePicture } = usePutApiUsersPicture();
 	const [saving, setSaving] = useState(false);
-	const { refetch } = useAuth();
 
 	const onCropComplete = useCallback((_: Area, pixels: Area) => {
 		setCroppedAreaPixels(pixels);
@@ -66,18 +70,9 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 		if (!croppedAreaPixels) return;
 		setSaving(true);
 		try {
-			const blob = await getCroppedImg(imageUrl, croppedAreaPixels);
-			const cdnUrl = await uploadBlobToR2(
-				blob,
-				"profile.jpg",
-				"profile-pictures",
-			);
-			await updateProfilePicture({ pictureUrl: cdnUrl });
-			toast.success("Profile picture updated");
-			onDone();
-			refetch();
+			await onSave(await getCroppedImg(imageUrl, croppedAreaPixels));
 		} catch {
-			toast.error("Failed to update profile picture");
+			toast.error(errorMessage);
 		} finally {
 			setSaving(false);
 		}
@@ -90,7 +85,7 @@ export default function ImageCropper({ imageUrl, onDone, onCancel }: Props) {
 					image={imageUrl}
 					crop={crop}
 					zoom={zoom}
-					aspect={1}
+					aspect={aspect}
 					onCropChange={setCrop}
 					onCropComplete={onCropComplete}
 					onZoomChange={setZoom}
