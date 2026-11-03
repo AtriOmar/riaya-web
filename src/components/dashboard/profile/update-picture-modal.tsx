@@ -36,42 +36,42 @@ export default function UpdatePictureModal({ open, onClose }: Props) {
 					<DialogTitle>Update Profile Picture</DialogTitle>
 				</DialogHeader>
 
-				{/* biome-ignore lint/a11y/useKeyWithClickEvents: drop zone contains a visible <Button> for keyboard users */}
-				<div
-					className="flex flex-col justify-center items-center p-4 border-2 hover:border-primary border-dashed rounded-lg transition cursor-pointer"
-					onDragOver={(e) => e.preventDefault()}
-					onDrop={(e) => {
-						e.preventDefault();
-						const file = e.dataTransfer.files[0];
-						if (file) handleFile(file);
-					}}
-					onClick={() => inputRef.current?.click()}
-				>
-					<input
-						ref={inputRef}
-						type="file"
-						accept="image/*"
-						className="hidden"
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							if (file) handleFile(file);
-						}}
-					/>
-					<Button variant="default" size="sm" type="button">
-						<Upload className="w-4 h-4" />
-						Upload
-					</Button>
-					<p className="mt-2 text-muted-foreground text-sm text-center">
-						Or drop an image here
-					</p>
-				</div>
-
-				{imageUrl && (
+				{imageUrl ? (
 					<ImageCropper
 						imageUrl={imageUrl}
 						onDone={handleDone}
 						onCancel={() => setImageUrl(null)}
 					/>
+				) : (
+					// biome-ignore lint/a11y/useKeyWithClickEvents: drop zone contains a visible <Button> for keyboard users
+					<div
+						className="flex flex-col justify-center items-center p-4 border-2 hover:border-primary border-dashed rounded-lg h-[250px] transition cursor-pointer"
+						onDragOver={(e) => e.preventDefault()}
+						onDrop={(e) => {
+							e.preventDefault();
+							const file = e.dataTransfer.files[0];
+							if (file) handleFile(file);
+						}}
+						onClick={() => inputRef.current?.click()}
+					>
+						<input
+							ref={inputRef}
+							type="file"
+							accept="image/*"
+							className="hidden"
+							onChange={(e) => {
+								const file = e.target.files?.[0];
+								if (file) handleFile(file);
+							}}
+						/>
+						<Button variant="default" size="sm" type="button">
+							<Upload className="w-4 h-4" />
+							Upload
+						</Button>
+						<p className="mt-2 text-muted-foreground text-sm text-center">
+							Or drop an image here
+						</p>
+					</div>
 				)}
 			</DialogContent>
 		</Dialog>
