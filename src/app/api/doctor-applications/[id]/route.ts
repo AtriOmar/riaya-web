@@ -107,6 +107,8 @@ export async function PUT(
 						cabinetLatitude: application.cabinetLatitude,
 						tin: application.tin,
 						specialityId: application.specialityId,
+						medicalCouncilNumber: application.medicalCouncilNumber,
+						medicalCouncilCertificate: application.medicalCouncilCertificate,
 						status: "verified",
 						updatedAt: new Date(),
 					})
@@ -125,6 +127,8 @@ export async function PUT(
 					cabinetLatitude: application.cabinetLatitude,
 					tin: application.tin,
 					specialityId: application.specialityId,
+					medicalCouncilNumber: application.medicalCouncilNumber,
+					medicalCouncilCertificate: application.medicalCouncilCertificate,
 					status: "verified",
 				});
 			}
