@@ -1,0 +1,1 @@
+ALTER TABLE "doctor_application" ADD COLUMN "cin" varchar(100);

@@ -46,6 +46,22 @@ export default function PersonalInfo() {
 				</div>
 			</div>
 
+			<div className="space-y-2 mt-4">
+				<Label htmlFor="cin">
+					CIN Number <span className="text-destructive">*</span>
+				</Label>
+				<Input
+					id="cin"
+					inputMode="numeric"
+					maxLength={8}
+					placeholder="12345678"
+					{...register("cin")}
+				/>
+				{errors.cin && (
+					<p className="mt-1 text-destructive text-sm">{errors.cin.message}</p>
+				)}
+			</div>
+
 			<div className="gap-4 grid lg:grid-cols-2 mt-4">
 				<CinField
 					name="cinRecto"

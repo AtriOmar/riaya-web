@@ -7137,6 +7137,11 @@
                         "nullable": true,
                         "maxLength": 255
                       },
+                      "cin": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 100
+                      },
                       "cinRecto": {
                         "type": "string",
                         "nullable": true,
@@ -7342,6 +7347,7 @@
                       "userId",
                       "firstName",
                       "lastName",
+                      "cin",
                       "cinRecto",
                       "cinVerso",
                       "cabinetName",
@@ -7386,6 +7392,10 @@
                   "lastName": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "cin": {
+                    "type": "string",
+                    "pattern": "^\\d{8}$"
                   },
                   "cinRecto": {
                     "type": "string",
@@ -7438,6 +7448,7 @@
                 "required": [
                   "firstName",
                   "lastName",
+                  "cin",
                   "cinRecto",
                   "cinVerso",
                   "cabinetName",
@@ -7477,6 +7488,11 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
                     },
                     "cinRecto": {
                       "type": "string",
@@ -7564,6 +7580,7 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
@@ -7629,6 +7646,11 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
                     },
                     "cinRecto": {
                       "type": "string",
@@ -7835,6 +7857,7 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
@@ -7986,6 +8009,11 @@
                       "nullable": true,
                       "maxLength": 255
                     },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
                     "cinRecto": {
                       "type": "string",
                       "nullable": true,
@@ -8191,6 +8219,7 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",

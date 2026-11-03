@@ -10,6 +10,7 @@ const requiredFile = (message: string) =>
 export const schema = z.object({
 	firstName: z.string().min(1, "First name is required"),
 	lastName: z.string().min(1, "Last name is required"),
+	cin: z.string().regex(/^\d{8}$/, "The CIN number has 8 digits"),
 	cinRecto: requiredFile("CIN recto is required"),
 	cinVerso: requiredFile("CIN verso is required"),
 	specialityId: z.string().min(1, "Speciality is required"),
@@ -36,7 +37,7 @@ export type FormValues = z.infer<typeof schema>;
 export const steps = [
 	{
 		title: "Identity",
-		fields: ["firstName", "lastName", "cinRecto", "cinVerso"],
+		fields: ["firstName", "lastName", "cin", "cinRecto", "cinVerso"],
 	},
 	{
 		title: "Professional",

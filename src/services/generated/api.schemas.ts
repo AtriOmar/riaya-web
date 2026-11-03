@@ -2970,6 +2970,11 @@ export type GetApiDoctorApplications200Item = {
 	 */
 	lastName: string | null;
 	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
+	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
@@ -3049,6 +3054,8 @@ export type PostApiDoctorApplicationsBody = {
 	firstName: string;
 	/** @minLength 1 */
 	lastName: string;
+	/** @pattern ^\d{8}$ */
+	cin: string;
 	/** @minLength 1 */
 	cinRecto: string;
 	/** @minLength 1 */
@@ -3094,6 +3101,11 @@ export type PostApiDoctorApplications201 = {
 	 * @nullable
 	 */
 	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -3274,6 +3286,11 @@ export type GetApiDoctorApplicationsId200 = {
 	 * @nullable
 	 */
 	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -3482,6 +3499,11 @@ export type GetApiDoctorApplicationsMe200 = {
 	 * @nullable
 	 */
 	lastName: string | null;
+	/**
+	 * @maxLength 100
+	 * @nullable
+	 */
+	cin: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable

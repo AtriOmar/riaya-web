@@ -40,6 +40,7 @@ export default function DoctorApplicationForm({
 		defaultValues: {
 			firstName: "",
 			lastName: "",
+			cin: "",
 			specialityId: "",
 			medicalCouncilNumber: "",
 			cabinetName: "",
@@ -79,6 +80,7 @@ export default function DoctorApplicationForm({
 			await createDoctorApplication({
 				firstName: data.firstName,
 				lastName: data.lastName,
+				cin: data.cin,
 				cabinetName: data.cabinetName,
 				cabinetAddress: data.cabinetAddress,
 				cabinetLatitude: data.cabinetLatitude,

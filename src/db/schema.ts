@@ -449,6 +449,7 @@ export const doctorApplication = pgTable(
 		userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
 		firstName: varchar("first_name", { length: 255 }),
 		lastName: varchar("last_name", { length: 255 }),
+		cin: varchar("cin", { length: 100 }),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		cabinetName: varchar("cabinet_name", { length: 255 }),

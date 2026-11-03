@@ -61,6 +61,7 @@ export default function UserInfoReadOnly({ info, onSaveAddress }: Props) {
 				<div className="gap-4 grid sm:grid-cols-2">
 					<InfoField label="First Name" value={info.firstName} />
 					<InfoField label="Last Name" value={info.lastName} />
+					<InfoField label="CIN Number" value={info.cin} />
 				</div>
 				<div className="gap-4 grid lg:grid-cols-2 mt-4">
 					{info.cinRecto && (

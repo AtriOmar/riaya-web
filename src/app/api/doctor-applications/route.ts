@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
 const createSchema = z.object({
 	firstName: z.string().min(1),
 	lastName: z.string().min(1),
+	cin: z.string().regex(/^\d{8}$/),
 	cinRecto: z.string().min(1), // URL from R2
 	cinVerso: z.string().min(1), // URL from R2
 	cabinetName: z.string().min(1),
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
 				userId: session.user.id,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,
+				cin: parsed.data.cin,
 				cinRecto: parsed.data.cinRecto,
 				cinVerso: parsed.data.cinVerso,
 				cabinetName: parsed.data.cabinetName,

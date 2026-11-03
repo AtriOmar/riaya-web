@@ -98,6 +98,7 @@ export async function PUT(
 					.set({
 						firstName: application.firstName,
 						lastName: application.lastName,
+						cin: application.cin,
 						cinRecto: application.cinRecto,
 						cinVerso: application.cinVerso,
 						cabinetName: application.cabinetName,
@@ -118,6 +119,7 @@ export async function PUT(
 					userId: application.userId,
 					firstName: application.firstName,
 					lastName: application.lastName,
+					cin: application.cin,
 					cinRecto: application.cinRecto,
 					cinVerso: application.cinVerso,
 					cabinetName: application.cabinetName,
