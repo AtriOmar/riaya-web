@@ -1,6 +1,15 @@
 "use client";
 
-import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
+import {
+	AlertCircle,
+	ArrowLeft,
+	Check,
+	CheckCircle2,
+	Clock,
+	FileX,
+	X,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mutate as mutateGlobal } from "swr";
@@ -9,6 +18,7 @@ import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly"
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -16,6 +26,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 
+import { getApiErrorCode, getErrorMessage } from "@/lib/error-handling";
 import {
 	getGetApiDoctorApplicationsCountKey,
 	useGetApiDoctorApplicationsId,
@@ -28,7 +39,12 @@ export default function ApplicationDetail({
 	applicationId: number;
 }) {
 	const id = String(applicationId);
-	const { data: app, isLoading, mutate } = useGetApiDoctorApplicationsId(id);
+	const {
+		data: app,
+		isLoading,
+		error,
+		mutate,
+	} = useGetApiDoctorApplicationsId(id);
 
 	const { trigger: updateApplication, isMutating: saving } =
 		usePutApiDoctorApplicationsId(id);
@@ -44,8 +60,45 @@ export default function ApplicationDetail({
 		);
 	}
 
-	if (!app)
-		return <p className="text-muted-foreground">Application not found.</p>;
+	if (error || !app) {
+		const notFound = getApiErrorCode(error) === "APPLICATION_NOT_FOUND";
+		return (
+			<Card className="max-w-md">
+				<CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+					{notFound ? (
+						<FileX className="size-8 text-muted-foreground" />
+					) : (
+						<AlertCircle className="size-8 text-muted-foreground" />
+					)}
+					<div className="space-y-1">
+						<p className="font-medium">
+							{notFound
+								? "Application not found"
+								: "Could not load application"}
+						</p>
+						<p className="text-muted-foreground text-sm">
+							{notFound
+								? "It may have been deleted, or the link is out of date."
+								: getErrorMessage(error)}
+						</p>
+					</div>
+					<div className="flex gap-2">
+						<Button asChild variant="outline" size="sm">
+							<Link href="/admin/doctor-applications">
+								<ArrowLeft className="size-4" />
+								All applications
+							</Link>
+						</Button>
+						{!notFound && (
+							<Button size="sm" onClick={() => mutate()}>
+								Try again
+							</Button>
+						)}
+					</div>
+				</CardContent>
+			</Card>
+		);
+	}
 
 	async function handleApprove() {
 		try {
