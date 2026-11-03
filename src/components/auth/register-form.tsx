@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import GoogleButton, { OrDivider } from "@/components/auth/google-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,6 +208,13 @@ export default function RegisterForm({
 						<div className="mb-4 p-3 border border-destructive/30 rounded-lg bg-destructive/10 text-destructive text-sm">
 							{apiError}
 						</div>
+					)}
+
+					{step === "form" && (
+						<>
+							<GoogleButton next={next} />
+							<OrDivider />
+						</>
 					)}
 
 					{step === "form" ? (

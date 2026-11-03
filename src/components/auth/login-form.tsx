@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import GoogleButton, { OrDivider } from "@/components/auth/google-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -95,6 +96,9 @@ export default function LoginForm({
 							{apiError}
 						</div>
 					)}
+
+					<GoogleButton next={next} />
+					<OrDivider />
 
 					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 						<div className="space-y-2">
