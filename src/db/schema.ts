@@ -106,7 +106,7 @@ export const doctorProfile = pgTable(
 		index("doctor_profile_status_idx").on(table.status),
 		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
-		index("doctor_profile_cin_idx").on(table.cin),
+		uniqueIndex("doctor_profile_cin_idx").on(table.cin),
 		// An exclusion always carries the reason shown to the doctor.
 		check(
 			"doctor_profile_best_fit_exclusion_reason",

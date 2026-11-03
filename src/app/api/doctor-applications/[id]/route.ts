@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
@@ -86,6 +86,20 @@ export async function PUT(
 		if (!application?.userId) return apiError("APPLICATION_NOT_FOUND");
 
 		if (status === "verified") {
+			if (application.cin) {
+				const [duplicate] = await db
+					.select({ id: doctorProfile.id })
+					.from(doctorProfile)
+					.where(
+						and(
+							eq(doctorProfile.cin, application.cin),
+							ne(doctorProfile.userId, application.userId),
+						),
+					)
+					.limit(1);
+				if (duplicate) return apiError("CIN_ALREADY_USED");
+			}
+
 			// Create / update the doctor profile from the application data
 			const existing = await db
 				.select()
