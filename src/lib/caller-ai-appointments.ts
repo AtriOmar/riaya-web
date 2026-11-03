@@ -42,7 +42,7 @@ function mapRow(row: {
 		firstName: string | null;
 		lastName: string | null;
 		cabinetName: string | null;
-		address: string | null;
+		cabinetAddress: string | null;
 	} | null;
 }): CallerAiAppointmentItem {
 	const doctor = row.doctor;
@@ -59,7 +59,7 @@ function mapRow(row: {
 		description: row.description,
 		doctorName: doctorName || "Doctor",
 		cabinetName: doctor?.cabinetName ?? null,
-		address: doctor?.address ?? null,
+		address: doctor?.cabinetAddress ?? null,
 		urgent: row.urgent,
 	};
 }

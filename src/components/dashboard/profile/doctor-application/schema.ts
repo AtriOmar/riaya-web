@@ -22,6 +22,7 @@ export const schema = z.object({
 		.string()
 		.regex(/^\d{7}[A-Z]$/, "Format: 0000000X (7 digits + uppercase letter)"),
 	cabinetCityId: z.string().min(1, "City is required"),
+	cabinetAddress: z.string().trim().min(1, "Address is required").max(500),
 	cabinetLatitude: z.number({
 		message: "Exact location is required",
 	}),
@@ -51,6 +52,7 @@ export const steps = [
 			"cabinetName",
 			"tin",
 			"cabinetCityId",
+			"cabinetAddress",
 			"cabinetLatitude",
 			"cabinetLongitude",
 		],

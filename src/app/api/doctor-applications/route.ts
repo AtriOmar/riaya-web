@@ -75,6 +75,7 @@ const createSchema = z.object({
 	cinRecto: z.string().min(1), // URL from R2
 	cinVerso: z.string().min(1), // URL from R2
 	cabinetName: z.string().min(1),
+	cabinetAddress: z.string().trim().min(1).max(500),
 	cabinetCityId: z.coerce.number().int().positive().optional(),
 	cabinetLongitude: z.coerce.number().optional(),
 	cabinetLatitude: z.coerce.number().optional(),
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
 				cinRecto: parsed.data.cinRecto,
 				cinVerso: parsed.data.cinVerso,
 				cabinetName: parsed.data.cabinetName,
+				cabinetAddress: parsed.data.cabinetAddress,
 				cabinetCityId: parsed.data.cabinetCityId,
 				cabinetLongitude: parsed.data.cabinetLongitude,
 				cabinetLatitude: parsed.data.cabinetLatitude,

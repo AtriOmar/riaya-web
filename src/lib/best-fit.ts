@@ -303,7 +303,7 @@ export async function findBestFitDoctors(params: {
 				cabinetLatitude: doctor.cabinetLatitude,
 				cabinetLongitude: doctor.cabinetLongitude,
 				specialityId: doctor.specialityId,
-				address: doctor.address ?? null,
+				address: doctor.cabinetAddress ?? null,
 				distance: doctor.distance,
 				...(outsideRadius ? { outsideRadius: true } : {}),
 				nextSlot: slots.nextSlot,

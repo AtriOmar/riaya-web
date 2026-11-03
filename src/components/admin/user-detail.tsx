@@ -15,6 +15,7 @@ import Image from "next/image";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/contexts/auth-provider";
+import CabinetAddressField from "@/components/dashboard/profile/cabinet-address-field";
 import CabinetLocationMap from "@/components/dashboard/profile/doctor-application/cabinet-location-map";
 import { CubeLoader } from "@/components/loaders";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +50,7 @@ import type {
 	GetApiUsersId200DoctorProfile,
 	PutApiUsersIdBody,
 } from "@/services/generated/api.schemas";
+import { putApiDoctorsIdAddress } from "@/services/generated/doctors/doctors";
 import {
 	useGetApiUsersId,
 	usePutApiUsersId,
@@ -135,7 +137,15 @@ export default function UserDetail({ userId }: { userId: string }) {
 					{profile ? (
 						<>
 							<ProfessionalCard profile={profile} />
-							<PracticeCard profile={profile} />
+							<PracticeCard
+								profile={profile}
+								onSaveAddress={async (cabinetAddress) => {
+									await putApiDoctorsIdAddress(String(profile.id), {
+										cabinetAddress,
+									});
+									await mutate();
+								}}
+							/>
 							<DocumentsCard profile={profile} />
 						</>
 					) : (
@@ -279,7 +289,13 @@ function ProfessionalCard({ profile }: { profile: DoctorProfile }) {
 	);
 }
 
-function PracticeCard({ profile }: { profile: DoctorProfile }) {
+function PracticeCard({
+	profile,
+	onSaveAddress,
+}: {
+	profile: DoctorProfile;
+	onSaveAddress: (address: string) => Promise<void>;
+}) {
 	const hasLocation =
 		profile.cabinetLatitude != null && profile.cabinetLongitude != null;
 	return (
@@ -292,7 +308,11 @@ function PracticeCard({ profile }: { profile: DoctorProfile }) {
 					<Field label="Cabinet" value={profile.cabinetName} />
 					<Field label="City" value={localizedName(profile.cabinetCity)} />
 					<div className="sm:col-span-2">
-						<Field label="Address" value={profile.address} />
+						<CabinetAddressField
+							variant="plain"
+							value={profile.cabinetAddress}
+							onSave={onSaveAddress}
+						/>
 					</div>
 				</FieldGrid>
 				{hasLocation && (

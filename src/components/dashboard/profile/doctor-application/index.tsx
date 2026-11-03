@@ -45,6 +45,7 @@ export default function DoctorApplicationForm({
 			cabinetName: "",
 			tin: "",
 			cabinetCityId: "",
+			cabinetAddress: "",
 		},
 	});
 
@@ -79,6 +80,7 @@ export default function DoctorApplicationForm({
 				firstName: data.firstName,
 				lastName: data.lastName,
 				cabinetName: data.cabinetName,
+				cabinetAddress: data.cabinetAddress,
 				cabinetLatitude: data.cabinetLatitude,
 				cabinetLongitude: data.cabinetLongitude,
 				tin: data.tin,

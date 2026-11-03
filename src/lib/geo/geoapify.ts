@@ -92,7 +92,11 @@ async function call(
 	}
 	const data = (await res.json()) as { features?: GeoapifyFeature[] };
 
-	return (data.features ?? []).map(({ properties: p }) => ({
+	return (data.features ?? []).map(toResult);
+}
+
+function toResult({ properties: p }: GeoapifyFeature): PlaceResult {
+	return {
 		id: p.place_id ?? `${p.lat},${p.lon}`,
 		label: p.formatted ?? "",
 		lat: p.lat,
@@ -100,7 +104,7 @@ async function call(
 		city: p.city ?? null,
 		state: p.state ?? null,
 		street: p.street ?? null,
-	}));
+	};
 }
 
 const proximity = (p: LatLng) => `proximity:${p.lng},${p.lat}`;
@@ -117,6 +121,28 @@ export const geoapifyProvider: GeoProvider = {
 
 	// Geoapify autocomplete already returns coordinates, so nothing to resolve.
 	details: async () => null,
+
+	async reverse({ lat, lng }) {
+		const url = new URL(`${BASE}/reverse`);
+		url.search = new URLSearchParams({
+			lat: String(lat),
+			lon: String(lng),
+			limit: "1",
+			apiKey: apiKey(),
+		}).toString();
+		const res = await fetch(url, {
+			signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
+		});
+		if (!res.ok) {
+			throw new GeoProviderError(
+				`Geoapify reverse failed (${res.status})`,
+				"geoapify",
+			);
+		}
+		const feature = ((await res.json()) as { features?: GeoapifyFeature[] })
+			.features?.[0];
+		return feature ? toResult(feature) : null;
+	},
 
 	search: ({ text, near, radiusM }) =>
 		call("search", {

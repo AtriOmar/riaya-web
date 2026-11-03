@@ -2984,6 +2984,8 @@ export type GetApiDoctorApplications200Item = {
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3053,6 +3055,11 @@ export type PostApiDoctorApplicationsBody = {
 	cinVerso: string;
 	/** @minLength 1 */
 	cabinetName: string;
+	/**
+	 * @minLength 1
+	 * @maxLength 500
+	 */
+	cabinetAddress: string;
 	/** @exclusiveMinimum 0 */
 	cabinetCityId?: number;
 	/** @nullable */
@@ -3102,6 +3109,8 @@ export type PostApiDoctorApplications201 = {
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3280,6 +3289,8 @@ export type GetApiDoctorApplicationsId200 = {
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3486,6 +3497,8 @@ export type GetApiDoctorApplicationsMe200 = {
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3786,13 +3799,13 @@ export type GetApiDoctorsId200Doctor = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -3894,6 +3907,22 @@ export type GetApiDoctorsId200AppointmentsItem = {
 export type GetApiDoctorsId200 = {
 	doctor: GetApiDoctorsId200Doctor;
 	appointments: GetApiDoctorsId200AppointmentsItem[];
+};
+
+export type PutApiDoctorsIdAddressBody = {
+	/**
+	 * @minLength 1
+	 * @maxLength 500
+	 */
+	cabinetAddress: string;
+};
+
+export type PutApiDoctorsIdAddress200 = {
+	/**
+	 * @minLength 1
+	 * @maxLength 500
+	 */
+	cabinetAddress: string;
 };
 
 export type PostApiDoctorsIdBestFitExclusionBody = {
@@ -4067,8 +4096,6 @@ export type GetApiDoctorsBestFit200Item = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -4138,6 +4165,8 @@ export type GetApiDoctorsBestFit200Item = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
+	/** @nullable */
+	address: string | null;
 	distance: number;
 	outsideRadius?: boolean;
 	roadDistanceKm?: number;
@@ -4193,8 +4222,6 @@ export type GetApiDoctorsBestFitMap200Item = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -4264,6 +4291,8 @@ export type GetApiDoctorsBestFitMap200Item = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
+	/** @nullable */
+	address: string | null;
 	outsideRadius?: boolean;
 	roadDistanceKm?: number;
 	driveMinutes?: number;
@@ -4330,8 +4359,6 @@ export type GetApiDoctorsBestFitRange200ItemDoctorsItem = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
@@ -4401,6 +4428,8 @@ export type GetApiDoctorsBestFitRange200ItemDoctorsItem = {
 	createdAt: string | null;
 	/** @nullable */
 	updatedAt: string | null;
+	/** @nullable */
+	address: string | null;
 	outsideRadius?: boolean;
 	roadDistanceKm?: number;
 	driveMinutes?: number;
@@ -4413,6 +4442,22 @@ export type GetApiDoctorsBestFitRange200ItemDoctorsItem = {
 export type GetApiDoctorsBestFitRange200Item = {
 	date: string;
 	doctors: GetApiDoctorsBestFitRange200ItemDoctorsItem[];
+};
+
+export type PutApiDoctorsMeAddressBody = {
+	/**
+	 * @minLength 1
+	 * @maxLength 500
+	 */
+	cabinetAddress: string;
+};
+
+export type PutApiDoctorsMeAddress200 = {
+	/**
+	 * @minLength 1
+	 * @maxLength 500
+	 */
+	cabinetAddress: string;
 };
 
 export type PutApiDoctorsMeBrandingBody = {
@@ -8365,13 +8410,13 @@ export type GetApiUsersId200DoctorProfile = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -8606,13 +8651,13 @@ export type PutApiUsersId200DoctorProfile = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647
@@ -8837,13 +8882,13 @@ export type GetApiUsersMe200DoctorProfile = {
 	 * @nullable
 	 */
 	status: string | null;
-	/** @nullable */
-	address: string | null;
 	/**
 	 * @maxLength 255
 	 * @nullable
 	 */
 	cabinetName: string | null;
+	/** @nullable */
+	cabinetAddress: string | null;
 	/**
 	 * @minimum -2147483648
 	 * @maximum 2147483647

@@ -35,6 +35,10 @@ import type {
 	PostApiDoctorApplicationsBody,
 	PutApiDoctorApplicationsId200,
 	PutApiDoctorApplicationsIdBody,
+	PutApiDoctorsIdAddress200,
+	PutApiDoctorsIdAddressBody,
+	PutApiDoctorsMeAddress200,
+	PutApiDoctorsMeAddressBody,
 	PutApiDoctorsMeBranding200,
 	PutApiDoctorsMeBrandingBody,
 } from "../api.schemas";
@@ -431,6 +435,68 @@ export const useGetApiDoctorsId = <TError = unknown>(
 	};
 };
 /**
+ * @summary Update a doctor's cabinet address (Admin)
+ */
+export const putApiDoctorsIdAddress = (
+	id: string,
+	putApiDoctorsIdAddressBody?: PutApiDoctorsIdAddressBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsIdAddress200>(
+		{
+			url: `/api/doctors/${id}/address`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsIdAddressBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsIdAddressMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PutApiDoctorsIdAddressBody | undefined }) => {
+		return putApiDoctorsIdAddress(id, arg, options);
+	};
+};
+export const getPutApiDoctorsIdAddressMutationKey = (id: string) =>
+	[`/api/doctors/${id}/address`] as const;
+
+export type PutApiDoctorsIdAddressMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsIdAddress>>
+>;
+
+/**
+ * @summary Update a doctor's cabinet address (Admin)
+ */
+export const usePutApiDoctorsIdAddress = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof putApiDoctorsIdAddress>>,
+			TError,
+			Key,
+			PutApiDoctorsIdAddressBody | undefined,
+			Awaited<ReturnType<typeof putApiDoctorsIdAddress>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsIdAddressMutationKey(id);
+	const swrFn = getPutApiDoctorsIdAddressMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Update a doctor's cabinet coordinates (Admin)
  */
 export const patchApiDoctorsIdLocation = (
@@ -702,6 +768,63 @@ export const useGetApiDoctorsBestFitRange = <TError = unknown>(
 		swrFn,
 		swrOptions,
 	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Update the address of the doctor's own cabinet
+ */
+export const putApiDoctorsMeAddress = (
+	putApiDoctorsMeAddressBody?: PutApiDoctorsMeAddressBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsMeAddress200>(
+		{
+			url: `/api/doctors/me/address`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsMeAddressBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsMeAddressMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PutApiDoctorsMeAddressBody | undefined }) => {
+		return putApiDoctorsMeAddress(arg, options);
+	};
+};
+export const getPutApiDoctorsMeAddressMutationKey = () =>
+	[`/api/doctors/me/address`] as const;
+
+export type PutApiDoctorsMeAddressMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsMeAddress>>
+>;
+
+/**
+ * @summary Update the address of the doctor's own cabinet
+ */
+export const usePutApiDoctorsMeAddress = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof putApiDoctorsMeAddress>>,
+		TError,
+		Key,
+		PutApiDoctorsMeAddressBody | undefined,
+		Awaited<ReturnType<typeof putApiDoctorsMeAddress>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsMeAddressMutationKey();
+	const swrFn = getPutApiDoctorsMeAddressMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
 	return {
 		swrKey,

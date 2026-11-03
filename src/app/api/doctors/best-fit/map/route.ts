@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
 				cabinetLatitude: d.cabinetLatitude,
 				cabinetLongitude: d.cabinetLongitude,
 				specialityId: d.specialityId,
-				address: d.address ?? null,
+				address: d.cabinetAddress ?? null,
 				distance: location
 					? calculateHaversineKm(
 							location.lat,

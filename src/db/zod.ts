@@ -152,9 +152,11 @@ export const selectUserWithDoctorProfileSchema = selectUserSchema.merge(
 );
 
 export const selectBestFitDoctorSchema = selectDoctorProfileSchema
-	.omit({ availability: true })
+	.omit({ availability: true, cabinetAddress: true })
 	.merge(
 		z.object({
+			/** The cabinet's street address (`doctor_profile.cabinet_address`). */
+			address: z.string().nullable(),
 			distance: z.number(),
 			/** Present (true) when beyond the radius and returned as a fallback. */
 			outsideRadius: z.boolean().optional(),

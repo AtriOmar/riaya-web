@@ -13,6 +13,7 @@
 		"prepare": "husky",
 		"db:push": "drizzle-kit push",
 		"db:seed": "tsx src/db/seed.ts",
+		"db:backfill-cabinet-addresses": "tsx src/db/backfill-cabinet-addresses.ts",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"infra:up": "docker compose -f docker-compose.infra.yml up -d",

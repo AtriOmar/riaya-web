@@ -3,7 +3,10 @@
 import { useAuth } from "@/components/contexts/auth-provider";
 import ApplicationStatus from "@/components/dashboard/application-status";
 import { usePractice } from "@/hooks/use-practice";
-import { useGetApiDoctorApplicationsMe } from "@/services/generated/doctors/doctors";
+import {
+	putApiDoctorsMeAddress,
+	useGetApiDoctorApplicationsMe,
+} from "@/services/generated/doctors/doctors";
 import {
 	useGetApiCities,
 	useGetApiSpecialities,
@@ -46,6 +49,11 @@ export default function Profile() {
 		void mutateApp();
 	};
 
+	const saveAddress = async (cabinetAddress: string) => {
+		await putApiDoctorsMeAddress({ cabinetAddress });
+		await mutateMe();
+	};
+
 	// Secretaries have no doctor profile: show who they work for instead
 	if (practice?.role === "secretary") {
 		return (
@@ -78,7 +86,14 @@ export default function Profile() {
 			/>
 			<ProfilePicture />
 
-			{showReadOnly && readOnlyInfo && <UserInfoReadOnly info={readOnlyInfo} />}
+			{showReadOnly && readOnlyInfo && (
+				<UserInfoReadOnly
+					info={readOnlyInfo}
+					onSaveAddress={
+						status === "verified" && profile ? saveAddress : undefined
+					}
+				/>
+			)}
 
 			{status === "verified" && profile && (
 				<DocumentBranding

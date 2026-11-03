@@ -72,7 +72,7 @@ export async function POST(
 				firstName: record.doctor?.firstName ?? null,
 				lastName: record.doctor?.lastName ?? null,
 				cabinetName: record.doctor?.cabinetName ?? null,
-				address: record.doctor?.address ?? null,
+				address: record.doctor?.cabinetAddress ?? null,
 				tin: record.doctor?.tin ?? null,
 				medicalCouncilNumber: record.doctor?.medicalCouncilNumber ?? null,
 				specialityName:

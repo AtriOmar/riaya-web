@@ -144,6 +144,19 @@ function rectangle(center: LatLng, radiusM: number) {
 	};
 }
 
+// Google Geocoding API: needs "Geocoding API" enabled on the same project and key.
+const GEOCODE = "https://maps.googleapis.com/maps/api/geocode/json";
+
+type GeocodeResult = {
+	place_id?: string;
+	formatted_address?: string;
+	geometry?: { location?: { lat: number; lng: number } };
+	address_components?: { long_name?: string; types?: string[] }[];
+};
+
+const geocodeComponent = (r: GeocodeResult, type: string) =>
+	r.address_components?.find((c) => c.types?.includes(type))?.long_name ?? null;
+
 // Google Routes API: needs "Routes API" enabled on the same project and key.
 const ROUTE_MATRIX =
 	"https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
@@ -285,6 +298,46 @@ export const googleProvider: GeoProvider = {
 			},
 		);
 		return (data.places ?? []).map(toResult);
+	},
+
+	async reverse({ lat, lng }) {
+		const qs = new URLSearchParams({
+			latlng: `${lat},${lng}`,
+			language: LANGUAGE,
+			key: apiKey(),
+		});
+		const res = await fetch(`${GEOCODE}?${qs}`, {
+			signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
+		});
+		if (!res.ok) {
+			throw new GeoProviderError(
+				`Google reverse geocoding failed (${res.status})`,
+				"google",
+			);
+		}
+		const data = (await res.json()) as {
+			status?: string;
+			results?: GeocodeResult[];
+			error_message?: string;
+		};
+		if (data.status === "ZERO_RESULTS") return null;
+		if (data.status !== "OK") {
+			throw new GeoProviderError(
+				`Google reverse geocoding failed (${data.status}): ${data.error_message ?? ""}`,
+				"google",
+			);
+		}
+		const r = data.results?.[0];
+		if (!r) return null;
+		return {
+			id: r.place_id ?? "",
+			label: r.formatted_address ?? "",
+			lat,
+			lng,
+			city: geocodeComponent(r, "locality"),
+			state: geocodeComponent(r, "administrative_area_level_1"),
+			street: geocodeComponent(r, "route"),
+		};
 	},
 
 	driveLegs,

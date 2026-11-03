@@ -74,8 +74,8 @@ export const doctorProfile = pgTable(
 		cin: varchar("cin", { length: 100 }),
 		tin: varchar("tin", { length: 100 }), // Tax Identification Number
 		status: varchar("status", { length: 50 }).default("none"), // none | pending | verified | rejected | banned
-		address: text("address"),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
+		cabinetAddress: text("cabinet_address"),
 		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
@@ -452,6 +452,7 @@ export const doctorApplication = pgTable(
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
+		cabinetAddress: text("cabinet_address"),
 		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),

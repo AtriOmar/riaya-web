@@ -8,10 +8,13 @@ import type {
 	GetApiUsersId200DoctorProfile,
 	GetApiUsersMe200DoctorProfile,
 } from "@/services/generated/api.schemas";
+import CabinetAddressField from "./cabinet-address-field";
 import CabinetLocationMap from "./doctor-application/cabinet-location-map";
 
 type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
+	/** Given for a verified doctor on their own page: makes the address editable. */
+	onSaveAddress?: (address: string) => Promise<void>;
 	info:
 		| GetApiDoctorApplicationsId200
 		| GetApiDoctorApplicationsMe200
@@ -36,7 +39,7 @@ function InfoField({
 	);
 }
 
-export default function UserInfoReadOnly({ info }: Props) {
+export default function UserInfoReadOnly({ info, onSaveAddress }: Props) {
 	if (!info) return null;
 
 	const cabinetCityName =
@@ -147,6 +150,16 @@ export default function UserInfoReadOnly({ info }: Props) {
 					<InfoField label="Cabinet Name" value={info.cabinetName} />
 					<InfoField label="Cabinet City" value={cabinetCityName} />
 					<InfoField label="TIN" value={info.tin} />
+					<div className="sm:col-span-2">
+						{onSaveAddress ? (
+							<CabinetAddressField
+								value={info.cabinetAddress}
+								onSave={onSaveAddress}
+							/>
+						) : (
+							<InfoField label="Cabinet Address" value={info.cabinetAddress} />
+						)}
+					</div>
 				</div>
 				{info.cabinetLatitude && info.cabinetLongitude && (
 					<div className="mt-4">

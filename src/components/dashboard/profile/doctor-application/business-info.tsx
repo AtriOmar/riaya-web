@@ -42,6 +42,7 @@ export default function BusinessInfo({ cities }: Props) {
 	const handleLocationSelect = useCallback(
 		(location: GeoLocation) => {
 			setMapCenter({ lat: location.lat, lng: location.lon });
+			setValue("cabinetAddress", location.address, { shouldValidate: true });
 			setValue("cabinetLatitude", location.lat, { shouldValidate: true });
 			setValue("cabinetLongitude", location.lon, { shouldValidate: true });
 		},
@@ -103,6 +104,26 @@ export default function BusinessInfo({ cities }: Props) {
 				{errors.cabinetCityId && (
 					<p className="mt-1 text-destructive text-sm">
 						{errors.cabinetCityId.message}
+					</p>
+				)}
+			</div>
+
+			<div className="space-y-2 mt-4">
+				<Label htmlFor="cabinetAddress">
+					Cabinet address <span className="text-destructive">*</span>
+				</Label>
+				<Input
+					id="cabinetAddress"
+					placeholder="12 Avenue Habib Bourguiba"
+					{...register("cabinetAddress")}
+				/>
+				<p className="text-muted-foreground text-xs">
+					Patients are told this address. Picking a place on the map below fills
+					it in; you can edit it.
+				</p>
+				{errors.cabinetAddress && (
+					<p className="mt-1 text-destructive text-sm">
+						{errors.cabinetAddress.message}
 					</p>
 				)}
 			</div>

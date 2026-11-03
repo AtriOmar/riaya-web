@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
 				firstName: doctorProfile.firstName,
 				lastName: doctorProfile.lastName,
 				cabinetName: doctorProfile.cabinetName,
-				address: doctorProfile.address,
+				address: doctorProfile.cabinetAddress,
 				specialitySlug: speciality.slug,
 				speciality: speciality.enName,
 			})

@@ -7152,6 +7152,10 @@
                         "nullable": true,
                         "maxLength": 255
                       },
+                      "cabinetAddress": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "cabinetCityId": {
                         "type": "integer",
                         "nullable": true,
@@ -7341,6 +7345,7 @@
                       "cinRecto",
                       "cinVerso",
                       "cabinetName",
+                      "cabinetAddress",
                       "cabinetCityId",
                       "cabinetLongitude",
                       "cabinetLatitude",
@@ -7394,6 +7399,11 @@
                     "type": "string",
                     "minLength": 1
                   },
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
                   "cabinetCityId": {
                     "type": "integer",
                     "minimum": 0,
@@ -7431,6 +7441,7 @@
                   "cinRecto",
                   "cinVerso",
                   "cabinetName",
+                  "cabinetAddress",
                   "specialityId",
                   "tin",
                   "medicalCouncilNumber",
@@ -7481,6 +7492,10 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "cabinetCityId": {
                       "type": "integer",
@@ -7552,6 +7567,7 @@
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -7628,6 +7644,10 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "cabinetCityId": {
                       "type": "integer",
@@ -7818,6 +7838,7 @@
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -7980,6 +8001,10 @@
                       "nullable": true,
                       "maxLength": 255
                     },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "cabinetCityId": {
                       "type": "integer",
                       "nullable": true,
@@ -8169,6 +8194,7 @@
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -8562,14 +8588,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -8776,8 +8802,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -8852,6 +8878,65 @@
                   "required": [
                     "doctor",
                     "appointments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/{id}/address": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Update a doctor's cabinet address (Admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "cabinetAddress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cabinetAddress": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "cabinetAddress"
                   ]
                 }
               }
@@ -9272,10 +9357,6 @@
                         "nullable": true,
                         "maxLength": 50
                       },
-                      "address": {
-                        "type": "string",
-                        "nullable": true
-                      },
                       "cabinetName": {
                         "type": "string",
                         "nullable": true,
@@ -9358,6 +9439,10 @@
                         "nullable": true,
                         "format": "date-time"
                       },
+                      "address": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "distance": {
                         "type": "number"
                       },
@@ -9412,7 +9497,6 @@
                       "cin",
                       "tin",
                       "status",
-                      "address",
                       "cabinetName",
                       "cabinetCityId",
                       "cabinetLongitude",
@@ -9429,6 +9513,7 @@
                       "bestFitExcludedReason",
                       "createdAt",
                       "updatedAt",
+                      "address",
                       "distance",
                       "nextSlot"
                     ]
@@ -9518,10 +9603,6 @@
                         "nullable": true,
                         "maxLength": 50
                       },
-                      "address": {
-                        "type": "string",
-                        "nullable": true
-                      },
                       "cabinetName": {
                         "type": "string",
                         "nullable": true,
@@ -9604,6 +9685,10 @@
                         "nullable": true,
                         "format": "date-time"
                       },
+                      "address": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "outsideRadius": {
                         "type": "boolean"
                       },
@@ -9626,7 +9711,6 @@
                       "cin",
                       "tin",
                       "status",
-                      "address",
                       "cabinetName",
                       "cabinetCityId",
                       "cabinetLongitude",
@@ -9643,6 +9727,7 @@
                       "bestFitExcludedReason",
                       "createdAt",
                       "updatedAt",
+                      "address",
                       "distance"
                     ]
                   }
@@ -9755,10 +9840,6 @@
                               "nullable": true,
                               "maxLength": 50
                             },
-                            "address": {
-                              "type": "string",
-                              "nullable": true
-                            },
                             "cabinetName": {
                               "type": "string",
                               "nullable": true,
@@ -9841,6 +9922,10 @@
                               "nullable": true,
                               "format": "date-time"
                             },
+                            "address": {
+                              "type": "string",
+                              "nullable": true
+                            },
                             "outsideRadius": {
                               "type": "boolean"
                             },
@@ -9899,7 +9984,6 @@
                             "cin",
                             "tin",
                             "status",
-                            "address",
                             "cabinetName",
                             "cabinetCityId",
                             "cabinetLongitude",
@@ -9916,6 +10000,7 @@
                             "bestFitExcludedReason",
                             "createdAt",
                             "updatedAt",
+                            "address",
                             "distance",
                             "slots"
                           ]
@@ -9927,6 +10012,55 @@
                       "doctors"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/me/address": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Update the address of the doctor's own cabinet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "cabinetAddress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cabinetAddress": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "cabinetAddress"
+                  ]
                 }
               }
             }
@@ -18457,14 +18591,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -18671,8 +18805,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -18840,14 +18974,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -19054,8 +19188,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -19201,14 +19335,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -19411,8 +19545,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
