@@ -101,9 +101,6 @@ function AdminSidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 						<SidebarItem item={item} collapsed={collapsed} />
 					</li>
 				))}
-				<li>
-					<div className="h-px my-2 bg-border" />
-				</li>
 				{items2.map((item) => (
 					<li key={item.path}>
 						<SidebarItem item={item} collapsed={collapsed} />

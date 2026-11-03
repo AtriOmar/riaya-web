@@ -134,9 +134,6 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 						/>
 					</li>
 				))}
-				<li>
-					<div className="h-px my-2 bg-border" />
-				</li>
 				{visible(items2).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
