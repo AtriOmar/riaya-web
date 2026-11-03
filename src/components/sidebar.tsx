@@ -11,6 +11,7 @@ import {
 	PanelLeftClose,
 	PanelLeftOpen,
 	Receipt,
+	Settings,
 	Stethoscope,
 	User,
 	Users,
@@ -97,6 +98,11 @@ const items2: SidebarItemData[] = [
 		name: "Subscription",
 		icon: <CreditCard className="size-5" />,
 		path: "/dashboard/subscription",
+	},
+	{
+		name: "Settings",
+		icon: <Settings className="size-5" />,
+		path: "/dashboard/settings",
 	},
 ];
 

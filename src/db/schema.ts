@@ -17,6 +17,7 @@ import {
 import type { AiChatPart } from "../lib/ai-chat-parts";
 import type { ConsultationSummary } from "../lib/consultation-summary";
 import type { Availability } from "../lib/doctor-slots";
+import type { Language } from "../lib/language";
 import type { SpeakerRoles } from "../lib/speaker-roles";
 import { account, session, user } from "./auth-schema";
 
@@ -91,6 +92,11 @@ export const doctorProfile = pgTable(
 		// Printed on invoices (Pro). PNG or JPEG on the CDN.
 		logoUrl: varchar("logo_url", { length: 1024 }),
 		stampUrl: varchar("stamp_url", { length: 1024 }),
+		// Language of the AI consultation notes written for this doctor
+		noteLanguage: varchar("note_language", { length: 8 })
+			.$type<Language>()
+			.notNull()
+			.default("fr"),
 		// Admin decision to stop referring patients to this doctor (best-fit,
 		// emergency fan-out, refusal suggestions). Null = listed. The doctor sees the reason.
 		bestFitExcludedAt: timestamp("best_fit_excluded_at"),

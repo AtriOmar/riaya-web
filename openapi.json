@@ -8702,6 +8702,10 @@
                           "nullable": true,
                           "maxLength": 1024
                         },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
                         "bestFitExcludedAt": {
                           "type": "string",
                           "nullable": true,
@@ -8844,6 +8848,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -9445,6 +9450,10 @@
                         "nullable": true,
                         "maxLength": 1024
                       },
+                      "noteLanguage": {
+                        "type": "string",
+                        "maxLength": 8
+                      },
                       "bestFitExcludedAt": {
                         "type": "string",
                         "nullable": true,
@@ -9537,6 +9546,7 @@
                       "medicalCouncilCertificate",
                       "logoUrl",
                       "stampUrl",
+                      "noteLanguage",
                       "bestFitExcludedAt",
                       "bestFitExcludedBy",
                       "bestFitExcludedReason",
@@ -9691,6 +9701,10 @@
                         "nullable": true,
                         "maxLength": 1024
                       },
+                      "noteLanguage": {
+                        "type": "string",
+                        "maxLength": 8
+                      },
                       "bestFitExcludedAt": {
                         "type": "string",
                         "nullable": true,
@@ -9751,6 +9765,7 @@
                       "medicalCouncilCertificate",
                       "logoUrl",
                       "stampUrl",
+                      "noteLanguage",
                       "bestFitExcludedAt",
                       "bestFitExcludedBy",
                       "bestFitExcludedReason",
@@ -9928,6 +9943,10 @@
                               "nullable": true,
                               "maxLength": 1024
                             },
+                            "noteLanguage": {
+                              "type": "string",
+                              "maxLength": 8
+                            },
                             "bestFitExcludedAt": {
                               "type": "string",
                               "nullable": true,
@@ -10024,6 +10043,7 @@
                             "medicalCouncilCertificate",
                             "logoUrl",
                             "stampUrl",
+                            "noteLanguage",
                             "bestFitExcludedAt",
                             "bestFitExcludedBy",
                             "bestFitExcludedReason",
@@ -10150,6 +10170,61 @@
                   "required": [
                     "logoUrl",
                     "stampUrl"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/me/note-language": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Set the language of the doctor's AI consultation notes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "noteLanguage": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fr",
+                      "ar"
+                    ]
+                  }
+                },
+                "required": [
+                  "noteLanguage"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved language",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "noteLanguage": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fr",
+                        "ar"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "noteLanguage"
                   ]
                 }
               }
@@ -16461,6 +16536,26 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fr",
+                      "ar"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Recording with its new summary",
@@ -18705,6 +18800,10 @@
                           "nullable": true,
                           "maxLength": 1024
                         },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
                         "bestFitExcludedAt": {
                           "type": "string",
                           "nullable": true,
@@ -18847,6 +18946,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -19088,6 +19188,10 @@
                           "nullable": true,
                           "maxLength": 1024
                         },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
                         "bestFitExcludedAt": {
                           "type": "string",
                           "nullable": true,
@@ -19230,6 +19334,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -19449,6 +19554,10 @@
                           "nullable": true,
                           "maxLength": 1024
                         },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
+                        },
                         "bestFitExcludedAt": {
                           "type": "string",
                           "nullable": true,
@@ -19587,6 +19696,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedReason",
                         "createdAt",

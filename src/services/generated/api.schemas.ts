@@ -3884,6 +3884,8 @@ export type GetApiDoctorsId200Doctor = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -4177,6 +4179,8 @@ export type GetApiDoctorsBestFit200Item = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -4303,6 +4307,8 @@ export type GetApiDoctorsBestFitMap200Item = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -4440,6 +4446,8 @@ export type GetApiDoctorsBestFitRange200ItemDoctorsItem = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -4494,6 +4502,32 @@ export type PutApiDoctorsMeBranding200 = {
 	logoUrl: string | null;
 	/** @nullable */
 	stampUrl: string | null;
+};
+
+export type PutApiDoctorsMeNoteLanguageBodyNoteLanguage =
+	(typeof PutApiDoctorsMeNoteLanguageBodyNoteLanguage)[keyof typeof PutApiDoctorsMeNoteLanguageBodyNoteLanguage];
+
+export const PutApiDoctorsMeNoteLanguageBodyNoteLanguage = {
+	en: "en",
+	fr: "fr",
+	ar: "ar",
+} as const;
+
+export type PutApiDoctorsMeNoteLanguageBody = {
+	noteLanguage: PutApiDoctorsMeNoteLanguageBodyNoteLanguage;
+};
+
+export type PutApiDoctorsMeNoteLanguage200NoteLanguage =
+	(typeof PutApiDoctorsMeNoteLanguage200NoteLanguage)[keyof typeof PutApiDoctorsMeNoteLanguage200NoteLanguage];
+
+export const PutApiDoctorsMeNoteLanguage200NoteLanguage = {
+	en: "en",
+	fr: "fr",
+	ar: "ar",
+} as const;
+
+export type PutApiDoctorsMeNoteLanguage200 = {
+	noteLanguage: PutApiDoctorsMeNoteLanguage200NoteLanguage;
 };
 
 export type GetApiDoctorsSearchParams = {
@@ -7477,6 +7511,19 @@ export type DeleteApiRecordingsId200 = {
 	ok: boolean;
 };
 
+export type PostApiRecordingsIdSummaryBodyLanguage =
+	(typeof PostApiRecordingsIdSummaryBodyLanguage)[keyof typeof PostApiRecordingsIdSummaryBodyLanguage];
+
+export const PostApiRecordingsIdSummaryBodyLanguage = {
+	en: "en",
+	fr: "fr",
+	ar: "ar",
+} as const;
+
+export type PostApiRecordingsIdSummaryBody = {
+	language?: PostApiRecordingsIdSummaryBodyLanguage;
+};
+
 export type PostApiRecordingsIdSummary200Transcript =
 	| string
 	| number
@@ -8495,6 +8542,8 @@ export type GetApiUsersId200DoctorProfile = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -8736,6 +8785,8 @@ export type PutApiUsersId200DoctorProfile = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */
@@ -8967,6 +9018,8 @@ export type GetApiUsersMe200DoctorProfile = {
 	 * @nullable
 	 */
 	stampUrl: string | null;
+	/** @maxLength 8 */
+	noteLanguage: string;
 	/** @nullable */
 	bestFitExcludedAt: string | null;
 	/** @nullable */

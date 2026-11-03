@@ -41,6 +41,8 @@ import type {
 	PutApiDoctorsMeAddressBody,
 	PutApiDoctorsMeBranding200,
 	PutApiDoctorsMeBrandingBody,
+	PutApiDoctorsMeNoteLanguage200,
+	PutApiDoctorsMeNoteLanguageBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -883,6 +885,67 @@ export const usePutApiDoctorsMeBranding = <TError = unknown>(options?: {
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsMeBrandingMutationKey();
 	const swrFn = getPutApiDoctorsMeBrandingMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Set the language of the doctor's AI consultation notes
+ */
+export const putApiDoctorsMeNoteLanguage = (
+	putApiDoctorsMeNoteLanguageBody?: PutApiDoctorsMeNoteLanguageBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsMeNoteLanguage200>(
+		{
+			url: `/api/doctors/me/note-language`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsMeNoteLanguageBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsMeNoteLanguageMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PutApiDoctorsMeNoteLanguageBody | undefined },
+	) => {
+		return putApiDoctorsMeNoteLanguage(arg, options);
+	};
+};
+export const getPutApiDoctorsMeNoteLanguageMutationKey = () =>
+	[`/api/doctors/me/note-language`] as const;
+
+export type PutApiDoctorsMeNoteLanguageMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>
+>;
+
+/**
+ * @summary Set the language of the doctor's AI consultation notes
+ */
+export const usePutApiDoctorsMeNoteLanguage = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>,
+		TError,
+		Key,
+		PutApiDoctorsMeNoteLanguageBody | undefined,
+		Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPutApiDoctorsMeNoteLanguageMutationKey();
+	const swrFn = getPutApiDoctorsMeNoteLanguageMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

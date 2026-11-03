@@ -1,13 +1,11 @@
-export const personPreferredLanguages = ["en", "fr", "ar"] as const;
-export type PersonPreferredLanguage = (typeof personPreferredLanguages)[number];
+import { isLanguage, type Language, languages } from "@/lib/language";
+
+export const personPreferredLanguages = languages;
+export type PersonPreferredLanguage = Language;
 
 export const DEFAULT_PERSON_PREFERRED_LANGUAGE: PersonPreferredLanguage = "ar";
 
-export function isPersonPreferredLanguage(
-	value: unknown,
-): value is PersonPreferredLanguage {
-	return value === "en" || value === "fr" || value === "ar";
-}
+export const isPersonPreferredLanguage = isLanguage;
 
 export function normalizePersonPreferredLanguage(
 	value: unknown,

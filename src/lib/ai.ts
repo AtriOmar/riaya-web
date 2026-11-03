@@ -20,6 +20,7 @@ import {
 	type ConsultationSummary,
 	consultationSummarySchema,
 } from "@/lib/consultation-summary";
+import { type Language, languageNames } from "@/lib/language";
 import { SPEAKER_ROLES, type SpeakerRoles } from "@/lib/speaker-roles";
 import { formatSpeakerLabel } from "@/lib/transcript";
 
@@ -148,7 +149,9 @@ function usageFrom(usage: OpenAI.CompletionUsage | undefined): ChatUsage {
 	};
 }
 
-const SUMMARY_INSTRUCTIONS = `You turn a doctor–patient consultation transcript into a short clinical note for the patient's file.
+const summaryInstructions = (
+	language: Language,
+) => `You turn a doctor–patient consultation transcript into a short clinical note for the patient's file.
 
 Return only a JSON object with these string fields:
 - "reason": why the patient came, in one or two sentences
@@ -158,7 +161,7 @@ Return only a JSON object with these string fields:
 - "plan": treatment, prescriptions, tests, advice and follow-up the doctor gave
 
 Rules:
-- Write in French, the usual language of medical records in Tunisia, even when the conversation is in Tunisian Derja or Arabic. Keep drug names and doses exactly as said.
+- Write in ${languageNames[language]}, whatever language the conversation is in (it may be Tunisian Derja, Arabic or French). Keep drug names and doses exactly as said.
 - Use only what was said. Never add a diagnosis, finding or treatment the doctor didn't state. If a section wasn't discussed, use an empty string.
 - Be concise: short sentences or "-" bullet lines, no greetings or filler.`;
 
@@ -218,12 +221,13 @@ export async function generateRecordingInsights(
 /** Writes a structured consultation note from a transcript (non-streaming). */
 export async function generateConsultationSummary(
 	transcriptText: string,
+	language: Language,
 ): Promise<{ summary: ConsultationSummary; usage: ChatUsage }> {
 	const client = createChatClient();
 	const completion = await client.chat.completions.create({
 		model: CHAT_MODEL,
 		messages: [
-			{ role: "system", content: SUMMARY_INSTRUCTIONS },
+			{ role: "system", content: summaryInstructions(language) },
 			{ role: "user", content: transcriptText },
 		],
 		response_format: { type: "json_object" },

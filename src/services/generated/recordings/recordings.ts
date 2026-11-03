@@ -21,6 +21,7 @@ import type {
 	PostApiRecordings201,
 	PostApiRecordingsBody,
 	PostApiRecordingsIdSummary200,
+	PostApiRecordingsIdSummaryBody,
 	PostApiRecordingsIdTranscribe200,
 } from "../api.schemas";
 
@@ -311,10 +312,16 @@ export const useDeleteApiRecordingsId = <TError = unknown>(
  */
 export const postApiRecordingsIdSummary = (
 	id: string,
+	postApiRecordingsIdSummaryBody?: PostApiRecordingsIdSummaryBody,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
 	return customInstance<PostApiRecordingsIdSummary200>(
-		{ url: `/api/recordings/${id}/summary`, method: "POST" },
+		{
+			url: `/api/recordings/${id}/summary`,
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			data: postApiRecordingsIdSummaryBody,
+		},
 		options,
 	);
 };
@@ -323,8 +330,11 @@ export const getPostApiRecordingsIdSummaryMutationFetcher = (
 	id: string,
 	options?: SecondParameter<typeof customInstance>,
 ) => {
-	return (_: Key, __: { arg: Arguments }) => {
-		return postApiRecordingsIdSummary(id, options);
+	return (
+		_: Key,
+		{ arg }: { arg: PostApiRecordingsIdSummaryBody | undefined },
+	) => {
+		return postApiRecordingsIdSummary(id, arg, options);
 	};
 };
 export const getPostApiRecordingsIdSummaryMutationKey = (id: string) =>
@@ -344,7 +354,7 @@ export const usePostApiRecordingsIdSummary = <TError = unknown>(
 			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>,
 			TError,
 			Key,
-			Arguments,
+			PostApiRecordingsIdSummaryBody | undefined,
 			Awaited<ReturnType<typeof postApiRecordingsIdSummary>>
 		> & { swrKey?: string };
 		request?: SecondParameter<typeof customInstance>;

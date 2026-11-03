@@ -225,6 +225,13 @@
       "when": 1793748146928,
       "tag": "0031_doctor_profile_cin_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793749087285,
+      "tag": "0032_doctor_note_language",
+      "breakpoints": true
     }
   ]
 }
