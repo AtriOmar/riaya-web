@@ -89,6 +89,7 @@ export default function Profile() {
 			{showReadOnly && readOnlyInfo && (
 				<UserInfoReadOnly
 					info={readOnlyInfo}
+					email={user?.email}
 					onSaveAddress={
 						status === "verified" && profile ? saveAddress : undefined
 					}

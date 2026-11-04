@@ -15,6 +15,8 @@ type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */
 	/** Given for a verified doctor on their own page: makes the address editable. */
 	onSaveAddress?: (address: string) => Promise<void>;
+	/** Login email of the doctor, shown on their own profile. */
+	email?: string;
 	info:
 		| GetApiDoctorApplicationsId200
 		| GetApiDoctorApplicationsMe200
@@ -39,7 +41,11 @@ function InfoField({
 	);
 }
 
-export default function UserInfoReadOnly({ info, onSaveAddress }: Props) {
+export default function UserInfoReadOnly({
+	info,
+	onSaveAddress,
+	email,
+}: Props) {
 	if (!info) return null;
 
 	const cabinetCityName =
@@ -61,6 +67,7 @@ export default function UserInfoReadOnly({ info, onSaveAddress }: Props) {
 				<div className="gap-4 grid sm:grid-cols-2">
 					<InfoField label="First Name" value={info.firstName} />
 					<InfoField label="Last Name" value={info.lastName} />
+					{email && <InfoField label="Email" value={email} />}
 					<InfoField label="CIN Number" value={info.cin} />
 				</div>
 				<div className="gap-4 grid lg:grid-cols-2 mt-4">
