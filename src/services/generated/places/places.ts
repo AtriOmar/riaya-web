@@ -16,6 +16,8 @@ import type {
 	GetApiPlacesAutocompleteParams,
 	GetApiPlacesDetails200,
 	GetApiPlacesDetailsParams,
+	GetApiPlacesReverse200,
+	GetApiPlacesReverseParams,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -166,6 +168,58 @@ export const useGetApiPlacesDetails = <TError = unknown>(
 		swrOptions?.swrKey ??
 		(() => (isEnabled ? getGetApiPlacesDetailsKey(params) : null));
 	const swrFn = () => getApiPlacesDetails(params, requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Address at a map point
+ */
+export const getApiPlacesReverse = (
+	params?: GetApiPlacesReverseParams,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiPlacesReverse200>(
+		{ url: `/api/places/reverse`, method: "GET", params },
+		options,
+	);
+};
+
+export const getGetApiPlacesReverseKey = (params?: GetApiPlacesReverseParams) =>
+	[`/api/places/reverse`, ...(params ? [params] : [])] as const;
+
+export type GetApiPlacesReverseQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiPlacesReverse>>
+>;
+
+/**
+ * @summary Address at a map point
+ */
+export const useGetApiPlacesReverse = <TError = unknown>(
+	params?: GetApiPlacesReverseParams,
+	options?: {
+		swr?: SWRConfiguration<
+			Awaited<ReturnType<typeof getApiPlacesReverse>>,
+			TError
+		> & { swrKey?: Key; enabled?: boolean };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiPlacesReverseKey(params) : null));
+	const swrFn = () => getApiPlacesReverse(params, requestOptions);
 
 	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
 		swrKey,

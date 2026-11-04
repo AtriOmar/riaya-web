@@ -1,11 +1,13 @@
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { GetApiCities200Item } from "@/services/generated/api.schemas";
+import { getApiPlacesReverse } from "@/services/generated/places/places";
 import AddressSearchBar, { type GeoLocation } from "./address-search-bar";
 import CabinetLocationMap from "./cabinet-location-map";
 import CitySelect from "./city-select";
@@ -37,10 +39,39 @@ export default function BusinessInfo({ cities }: Props) {
 			? { lat: cabinetLatitude, lng: cabinetLongitude }
 			: DEFAULT_CENTER,
 	);
+	const [findingAddress, setFindingAddress] = useState(false);
 	const mapContainerRef = useRef<HTMLDivElement>(null);
+	// Only the answer for the latest pin may fill the address.
+	const reverseRequest = useRef(0);
+
+	const fillAddressFromPin = useCallback(
+		async (lat: number, lng: number) => {
+			const request = ++reverseRequest.current;
+			setFindingAddress(true);
+			try {
+				const place = await getApiPlacesReverse({ lat, lng });
+				if (request !== reverseRequest.current) return;
+				const address = place?.label.trim();
+				if (address) {
+					setValue("cabinetAddress", address, { shouldValidate: true });
+				} else {
+					toast.info("No address found here. Type it in below.");
+				}
+			} catch {
+				if (request === reverseRequest.current) {
+					toast.error("Could not find the address. Type it in below.");
+				}
+			} finally {
+				if (request === reverseRequest.current) setFindingAddress(false);
+			}
+		},
+		[setValue],
+	);
 
 	const handleLocationSelect = useCallback(
 		(location: GeoLocation) => {
+			reverseRequest.current++;
+			setFindingAddress(false);
 			setMapCenter({ lat: location.lat, lng: location.lon });
 			setValue("cabinetAddress", location.address, { shouldValidate: true });
 			setValue("cabinetLatitude", location.lat, { shouldValidate: true });
@@ -104,26 +135,6 @@ export default function BusinessInfo({ cities }: Props) {
 				{errors.cabinetCityId && (
 					<p className="mt-1 text-destructive text-sm">
 						{errors.cabinetCityId.message}
-					</p>
-				)}
-			</div>
-
-			<div className="space-y-2 mt-4">
-				<Label htmlFor="cabinetAddress">
-					Cabinet address <span className="text-destructive">*</span>
-				</Label>
-				<Input
-					id="cabinetAddress"
-					placeholder="12 Avenue Habib Bourguiba"
-					{...register("cabinetAddress")}
-				/>
-				<p className="text-muted-foreground text-xs">
-					Patients are told this address. Picking a place on the map below fills
-					it in; you can edit it.
-				</p>
-				{errors.cabinetAddress && (
-					<p className="mt-1 text-destructive text-sm">
-						{errors.cabinetAddress.message}
 					</p>
 				)}
 			</div>
@@ -198,6 +209,7 @@ export default function BusinessInfo({ cities }: Props) {
 							onMapClick={(lat, lng) => {
 								setValue("cabinetLatitude", lat, { shouldValidate: true });
 								setValue("cabinetLongitude", lng, { shouldValidate: true });
+								void fillAddressFromPin(lat, lng);
 							}}
 						/>
 					</div>
@@ -208,6 +220,30 @@ export default function BusinessInfo({ cities }: Props) {
 						</p>
 					)}
 				</div>
+			</div>
+
+			<div className="space-y-2 mt-4">
+				<Label htmlFor="cabinetAddress">
+					Cabinet address <span className="text-destructive">*</span>
+				</Label>
+				<Input
+					id="cabinetAddress"
+					placeholder={
+						findingAddress
+							? "Finding the address..."
+							: "12 Avenue Habib Bourguiba"
+					}
+					{...register("cabinetAddress")}
+				/>
+				<p className="text-muted-foreground text-xs">
+					Patients are told this address. Picking a place on the map fills it
+					in; you can edit it.
+				</p>
+				{errors.cabinetAddress && (
+					<p className="mt-1 text-destructive text-sm">
+						{errors.cabinetAddress.message}
+					</p>
+				)}
 			</div>
 		</div>
 	);

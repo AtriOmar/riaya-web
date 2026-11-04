@@ -7029,6 +7029,39 @@ export type GetApiPlacesDetails200 = {
 	street: string | null;
 };
 
+export type GetApiPlacesReverseParams = {
+	/**
+	 * @minimum -90
+	 * @maximum 90
+	 * @nullable
+	 */
+	lat?: number | null;
+	/**
+	 * @minimum -180
+	 * @maximum 180
+	 * @nullable
+	 */
+	lng?: number | null;
+};
+
+/**
+ * @nullable
+ */
+export type GetApiPlacesReverse200 = {
+	id: string;
+	label: string;
+	/** @nullable */
+	lat: number | null;
+	/** @nullable */
+	lng: number | null;
+	/** @nullable */
+	city: string | null;
+	/** @nullable */
+	state: string | null;
+	/** @nullable */
+	street: string | null;
+} | null;
+
 export type GetApiPlatformSettings200 = {
 	/**
 	 * @minimum 1

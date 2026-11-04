@@ -62,6 +62,7 @@ type GeoapifyFeature = {
 		city?: string;
 		state?: string;
 		street?: string;
+		housenumber?: string;
 	};
 };
 
@@ -123,25 +124,39 @@ export const geoapifyProvider: GeoProvider = {
 	details: async () => null,
 
 	async reverse({ lat, lng }) {
-		const url = new URL(`${BASE}/reverse`);
-		url.search = new URLSearchParams({
-			lat: String(lat),
-			lon: String(lng),
-			limit: "1",
-			apiKey: apiKey(),
-		}).toString();
-		const res = await fetch(url, {
-			signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
-		});
-		if (!res.ok) {
-			throw new GeoProviderError(
-				`Geoapify reverse failed (${res.status})`,
-				"geoapify",
-			);
-		}
-		const feature = ((await res.json()) as { features?: GeoapifyFeature[] })
-			.features?.[0];
-		return feature ? toResult(feature) : null;
+		// French street names; the plain lookup names the nearest shop or
+		// building ("Pizzeria X, ..."), which is no use as a cabinet address.
+		const lookup = async (extra: Record<string, string>) => {
+			const url = new URL(`${BASE}/reverse`);
+			url.search = new URLSearchParams({
+				lat: String(lat),
+				lon: String(lng),
+				lang: "fr",
+				limit: "1",
+				...extra,
+				apiKey: apiKey(),
+			}).toString();
+			const res = await fetch(url, {
+				signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
+			});
+			if (!res.ok) {
+				throw new GeoProviderError(
+					`Geoapify reverse failed (${res.status})`,
+					"geoapify",
+				);
+			}
+			return ((await res.json()) as { features?: GeoapifyFeature[] })
+				.features?.[0];
+		};
+		const feature = (await lookup({ type: "street" })) ?? (await lookup({}));
+		if (!feature) return null;
+		// "Avenue X, Sfax": no postal code, governorate prefix or country.
+		const { housenumber, street, city, state } = feature.properties;
+		const place = city ?? state?.replace(/^Gouvernorat\s+/i, "");
+		const label = [[housenumber, street].filter(Boolean).join(" "), place]
+			.filter(Boolean)
+			.join(", ");
+		return { ...toResult(feature), label: label || toResult(feature).label };
 	},
 
 	search: ({ text, near, radiusM }) =>

@@ -15542,6 +15542,88 @@
         }
       }
     },
+    "/api/places/reverse": {
+      "get": {
+        "tags": [
+          "Places"
+        ],
+        "summary": "Address at a map point",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -90,
+              "maximum": 90
+            },
+            "required": false,
+            "name": "lat",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -180,
+              "maximum": 180
+            },
+            "required": false,
+            "name": "lng",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The address at the point, or null when there is none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "lat": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "lng": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "street": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "lat",
+                    "lng",
+                    "city",
+                    "state",
+                    "street"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform-settings": {
       "get": {
         "tags": [
