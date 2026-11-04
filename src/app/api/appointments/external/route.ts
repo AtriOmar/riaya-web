@@ -25,6 +25,9 @@ const patientPlaceSchema = z.object({
 	long: z.number(),
 });
 
+/** No appointment runs longer than this; a longer span means a wrong start or end date. */
+const MAX_APPOINTMENT_MS = 24 * 60 * 60 * 1000;
+
 const externalSchema = z.object({
 	doctorId: z.coerce.number().int().positive(),
 	/** The calling phone line. */
@@ -64,6 +67,12 @@ export async function POST(req: NextRequest) {
 		const endDate = new Date(data.end);
 
 		if (startDate >= endDate) return apiError("INVALID_TIME_RANGE");
+		// A slot is a few minutes in the near future: a past start or an end days later is a wrong date.
+		if (
+			startDate.getTime() < Date.now() ||
+			endDate.getTime() - startDate.getTime() > MAX_APPOINTMENT_MS
+		)
+			return apiError("INVALID_TIME_RANGE");
 
 		// Check availability (opening hours are Tunis wall-clock times)
 		const availability =
