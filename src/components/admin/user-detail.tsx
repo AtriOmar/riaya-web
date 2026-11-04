@@ -5,13 +5,11 @@ import {
 	Ban,
 	Copy,
 	ExternalLink,
-	FileText,
 	ShieldAlert,
 	ShieldCheck,
 	Stethoscope,
 	UserRoundX,
 } from "lucide-react";
-import Image from "next/image";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import ExcludeDoctorDialog from "@/components/admin/ratings/exclude-doctor-dialog";
@@ -19,6 +17,7 @@ import { revalidateRatingsData } from "@/components/admin/ratings/rating-labels"
 import { useAuth } from "@/components/contexts/auth-provider";
 import CabinetAddressField from "@/components/dashboard/profile/cabinet-address-field";
 import CabinetLocationMap from "@/components/dashboard/profile/doctor-application/cabinet-location-map";
+import DocumentPreview from "@/components/document-preview";
 import { CubeLoader } from "@/components/loaders";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -380,17 +379,7 @@ function DocumentsCard({ profile }: { profile: DoctorProfile }) {
 								className="group space-y-2"
 							>
 								<div className="relative flex justify-center items-center bg-muted border rounded-lg aspect-[14/9] overflow-hidden group-hover:ring-2 group-hover:ring-primary/40 transition">
-									{doc.url.toLowerCase().endsWith(".pdf") ? (
-										<FileText className="size-8 text-muted-foreground" />
-									) : (
-										<Image
-											unoptimized
-											src={doc.url}
-											alt={doc.label}
-											fill
-											className="object-cover"
-										/>
-									)}
+									<DocumentPreview url={doc.url} alt={doc.label} />
 								</div>
 								<p className="flex items-center gap-1 text-muted-foreground group-hover:text-foreground text-xs transition-colors">
 									{doc.label}

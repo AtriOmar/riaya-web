@@ -1,7 +1,7 @@
 "use client";
 
-import { Layers } from "lucide-react";
 import Image from "next/image";
+import DocumentPreview from "@/components/document-preview";
 import type {
 	GetApiDoctorApplicationsId200,
 	GetApiDoctorApplicationsMe200,
@@ -115,28 +115,10 @@ export default function UserInfoReadOnly({ info, onSaveAddress }: Props) {
 							Medical Council Certificate
 						</p>
 						<div className="w-full max-w-[300px] aspect-[14/9] border rounded-lg overflow-hidden relative">
-							{info.medicalCouncilCertificate.toLowerCase().endsWith(".pdf") ? (
-								<object
-									data={info.medicalCouncilCertificate}
-									type="application/pdf"
-									className="w-full h-full pointer-events-none"
-								>
-									<div className="flex flex-col justify-center items-center bg-muted/50 w-full h-full text-sm">
-										<Layers className="mb-2 size-8 text-muted-foreground" />
-										<span className="mt-1 text-muted-foreground text-xs">
-											PDF Document
-										</span>
-									</div>
-								</object>
-							) : (
-								<Image
-									unoptimized
-									src={info.medicalCouncilCertificate}
-									alt="Medical Council Certificate"
-									fill
-									className="w-full h-full object-cover"
-								/>
-							)}
+							<DocumentPreview
+								url={info.medicalCouncilCertificate}
+								alt="Medical Council Certificate"
+							/>
 						</div>
 					</div>
 				)}
