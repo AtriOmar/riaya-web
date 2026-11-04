@@ -5,10 +5,10 @@ type WithTranscriptStatus = {
 	summaryStatus?: string | null;
 };
 
-const POLL_MS = 3000;
+const POLL_MS = 1000;
 
 /**
- * Re-fetches recordings every few seconds while any transcript or AI summary
+ * Re-fetches recordings every second while any transcript or AI summary
  * is still being written in the background.
  *
  * Not SWR's `refreshInterval` function: SWR reads it once on mount, when there
