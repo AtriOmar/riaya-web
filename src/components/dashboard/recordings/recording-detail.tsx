@@ -32,7 +32,7 @@ import {
 	speakerName,
 	transcriptSpeakers,
 } from "@/lib/transcript";
-import { transcriptRefreshInterval } from "@/lib/transcript-polling";
+import { useTranscriptPolling } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
 import { useGetApiPatients } from "@/services/generated/patients/patients";
@@ -166,9 +166,8 @@ export default function RecordingDetail({
 		data: recording,
 		isLoading,
 		mutate,
-	} = useGetApiRecordingsId(recordingId.toString(), {
-		swr: { refreshInterval: transcriptRefreshInterval },
-	});
+	} = useGetApiRecordingsId(recordingId.toString());
+	useTranscriptPolling(recording, mutate);
 	const { data: patients = [] } = useGetApiPatients();
 
 	const { trigger: updateRecording, isMutating: isUpdating } =

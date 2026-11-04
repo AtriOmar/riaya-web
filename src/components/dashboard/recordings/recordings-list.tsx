@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { getErrorMessage } from "@/lib/error-handling";
 import { recordingTitle } from "@/lib/recording-title";
-import { transcriptRefreshInterval } from "@/lib/transcript-polling";
+import { useTranscriptPolling } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiRecordings200Item } from "@/services/generated/api.schemas";
 import {
@@ -208,13 +208,8 @@ function RecordingRow({
 export default function RecordingsList() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const {
-		data: recordings,
-		isLoading,
-		mutate,
-	} = useGetApiRecordings(undefined, {
-		swr: { refreshInterval: transcriptRefreshInterval },
-	});
+	const { data: recordings, isLoading, mutate } = useGetApiRecordings();
+	useTranscriptPolling(recordings, mutate);
 
 	// Right panel: always visible on desktop (defaults to a new recording),
 	// a sheet on small screens that only opens when something is picked.
