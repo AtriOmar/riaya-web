@@ -6206,8 +6206,7 @@ export const PostApiPatientsBodyPhoneOwnerRelationship = {
 } as const;
 
 export type PostApiPatientsBody = {
-	/** @minLength 1 */
-	cin: string;
+	cin?: string;
 	/** @minLength 1 */
 	firstName: string;
 	/** @minLength 1 */
@@ -6480,8 +6479,7 @@ export type GetApiPatientsId200 = {
 };
 
 export type PatchApiPatientsIdBody = {
-	/** @minLength 1 */
-	cin: string;
+	cin?: string;
 	/** @minLength 1 */
 	firstName: string;
 	/** @minLength 1 */
