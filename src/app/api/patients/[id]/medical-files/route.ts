@@ -74,13 +74,16 @@ const updateSchema = z
 		description: z.string().optional(),
 		type: z.string().min(1).optional(),
 		date: z.iso.datetime().optional(),
+		// Replaces the whole list: kept URLs plus newly uploaded ones, in display order.
+		documents: z.array(z.url()).optional(),
 	})
 	.refine(
 		(d) =>
 			d.title !== undefined ||
 			d.description !== undefined ||
 			d.type !== undefined ||
-			d.date !== undefined,
+			d.date !== undefined ||
+			d.documents !== undefined,
 		{ message: "At least one field to update is required" },
 	);
 
@@ -115,6 +118,7 @@ export async function PUT(
 			updateData.description = fields.description;
 		if (fields.type !== undefined) updateData.type = fields.type;
 		if (fields.date !== undefined) updateData.date = new Date(fields.date);
+		if (fields.documents !== undefined) updateData.documents = fields.documents;
 
 		const [updated] = await db
 			.update(patientMedicalFile)

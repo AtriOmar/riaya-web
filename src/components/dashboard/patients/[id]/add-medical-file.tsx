@@ -150,7 +150,7 @@ export function AddMedicalFile({
 									key={value}
 									type="button"
 									className={cn(
-										"flex-1 min-w-[5.5rem] px-2 py-2 border rounded-md font-medium text-xs sm:text-sm text-center transition-colors",
+										"flex-auto px-3 py-2 border rounded-md font-medium text-xs sm:text-sm text-center transition-colors",
 										selectedType === value
 											? accentClassName
 											: typeButtonUnselected,

@@ -14803,6 +14803,13 @@
                   "date": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "documents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    }
                   }
                 },
                 "required": [

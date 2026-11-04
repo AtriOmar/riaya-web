@@ -6754,6 +6754,7 @@ export type PutApiPatientsIdMedicalFilesBody = {
 	/** @minLength 1 */
 	type?: string;
 	date?: string;
+	documents?: string[];
 };
 
 export type PutApiPatientsIdMedicalFiles200 = {
