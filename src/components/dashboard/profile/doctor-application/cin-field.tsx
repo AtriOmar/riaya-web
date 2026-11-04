@@ -1,6 +1,6 @@
 import { Trash2, Upload } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import ImageUploadModal from "@/components/dashboard/profile/image-upload-modal";
 import { Label } from "@/components/ui/label";
@@ -24,15 +24,18 @@ export default function CinField({ name, label, placeholderSrc }: Props) {
 	const file = watch(name);
 	const [modalOpen, setModalOpen] = useState(false);
 
-	const previewUrl = useMemo(
-		() => (file ? URL.createObjectURL(file) : null),
-		[file],
-	);
+	// Created in an effect so the cleanup that revokes it pairs with the creation
+	// (a memoized URL stays revoked after StrictMode re-runs the effects).
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	useEffect(() => {
-		return () => {
-			if (previewUrl) URL.revokeObjectURL(previewUrl);
-		};
-	}, [previewUrl]);
+		if (!file) {
+			setPreviewUrl(null);
+			return;
+		}
+		const url = URL.createObjectURL(file);
+		setPreviewUrl(url);
+		return () => URL.revokeObjectURL(url);
+	}, [file]);
 
 	const error = errors[name];
 
