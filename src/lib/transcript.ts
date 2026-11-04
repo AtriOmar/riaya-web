@@ -1,5 +1,10 @@
 import { recordingTitle } from "@/lib/recording-title";
-import { SPEAKER_ROLE_LABELS, type SpeakerRoles } from "@/lib/speaker-roles";
+import {
+	SPEAKER_ROLE_COLORS,
+	SPEAKER_ROLE_LABELS,
+	type SpeakerRoles,
+	UNASSIGNED_SPEAKER_COLORS,
+} from "@/lib/speaker-roles";
 
 /**
  * Speaker labels from OpenRouter diarization are 0-based indexes.
@@ -27,6 +32,18 @@ export function speakerName(
 	const label = formatSpeakerLabel(speaker);
 	const role = roles?.[label];
 	return role ? SPEAKER_ROLE_LABELS[role] : label;
+}
+
+/** Text and dot colors for a speaker: by role once known, else by number. */
+export function speakerColor(
+	speaker: unknown,
+	roles: SpeakerRoles | null | undefined,
+): { text: string; dot: string; bg: string } {
+	const label = formatSpeakerLabel(speaker);
+	const role = roles?.[label];
+	if (role) return SPEAKER_ROLE_COLORS[role];
+	const n = Number(label.replace(/\D/g, "")) || 1;
+	return UNASSIGNED_SPEAKER_COLORS[(n - 1) % UNASSIGNED_SPEAKER_COLORS.length];
 }
 
 /** Distinct speaker labels in a transcript, in order of first appearance. */

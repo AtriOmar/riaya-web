@@ -27,7 +27,11 @@ import {
 } from "@/components/ui/popover";
 import { getErrorMessage } from "@/lib/error-handling";
 import { recordingTitle } from "@/lib/recording-title";
-import { speakerName, transcriptSpeakers } from "@/lib/transcript";
+import {
+	speakerColor,
+	speakerName,
+	transcriptSpeakers,
+} from "@/lib/transcript";
 import { transcriptRefreshInterval } from "@/lib/transcript-polling";
 import { cn } from "@/lib/utils";
 import type { GetApiPatients200Item } from "@/services/generated/api.schemas";
@@ -519,19 +523,31 @@ export default function RecordingDetail({
 									speakerRoles={recording.speakerRoles}
 									onChanged={() => mutate()}
 								/>
-								<div className="-mx-2">
+								<div className="-mx-2 space-y-1">
 									{segments.map((segment: any, idx: number) => (
 										<button
 											key={idx}
 											type="button"
 											onClick={() => seekTo(segment.start)}
-											className="flex gap-4 hover:bg-muted/60 px-2 py-2.5 rounded-md w-full text-left transition-colors cursor-pointer"
+											className={cn(
+												"flex gap-4 px-2 py-2.5 rounded-md w-full text-left transition-colors cursor-pointer",
+												speakerColor(segment.speaker, recording.speakerRoles)
+													.bg,
+											)}
 										>
-											<span className="mt-0.5 w-9 font-mono tabular-nums text-primary text-xs shrink-0">
+											<span className="mt-0.5 w-9 font-mono tabular-nums text-muted-foreground text-xs shrink-0">
 												{formatTimestamp(segment.start)}
 											</span>
 											<div className="flex-1 min-w-0">
-												<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+												<span
+													className={cn(
+														"font-semibold text-xs uppercase tracking-wider",
+														speakerColor(
+															segment.speaker,
+															recording.speakerRoles,
+														).text,
+													)}
+												>
 													{speakerName(segment.speaker, recording.speakerRoles)}
 												</span>
 												{/* Each line picks its own direction: Arabic/Derja RTL, French LTR */}
