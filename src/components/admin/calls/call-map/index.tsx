@@ -167,23 +167,28 @@ export default function CallMap({
 			swr: { enabled: Boolean(slug), revalidateOnFocus: false },
 		});
 
-	const doctors = useMemo<MapDoctor[]>(
-		() =>
-			(specialityDoctors ?? []).flatMap((d) =>
-				d.cabinetLatitude != null && d.cabinetLongitude != null
-					? [
-							{
-								id: d.id,
-								name: `Dr. ${[d.firstName, d.lastName].filter(Boolean).join(" ")}`,
-								cabinet: d.cabinetName,
-								lat: d.cabinetLatitude,
-								lng: d.cabinetLongitude,
-							},
-						]
-					: [],
-			),
-		[specialityDoctors],
+	// The doctors the call offered, fetched by id so they show even when they are
+	// no longer in the speciality list (excluded since, or past its cap).
+	const offeredIds = journey.offered.map((d) => d.id).join(",");
+	const { data: offeredDoctors } = useGetApiDoctorsBestFitMap(
+		{ ids: offeredIds },
+		{ swr: { enabled: offeredIds !== "", revalidateOnFocus: false } },
 	);
+
+	const doctors = useMemo<MapDoctor[]>(() => {
+		const byId = new Map<number, MapDoctor>();
+		for (const d of [...(offeredDoctors ?? []), ...(specialityDoctors ?? [])]) {
+			if (d.cabinetLatitude == null || d.cabinetLongitude == null) continue;
+			byId.set(d.id, {
+				id: d.id,
+				name: `Dr. ${[d.firstName, d.lastName].filter(Boolean).join(" ")}`,
+				cabinet: d.cabinetName,
+				lat: d.cabinetLatitude,
+				lng: d.cabinetLongitude,
+			});
+		}
+		return [...byId.values()];
+	}, [offeredDoctors, specialityDoctors]);
 
 	const specialityName = slug
 		? (specialities?.find((s) => s.slug === slug)?.enName ?? slug)

@@ -4214,6 +4214,10 @@ export type GetApiDoctorsBestFitMapParams = {
 	 * @nullable
 	 */
 	lat?: number | null;
+	/**
+	 * @pattern ^\d+(,\d+)*$
+	 */
+	ids?: string;
 };
 
 export type GetApiDoctorsBestFitMap200Item = {

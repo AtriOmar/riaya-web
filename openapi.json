@@ -9597,6 +9597,15 @@
             "required": false,
             "name": "lat",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(,\\d+)*$"
+            },
+            "required": false,
+            "name": "ids",
+            "in": "query"
           }
         ],
         "responses": {

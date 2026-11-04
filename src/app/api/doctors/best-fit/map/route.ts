@@ -1,20 +1,26 @@
-import { eq, or } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { speciality } from "@/db/schema";
+import { doctorProfile, speciality } from "@/db/schema";
 import { apiError, json, requireAdmin, validationError } from "@/lib/api-utils";
 import { calculateHaversineKm, listFinderDoctors } from "@/lib/best-fit";
 
 // ─── GET /api/doctors/best-fit/map ───────────────────────────────────────────
 // Admin-only. Doctors for the Best Fit map: no dates or slots, just who is in
 // the speciality and near the location. `speciality` and the `lat`/`long` pair
-// are optional; without a location `distance` is null.
+// are optional; without a location `distance` is null. `ids` instead returns
+// exactly those doctors, whatever their status, so a past call can still place
+// the doctors it offered.
 
 const schema = z.object({
 	speciality: z.string().min(1).optional(),
 	long: z.coerce.number().optional(),
 	lat: z.coerce.number().optional(),
+	ids: z
+		.string()
+		.regex(/^\d+(,\d+)*$/)
+		.optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -34,6 +40,8 @@ export async function GET(req: NextRequest) {
 				? { lat: parsed.data.lat, long: parsed.data.long }
 				: null;
 
+		const ids = parsed.data.ids?.split(",").map(Number);
+
 		let specialityId: number | null = null;
 		if (term) {
 			const [found] = await db
@@ -51,7 +59,14 @@ export async function GET(req: NextRequest) {
 			specialityId = found.id;
 		}
 
-		const doctors = await listFinderDoctors({ specialityId, location });
+		const doctors = ids
+			? (
+					await db
+						.select()
+						.from(doctorProfile)
+						.where(inArray(doctorProfile.id, ids))
+				).filter((d) => d.cabinetLatitude != null && d.cabinetLongitude != null)
+			: await listFinderDoctors({ specialityId, location });
 
 		return json(
 			doctors.map((d) => ({
