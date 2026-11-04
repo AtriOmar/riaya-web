@@ -397,7 +397,7 @@ Practice overview: today's and upcoming appointments, pending bookings, number o
 
 ### Patients
 
-- **Add a patient**: first name, last name, date of birth (typed or from a calendar; age shown), gender (all required), CIN (optional, young patients often have none), phone (required), address (optional). Phone entry uses the shared phone input with country picker and validation.
+- **Add a patient**: first name, last name, date of birth (typed or from a calendar; age shown), gender (all required), CIN (optional, exactly 8 digits; young patients often have none), phone (required), address (optional). Phone entry uses the shared phone input with country picker and validation.
 - **"This number belongs to someone else"**: pick the relationship (child, parent, spouse, sibling, other). The patient is filed as a family member on that phone instead of becoming its owner.
 - **Patient page**: edit details (editing never changes which person on the phone the file belongs to), a **History** timeline of medical files and recorded consultations (newest first), and the patient's invoices.
 - **Medical files**: types `consultation`, `prescription`, `lab-report`; title (required), date, description, up to **10 documents** of **20 MB** each (PDF, images, Word). Can be **sent on WhatsApp** (patient needs a phone, doctor's WhatsApp must be linked, counts toward the limit). Can be sent again.

@@ -8,7 +8,11 @@ import { normalizePhoneForStorage } from "@/lib/phone";
 import { requirePractice } from "@/lib/practice";
 
 const updateSchema = z.object({
-	cin: z.string().trim().optional(),
+	cin: z
+		.string()
+		.trim()
+		.regex(/^(\d{8})?$/, "The CIN number has 8 digits")
+		.optional(),
 	firstName: z.string().min(1),
 	lastName: z.string().min(1),
 	dateOfBirth: z.string().datetime(),

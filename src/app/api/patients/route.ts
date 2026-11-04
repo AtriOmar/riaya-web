@@ -55,7 +55,11 @@ export async function GET(req: NextRequest) {
 
 const createSchema = z.object({
 	/** Optional: young patients may not have a national ID card yet. */
-	cin: z.string().trim().optional(),
+	cin: z
+		.string()
+		.trim()
+		.regex(/^(\d{8})?$/, "The CIN number has 8 digits")
+		.optional(),
 	firstName: z.string().min(1),
 	lastName: z.string().min(1),
 	dateOfBirth: z.string().datetime(),

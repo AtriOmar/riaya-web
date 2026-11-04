@@ -51,7 +51,10 @@ export const patientFieldsSchema = z.object({
 		.min(1, "Date of birth is required")
 		.refine((v) => parseBirthDate(v) !== null, "Enter a real date in the past"),
 	gender: z.string().min(1, "Choose a gender"),
-	cin: z.string().trim(),
+	cin: z
+		.string()
+		.trim()
+		.regex(/^(\d{8})?$/, "The CIN number has 8 digits"),
 	phoneNumber: z
 		.string()
 		.min(1, "Phone number is required")
@@ -393,13 +396,14 @@ export function PatientPersonalFields() {
 				label="CIN"
 				htmlFor={`${id}-cin`}
 				error={errors.cin?.message}
-				hint="National ID card number, if they have one"
+				hint="National ID card number"
 			>
 				<Input
 					id={`${id}-cin`}
-					placeholder="AB123456"
+					placeholder="01234567"
+					inputMode="numeric"
+					maxLength={8}
 					autoComplete="off"
-					className="uppercase placeholder:normal-case"
 					aria-invalid={!!errors.cin}
 					{...register("cin")}
 				/>

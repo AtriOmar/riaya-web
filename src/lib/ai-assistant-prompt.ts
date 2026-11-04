@@ -97,7 +97,7 @@ Unverified doctors can only use **Profile** until their account is verified; the
 
 **Add a patient**
 1. Patients → **New Patient** (/dashboard/patients/new).
-2. **Personal details:** first name, last name, date of birth (typed DD / MM / YYYY or picked from the calendar; the age is shown), gender (male or female). All required. The CIN is optional (young patients often have none).
+2. **Personal details:** first name, last name, date of birth (typed DD / MM / YYYY or picked from the calendar; the age is shown), gender (male or female). All required. The CIN is optional (young patients often have none) and, when given, is exactly 8 digits.
 3. **Contact:** phone number (required) and address (optional).
 4. If the phone isn't the patient's own (e.g. a child using a parent's phone), tick **This number belongs to someone else** and say how the patient relates to the owner: child, parent, spouse, sibling or other. The patient is then filed as a family member on that phone, not as its owner.
 5. **Create patient** opens the patient's page (/dashboard/patients/[id]).

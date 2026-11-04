@@ -6206,6 +6206,7 @@ export const PostApiPatientsBodyPhoneOwnerRelationship = {
 } as const;
 
 export type PostApiPatientsBody = {
+	/** @pattern ^(\d{8})?$ */
 	cin?: string;
 	/** @minLength 1 */
 	firstName: string;
@@ -6479,6 +6480,7 @@ export type GetApiPatientsId200 = {
 };
 
 export type PatchApiPatientsIdBody = {
+	/** @pattern ^(\d{8})?$ */
 	cin?: string;
 	/** @minLength 1 */
 	firstName: string;

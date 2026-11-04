@@ -13689,7 +13689,8 @@
                 "type": "object",
                 "properties": {
                   "cin": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^(\\d{8})?$"
                   },
                   "firstName": {
                     "type": "string",
@@ -14227,7 +14228,8 @@
                 "type": "object",
                 "properties": {
                   "cin": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^(\\d{8})?$"
                   },
                   "firstName": {
                     "type": "string",
