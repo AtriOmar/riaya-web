@@ -28,8 +28,9 @@ const DEFAULT_MIN = 8 * 60; // 08:00 fallback
 const DEFAULT_MAX = 18 * 60; // 18:00 fallback
 
 // ── Date/time helpers ─────────────────────────────────────────────────────────
+/** The 7 days starting at `anchor`, so the view opens on today. */
 function weekDaysOf(anchor: Date): Date[] {
-	const start = moment(anchor).startOf("week");
+	const start = moment(anchor).startOf("day");
 	return Array.from({ length: 7 }, (_, i) =>
 		start.clone().add(i, "days").toDate(),
 	);

@@ -2,9 +2,9 @@ import moment from "moment";
 import type { BestFitMapDoctor } from "@/hooks/use-best-fit-range";
 import { DEFAULT_MAX_HOUR, DEFAULT_MIN_HOUR } from "./constants";
 
-/** Return the 7 calendar days of the week that contains `anchor`. */
+/** Return the 7 calendar days starting at `anchor` (past days are not shown). */
 export function getWeekDays(anchor: Date): Date[] {
-	const start = moment(anchor).startOf("week");
+	const start = moment(anchor).startOf("day");
 	return Array.from({ length: 7 }, (_, i) =>
 		start.clone().add(i, "days").toDate(),
 	);
