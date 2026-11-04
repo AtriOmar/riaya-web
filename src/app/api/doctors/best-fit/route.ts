@@ -38,9 +38,11 @@ export async function GET(req: NextRequest) {
 		let desiredTime: Date;
 		if (desiredTimeParam) {
 			desiredTime = new Date(desiredTimeParam);
-			if (Number.isNaN(desiredTime.getTime()) || desiredTime < currentTime) {
+			if (Number.isNaN(desiredTime.getTime())) {
 				return apiError("INVALID_DESIRED_TIME");
 			}
+			// A time that slipped into the past while the patient was deciding means "as soon as possible".
+			if (desiredTime < currentTime) desiredTime = currentTime;
 		} else {
 			desiredTime = currentTime;
 		}
