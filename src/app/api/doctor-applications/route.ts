@@ -94,32 +94,41 @@ export async function POST(req: NextRequest) {
 
 		if (!parsed.success) return validationError(parsed.error.issues);
 
-		// Delete existing application if any
-		await db
-			.delete(doctorApplication)
-			.where(eq(doctorApplication.userId, session.user.id));
+		// Rejected, banned and verified applications stay as history. Only a
+		// still-pending one is replaced, so a doctor never has two in the queue.
+		const application = await db.transaction(async (tx) => {
+			await tx
+				.delete(doctorApplication)
+				.where(
+					and(
+						eq(doctorApplication.userId, session.user.id),
+						eq(doctorApplication.status, "pending"),
+					),
+				);
 
-		const [application] = await db
-			.insert(doctorApplication)
-			.values({
-				userId: session.user.id,
-				firstName: parsed.data.firstName,
-				lastName: parsed.data.lastName,
-				cin: parsed.data.cin,
-				cinRecto: parsed.data.cinRecto,
-				cinVerso: parsed.data.cinVerso,
-				cabinetName: parsed.data.cabinetName,
-				cabinetAddress: parsed.data.cabinetAddress,
-				cabinetCityId: parsed.data.cabinetCityId,
-				cabinetLongitude: parsed.data.cabinetLongitude,
-				cabinetLatitude: parsed.data.cabinetLatitude,
-				specialityId: parsed.data.specialityId,
-				tin: parsed.data.tin,
-				medicalCouncilNumber: parsed.data.medicalCouncilNumber,
-				medicalCouncilCertificate: parsed.data.medicalCouncilCertificate,
-				status: "pending",
-			})
-			.returning();
+			const [created] = await tx
+				.insert(doctorApplication)
+				.values({
+					userId: session.user.id,
+					firstName: parsed.data.firstName,
+					lastName: parsed.data.lastName,
+					cin: parsed.data.cin,
+					cinRecto: parsed.data.cinRecto,
+					cinVerso: parsed.data.cinVerso,
+					cabinetName: parsed.data.cabinetName,
+					cabinetAddress: parsed.data.cabinetAddress,
+					cabinetCityId: parsed.data.cabinetCityId,
+					cabinetLongitude: parsed.data.cabinetLongitude,
+					cabinetLatitude: parsed.data.cabinetLatitude,
+					specialityId: parsed.data.specialityId,
+					tin: parsed.data.tin,
+					medicalCouncilNumber: parsed.data.medicalCouncilNumber,
+					medicalCouncilCertificate: parsed.data.medicalCouncilCertificate,
+					status: "pending",
+				})
+				.returning();
+			return created;
+		});
 
 		// Update user status to pending
 		const { user: userTable } = await import("@/db/auth-schema");
