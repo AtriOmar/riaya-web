@@ -540,6 +540,32 @@ export const callEvent = pgTable(
 	],
 );
 
+// ─── Call Usage ───────────────────────────────────────────────────────────────
+// Billed tokens of one model during one call. Tokens are stored, not dollars:
+// prices change, so the cost is computed at read time from the price list.
+
+export const callUsage = pgTable(
+	"call_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callId: integer("call_id")
+			.notNull()
+			.references(() => call.id, { onDelete: "cascade" }),
+		model: varchar("model", { length: 100 }).notNull(),
+		textInputTokens: integer("text_input_tokens").notNull().default(0),
+		audioInputTokens: integer("audio_input_tokens").notNull().default(0),
+		textOutputTokens: integer("text_output_tokens").notNull().default(0),
+		audioOutputTokens: integer("audio_output_tokens").notNull().default(0),
+		// The provider's own usage object, kept so the counts can be recomputed.
+		raw: jsonb("raw"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("call_usage_call_id_model_idx").on(table.callId, table.model),
+	],
+);
+
 // ─── Call Report ──────────────────────────────────────────────────────────────
 // Filed by the voice AI (`report_abuse`) when a caller is abusive. Admins review
 // it and either dismiss it or block the number (see `blockedPhone`).
@@ -1077,7 +1103,15 @@ export const callRelations = relations(call, ({ one, many }) => ({
 		references: [appointment.id],
 	}),
 	events: many(callEvent),
+	usage: many(callUsage),
 	report: one(callReport),
+}));
+
+export const callUsageRelations = relations(callUsage, ({ one }) => ({
+	call: one(call, {
+		fields: [callUsage.callId],
+		references: [call.id],
+	}),
 }));
 
 export const callReportRelations = relations(callReport, ({ one }) => ({

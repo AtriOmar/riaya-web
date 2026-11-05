@@ -2699,6 +2699,84 @@ export type PostApiCallsIdEvents201 = {
 	timestamp: string | null;
 };
 
+export type PutApiCallsIdUsageBody = {
+	/**
+	 * @minLength 1
+	 * @maxLength 100
+	 */
+	model: string;
+	/**
+	 * @minimum 0
+	 * @nullable
+	 */
+	textInputTokens: number | null;
+	/**
+	 * @minimum 0
+	 * @nullable
+	 */
+	audioInputTokens: number | null;
+	/**
+	 * @minimum 0
+	 * @nullable
+	 */
+	textOutputTokens: number | null;
+	/**
+	 * @minimum 0
+	 * @nullable
+	 */
+	audioOutputTokens: number | null;
+	raw?: unknown | null;
+};
+
+export type PutApiCallsIdUsage200Raw =
+	| string
+	| number
+	| boolean
+	| unknown
+	| null
+	| { [key: string]: unknown | null }
+	| (unknown | null)[];
+
+export type PutApiCallsIdUsage200 = {
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	id: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	callId: number;
+	/** @maxLength 100 */
+	model: string;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	textInputTokens: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	audioInputTokens: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	textOutputTokens: number;
+	/**
+	 * @minimum -2147483648
+	 * @maximum 2147483647
+	 */
+	audioOutputTokens: number;
+	raw: PutApiCallsIdUsage200Raw;
+	/** @nullable */
+	createdAt: string | null;
+	/** @nullable */
+	updatedAt: string | null;
+};
+
 export type GetApiCities200Item = {
 	/**
 	 * @minimum -2147483648

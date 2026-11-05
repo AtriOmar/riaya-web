@@ -16,6 +16,7 @@ import {
 	callReport,
 	callReportCategories,
 	callReportStatuses,
+	callUsage,
 	cities,
 	consultationRecording,
 	doctorApplication,
@@ -87,6 +88,7 @@ export const selectDoctorApplicationWithRelationsSchema =
 	);
 export const selectCallSchema = createSelectSchema(call);
 export const selectCallEventSchema = createSelectSchema(callEvent);
+export const selectCallUsageSchema = createSelectSchema(callUsage);
 export const selectCallReportSchema = createSelectSchema(callReport, {
 	category: z.enum(callReportCategories),
 	status: z.enum(callReportStatuses),
