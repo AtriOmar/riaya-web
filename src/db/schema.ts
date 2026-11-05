@@ -749,6 +749,13 @@ export const billingInvoice = pgTable(
 	],
 );
 
+// Last invoice sequence handed out per year. Incremented atomically so two
+// concurrent requests never get the same invoice number.
+export const billingInvoiceCounter = pgTable("billing_invoice_counter", {
+	year: integer("year").primaryKey(),
+	lastSeq: integer("last_seq").notNull(),
+});
+
 // ─── Consultation Recording ───────────────────────────────────────────────────
 // Recordings made by the doctor during or after a patient consultation.
 // Linked optionally to a patient. Transcript is generated via OpenRouter.
