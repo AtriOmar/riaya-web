@@ -97,7 +97,8 @@ export function AiPanelProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		if (!available) return;
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key.toLowerCase() === "j" && (e.metaKey || e.ctrlKey)) {
+			// Browser autofill dispatches keydown events without a key
+			if (e.key?.toLowerCase() === "j" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
 				setOpen(!open);
 			}
