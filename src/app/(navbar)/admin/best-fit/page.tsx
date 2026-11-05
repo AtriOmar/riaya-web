@@ -25,11 +25,9 @@ function toDateOnly(d: Date): string {
 }
 
 function weekWindow(anchor: Date) {
-	const start = moment(anchor).startOf("week").toDate();
-	start.setHours(0, 0, 0, 0);
-	const end = moment(anchor).endOf("week").toDate();
-	end.setHours(23, 59, 59, 999);
-	return { start, end };
+	const start = moment(anchor).startOf("day");
+	const end = start.clone().add(6, "days").endOf("day");
+	return { start: start.toDate(), end: end.toDate() };
 }
 
 function parseDateOnly(dateStr: string | null): Date | null {
@@ -140,7 +138,7 @@ export default function AdminBestFitPage() {
 	const { start, end } = useMemo(() => weekWindow(rangeAnchor), [rangeAnchor]);
 	const hasSpeciality = filters.specialitySlug != null;
 	const hasLocation = filters.lat != null && filters.long != null;
-	// Every filter is optional: with none set, all doctors are listed.
+	// Every filter is optional: the server caps the unfiltered list per speciality.
 	const rangeParams = {
 		...(hasSpeciality ? { speciality: filters.specialitySlug as string } : {}),
 		...(hasLocation

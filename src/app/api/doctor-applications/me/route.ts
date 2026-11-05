@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { doctorApplication } from "@/db/schema";
 import { apiError, json, requireSession } from "@/lib/api-utils";
@@ -15,6 +15,8 @@ export async function GET() {
 
 		const application = await db.query.doctorApplication.findFirst({
 			where: eq(doctorApplication.userId, session.user.id),
+			// Latest submission; earlier rejected ones are kept as history
+			orderBy: desc(doctorApplication.id),
 			with: {
 				user: { columns: { id: true, username: true, email: true } },
 				speciality: {

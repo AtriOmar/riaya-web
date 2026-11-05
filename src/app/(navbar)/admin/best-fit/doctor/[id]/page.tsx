@@ -169,10 +169,10 @@ export default function AdminBestFitDoctorPage() {
 										{data.doctor.cabinetName}
 									</span>
 								)}
-								{(data.doctor.cabinetCity || data.doctor.address) && (
+								{(data.doctor.cabinetCity || data.doctor.cabinetAddress) && (
 									<span className="inline-flex items-center gap-1.5">
 										<MapPin className="w-4 h-4" />
-										{data.doctor.address ??
+										{data.doctor.cabinetAddress ??
 											data.doctor.cabinetCity?.enName ??
 											data.doctor.cabinetCity?.frName}
 									</span>

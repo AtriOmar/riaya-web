@@ -5,13 +5,14 @@
  * AudioWaveformPlayer
  *
  * A compact call-recording player: play/pause, a waveform scrubber (built
- * from decoded peaks, not a canvas library), current/total time and a mute
- * toggle. Falls back to a plain flat progress bar if the audio can't be
- * decoded for peaks (e.g. a CORS-blocked fetch) — playback itself always
- * goes through a plain <audio> element, so it never depends on decoding.
+ * from decoded peaks, not a canvas library), current/total time, a volume
+ * control (mute toggle, slider on hover) and a download link. Falls back to
+ * a plain flat progress bar if the audio can't be decoded for peaks (e.g. a
+ * CORS-blocked fetch) — playback itself always goes through a plain <audio>
+ * element, so it never depends on decoding.
  */
 
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { Download, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import {
 	type RefObject,
 	useCallback,
@@ -28,6 +29,12 @@ function formatTime(seconds: number): string {
 	const m = Math.floor(seconds / 60);
 	const s = Math.floor(seconds % 60);
 	return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** "recording.mp3" from a stored URL; a blob URL has no extension to keep. */
+function downloadName(src: string): string {
+	const ext = src.split(/[?#]/)[0].match(/\.(\w{2,4})$/)?.[1];
+	return ext ? `recording.${ext}` : "recording";
 }
 
 /** Downsamples decoded channel data into `BAR_COUNT` peak amplitudes (0–1). */
@@ -55,6 +62,7 @@ export function AudioWaveformPlayer({
 	src,
 	waveformSrc,
 	audioRef: externalAudioRef,
+	fileName,
 	className,
 }: {
 	src: string;
@@ -62,6 +70,8 @@ export function AudioWaveformPlayer({
 	waveformSrc?: string;
 	/** Lets the parent drive the underlying element (e.g. seek from a transcript). */
 	audioRef?: RefObject<HTMLAudioElement | null>;
+	/** Name for the downloaded file; defaults to "recording" plus the URL's extension. */
+	fileName?: string;
 	className?: string;
 }) {
 	const ownAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -69,6 +79,7 @@ export function AudioWaveformPlayer({
 	const [peaks, setPeaks] = useState<number[] | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isMuted, setIsMuted] = useState(false);
+	const [volume, setVolume] = useState(1);
 	const [mediaDuration, setMediaDuration] = useState(0);
 	const [decodedDuration, setDecodedDuration] = useState(0);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -148,6 +159,15 @@ export function AudioWaveformPlayer({
 		setIsMuted(audio.muted);
 	}, []);
 
+	const changeVolume = (next: number) => {
+		const audio = audioRef.current;
+		if (!audio) return;
+		audio.volume = next;
+		audio.muted = next === 0;
+		setVolume(next);
+		setIsMuted(audio.muted);
+	};
+
 	const totalDuration = mediaDuration || decodedDuration;
 	const seekToRatio = (ratio: number) => {
 		const audio = audioRef.current;
@@ -207,18 +227,42 @@ export function AudioWaveformPlayer({
 				{formatTime(currentTime)} / {formatTime(totalDuration)}
 			</span>
 
-			<button
-				type="button"
-				onClick={toggleMute}
+			{/* The slider grows out of the mute button on hover or keyboard focus. */}
+			<div className="group/volume flex shrink-0 items-center">
+				<button
+					type="button"
+					onClick={toggleMute}
+					className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
+					title={isMuted ? "Unmute" : "Mute"}
+				>
+					{isMuted ? (
+						<VolumeX className="size-3.5" />
+					) : (
+						<Volume2 className="size-3.5" />
+					)}
+				</button>
+				<input
+					type="range"
+					min={0}
+					max={1}
+					step={0.05}
+					value={isMuted ? 0 : volume}
+					onChange={(e) => changeVolume(Number(e.target.value))}
+					aria-label="Volume"
+					className="h-1 w-0 cursor-pointer accent-primary opacity-0 transition-all duration-150 group-focus-within/volume:ml-1 group-focus-within/volume:w-16 group-focus-within/volume:opacity-100 group-hover/volume:ml-1 group-hover/volume:w-16 group-hover/volume:opacity-100"
+				/>
+			</div>
+
+			{/* `download` is only honoured same-origin, so prefer the proxied URL
+			    when there is one; a bare CDN URL just opens in the browser. */}
+			<a
+				href={waveformSrc ?? src}
+				download={fileName ?? downloadName(src)}
 				className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
-				title={isMuted ? "Unmute" : "Mute"}
+				title="Download"
 			>
-				{isMuted ? (
-					<VolumeX className="size-3.5" />
-				) : (
-					<Volume2 className="size-3.5" />
-				)}
-			</button>
+				<Download className="size-3.5" />
+			</a>
 		</div>
 	);
 }

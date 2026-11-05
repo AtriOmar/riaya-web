@@ -42,6 +42,8 @@ export interface GeoProvider {
 		near?: LatLng;
 		radiusM?: number;
 	}): Promise<PlaceResult[]>;
+	/** The address at a point, or null when the provider knows none there. */
+	reverse(point: LatLng): Promise<PlaceResult | null>;
 	/**
 	 * Road distance and drive time from one origin to each target, in target
 	 * order, in one request. Never throws: null means routing failed as a whole.

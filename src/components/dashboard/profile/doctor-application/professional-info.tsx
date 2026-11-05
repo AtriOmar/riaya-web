@@ -9,19 +9,9 @@ import SpecialitySelect from "./speciality-select";
 
 type Props = {
 	specialities: GetApiSpecialities200Item[];
-	medicalCouncilCertificate: File | null;
-	setMedicalCouncilCertificate: (f: File | null) => void;
-	medicalCouncilCertificateError: string | null;
-	handleMedicalCouncilCertificateFile: (file: File) => void;
 };
 
-export default function ProfessionalInfo({
-	specialities,
-	medicalCouncilCertificate,
-	setMedicalCouncilCertificate,
-	medicalCouncilCertificateError,
-	handleMedicalCouncilCertificateFile,
-}: Props) {
+export default function ProfessionalInfo({ specialities }: Props) {
 	const {
 		register,
 		formState: { errors },
@@ -29,12 +19,12 @@ export default function ProfessionalInfo({
 		watch,
 	} = useFormContext<FormValues>();
 	const specialityId = watch("specialityId");
+	const medicalCouncilCertificate = watch("medicalCouncilCertificate");
 	const medicalCouncilCertificateRef = useRef<HTMLInputElement>(null);
 
 	return (
 		<div>
-			<div className="bg-border my-6 h-px" />
-			<h3 className="font-semibold text-xl">Professional Information</h3>
+			<h3 className="mt-6 font-semibold text-xl">Professional Information</h3>
 
 			<div className="space-y-2 mt-4">
 				<Label>
@@ -84,7 +74,10 @@ export default function ProfessionalInfo({
 						className="hidden"
 						onChange={(e) => {
 							const f = e.target.files?.[0];
-							if (f) handleMedicalCouncilCertificateFile(f);
+							if (f)
+								setValue("medicalCouncilCertificate", f, {
+									shouldValidate: true,
+								});
 						}}
 					/>
 					<div className="relative mt-2 w-full max-w-[300px] group overflow-hidden rounded-lg border-2 border-dashed hover:border-primary transition">
@@ -139,7 +132,7 @@ export default function ProfessionalInfo({
 										className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium transition-colors bg-red-500/40 border border-red-500/50 text-red-100 hover:bg-red-500/60 hover:text-white"
 										onClick={(e) => {
 											e.stopPropagation();
-											setMedicalCouncilCertificate(null);
+											setValue("medicalCouncilCertificate", undefined as never);
 											if (medicalCouncilCertificateRef.current)
 												medicalCouncilCertificateRef.current.value = "";
 										}}
@@ -166,9 +159,9 @@ export default function ProfessionalInfo({
 							</button>
 						)}
 					</div>
-					{medicalCouncilCertificateError && (
+					{errors.medicalCouncilCertificate && (
 						<p className="mt-1 text-destructive text-sm">
-							{medicalCouncilCertificateError}
+							{errors.medicalCouncilCertificate.message}
 						</p>
 					)}
 				</div>

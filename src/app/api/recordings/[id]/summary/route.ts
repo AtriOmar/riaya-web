@@ -8,7 +8,9 @@ import {
 	json,
 	requireDoctorProfile,
 	requireSession,
+	validationError,
 } from "@/lib/api-utils";
+import { languages } from "@/lib/language";
 import { getEffectivePlan } from "@/lib/plan-limits";
 import { summarizeRecording } from "@/lib/recording-summary";
 
@@ -16,12 +18,21 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 // ─── POST /api/recordings/[id]/summary ────────────────────────────────────────
 // (Re)writes the AI consultation note from the transcript (Pro). Replaces any
-// edits the doctor made. Covered by recording hours, so no extra limit.
+// edits the doctor made. Covered by recording hours, so no extra limit. The body
+// is optional: `language` writes this note in another language than the
+// doctor's default.
 
-export async function POST(_req: NextRequest, { params }: RouteContext) {
+const summaryBodySchema = z.object({ language: z.enum(languages).optional() });
+
+export async function POST(req: NextRequest, { params }: RouteContext) {
 	try {
 		const session = await requireSession();
 		const profile = await requireDoctorProfile(session.user.id);
+
+		// An empty body means the doctor's default language
+		const body = await req.json().catch(() => ({}));
+		const parsed = summaryBodySchema.safeParse(body);
+		if (!parsed.success) return validationError(parsed.error.issues);
 
 		const { id } = await params;
 		const recordingId = Number(id);
@@ -46,7 +57,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 			return apiError("TRANSCRIPT_REQUIRED");
 		}
 
-		const updated = await summarizeRecording(recordingId);
+		const updated = await summarizeRecording(recordingId, parsed.data.language);
 		if (!updated) return apiError("SUMMARY_FAILED");
 
 		return json(updated);
@@ -64,7 +75,13 @@ registry.registerPath({
 	path: "/api/recordings/{id}/summary",
 	tags: ["Recordings"],
 	summary: "Write the AI consultation note",
-	request: { params: z.object({ id: z.string() }) },
+	request: {
+		params: z.object({ id: z.string() }),
+		body: {
+			required: false,
+			content: { "application/json": { schema: summaryBodySchema } },
+		},
+	},
 	responses: {
 		200: {
 			description: "Recording with its new summary",

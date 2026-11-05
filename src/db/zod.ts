@@ -16,6 +16,7 @@ import {
 	callReport,
 	callReportCategories,
 	callReportStatuses,
+	callUsage,
 	cities,
 	consultationRecording,
 	doctorApplication,
@@ -87,6 +88,7 @@ export const selectDoctorApplicationWithRelationsSchema =
 	);
 export const selectCallSchema = createSelectSchema(call);
 export const selectCallEventSchema = createSelectSchema(callEvent);
+export const selectCallUsageSchema = createSelectSchema(callUsage);
 export const selectCallReportSchema = createSelectSchema(callReport, {
 	category: z.enum(callReportCategories),
 	status: z.enum(callReportStatuses),
@@ -152,9 +154,11 @@ export const selectUserWithDoctorProfileSchema = selectUserSchema.merge(
 );
 
 export const selectBestFitDoctorSchema = selectDoctorProfileSchema
-	.omit({ availability: true })
+	.omit({ availability: true, cabinetAddress: true })
 	.merge(
 		z.object({
+			/** The cabinet's street address (`doctor_profile.cabinet_address`). */
+			address: z.string().nullable(),
 			distance: z.number(),
 			/** Present (true) when beyond the radius and returned as a fallback. */
 			outsideRadius: z.boolean().optional(),

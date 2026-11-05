@@ -1,0 +1,1 @@
+ALTER TABLE "doctor_profile" ADD COLUMN "note_language" varchar(8) DEFAULT 'fr' NOT NULL;

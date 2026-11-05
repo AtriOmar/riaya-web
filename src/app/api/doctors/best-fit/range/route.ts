@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
 					cabinetLatitude: doctor.cabinetLatitude,
 					cabinetLongitude: doctor.cabinetLongitude,
 					specialityId: doctor.specialityId,
-					address: doctor.address ?? null,
+					address: doctor.cabinetAddress ?? null,
 					distance,
 					slots: slots.map((s) => ({
 						start: s.start.toISOString(),

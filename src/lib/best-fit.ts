@@ -1,11 +1,14 @@
 import { and, eq, gte, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import { db } from "@/db";
 import { appointment, doctorProfile, speciality } from "@/db/schema";
+import { BEST_FIT_MAX_RADIUS_KM } from "@/lib/best-fit-radius";
 import {
 	findNextAvailableSlot,
 	listAvailableSlotsForDoctor,
 } from "@/lib/doctor-slots";
 import { getDriveLegs } from "@/lib/route-matrix";
+
+export { BEST_FIT_MAX_RADIUS_KM };
 
 /** Doctors Riaya may refer patients to: verified and not excluded by an admin. */
 export const referableDoctor = and(
@@ -13,15 +16,18 @@ export const referableDoctor = and(
 	isNull(doctorProfile.bestFitExcludedAt),
 );
 
-/** Doctors beyond this radius (km) are excluded — prevents cross-city matches. */
-export const BEST_FIT_MAX_RADIUS_KM = 50;
-
 /**
  * When no doctor inside the radius has a slot, the nearest doctors beyond it
  * are returned instead (flagged `outsideRadius`) so callers never get an empty
  * answer just because the area is sparse.
  */
 export const BEST_FIT_FALLBACK_COUNT = 3;
+
+/**
+ * Without a patient location nothing narrows the admin finder, so each
+ * speciality contributes at most this many doctors.
+ */
+export const FINDER_MAX_DOCTORS_PER_SPECIALITY = 10;
 
 /** How many top straight-line candidates get re-ranked by real drive time. */
 export const BEST_FIT_ROUTE_CANDIDATES = 8;
@@ -87,6 +93,7 @@ export async function resolveSpeciality(searchTerm: string) {
  * Verified doctors with a cabinet location, optionally narrowed to one
  * speciality. With a patient location, only doctors inside the radius are kept;
  * if nobody is, the nearest few are returned so a sparse area is never empty.
+ * Without one, the list is capped per speciality (lowest ids first).
  * Shared by the admin calendar (range) and map endpoints.
  */
 export async function listFinderDoctors(opts: {
@@ -109,7 +116,16 @@ export async function listFinderDoctors(opts: {
 	const withCoords = allDoctors.filter(
 		(d) => d.cabinetLatitude != null && d.cabinetLongitude != null,
 	);
-	if (!location) return withCoords;
+	if (!location) {
+		const perSpeciality = new Map<number | null, number>();
+		return withCoords
+			.sort((a, b) => a.id - b.id)
+			.filter((d) => {
+				const count = perSpeciality.get(d.specialityId) ?? 0;
+				perSpeciality.set(d.specialityId, count + 1);
+				return count < FINDER_MAX_DOCTORS_PER_SPECIALITY;
+			});
+	}
 
 	const ranked = withCoords
 		.map((d) => ({
@@ -287,7 +303,7 @@ export async function findBestFitDoctors(params: {
 				cabinetLatitude: doctor.cabinetLatitude,
 				cabinetLongitude: doctor.cabinetLongitude,
 				specialityId: doctor.specialityId,
-				address: doctor.address ?? null,
+				address: doctor.cabinetAddress ?? null,
 				distance: doctor.distance,
 				...(outsideRadius ? { outsideRadius: true } : {}),
 				nextSlot: slots.nextSlot,

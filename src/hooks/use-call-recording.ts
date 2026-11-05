@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { encodeMp3 } from "@/lib/encode-mp3";
 import { uploadToR2 } from "@/lib/upload";
 import { usePostApiTestCallRecording } from "@/services/generated/test-call/test-call";
 
@@ -177,11 +178,19 @@ export function useCallRecording() {
 					setRecordingStatus("error");
 					return;
 				}
-				const file = new File([blob], `${callSid}.${format.ext}`, {
-					type: format.type,
-				});
-				lastRef.current = { file, callSid };
-				void save(file, callSid);
+				void (async () => {
+					// Store MP3 so every download plays anywhere; keep the raw
+					// recording if this browser can't decode it.
+					const file = await encodeMp3(blob).then(
+						(mp3) => new File([mp3], `${callSid}.mp3`, { type: "audio/mpeg" }),
+						() =>
+							new File([blob], `${callSid}.${format.ext}`, {
+								type: format.type,
+							}),
+					);
+					lastRef.current = { file, callSid };
+					void save(file, callSid);
+				})();
 			};
 			if (recorder.state === "inactive")
 				recorder.onstop?.call(recorder, new Event("stop"));

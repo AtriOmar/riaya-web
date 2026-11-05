@@ -16,7 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import WhatsappGate from "@/components/whatsapp/whatsapp-gate";
 import { isLikelyImageUrl } from "@/lib/document-file";
+import { uploadToR2 } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import type { GetApiPatientsId200MedicalFilesItem } from "@/services/generated/api.schemas";
 import {
@@ -24,6 +26,7 @@ import {
 	usePostApiPatientsIdMedicalFilesFileIdSend,
 	usePutApiPatientsIdMedicalFiles,
 } from "@/services/generated/patients/patients";
+import DocumentUpload, { type DocumentItem } from "./document-upload";
 import {
 	formatMedicalFileType,
 	MEDICAL_FILE_TYPES,
@@ -79,7 +82,17 @@ type Draft = {
 	description: string;
 	type: string;
 	dateLocal: string;
+	documents: DocumentItem[];
 };
+
+function documentNameFromUrl(url: string): string {
+	const last = url.split("?")[0].split("/").pop() ?? url;
+	try {
+		return decodeURIComponent(last);
+	} catch {
+		return last;
+	}
+}
 
 function draftFromFile(file: GetApiPatientsId200MedicalFilesItem): Draft {
 	return {
@@ -87,6 +100,13 @@ function draftFromFile(file: GetApiPatientsId200MedicalFilesItem): Draft {
 		description: file.description ?? "",
 		type: file.type ?? MEDICAL_FILE_TYPES[0].value,
 		dateLocal: fileToDatetimeLocal(file),
+		documents: (file.documents ?? [])
+			.filter((u): u is string => Boolean(u))
+			.map((url, i) => ({
+				id: `existing-${file.id}-${i}`,
+				name: documentNameFromUrl(url),
+				cdnUrl: url,
+			})),
 	};
 }
 
@@ -133,12 +153,21 @@ export function MedicalFileCard({
 			return;
 		}
 		try {
+			const documents: string[] = [];
+			for (const doc of draft.documents) {
+				if (doc.file) {
+					documents.push(await uploadToR2(doc.file, "medical-files"));
+				} else if (doc.cdnUrl) {
+					documents.push(doc.cdnUrl);
+				}
+			}
 			await updateMedicalFile({
 				medicalFileId: file.id,
 				title: draft.title.trim(),
 				description: draft.description,
 				type: draft.type,
 				date: new Date(draft.dateLocal).toISOString(),
+				documents,
 			});
 			toast.success("Medical file updated");
 			setIsEditing(false);
@@ -239,6 +268,15 @@ export function MedicalFileCard({
 								placeholder="Optional notes…"
 							/>
 						</div>
+						<div>
+							<p className="mb-1 text-muted-foreground text-xs">Documents</p>
+							<DocumentUpload
+								value={draft.documents}
+								onChange={(documents) => setDraft((d) => ({ ...d, documents }))}
+								maxFiles={10}
+								maxFileSize={20}
+							/>
+						</div>
 					</div>
 				) : (
 					<>
@@ -262,7 +300,7 @@ export function MedicalFileCard({
 					</>
 				)}
 
-				{file.documents && file.documents.length > 0 && (
+				{!isEditing && file.documents && file.documents.length > 0 && (
 					<div className="mt-2 flex flex-wrap gap-3">
 						{file.documents
 							.filter((u): u is string => Boolean(u))
@@ -302,30 +340,34 @@ export function MedicalFileCard({
 
 			{!isEditing && (
 				<div className="absolute top-3 right-3 flex gap-0.5">
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						className={cn(
-							"h-7 px-2 text-xs",
-							file.sentViaWhatsapp
-								? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-								: "text-muted-foreground hover:text-green-600",
+					<WhatsappGate>
+						{(whatsappOff) => (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className={cn(
+									"h-7 px-2 text-xs",
+									file.sentViaWhatsapp
+										? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+										: "text-muted-foreground hover:text-green-600",
+								)}
+								onClick={handleSendClick}
+								disabled={whatsappOff || isSending}
+								aria-label="Send via WhatsApp"
+								title="Send via WhatsApp"
+							>
+								{isSending ? (
+									<Loader2 className="mr-1.5 size-3.5 animate-spin" />
+								) : file.sentViaWhatsapp ? (
+									<CheckCircle2 className="mr-1.5 size-3.5" />
+								) : (
+									<MessageSquare className="mr-1.5 size-3.5" />
+								)}
+								{file.sentViaWhatsapp ? "Sent" : "Send"}
+							</Button>
 						)}
-						onClick={handleSendClick}
-						disabled={isSending}
-						aria-label="Send via WhatsApp"
-						title="Send via WhatsApp"
-					>
-						{isSending ? (
-							<Loader2 className="mr-1.5 size-3.5 animate-spin" />
-						) : file.sentViaWhatsapp ? (
-							<CheckCircle2 className="mr-1.5 size-3.5" />
-						) : (
-							<MessageSquare className="mr-1.5 size-3.5" />
-						)}
-						{file.sentViaWhatsapp ? "Sent" : "Send"}
-					</Button>
+					</WhatsappGate>
 					<Button
 						type="button"
 						variant="ghost"

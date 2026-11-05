@@ -84,7 +84,7 @@ export function PatientDetails({
 		try {
 			await updatePatient({
 				...values,
-				cin: values.cin.toUpperCase(),
+				cin: values.cin,
 				phoneNumber: phone,
 				dateOfBirth: new Date(values.dateOfBirth).toISOString(),
 			});

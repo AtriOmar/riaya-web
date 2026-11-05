@@ -27,7 +27,7 @@ import {
 	segmentText,
 	speakerName,
 } from "@/lib/transcript";
-import { transcriptRefreshInterval } from "@/lib/transcript-polling";
+import { useTranscriptPolling } from "@/lib/transcript-polling";
 import type {
 	GetApiPatientsId200MedicalFilesItem,
 	GetApiRecordings200Item,
@@ -242,10 +242,8 @@ export function PatientHistory({
 		data: recordings,
 		isLoading,
 		mutate: mutateRecordings,
-	} = useGetApiRecordings(
-		{ patientId },
-		{ swr: { refreshInterval: transcriptRefreshInterval } },
-	);
+	} = useGetApiRecordings({ patientId });
+	useTranscriptPolling(recordings, mutateRecordings);
 
 	const entries: HistoryEntry[] = [
 		...(medicalFiles ?? []).map((file) => ({

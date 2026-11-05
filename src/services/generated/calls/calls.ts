@@ -20,6 +20,8 @@ import type {
 	PostApiCallsIdEventsBody,
 	PutApiCallsId200,
 	PutApiCallsIdBody,
+	PutApiCallsIdUsage200,
+	PutApiCallsIdUsageBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -349,6 +351,68 @@ export const useGetApiCallsIdRecording = <TError = unknown>(
 		swrFn,
 		swrOptions,
 	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Save the billed tokens of a call
+ */
+export const putApiCallsIdUsage = (
+	id: string,
+	putApiCallsIdUsageBody?: PutApiCallsIdUsageBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiCallsIdUsage200>(
+		{
+			url: `/api/calls/${id}/usage`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiCallsIdUsageBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiCallsIdUsageMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PutApiCallsIdUsageBody | undefined }) => {
+		return putApiCallsIdUsage(id, arg, options);
+	};
+};
+export const getPutApiCallsIdUsageMutationKey = (id: string) =>
+	[`/api/calls/${id}/usage`] as const;
+
+export type PutApiCallsIdUsageMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiCallsIdUsage>>
+>;
+
+/**
+ * @summary Save the billed tokens of a call
+ */
+export const usePutApiCallsIdUsage = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof putApiCallsIdUsage>>,
+			TError,
+			Key,
+			PutApiCallsIdUsageBody | undefined,
+			Awaited<ReturnType<typeof putApiCallsIdUsage>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiCallsIdUsageMutationKey(id);
+	const swrFn = getPutApiCallsIdUsageMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
 	return {
 		swrKey,

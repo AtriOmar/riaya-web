@@ -11,6 +11,7 @@ import {
 	PanelLeftClose,
 	PanelLeftOpen,
 	Receipt,
+	Settings,
 	Stethoscope,
 	User,
 	Users,
@@ -32,6 +33,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
+import { useWhatsappStatus } from "@/hooks/use-whatsapp-status";
 import { cn } from "@/lib/utils";
 import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 
@@ -97,6 +99,11 @@ const items2: SidebarItemData[] = [
 		icon: <CreditCard className="size-5" />,
 		path: "/dashboard/subscription",
 	},
+	{
+		name: "Settings",
+		icon: <Settings className="size-5" />,
+		path: "/dashboard/settings",
+	},
 ];
 
 function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
@@ -104,6 +111,8 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 	const { data: billing } = useGetApiBillingSubscription({
 		swr: { enabled: canWork && !isSecretary },
 	});
+
+	const { notConnected: whatsappOff } = useWhatsappStatus();
 
 	const planBadge = billing?.plan.isPro ? "Pro" : null;
 	// Secretaries only see the pages they can use
@@ -131,9 +140,6 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 						/>
 					</li>
 				))}
-				<li>
-					<div className="h-px my-2 bg-border" />
-				</li>
 				{visible(items2).map((item) => (
 					<li key={item.path}>
 						<SidebarItem
@@ -143,6 +149,10 @@ function SidebarContent({ collapsed = false }: { collapsed?: boolean }) {
 								badge:
 									item.path === "/dashboard/subscription" && planBadge
 										? planBadge
+										: undefined,
+								alert:
+									item.path === "/dashboard/whatsapp-config" && whatsappOff
+										? "not connected"
 										: undefined,
 							}}
 							collapsed={collapsed}

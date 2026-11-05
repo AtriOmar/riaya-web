@@ -9,9 +9,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import GoogleButton, { OrDivider } from "@/components/auth/google-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
@@ -70,7 +70,10 @@ export default function LoginForm({
 					<ThemeToggle />
 				</div>
 				<div className="w-full max-w-md animate-fade-in-up">
-					<Link href="/" className="inline-flex items-center gap-2 mb-8">
+					<Link
+						href="/"
+						className="flex justify-center items-center gap-2 mb-8"
+					>
 						<Image
 							src="/logo.png"
 							alt="Riaya"
@@ -81,7 +84,7 @@ export default function LoginForm({
 						<span className="font-bold text-gradient text-2xl">رعاية</span>
 					</Link>
 
-					<div className="mb-8">
+					<div className="mb-8 text-center">
 						<h1 className="mb-2 font-bold text-foreground text-3xl">
 							Welcome back, Doctor
 						</h1>
@@ -95,6 +98,9 @@ export default function LoginForm({
 							{apiError}
 						</div>
 					)}
+
+					<GoogleButton next={next} />
+					<OrDivider />
 
 					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 						<div className="space-y-2">
@@ -149,16 +155,6 @@ export default function LoginForm({
 									{errors.password.message}
 								</p>
 							)}
-						</div>
-
-						<div className="flex items-center gap-2">
-							<Checkbox id="remember" />
-							<Label
-								htmlFor="remember"
-								className="font-normal text-sm cursor-pointer"
-							>
-								Remember me for 30 days
-							</Label>
 						</div>
 
 						<Button

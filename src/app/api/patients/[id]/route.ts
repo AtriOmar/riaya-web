@@ -8,7 +8,11 @@ import { normalizePhoneForStorage } from "@/lib/phone";
 import { requirePractice } from "@/lib/practice";
 
 const updateSchema = z.object({
-	cin: z.string().min(1),
+	cin: z
+		.string()
+		.trim()
+		.regex(/^(\d{8})?$/, "The CIN number has 8 digits")
+		.optional(),
 	firstName: z.string().min(1),
 	lastName: z.string().min(1),
 	dateOfBirth: z.string().datetime(),
@@ -94,7 +98,7 @@ export async function PATCH(
 		await db
 			.update(patient)
 			.set({
-				cin: parsed.data.cin,
+				cin: parsed.data.cin || null,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,
 				dateOfBirth: new Date(parsed.data.dateOfBirth),

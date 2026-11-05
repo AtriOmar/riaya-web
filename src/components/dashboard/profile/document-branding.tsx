@@ -79,15 +79,29 @@ function BrandingSlot({
 				}}
 			/>
 			<div className="flex gap-2">
-				<Button
-					size="sm"
-					variant="outline"
-					className="flex-1"
-					disabled={locked || busy}
-					onClick={() => inputRef.current?.click()}
-				>
-					{url ? "Replace" : "Upload"}
-				</Button>
+				{locked ? (
+					<Button
+						asChild
+						size="sm"
+						variant="outline"
+						className="flex-1 gap-1.5"
+					>
+						<Link href="/dashboard/subscription">
+							<Lock className="size-3.5" />
+							{url ? "Replace" : "Upload"}
+						</Link>
+					</Button>
+				) : (
+					<Button
+						size="sm"
+						variant="outline"
+						className="flex-1"
+						disabled={busy}
+						onClick={() => inputRef.current?.click()}
+					>
+						{url ? "Replace" : "Upload"}
+					</Button>
+				)}
 				{url && (
 					<Button
 						size="sm"

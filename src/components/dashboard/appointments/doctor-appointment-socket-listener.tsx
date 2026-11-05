@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { fetchRealtimeTicket } from "@/lib/realtime-client";
+import { getGetApiAppointmentsKey } from "@/services/generated/appointments/appointments";
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000];
 
@@ -114,7 +115,10 @@ export default function DoctorAppointmentSocketListener({
 					} else {
 						toast.success(`New appointment request from ${patientLabel}`);
 					}
-					void mutate("appointments");
+					const [appointmentsPath] = getGetApiAppointmentsKey();
+					void mutate(
+						(key) => Array.isArray(key) && key[0] === appointmentsPath,
+					);
 				} catch {
 					/* ignore malformed payloads */
 				}

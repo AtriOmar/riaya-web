@@ -16,6 +16,7 @@ import {
 	type SpeakerRole,
 	type SpeakerRoles,
 } from "@/lib/speaker-roles";
+import { speakerColor } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 import { usePatchApiRecordingsId } from "@/services/generated/recordings/recordings";
 
@@ -40,15 +41,21 @@ function SpeakerChip({
 					className="h-7 gap-1 px-2 text-xs"
 					disabled={saving}
 				>
+					<span
+						className={cn(
+							"size-2 rounded-full",
+							speakerColor(label, role ? { [label]: role } : null).dot,
+						)}
+					/>
 					{role ? (
 						<>
 							<span className="font-medium">{SPEAKER_ROLE_LABELS[role]}</span>
-							<span className="text-muted-foreground">· {label}</span>
+							<span className="opacity-70">· {label}</span>
 						</>
 					) : (
 						<span>{label}</span>
 					)}
-					<ChevronDown className="size-3 text-muted-foreground" />
+					<ChevronDown className="size-3 opacity-70" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent className="w-44 p-1" align="start">

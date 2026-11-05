@@ -3,7 +3,7 @@ import { db } from "../index";
 import { doctorProfile } from "../schema";
 import { DOCTORS } from "./doctors";
 
-/** Set `doctor_profile.address` from the doctors list rows that have an address, matching trimmed first and last name. */
+/** Set `doctor_profile.cabinet_address` from the doctors list rows that have an address, matching trimmed first and last name. */
 export async function seedDoctorProfileAddresses() {
 	const doctors = DOCTORS;
 	let doctorProfileRowsUpdated = 0;
@@ -20,7 +20,7 @@ export async function seedDoctorProfileAddresses() {
 		const updated = await db
 			.update(doctorProfile)
 			.set({
-				address,
+				cabinetAddress: address,
 				updatedAt: new Date(),
 			})
 			.where(

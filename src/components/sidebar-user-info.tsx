@@ -18,7 +18,7 @@ export default function SidebarUserInfo({
 	subtitle?: string | null;
 }) {
 	const { user } = useAuth();
-	const initials = (user?.username ?? user?.name ?? "U")
+	const initials = (user?.name ?? user?.username ?? "U")
 		.slice(0, 2)
 		.toUpperCase();
 
@@ -62,7 +62,7 @@ export default function SidebarUserInfo({
 				</div>
 			</div>
 			<h4 className="mt-8 font-semibold text-lg text-center capitalize">
-				{user?.username ?? user?.name}
+				{user?.name ?? user?.username}
 			</h4>
 			{subtitle && (
 				<p className="px-3 text-center text-muted-foreground text-xs">

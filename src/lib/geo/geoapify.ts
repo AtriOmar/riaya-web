@@ -62,6 +62,7 @@ type GeoapifyFeature = {
 		city?: string;
 		state?: string;
 		street?: string;
+		housenumber?: string;
 	};
 };
 
@@ -92,7 +93,11 @@ async function call(
 	}
 	const data = (await res.json()) as { features?: GeoapifyFeature[] };
 
-	return (data.features ?? []).map(({ properties: p }) => ({
+	return (data.features ?? []).map(toResult);
+}
+
+function toResult({ properties: p }: GeoapifyFeature): PlaceResult {
+	return {
 		id: p.place_id ?? `${p.lat},${p.lon}`,
 		label: p.formatted ?? "",
 		lat: p.lat,
@@ -100,7 +105,7 @@ async function call(
 		city: p.city ?? null,
 		state: p.state ?? null,
 		street: p.street ?? null,
-	}));
+	};
 }
 
 const proximity = (p: LatLng) => `proximity:${p.lng},${p.lat}`;
@@ -117,6 +122,42 @@ export const geoapifyProvider: GeoProvider = {
 
 	// Geoapify autocomplete already returns coordinates, so nothing to resolve.
 	details: async () => null,
+
+	async reverse({ lat, lng }) {
+		// French street names; the plain lookup names the nearest shop or
+		// building ("Pizzeria X, ..."), which is no use as a cabinet address.
+		const lookup = async (extra: Record<string, string>) => {
+			const url = new URL(`${BASE}/reverse`);
+			url.search = new URLSearchParams({
+				lat: String(lat),
+				lon: String(lng),
+				lang: "fr",
+				limit: "1",
+				...extra,
+				apiKey: apiKey(),
+			}).toString();
+			const res = await fetch(url, {
+				signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
+			});
+			if (!res.ok) {
+				throw new GeoProviderError(
+					`Geoapify reverse failed (${res.status})`,
+					"geoapify",
+				);
+			}
+			return ((await res.json()) as { features?: GeoapifyFeature[] })
+				.features?.[0];
+		};
+		const feature = (await lookup({ type: "street" })) ?? (await lookup({}));
+		if (!feature) return null;
+		// "Avenue X, Sfax": no postal code, governorate prefix or country.
+		const { housenumber, street, city, state } = feature.properties;
+		const place = city ?? state?.replace(/^Gouvernorat\s+/i, "");
+		const label = [[housenumber, street].filter(Boolean).join(" "), place]
+			.filter(Boolean)
+			.join(", ");
+		return { ...toResult(feature), label: label || toResult(feature).label };
+	},
 
 	search: ({ text, near, radiusM }) =>
 		call("search", {

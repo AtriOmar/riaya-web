@@ -13,6 +13,7 @@ import useSWRMutation from "swr/mutation";
 import { customInstance } from "../../api";
 import type {
 	GetApiDoctorApplications200Item,
+	GetApiDoctorApplicationsCount200,
 	GetApiDoctorApplicationsId200,
 	GetApiDoctorApplicationsMe200,
 	GetApiDoctorApplicationsParams,
@@ -34,8 +35,14 @@ import type {
 	PostApiDoctorApplicationsBody,
 	PutApiDoctorApplicationsId200,
 	PutApiDoctorApplicationsIdBody,
+	PutApiDoctorsIdAddress200,
+	PutApiDoctorsIdAddressBody,
+	PutApiDoctorsMeAddress200,
+	PutApiDoctorsMeAddressBody,
 	PutApiDoctorsMeBranding200,
 	PutApiDoctorsMeBrandingBody,
+	PutApiDoctorsMeNoteLanguage200,
+	PutApiDoctorsMeNoteLanguageBody,
 } from "../api.schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -277,6 +284,54 @@ export const usePutApiDoctorApplicationsId = <TError = unknown>(
 	};
 };
 /**
+ * @summary Count pending doctor applications (Admin)
+ */
+export const getApiDoctorApplicationsCount = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<GetApiDoctorApplicationsCount200>(
+		{ url: `/api/doctor-applications/count`, method: "GET" },
+		options,
+	);
+};
+
+export const getGetApiDoctorApplicationsCountKey = () =>
+	[`/api/doctor-applications/count`] as const;
+
+export type GetApiDoctorApplicationsCountQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiDoctorApplicationsCount>>
+>;
+
+/**
+ * @summary Count pending doctor applications (Admin)
+ */
+export const useGetApiDoctorApplicationsCount = <TError = unknown>(options?: {
+	swr?: SWRConfiguration<
+		Awaited<ReturnType<typeof getApiDoctorApplicationsCount>>,
+		TError
+	> & { swrKey?: Key; enabled?: boolean };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const isEnabled = swrOptions?.enabled !== false;
+	const swrKey =
+		swrOptions?.swrKey ??
+		(() => (isEnabled ? getGetApiDoctorApplicationsCountKey() : null));
+	const swrFn = () => getApiDoctorApplicationsCount(requestOptions);
+
+	const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(
+		swrKey,
+		swrFn,
+		swrOptions,
+	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Get current user's application
  */
 export const getApiDoctorApplicationsMe = (
@@ -375,6 +430,68 @@ export const useGetApiDoctorsId = <TError = unknown>(
 		swrFn,
 		swrOptions,
 	);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Update a doctor's cabinet address (Admin)
+ */
+export const putApiDoctorsIdAddress = (
+	id: string,
+	putApiDoctorsIdAddressBody?: PutApiDoctorsIdAddressBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsIdAddress200>(
+		{
+			url: `/api/doctors/${id}/address`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsIdAddressBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsIdAddressMutationFetcher = (
+	id: string,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PutApiDoctorsIdAddressBody | undefined }) => {
+		return putApiDoctorsIdAddress(id, arg, options);
+	};
+};
+export const getPutApiDoctorsIdAddressMutationKey = (id: string) =>
+	[`/api/doctors/${id}/address`] as const;
+
+export type PutApiDoctorsIdAddressMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsIdAddress>>
+>;
+
+/**
+ * @summary Update a doctor's cabinet address (Admin)
+ */
+export const usePutApiDoctorsIdAddress = <TError = unknown>(
+	id: string,
+	options?: {
+		swr?: SWRMutationConfiguration<
+			Awaited<ReturnType<typeof putApiDoctorsIdAddress>>,
+			TError,
+			Key,
+			PutApiDoctorsIdAddressBody | undefined,
+			Awaited<ReturnType<typeof putApiDoctorsIdAddress>>
+		> & { swrKey?: string };
+		request?: SecondParameter<typeof customInstance>;
+	},
+) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsIdAddressMutationKey(id);
+	const swrFn = getPutApiDoctorsIdAddressMutationFetcher(id, requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
 	return {
 		swrKey,
@@ -660,6 +777,63 @@ export const useGetApiDoctorsBestFitRange = <TError = unknown>(
 	};
 };
 /**
+ * @summary Update the address of the doctor's own cabinet
+ */
+export const putApiDoctorsMeAddress = (
+	putApiDoctorsMeAddressBody?: PutApiDoctorsMeAddressBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsMeAddress200>(
+		{
+			url: `/api/doctors/me/address`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsMeAddressBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsMeAddressMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (_: Key, { arg }: { arg: PutApiDoctorsMeAddressBody | undefined }) => {
+		return putApiDoctorsMeAddress(arg, options);
+	};
+};
+export const getPutApiDoctorsMeAddressMutationKey = () =>
+	[`/api/doctors/me/address`] as const;
+
+export type PutApiDoctorsMeAddressMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsMeAddress>>
+>;
+
+/**
+ * @summary Update the address of the doctor's own cabinet
+ */
+export const usePutApiDoctorsMeAddress = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof putApiDoctorsMeAddress>>,
+		TError,
+		Key,
+		PutApiDoctorsMeAddressBody | undefined,
+		Awaited<ReturnType<typeof putApiDoctorsMeAddress>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsMeAddressMutationKey();
+	const swrFn = getPutApiDoctorsMeAddressMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
  * @summary Set the logo and stamp printed on invoices
  */
 export const putApiDoctorsMeBranding = (
@@ -711,6 +885,67 @@ export const usePutApiDoctorsMeBranding = <TError = unknown>(options?: {
 
 	const swrKey = swrOptions?.swrKey ?? getPutApiDoctorsMeBrandingMutationKey();
 	const swrFn = getPutApiDoctorsMeBrandingMutationFetcher(requestOptions);
+
+	const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+	return {
+		swrKey,
+		...query,
+	};
+};
+/**
+ * @summary Set the language of the doctor's AI consultation notes
+ */
+export const putApiDoctorsMeNoteLanguage = (
+	putApiDoctorsMeNoteLanguageBody?: PutApiDoctorsMeNoteLanguageBody,
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return customInstance<PutApiDoctorsMeNoteLanguage200>(
+		{
+			url: `/api/doctors/me/note-language`,
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			data: putApiDoctorsMeNoteLanguageBody,
+		},
+		options,
+	);
+};
+
+export const getPutApiDoctorsMeNoteLanguageMutationFetcher = (
+	options?: SecondParameter<typeof customInstance>,
+) => {
+	return (
+		_: Key,
+		{ arg }: { arg: PutApiDoctorsMeNoteLanguageBody | undefined },
+	) => {
+		return putApiDoctorsMeNoteLanguage(arg, options);
+	};
+};
+export const getPutApiDoctorsMeNoteLanguageMutationKey = () =>
+	[`/api/doctors/me/note-language`] as const;
+
+export type PutApiDoctorsMeNoteLanguageMutationResult = NonNullable<
+	Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>
+>;
+
+/**
+ * @summary Set the language of the doctor's AI consultation notes
+ */
+export const usePutApiDoctorsMeNoteLanguage = <TError = unknown>(options?: {
+	swr?: SWRMutationConfiguration<
+		Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>,
+		TError,
+		Key,
+		PutApiDoctorsMeNoteLanguageBody | undefined,
+		Awaited<ReturnType<typeof putApiDoctorsMeNoteLanguage>>
+	> & { swrKey?: string };
+	request?: SecondParameter<typeof customInstance>;
+}) => {
+	const { swr: swrOptions, request: requestOptions } = options ?? {};
+
+	const swrKey =
+		swrOptions?.swrKey ?? getPutApiDoctorsMeNoteLanguageMutationKey();
+	const swrFn = getPutApiDoctorsMeNoteLanguageMutationFetcher(requestOptions);
 
 	const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

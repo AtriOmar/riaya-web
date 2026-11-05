@@ -108,7 +108,7 @@ export default function NewPatientForm() {
 		try {
 			const patient = await createPatient({
 				...values,
-				cin: values.cin.toUpperCase(),
+				cin: values.cin,
 				phoneNumber: phone,
 				phoneOwnerRelationship: phoneIsSomeoneElses
 					? values.phoneOwnerRelationship

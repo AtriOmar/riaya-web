@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { json, requireInternal, validationError } from "@/lib/api-utils";
 import { apiError } from "@/lib/errors";
-import { getGeoProvider, placeResultSchema } from "@/lib/geo";
+import { getPlaceSearchProvider, placeResultSchema } from "@/lib/geo";
 import { registry } from "@/lib/openapi";
 
 // ─── GET /api/internal/places/search ─────────────────────────────────────────
 // Full-text place lookup for the voice service (patient says a place name).
-// Uses the active geo provider (GEO_PROVIDER).
+// Uses the place search provider (GEO_SEARCH_PROVIDER).
 
 const schema = z.object({
 	text: z.string().min(1).max(300),
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 		if (!parsed.success) return validationError(parsed.error.issues);
 
 		const { text, lat, lng, radiusM } = parsed.data;
-		const results = await getGeoProvider().search({
+		const results = await getPlaceSearchProvider().search({
 			text,
 			radiusM,
 			near: lat != null && lng != null ? { lat, lng } : undefined,

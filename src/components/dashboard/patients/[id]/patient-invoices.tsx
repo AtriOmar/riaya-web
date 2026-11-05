@@ -12,6 +12,7 @@ import {
 } from "@/components/dashboard/invoices/invoice-status";
 import DataTable, { type Column } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import WhatsappGate from "@/components/whatsapp/whatsapp-gate";
 import { getErrorMessage } from "@/lib/error-handling";
 import type { PaymentMethod } from "@/lib/invoice";
 import { formatTnd } from "@/lib/money";
@@ -111,23 +112,27 @@ export function PatientInvoices({
 			cell: (row) =>
 				row.status !== "cancelled" ? (
 					<div className="flex flex-wrap justify-end gap-1">
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							disabled={sendingId === row.id}
-							onClick={(e) => {
-								e.stopPropagation();
-								void onSendWhatsapp(row);
-							}}
-						>
-							<MessageSquare className="size-4" />
-							{sendingId === row.id
-								? "Sending…"
-								: row.sentViaWhatsapp
-									? "Resend"
-									: "WhatsApp"}
-						</Button>
+						<WhatsappGate>
+							{(whatsappOff) => (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={whatsappOff || sendingId === row.id}
+									onClick={(e) => {
+										e.stopPropagation();
+										void onSendWhatsapp(row);
+									}}
+								>
+									<MessageSquare className="size-4" />
+									{sendingId === row.id
+										? "Sending…"
+										: row.sentViaWhatsapp
+											? "Resend"
+											: "WhatsApp"}
+								</Button>
+							)}
+						</WhatsappGate>
 						<Button
 							type="button"
 							variant="outline"

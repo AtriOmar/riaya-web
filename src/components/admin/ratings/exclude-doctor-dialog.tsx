@@ -23,6 +23,8 @@ type Props = {
 	onOpenChange: (open: boolean) => void;
 	doctorId: number;
 	doctorName: string;
+	/** Called after the exclusion is saved, for views not covered by the ratings revalidation. */
+	onExcluded?: () => void;
 };
 
 export default function ExcludeDoctorDialog({
@@ -30,6 +32,7 @@ export default function ExcludeDoctorDialog({
 	onOpenChange,
 	doctorId,
 	doctorName,
+	onExcluded,
 }: Props) {
 	const [reason, setReason] = useState("");
 	const { trigger, isMutating } = usePostApiDoctorsIdBestFitExclusion(
@@ -45,6 +48,7 @@ export default function ExcludeDoctorDialog({
 			await trigger({ reason: reason.trim() });
 			toast.success(`Dr ${doctorName} no longer receives referrals`);
 			await revalidateRatingsData();
+			onExcluded?.();
 			onOpenChange(false);
 		} catch (e) {
 			toast.error(getErrorMessage(e));

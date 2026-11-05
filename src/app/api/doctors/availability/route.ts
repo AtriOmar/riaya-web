@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
 				firstName: doctorData.firstName,
 				lastName: doctorData.lastName,
 				cabinetName: doctorData.cabinetName,
-				address: doctorData.address ?? null,
+				address: doctorData.cabinetAddress ?? null,
 			},
 			found: slots.length > 0,
 			slots: slots.map((slot) => ({ start: slot.start, end: slot.end })),

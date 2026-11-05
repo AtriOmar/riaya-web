@@ -4,6 +4,7 @@ import { Loader2, Lock, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import LanguageSelect from "@/components/dashboard/language-select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -11,11 +12,13 @@ import {
 	type ConsultationSummary,
 } from "@/lib/consultation-summary";
 import { getErrorMessage } from "@/lib/error-handling";
+import { type Language, normalizeLanguage } from "@/lib/language";
 import { useGetApiBillingSubscription } from "@/services/generated/billing/billing";
 import {
 	usePatchApiRecordingsId,
 	usePostApiRecordingsIdSummary,
 } from "@/services/generated/recordings/recordings";
+import { useGetApiUsersMe } from "@/services/generated/users/users";
 
 type SummaryRecording = {
 	id: number;
@@ -41,7 +44,12 @@ export function RecordingSummary({
 	const { trigger: update, isMutating: isSaving } = usePatchApiRecordingsId(
 		String(recording.id),
 	);
+	const { data: me } = useGetApiUsersMe();
 	const [draft, setDraft] = useState<ConsultationSummary | null>(null);
+	// Language for the next (re)write; the doctor's default until they pick one
+	const [chosenLanguage, setChosenLanguage] = useState<Language | null>(null);
+	const language =
+		chosenLanguage ?? normalizeLanguage(me?.doctorProfile?.noteLanguage);
 
 	// Nothing to summarize until there's a transcript
 	if (recording.transcriptStatus !== "done" || !billing) return null;
@@ -62,7 +70,7 @@ export function RecordingSummary({
 
 	async function regenerate() {
 		try {
-			await summarize();
+			await summarize({ language });
 			onChanged();
 		} catch (err) {
 			toast.error(getErrorMessage(err, "Couldn't write the summary."));
@@ -97,6 +105,12 @@ export function RecordingSummary({
 						The summary couldn't be written.
 					</p>
 				)}
+				<LanguageSelect
+					value={language}
+					onChange={setChosenLanguage}
+					className="h-8 w-28"
+					label="Note language"
+				/>
 				<Button
 					size="sm"
 					variant="outline"
@@ -150,7 +164,13 @@ export function RecordingSummary({
 					<Sparkles className="size-3.5 text-primary" />
 					Consultation note
 				</p>
-				<div className="flex gap-0.5">
+				<div className="flex items-center gap-0.5">
+					<LanguageSelect
+						value={language}
+						onChange={setChosenLanguage}
+						className="h-7 w-28 text-xs"
+						label="Language of the rewritten note"
+					/>
 					<Button
 						size="icon-sm"
 						variant="ghost"
@@ -166,7 +186,7 @@ export function RecordingSummary({
 						variant="ghost"
 						className="text-muted-foreground"
 						aria-label="Rewrite note from the transcript"
-						title="Rewrite from the transcript (replaces your edits)"
+						title="Rewrite from the transcript in the chosen language (replaces your edits)"
 						onClick={regenerate}
 					>
 						<RefreshCw className="size-3.5" />

@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Request logs
+/logs/
+
+# geocoding comparison output (scripts/geocode)
+/data/geocoding/

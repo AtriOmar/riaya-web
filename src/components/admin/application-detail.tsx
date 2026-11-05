@@ -1,22 +1,34 @@
 "use client";
 
-import { AlertCircle, Check, CheckCircle2, Clock, X } from "lucide-react";
+import {
+	AlertCircle,
+	ArrowLeft,
+	Check,
+	CheckCircle2,
+	Clock,
+	FileX,
+	X,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { mutate as mutateGlobal } from "swr";
+import RejectApplicationDialog from "@/components/admin/reject-application-dialog";
 import UserInfoReadOnly from "@/components/dashboard/profile/user-info-readonly";
 import { CubeLoader } from "@/components/loaders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
+import { getApiErrorCode, getErrorMessage } from "@/lib/error-handling";
 import {
+	getGetApiDoctorApplicationsCountKey,
 	useGetApiDoctorApplicationsId,
 	usePutApiDoctorApplicationsId,
 } from "@/services/generated/doctors/doctors";
@@ -27,14 +39,18 @@ export default function ApplicationDetail({
 	applicationId: number;
 }) {
 	const id = String(applicationId);
-	const { data: app, isLoading, mutate } = useGetApiDoctorApplicationsId(id);
+	const {
+		data: app,
+		isLoading,
+		error,
+		mutate,
+	} = useGetApiDoctorApplicationsId(id);
 
 	const { trigger: updateApplication, isMutating: saving } =
 		usePutApiDoctorApplicationsId(id);
 
 	const [approveOpen, setApproveOpen] = useState(false);
 	const [rejectOpen, setRejectOpen] = useState(false);
-	const [rejectReasons, setRejectReasons] = useState("");
 
 	if (isLoading) {
 		return (
@@ -44,8 +60,45 @@ export default function ApplicationDetail({
 		);
 	}
 
-	if (!app)
-		return <p className="text-muted-foreground">Application not found.</p>;
+	if (error || !app) {
+		const notFound = getApiErrorCode(error) === "APPLICATION_NOT_FOUND";
+		return (
+			<Card className="max-w-md">
+				<CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+					{notFound ? (
+						<FileX className="size-8 text-muted-foreground" />
+					) : (
+						<AlertCircle className="size-8 text-muted-foreground" />
+					)}
+					<div className="space-y-1">
+						<p className="font-medium">
+							{notFound
+								? "Application not found"
+								: "Could not load application"}
+						</p>
+						<p className="text-muted-foreground text-sm">
+							{notFound
+								? "It may have been deleted, or the link is out of date."
+								: getErrorMessage(error)}
+						</p>
+					</div>
+					<div className="flex gap-2">
+						<Button asChild variant="outline" size="sm">
+							<Link href="/admin/doctor-applications">
+								<ArrowLeft className="size-4" />
+								All applications
+							</Link>
+						</Button>
+						{!notFound && (
+							<Button size="sm" onClick={() => mutate()}>
+								Try again
+							</Button>
+						)}
+					</div>
+				</CardContent>
+			</Card>
+		);
+	}
 
 	async function handleApprove() {
 		try {
@@ -55,17 +108,14 @@ export default function ApplicationDetail({
 			toast.success("Application approved");
 			setApproveOpen(false);
 			mutate();
+			mutateGlobal(getGetApiDoctorApplicationsCountKey());
 		} catch {
 			toast.error("Failed to approve application");
 		}
 	}
 
-	async function handleReject() {
+	async function handleReject(reasons: string[]) {
 		try {
-			const reasons = rejectReasons
-				.split("\n")
-				.map((r) => r.trim())
-				.filter(Boolean);
 			await updateApplication({
 				status: "rejected",
 				rejectionReasons: reasons,
@@ -73,6 +123,7 @@ export default function ApplicationDetail({
 			toast.success("Application rejected");
 			setRejectOpen(false);
 			mutate();
+			mutateGlobal(getGetApiDoctorApplicationsCountKey());
 		} catch {
 			toast.error("Failed to reject application");
 		}
@@ -100,35 +151,12 @@ export default function ApplicationDetail({
 				</DialogContent>
 			</Dialog>
 
-			{/* Reject Dialog */}
-			<Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Reject Application</DialogTitle>
-					</DialogHeader>
-					<div className="space-y-3">
-						<Label>Rejection Reasons (one per line)</Label>
-						<Textarea
-							value={rejectReasons}
-							onChange={(e) => setRejectReasons(e.target.value)}
-							rows={4}
-							placeholder="Reason 1&#10;Reason 2"
-						/>
-						<div className="flex justify-end gap-2">
-							<Button variant="outline" onClick={() => setRejectOpen(false)}>
-								Cancel
-							</Button>
-							<Button
-								variant="destructive"
-								onClick={handleReject}
-								disabled={saving}
-							>
-								Reject
-							</Button>
-						</div>
-					</div>
-				</DialogContent>
-			</Dialog>
+			<RejectApplicationDialog
+				open={rejectOpen}
+				onOpenChange={setRejectOpen}
+				saving={saving}
+				onConfirm={handleReject}
+			/>
 
 			{/* Application Status Banner */}
 			<Alert
@@ -172,7 +200,7 @@ export default function ApplicationDetail({
 
 			{/* Application Info */}
 			<div>
-				<UserInfoReadOnly info={app} title="" />
+				<UserInfoReadOnly info={app} />
 			</div>
 
 			{/* Actions */}

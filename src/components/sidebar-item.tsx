@@ -18,6 +18,8 @@ type SidebarItemData = {
 	strict?: boolean;
 	disabled?: boolean;
 	badge?: string;
+	/** Warning shown as a red "!" after the name (a dot on the icon when collapsed), and as the tooltip. */
+	alert?: string;
 };
 
 export default function SidebarItem({
@@ -47,7 +49,12 @@ export default function SidebarItem({
 
 	const content = (
 		<>
-			{item.icon}
+			<span className="relative flex">
+				{item.icon}
+				{item.alert && collapsed && (
+					<span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-destructive" />
+				)}
+			</span>
 			{!collapsed && (
 				<span className="flex items-center justify-between gap-2 min-w-0">
 					<span className="truncate">{item.name}</span>
@@ -65,6 +72,15 @@ export default function SidebarItem({
 							{item.badge}
 						</span>
 					) : null}
+					{item.alert && (
+						<span
+							role="img"
+							aria-label={item.alert}
+							className="flex size-5 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white"
+						>
+							!
+						</span>
+					)}
 				</span>
 			)}
 		</>
@@ -72,11 +88,13 @@ export default function SidebarItem({
 
 	const tooltipLabel = item.disabled
 		? "Verify your profile to access this page"
-		: item.badge
-			? `${item.name} (${item.badge})`
-			: item.name;
+		: item.alert
+			? `${item.name}: ${item.alert}`
+			: item.badge
+				? `${item.name} (${item.badge})`
+				: item.name;
 
-	if (item.disabled || collapsed) {
+	if (item.disabled || collapsed || item.alert) {
 		const trigger = item.disabled ? (
 			<div className={className}>{content}</div>
 		) : (

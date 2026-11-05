@@ -54,7 +54,12 @@ export async function GET(req: NextRequest) {
 // ─── POST /api/patients ───────────────────────────────────────────────────────
 
 const createSchema = z.object({
-	cin: z.string().min(1),
+	/** Optional: young patients may not have a national ID card yet. */
+	cin: z
+		.string()
+		.trim()
+		.regex(/^(\d{8})?$/, "The CIN number has 8 digits")
+		.optional(),
 	firstName: z.string().min(1),
 	lastName: z.string().min(1),
 	dateOfBirth: z.string().datetime(),
@@ -95,7 +100,7 @@ export async function POST(req: NextRequest) {
 			.values({
 				personId: personRow.id,
 				doctorId: profile.id,
-				cin: parsed.data.cin,
+				cin: parsed.data.cin || null,
 				firstName: parsed.data.firstName,
 				lastName: parsed.data.lastName,
 				dateOfBirth: new Date(parsed.data.dateOfBirth),

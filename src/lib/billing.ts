@@ -1,19 +1,22 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { billingInvoice } from "@/db/schema";
+import { billingInvoiceCounter } from "@/db/schema";
 
 /** Generate sequential invoice number: INV-YYYY-NNN */
 export async function nextBillingInvoiceNumber(): Promise<string> {
 	const year = new Date().getFullYear();
-	const prefix = `INV-${year}-`;
 
+	// One atomic upsert, so concurrent callers each get a distinct sequence.
 	const [row] = await db
-		.select({ count: sql<number>`count(*)` })
-		.from(billingInvoice)
-		.where(sql`number like ${prefix + "%"}`);
+		.insert(billingInvoiceCounter)
+		.values({ year, lastSeq: 1 })
+		.onConflictDoUpdate({
+			target: billingInvoiceCounter.year,
+			set: { lastSeq: sql`${billingInvoiceCounter.lastSeq} + 1` },
+		})
+		.returning({ lastSeq: billingInvoiceCounter.lastSeq });
 
-	const seq = (Number(row?.count ?? 0) + 1).toString().padStart(3, "0");
-	return `${prefix}${seq}`;
+	return `INV-${year}-${String(row.lastSeq).padStart(3, "0")}`;
 }
 
 /** Konnect orderId for first-time upgrades (no invoice yet). */

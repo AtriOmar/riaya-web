@@ -1,20 +1,32 @@
+import { useEffect } from "react";
+
 type WithTranscriptStatus = {
 	transcriptStatus?: string | null;
 	summaryStatus?: string | null;
 };
 
+const POLL_MS = 1000;
+
 /**
- * SWR `refreshInterval` for recordings: poll every few seconds while any
- * transcript or AI summary is still being written in the background.
+ * Re-fetches recordings every second while any transcript or AI summary
+ * is still being written in the background.
+ *
+ * Not SWR's `refreshInterval` function: SWR reads it once on mount, when there
+ * is no data yet, so polling would never start for a freshly saved recording.
  */
-export function transcriptRefreshInterval(
+export function useTranscriptPolling(
 	data: WithTranscriptStatus | WithTranscriptStatus[] | undefined,
+	mutate: () => unknown,
 ) {
 	const items = Array.isArray(data) ? data : data ? [data] : [];
-	return items.some(
+	const pending = items.some(
 		(r) =>
 			r.transcriptStatus === "processing" || r.summaryStatus === "processing",
-	)
-		? 4000
-		: 0;
+	);
+
+	useEffect(() => {
+		if (!pending) return;
+		const timer = setInterval(() => void mutate(), POLL_MS);
+		return () => clearInterval(timer);
+	}, [pending, mutate]);
 }

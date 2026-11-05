@@ -190,6 +190,62 @@
       "when": 1792906170059,
       "tag": "0026_emergency_waves",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793691406754,
+      "tag": "0027_platform_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793730771955,
+      "tag": "0028_cabinet_address",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793746998168,
+      "tag": "0029_backfill_medical_council_from_applications",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793747871476,
+      "tag": "0030_doctor_application_cin",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793748146928,
+      "tag": "0031_doctor_profile_cin_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793749087285,
+      "tag": "0032_doctor_note_language",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793857031380,
+      "tag": "0033_billing_invoice_counter",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793874228549,
+      "tag": "0034_create_call_usage",
+      "breakpoints": true
     }
   ]
 }

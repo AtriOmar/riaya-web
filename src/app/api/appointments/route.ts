@@ -303,7 +303,8 @@ export async function PUT(req: NextRequest) {
 							console.error("NEXT_PUBLIC_REALTIME_URL is not set");
 						} else {
 							await sendWhatsapp(httpUrl, {
-								userId: full?.doctor?.userId,
+								// The admin dashboard links the clinic line under the "admin" id.
+								userId: "admin",
 								phone,
 								message,
 							}).catch((waErr) =>

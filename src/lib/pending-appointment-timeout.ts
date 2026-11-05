@@ -1,10 +1,7 @@
+import { getPlatformSettings } from "@/lib/platform-settings";
 import { pendingTimeoutQueue } from "@/lib/queue";
 
-/** How long an AI pending request may sit unanswered before auto-cancel. */
-export const PENDING_APPOINTMENT_TIMEOUT_MS = 10 * 60 * 1000;
-
-/** How long one wave of urgent requests waits for a doctor before the next wave. */
-export const EMERGENCY_WAVE_TIMEOUT_MS = 4 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
 
 export function pendingTimeoutJobIdForAppointment(appointmentId: number) {
 	return `pending-timeout:appt:${appointmentId}`;
@@ -20,17 +17,19 @@ export function pendingTimeoutJobIdForEmergency({
 	return `pending-timeout:emergency:${emergencyGroupId}-wave-${wave}`;
 }
 
+/** An AI pending request auto-cancels after the admin-set number of minutes. */
 export async function schedulePendingAppointmentTimeout(params: {
 	appointmentId: number;
 	delayMs?: number;
 }) {
+	const { pendingTimeoutMinutes } = await getPlatformSettings();
 	const jobId = pendingTimeoutJobIdForAppointment(params.appointmentId);
 	await pendingTimeoutQueue.add(
 		"pending-timeout",
 		{ kind: "appointment" as const, appointmentId: params.appointmentId },
 		{
 			jobId,
-			delay: params.delayMs ?? PENDING_APPOINTMENT_TIMEOUT_MS,
+			delay: params.delayMs ?? pendingTimeoutMinutes * MINUTE_MS,
 			removeOnComplete: true,
 			removeOnFail: true,
 		},
@@ -39,6 +38,7 @@ export async function schedulePendingAppointmentTimeout(params: {
 
 /** When this wave of urgent requests runs out of time, move to the next wave. */
 export async function scheduleEmergencyPendingTimeout(params: EmergencyWave) {
+	const { emergencyWaveTimeoutMinutes } = await getPlatformSettings();
 	await pendingTimeoutQueue.add(
 		"pending-timeout",
 		{
@@ -48,7 +48,7 @@ export async function scheduleEmergencyPendingTimeout(params: EmergencyWave) {
 		},
 		{
 			jobId: pendingTimeoutJobIdForEmergency(params),
-			delay: EMERGENCY_WAVE_TIMEOUT_MS,
+			delay: emergencyWaveTimeoutMinutes * MINUTE_MS,
 			removeOnComplete: true,
 			removeOnFail: true,
 		},

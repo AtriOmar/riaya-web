@@ -17,6 +17,7 @@ import {
 import type { AiChatPart } from "../lib/ai-chat-parts";
 import type { ConsultationSummary } from "../lib/consultation-summary";
 import type { Availability } from "../lib/doctor-slots";
+import type { Language } from "../lib/language";
 import type { SpeakerRoles } from "../lib/speaker-roles";
 import { account, session, user } from "./auth-schema";
 
@@ -74,8 +75,8 @@ export const doctorProfile = pgTable(
 		cin: varchar("cin", { length: 100 }),
 		tin: varchar("tin", { length: 100 }), // Tax Identification Number
 		status: varchar("status", { length: 50 }).default("none"), // none | pending | verified | rejected | banned
-		address: text("address"),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
+		cabinetAddress: text("cabinet_address"),
 		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
@@ -91,6 +92,11 @@ export const doctorProfile = pgTable(
 		// Printed on invoices (Pro). PNG or JPEG on the CDN.
 		logoUrl: varchar("logo_url", { length: 1024 }),
 		stampUrl: varchar("stamp_url", { length: 1024 }),
+		// Language of the AI consultation notes written for this doctor
+		noteLanguage: varchar("note_language", { length: 8 })
+			.$type<Language>()
+			.notNull()
+			.default("fr"),
 		// Admin decision to stop referring patients to this doctor (best-fit,
 		// emergency fan-out, refusal suggestions). Null = listed. The doctor sees the reason.
 		bestFitExcludedAt: timestamp("best_fit_excluded_at"),
@@ -106,7 +112,7 @@ export const doctorProfile = pgTable(
 		index("doctor_profile_status_idx").on(table.status),
 		index("doctor_profile_cabinet_city_id_idx").on(table.cabinetCityId),
 		index("doctor_profile_speciality_id_idx").on(table.specialityId),
-		index("doctor_profile_cin_idx").on(table.cin),
+		uniqueIndex("doctor_profile_cin_idx").on(table.cin),
 		// An exclusion always carries the reason shown to the doctor.
 		check(
 			"doctor_profile_best_fit_exclusion_reason",
@@ -449,9 +455,11 @@ export const doctorApplication = pgTable(
 		userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
 		firstName: varchar("first_name", { length: 255 }),
 		lastName: varchar("last_name", { length: 255 }),
+		cin: varchar("cin", { length: 100 }),
 		cinRecto: varchar("cin_recto", { length: 255 }),
 		cinVerso: varchar("cin_verso", { length: 255 }),
 		cabinetName: varchar("cabinet_name", { length: 255 }),
+		cabinetAddress: text("cabinet_address"),
 		cabinetCityId: integer("cabinet_city_id").references(() => cities.id),
 		cabinetLongitude: doublePrecision("cabinet_longitude"),
 		cabinetLatitude: doublePrecision("cabinet_latitude"),
@@ -532,6 +540,32 @@ export const callEvent = pgTable(
 	],
 );
 
+// ─── Call Usage ───────────────────────────────────────────────────────────────
+// Billed tokens of one model during one call. Tokens are stored, not dollars:
+// prices change, so the cost is computed at read time from the price list.
+
+export const callUsage = pgTable(
+	"call_usage",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		callId: integer("call_id")
+			.notNull()
+			.references(() => call.id, { onDelete: "cascade" }),
+		model: varchar("model", { length: 100 }).notNull(),
+		textInputTokens: integer("text_input_tokens").notNull().default(0),
+		audioInputTokens: integer("audio_input_tokens").notNull().default(0),
+		textOutputTokens: integer("text_output_tokens").notNull().default(0),
+		audioOutputTokens: integer("audio_output_tokens").notNull().default(0),
+		// The provider's own usage object, kept so the counts can be recomputed.
+		raw: jsonb("raw"),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("call_usage_call_id_model_idx").on(table.callId, table.model),
+	],
+);
+
 // ─── Call Report ──────────────────────────────────────────────────────────────
 // Filed by the voice AI (`report_abuse`) when a caller is abusive. Admins review
 // it and either dismiss it or block the number (see `blockedPhone`).
@@ -596,6 +630,54 @@ export const blockedPhone = pgTable("blocked_phone", {
 	lastRejectedAt: timestamp("last_rejected_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ─── Platform Settings ────────────────────────────────────────────────────────
+// One row (id = 1) of admin-editable values. A missing row means the defaults
+// in `lib/platform-settings.ts`; the first save creates it.
+
+export const platformSettings = pgTable(
+	"platform_settings",
+	{
+		id: integer("id").primaryKey().default(1),
+		/** How long an AI pending request waits for the doctor before auto-cancel. */
+		pendingTimeoutMinutes: integer("pending_timeout_minutes")
+			.notNull()
+			.default(10),
+		/** How long one wave of urgent requests waits before the next wave. */
+		emergencyWaveTimeoutMinutes: integer("emergency_wave_timeout_minutes")
+			.notNull()
+			.default(4),
+		/** Doctors who get an urgent request in each wave. */
+		emergencyFanoutCount: integer("emergency_fanout_count")
+			.notNull()
+			.default(3),
+		/** Waves sent before the patient is told that no doctor answered. */
+		emergencyMaxWaves: integer("emergency_max_waves").notNull().default(3),
+		updatedBy: text("updated_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [
+		check("platform_settings_single_row", sql`${table.id} = 1`),
+		check(
+			"platform_settings_pending_timeout_range",
+			sql`${table.pendingTimeoutMinutes} between 1 and 120`,
+		),
+		check(
+			"platform_settings_wave_timeout_range",
+			sql`${table.emergencyWaveTimeoutMinutes} between 1 and 30`,
+		),
+		check(
+			"platform_settings_fanout_range",
+			sql`${table.emergencyFanoutCount} between 1 and 10`,
+		),
+		check(
+			"platform_settings_max_waves_range",
+			sql`${table.emergencyMaxWaves} between 1 and 10`,
+		),
+	],
+);
 
 // ─── Doctor Unavailability ────────────────────────────────────────────────────
 
@@ -692,6 +774,13 @@ export const billingInvoice = pgTable(
 		index("billing_invoice_konnect_ref_idx").on(table.konnectPaymentRef),
 	],
 );
+
+// Last invoice sequence handed out per year. Incremented atomically so two
+// concurrent requests never get the same invoice number.
+export const billingInvoiceCounter = pgTable("billing_invoice_counter", {
+	year: integer("year").primaryKey(),
+	lastSeq: integer("last_seq").notNull(),
+});
 
 // ─── Consultation Recording ───────────────────────────────────────────────────
 // Recordings made by the doctor during or after a patient consultation.
@@ -1014,7 +1103,15 @@ export const callRelations = relations(call, ({ one, many }) => ({
 		references: [appointment.id],
 	}),
 	events: many(callEvent),
+	usage: many(callUsage),
 	report: one(callReport),
+}));
+
+export const callUsageRelations = relations(callUsage, ({ one }) => ({
+	call: one(call, {
+		fields: [callUsage.callId],
+		references: [call.id],
+	}),
 }));
 
 export const callReportRelations = relations(callReport, ({ one }) => ({

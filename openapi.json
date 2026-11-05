@@ -987,14 +987,19 @@
                                     "args": {
                                       "type": "object",
                                       "properties": {
-                                        "status": {
-                                          "type": "string",
-                                          "enum": [
-                                            "unpaid",
-                                            "partially_paid",
-                                            "paid",
-                                            "cancelled"
-                                          ]
+                                        "statuses": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "enum": [
+                                              "unpaid",
+                                              "partially_paid",
+                                              "paid",
+                                              "cancelled"
+                                            ]
+                                          },
+                                          "minItems": 1,
+                                          "description": "Only these statuses; pass several in one call, e.g. both unpaid and partially_paid for pending invoices"
                                         },
                                         "patientId": {
                                           "type": "integer",
@@ -6687,6 +6692,168 @@
         }
       }
     },
+    "/api/calls/{id}/usage": {
+      "put": {
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Save the billed tokens of a call",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "textInputTokens": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "audioInputTokens": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "textOutputTokens": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "audioOutputTokens": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "raw": {
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "model",
+                  "textInputTokens",
+                  "audioInputTokens",
+                  "textOutputTokens",
+                  "audioOutputTokens"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "callId": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "model": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "textInputTokens": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "audioInputTokens": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "textOutputTokens": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "audioOutputTokens": {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 2147483647
+                    },
+                    "raw": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "nullable": true
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "callId",
+                    "model",
+                    "textInputTokens",
+                    "audioInputTokens",
+                    "textOutputTokens",
+                    "audioOutputTokens",
+                    "raw",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cities": {
       "get": {
         "tags": [
@@ -7137,6 +7304,11 @@
                         "nullable": true,
                         "maxLength": 255
                       },
+                      "cin": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 100
+                      },
                       "cinRecto": {
                         "type": "string",
                         "nullable": true,
@@ -7151,6 +7323,10 @@
                         "type": "string",
                         "nullable": true,
                         "maxLength": 255
+                      },
+                      "cabinetAddress": {
+                        "type": "string",
+                        "nullable": true
                       },
                       "cabinetCityId": {
                         "type": "integer",
@@ -7338,9 +7514,11 @@
                       "userId",
                       "firstName",
                       "lastName",
+                      "cin",
                       "cinRecto",
                       "cinVerso",
                       "cabinetName",
+                      "cabinetAddress",
                       "cabinetCityId",
                       "cabinetLongitude",
                       "cabinetLatitude",
@@ -7382,6 +7560,10 @@
                     "type": "string",
                     "minLength": 1
                   },
+                  "cin": {
+                    "type": "string",
+                    "pattern": "^\\d{8}$"
+                  },
                   "cinRecto": {
                     "type": "string",
                     "minLength": 1
@@ -7393,6 +7575,11 @@
                   "cabinetName": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
                   },
                   "cabinetCityId": {
                     "type": "integer",
@@ -7428,9 +7615,11 @@
                 "required": [
                   "firstName",
                   "lastName",
+                  "cin",
                   "cinRecto",
                   "cinVerso",
                   "cabinetName",
+                  "cabinetAddress",
                   "specialityId",
                   "tin",
                   "medicalCouncilNumber",
@@ -7467,6 +7656,11 @@
                       "nullable": true,
                       "maxLength": 255
                     },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
                     "cinRecto": {
                       "type": "string",
                       "nullable": true,
@@ -7481,6 +7675,10 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "cabinetCityId": {
                       "type": "integer",
@@ -7549,9 +7747,11 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -7614,6 +7814,11 @@
                       "nullable": true,
                       "maxLength": 255
                     },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
                     "cinRecto": {
                       "type": "string",
                       "nullable": true,
@@ -7628,6 +7833,10 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "cabinetCityId": {
                       "type": "integer",
@@ -7815,9 +8024,11 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -7904,6 +8115,34 @@
         }
       }
     },
+    "/api/doctor-applications/count": {
+      "get": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Count pending doctor applications (Admin)",
+        "responses": {
+          "200": {
+            "description": "Number of pending applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctor-applications/me": {
       "get": {
         "tags": [
@@ -7937,6 +8176,11 @@
                       "nullable": true,
                       "maxLength": 255
                     },
+                    "cin": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 100
+                    },
                     "cinRecto": {
                       "type": "string",
                       "nullable": true,
@@ -7951,6 +8195,10 @@
                       "type": "string",
                       "nullable": true,
                       "maxLength": 255
+                    },
+                    "cabinetAddress": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "cabinetCityId": {
                       "type": "integer",
@@ -8138,9 +8386,11 @@
                     "userId",
                     "firstName",
                     "lastName",
+                    "cin",
                     "cinRecto",
                     "cinVerso",
                     "cabinetName",
+                    "cabinetAddress",
                     "cabinetCityId",
                     "cabinetLongitude",
                     "cabinetLatitude",
@@ -8534,14 +8784,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -8618,6 +8868,10 @@
                           "type": "string",
                           "nullable": true,
                           "maxLength": 1024
+                        },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
                         },
                         "bestFitExcludedAt": {
                           "type": "string",
@@ -8748,8 +9002,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -8761,6 +9015,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -8824,6 +9079,65 @@
                   "required": [
                     "doctor",
                     "appointments"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/{id}/address": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Update a doctor's cabinet address (Admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "cabinetAddress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cabinetAddress": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "cabinetAddress"
                   ]
                 }
               }
@@ -9244,10 +9558,6 @@
                         "nullable": true,
                         "maxLength": 50
                       },
-                      "address": {
-                        "type": "string",
-                        "nullable": true
-                      },
                       "cabinetName": {
                         "type": "string",
                         "nullable": true,
@@ -9307,6 +9617,10 @@
                         "nullable": true,
                         "maxLength": 1024
                       },
+                      "noteLanguage": {
+                        "type": "string",
+                        "maxLength": 8
+                      },
                       "bestFitExcludedAt": {
                         "type": "string",
                         "nullable": true,
@@ -9329,6 +9643,10 @@
                         "type": "string",
                         "nullable": true,
                         "format": "date-time"
+                      },
+                      "address": {
+                        "type": "string",
+                        "nullable": true
                       },
                       "distance": {
                         "type": "number"
@@ -9384,7 +9702,6 @@
                       "cin",
                       "tin",
                       "status",
-                      "address",
                       "cabinetName",
                       "cabinetCityId",
                       "cabinetLongitude",
@@ -9396,11 +9713,13 @@
                       "medicalCouncilCertificate",
                       "logoUrl",
                       "stampUrl",
+                      "noteLanguage",
                       "bestFitExcludedAt",
                       "bestFitExcludedBy",
                       "bestFitExcludedReason",
                       "createdAt",
                       "updatedAt",
+                      "address",
                       "distance",
                       "nextSlot"
                     ]
@@ -9444,6 +9763,15 @@
             },
             "required": false,
             "name": "lat",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(,\\d+)*$"
+            },
+            "required": false,
+            "name": "ids",
             "in": "query"
           }
         ],
@@ -9489,10 +9817,6 @@
                         "type": "string",
                         "nullable": true,
                         "maxLength": 50
-                      },
-                      "address": {
-                        "type": "string",
-                        "nullable": true
                       },
                       "cabinetName": {
                         "type": "string",
@@ -9553,6 +9877,10 @@
                         "nullable": true,
                         "maxLength": 1024
                       },
+                      "noteLanguage": {
+                        "type": "string",
+                        "maxLength": 8
+                      },
                       "bestFitExcludedAt": {
                         "type": "string",
                         "nullable": true,
@@ -9576,6 +9904,10 @@
                         "nullable": true,
                         "format": "date-time"
                       },
+                      "address": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "outsideRadius": {
                         "type": "boolean"
                       },
@@ -9598,7 +9930,6 @@
                       "cin",
                       "tin",
                       "status",
-                      "address",
                       "cabinetName",
                       "cabinetCityId",
                       "cabinetLongitude",
@@ -9610,11 +9941,13 @@
                       "medicalCouncilCertificate",
                       "logoUrl",
                       "stampUrl",
+                      "noteLanguage",
                       "bestFitExcludedAt",
                       "bestFitExcludedBy",
                       "bestFitExcludedReason",
                       "createdAt",
                       "updatedAt",
+                      "address",
                       "distance"
                     ]
                   }
@@ -9727,10 +10060,6 @@
                               "nullable": true,
                               "maxLength": 50
                             },
-                            "address": {
-                              "type": "string",
-                              "nullable": true
-                            },
                             "cabinetName": {
                               "type": "string",
                               "nullable": true,
@@ -9790,6 +10119,10 @@
                               "nullable": true,
                               "maxLength": 1024
                             },
+                            "noteLanguage": {
+                              "type": "string",
+                              "maxLength": 8
+                            },
                             "bestFitExcludedAt": {
                               "type": "string",
                               "nullable": true,
@@ -9812,6 +10145,10 @@
                               "type": "string",
                               "nullable": true,
                               "format": "date-time"
+                            },
+                            "address": {
+                              "type": "string",
+                              "nullable": true
                             },
                             "outsideRadius": {
                               "type": "boolean"
@@ -9871,7 +10208,6 @@
                             "cin",
                             "tin",
                             "status",
-                            "address",
                             "cabinetName",
                             "cabinetCityId",
                             "cabinetLongitude",
@@ -9883,11 +10219,13 @@
                             "medicalCouncilCertificate",
                             "logoUrl",
                             "stampUrl",
+                            "noteLanguage",
                             "bestFitExcludedAt",
                             "bestFitExcludedBy",
                             "bestFitExcludedReason",
                             "createdAt",
                             "updatedAt",
+                            "address",
                             "distance",
                             "slots"
                           ]
@@ -9899,6 +10237,55 @@
                       "doctors"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/me/address": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Update the address of the doctor's own cabinet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cabinetAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "cabinetAddress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cabinetAddress": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "cabinetAddress"
+                  ]
                 }
               }
             }
@@ -9959,6 +10346,61 @@
                   "required": [
                     "logoUrl",
                     "stampUrl"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/me/note-language": {
+      "put": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Set the language of the doctor's AI consultation notes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "noteLanguage": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fr",
+                      "ar"
+                    ]
+                  }
+                },
+                "required": [
+                  "noteLanguage"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved language",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "noteLanguage": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fr",
+                        "ar"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "noteLanguage"
                   ]
                 }
               }
@@ -10613,6 +11055,10 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "doctorsAsked": {
+                      "type": "integer",
+                      "nullable": true
+                    },
                     "suggestions": {
                       "type": "array",
                       "items": {
@@ -10684,6 +11130,7 @@
                     "found",
                     "reason",
                     "refusedDoctorName",
+                    "doctorsAsked",
                     "suggestions",
                     "patient",
                     "illness"
@@ -13419,7 +13866,7 @@
                 "properties": {
                   "cin": {
                     "type": "string",
-                    "minLength": 1
+                    "pattern": "^(\\d{8})?$"
                   },
                   "firstName": {
                     "type": "string",
@@ -13456,7 +13903,6 @@
                   }
                 },
                 "required": [
-                  "cin",
                   "firstName",
                   "lastName",
                   "dateOfBirth",
@@ -13959,7 +14405,7 @@
                 "properties": {
                   "cin": {
                     "type": "string",
-                    "minLength": 1
+                    "pattern": "^(\\d{8})?$"
                   },
                   "firstName": {
                     "type": "string",
@@ -13985,7 +14431,6 @@
                   }
                 },
                 "required": [
-                  "cin",
                   "firstName",
                   "lastName",
                   "dateOfBirth",
@@ -14525,6 +14970,13 @@
                   "date": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "documents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    }
                   }
                 },
                 "required": [
@@ -15249,6 +15701,219 @@
                     "city",
                     "state",
                     "street"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/places/reverse": {
+      "get": {
+        "tags": [
+          "Places"
+        ],
+        "summary": "Address at a map point",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -90,
+              "maximum": 90
+            },
+            "required": false,
+            "name": "lat",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -180,
+              "maximum": 180
+            },
+            "required": false,
+            "name": "lng",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The address at the point, or null when there is none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "lat": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "lng": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "street": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "lat",
+                    "lng",
+                    "city",
+                    "state",
+                    "street"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform-settings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get the platform settings (Admin)",
+        "responses": {
+          "200": {
+            "description": "Settings in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 120
+                    },
+                    "emergencyWaveTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 30
+                    },
+                    "emergencyFanoutCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "emergencyMaxWaves": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    }
+                  },
+                  "required": [
+                    "pendingTimeoutMinutes",
+                    "emergencyWaveTimeoutMinutes",
+                    "emergencyFanoutCount",
+                    "emergencyMaxWaves"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update the platform settings (Admin)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pendingTimeoutMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 120
+                  },
+                  "emergencyWaveTimeoutMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30
+                  },
+                  "emergencyFanoutCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "emergencyMaxWaves": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "pendingTimeoutMinutes",
+                  "emergencyWaveTimeoutMinutes",
+                  "emergencyFanoutCount",
+                  "emergencyMaxWaves"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 120
+                    },
+                    "emergencyWaveTimeoutMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 30
+                    },
+                    "emergencyFanoutCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "emergencyMaxWaves": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    }
+                  },
+                  "required": [
+                    "pendingTimeoutMinutes",
+                    "emergencyWaveTimeoutMinutes",
+                    "emergencyFanoutCount",
+                    "emergencyMaxWaves"
                   ]
                 }
               }
@@ -16134,6 +16799,26 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fr",
+                      "ar"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Recording with its new summary",
@@ -18293,14 +18978,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -18377,6 +19062,10 @@
                           "type": "string",
                           "nullable": true,
                           "maxLength": 1024
+                        },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
                         },
                         "bestFitExcludedAt": {
                           "type": "string",
@@ -18507,8 +19196,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -18520,6 +19209,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -18676,14 +19366,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -18760,6 +19450,10 @@
                           "type": "string",
                           "nullable": true,
                           "maxLength": 1024
+                        },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
                         },
                         "bestFitExcludedAt": {
                           "type": "string",
@@ -18890,8 +19584,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -18903,6 +19597,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedBy",
                         "bestFitExcludedReason",
@@ -19037,14 +19732,14 @@
                           "nullable": true,
                           "maxLength": 50
                         },
-                        "address": {
-                          "type": "string",
-                          "nullable": true
-                        },
                         "cabinetName": {
                           "type": "string",
                           "nullable": true,
                           "maxLength": 255
+                        },
+                        "cabinetAddress": {
+                          "type": "string",
+                          "nullable": true
                         },
                         "cabinetCityId": {
                           "type": "integer",
@@ -19121,6 +19816,10 @@
                           "type": "string",
                           "nullable": true,
                           "maxLength": 1024
+                        },
+                        "noteLanguage": {
+                          "type": "string",
+                          "maxLength": 8
                         },
                         "bestFitExcludedAt": {
                           "type": "string",
@@ -19247,8 +19946,8 @@
                         "cin",
                         "tin",
                         "status",
-                        "address",
                         "cabinetName",
+                        "cabinetAddress",
                         "cabinetCityId",
                         "cabinetLongitude",
                         "cabinetLatitude",
@@ -19260,6 +19959,7 @@
                         "medicalCouncilCertificate",
                         "logoUrl",
                         "stampUrl",
+                        "noteLanguage",
                         "bestFitExcludedAt",
                         "bestFitExcludedReason",
                         "createdAt",
@@ -19346,7 +20046,7 @@
       }
     },
     "/api/users/picture": {
-      "post": {
+      "put": {
         "tags": [
           "Users"
         ],
@@ -19443,6 +20143,35 @@
                     "type",
                     "createdAt",
                     "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/whatsapp/status": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Whether the practice's WhatsApp is connected",
+        "responses": {
+          "200": {
+            "description": "Connection state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connected": {
+                      "type": "boolean",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "connected"
                   ]
                 }
               }

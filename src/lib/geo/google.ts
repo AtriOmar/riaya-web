@@ -1,3 +1,5 @@
+import { appendFile, mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import {
 	GEO_TIMEOUT_MS,
 	type GeoProvider,
@@ -32,6 +34,42 @@ function apiKey() {
 	return key;
 }
 
+const LOG_FILE = join(process.cwd(), "logs", "google-places.log");
+const RULE = "=".repeat(80);
+
+/**
+ * Every request counts against the Google quota, so each one is appended to
+ * `logs/google-places.log` as its own block: the query sent, then what came back.
+ */
+async function logRequest(entry: {
+	endpoint: string;
+	body?: unknown;
+	status: number;
+	response?: unknown;
+	error?: string;
+}) {
+	const json = (v: unknown) => JSON.stringify(v, null, 2);
+	const block = [
+		RULE,
+		`${new Date().toISOString()}  ${entry.endpoint}  HTTP ${entry.status}`,
+		RULE,
+		"",
+		"QUERY SENT",
+		entry.body === undefined ? "(none)" : json(entry.body),
+		"",
+		entry.error ? "ERROR" : "RESPONSE",
+		entry.error ?? json(entry.response),
+		"",
+		"",
+	].join("\n");
+	try {
+		await mkdir(dirname(LOG_FILE), { recursive: true });
+		await appendFile(LOG_FILE, block);
+	} catch (e) {
+		console.error("google-places log write failed:", e);
+	}
+}
+
 async function request<T>(
 	path: string,
 	init: { method: "GET" | "POST"; body?: unknown; fieldMask?: string },
@@ -48,12 +86,25 @@ async function request<T>(
 	});
 	if (!res.ok) {
 		const detail = (await res.text()).slice(0, 200);
+		await logRequest({
+			endpoint: path,
+			body: init.body,
+			status: res.status,
+			error: detail,
+		});
 		throw new GeoProviderError(
 			`Google Places failed (${res.status}): ${detail}`,
 			"google",
 		);
 	}
-	return (await res.json()) as T;
+	const data = (await res.json()) as T;
+	await logRequest({
+		endpoint: path,
+		body: init.body,
+		status: res.status,
+		response: data,
+	});
+	return data;
 }
 
 const component = (p: GooglePlace, type: string) =>
@@ -92,6 +143,19 @@ function rectangle(center: LatLng, radiusM: number) {
 		},
 	};
 }
+
+// Google Geocoding API: needs "Geocoding API" enabled on the same project and key.
+const GEOCODE = "https://maps.googleapis.com/maps/api/geocode/json";
+
+type GeocodeResult = {
+	place_id?: string;
+	formatted_address?: string;
+	geometry?: { location?: { lat: number; lng: number } };
+	address_components?: { long_name?: string; types?: string[] }[];
+};
+
+const geocodeComponent = (r: GeocodeResult, type: string) =>
+	r.address_components?.find((c) => c.types?.includes(type))?.long_name ?? null;
 
 // Google Routes API: needs "Routes API" enabled on the same project and key.
 const ROUTE_MATRIX =
@@ -234,6 +298,46 @@ export const googleProvider: GeoProvider = {
 			},
 		);
 		return (data.places ?? []).map(toResult);
+	},
+
+	async reverse({ lat, lng }) {
+		const qs = new URLSearchParams({
+			latlng: `${lat},${lng}`,
+			language: LANGUAGE,
+			key: apiKey(),
+		});
+		const res = await fetch(`${GEOCODE}?${qs}`, {
+			signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
+		});
+		if (!res.ok) {
+			throw new GeoProviderError(
+				`Google reverse geocoding failed (${res.status})`,
+				"google",
+			);
+		}
+		const data = (await res.json()) as {
+			status?: string;
+			results?: GeocodeResult[];
+			error_message?: string;
+		};
+		if (data.status === "ZERO_RESULTS") return null;
+		if (data.status !== "OK") {
+			throw new GeoProviderError(
+				`Google reverse geocoding failed (${data.status}): ${data.error_message ?? ""}`,
+				"google",
+			);
+		}
+		const r = data.results?.[0];
+		if (!r) return null;
+		return {
+			id: r.place_id ?? "",
+			label: r.formatted_address ?? "",
+			lat,
+			lng,
+			city: geocodeComponent(r, "locality"),
+			state: geocodeComponent(r, "administrative_area_level_1"),
+			street: geocodeComponent(r, "route"),
+		};
 	},
 
 	driveLegs,
