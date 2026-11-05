@@ -1,10 +1,15 @@
 "use client";
 
-import { Moon } from "lucide-react";
+import { Copy, Moon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { usePractice } from "@/hooks/use-practice";
 import { cn } from "@/lib/utils";
 import type { PutApiUsersBodyAvailability } from "@/services/generated/api.schemas";
@@ -36,22 +41,14 @@ function parseTime(val: string): number {
 	return h * 60 + m;
 }
 
-const defaultAvailability: PutApiUsersBodyAvailability = {
-	0: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
-	1: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
-	2: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
-	3: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
-	4: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
-	5: [],
-	6: [],
-};
+const DEFAULT_HOURS = { start: toMinutes(9, 0), end: toMinutes(17, 0) };
 
 export default function AvailabilityForm() {
 	const { me, isLoading } = usePractice();
 	const saved = me?.practice?.availability;
 	if (isLoading || !me) return null;
 	// Remount when the saved hours load, so the form starts from them
-	return <AvailabilityFormInner initial={saved ?? defaultAvailability} />;
+	return <AvailabilityFormInner initial={saved ?? {}} />;
 }
 
 function AvailabilityFormInner({
@@ -70,11 +67,24 @@ function AvailabilityFormInner({
 				prev[day.toString() as keyof PutApiUsersBodyAvailability] ?? [];
 			return {
 				...prev,
-				[day]: slots.length
-					? []
-					: [{ start: toMinutes(9, 0), end: toMinutes(17, 0) }],
+				[day]: slots.length ? [] : [{ ...DEFAULT_HOURS }],
 			};
 		});
+	}
+
+	/** Gives every other day the same hours as `day` */
+	function handleCopy(day: number) {
+		const source =
+			availability[day.toString() as keyof PutApiUsersBodyAvailability] ?? [];
+		setAvailability(
+			Object.fromEntries(
+				DAYS.map((_, i) => [
+					i,
+					i === day ? source : source.map((s) => ({ ...s })),
+				]),
+			),
+		);
+		toast.success(`${DAYS[day]}'s hours copied to the other days`);
 	}
 
 	function handleTimeChange(
@@ -104,7 +114,7 @@ function AvailabilityFormInner({
 	}
 
 	return (
-		<form className="space-y-3 mt-4" onSubmit={handleSubmit}>
+		<form className="space-y-3 mt-4 max-w-3xl" onSubmit={handleSubmit}>
 			{DAYS.map((day, index) => {
 				const slots =
 					availability[index.toString() as keyof PutApiUsersBodyAvailability] ??
@@ -114,7 +124,7 @@ function AvailabilityFormInner({
 				return (
 					<div
 						key={day}
-						className="items-center gap-4 grid grid-cols-[60px_100px_1fr_1fr]"
+						className="items-center gap-4 grid grid-cols-[60px_100px_1fr_1fr_36px]"
 					>
 						<button
 							type="button"
@@ -141,14 +151,11 @@ function AvailabilityFormInner({
 									className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-muted transition cursor-pointer"
 								>
 									<span className="text-muted-foreground text-sm">From</span>
-									<Input
+									<TimePicker
 										id={`day-${index}-start`}
-										type="time"
 										value={fromMinutes(slots[0].start)}
-										onChange={(e) =>
-											handleTimeChange(index, "start", e.target.value)
-										}
-										className="w-[120px] h-auto ml-auto p-0 border-0 text-right"
+										onChange={(v) => handleTimeChange(index, "start", v)}
+										className="w-[120px] ml-auto"
 									/>
 								</label>
 								<label
@@ -156,14 +163,11 @@ function AvailabilityFormInner({
 									className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-muted transition cursor-pointer"
 								>
 									<span className="text-muted-foreground text-sm">To</span>
-									<Input
+									<TimePicker
 										id={`day-${index}-end`}
-										type="time"
 										value={fromMinutes(slots[0].end)}
-										onChange={(e) =>
-											handleTimeChange(index, "end", e.target.value)
-										}
-										className="w-[120px] h-auto ml-auto p-0 border-0 text-right"
+										onChange={(v) => handleTimeChange(index, "end", v)}
+										className="w-[120px] ml-auto"
 									/>
 								</label>
 							</>
@@ -173,6 +177,22 @@ function AvailabilityFormInner({
 								<span>Closed</span>
 							</div>
 						)}
+
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									aria-label={`Copy ${day}'s hours to the other days`}
+									disabled={!active}
+									onClick={() => handleCopy(index)}
+								>
+									<Copy className="size-4" />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Copy to the other days</TooltipContent>
+						</Tooltip>
 					</div>
 				);
 			})}
@@ -181,7 +201,7 @@ function AvailabilityFormInner({
 				<Button
 					type="button"
 					variant="outline"
-					onClick={() => setAvailability(defaultAvailability)}
+					onClick={() => setAvailability(initial)}
 				>
 					Reset
 				</Button>

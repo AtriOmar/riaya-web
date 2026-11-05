@@ -1,11 +1,13 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { CalendarClock, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/contexts/auth-provider";
 import DoctorAppointmentSocketListener from "@/components/dashboard/appointments/doctor-appointment-socket-listener";
 import SecretaryPaused from "@/components/layouts/secretary-paused";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { isDoctorOnlyPath, usePractice } from "@/hooks/use-practice";
 
 /**
@@ -51,9 +53,29 @@ export default function VerifiedDoctorGate({
 		return null;
 	}
 
+	const hasAvailability = Object.values(practice.availability ?? {}).some(
+		(slots) => slots.length > 0,
+	);
+	const onAvailabilityPage = pathname === "/dashboard/availability";
+
 	return (
 		<>
 			<DoctorAppointmentSocketListener doctorId={practice.doctorId} />
+			{!hasAvailability && !onAvailabilityPage && (
+				<Alert variant="warning" className="mb-4">
+					<CalendarClock className="size-4" />
+					<AlertTitle>Availability not set</AlertTitle>
+					<AlertDescription>
+						Patients can't book appointments until working hours are set.{" "}
+						<Link
+							href="/dashboard/availability"
+							className="font-medium underline"
+						>
+							Set availability
+						</Link>
+					</AlertDescription>
+				</Alert>
+			)}
 			{children}
 		</>
 	);
