@@ -112,9 +112,13 @@ export const readToolSchemas = {
 	},
 	get_invoices: {
 		input: z.object({
-			status: z
-				.enum(["unpaid", "partially_paid", "paid", "cancelled"])
-				.optional(),
+			statuses: z
+				.array(z.enum(["unpaid", "partially_paid", "paid", "cancelled"]))
+				.min(1)
+				.optional()
+				.describe(
+					"Only these statuses; pass several in one call, e.g. both unpaid and partially_paid for pending invoices",
+				),
 			patientId: z.coerce.number().int().positive().optional(),
 		}),
 		result: z.object({ invoices: z.array(aiInvoiceSchema) }),

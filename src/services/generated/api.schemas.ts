@@ -282,7 +282,11 @@ export type GetApiAiChatConversationsId200MessagesItemPartsItem =
 			name: "get_invoices";
 			status: "running" | "done" | "error";
 			args: {
-				status?: "unpaid" | "partially_paid" | "paid" | "cancelled";
+				/**
+				 * Only these statuses; pass several in one call, e.g. both unpaid and partially_paid for pending invoices
+				 * @minItems 1
+				 */
+				statuses?: ("unpaid" | "partially_paid" | "paid" | "cancelled")[];
 				/** @exclusiveMinimum 0 */
 				patientId?: number;
 			};

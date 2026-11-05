@@ -228,12 +228,12 @@ export const readTools: { [N in ReadToolName]: ReadTool<N> } = {
 
 	get_invoices: {
 		description:
-			"The doctor's invoices, newest first, optionally only one status (e.g. unpaid) or one patient. Amounts are in millimes (1 TND = 1000).",
-		async run(ctx, { status, patientId }) {
+			"The doctor's invoices, newest first, optionally only some statuses (pending = unpaid and partially_paid, in one call) or one patient. Amounts are in millimes (1 TND = 1000).",
+		async run(ctx, { statuses, patientId }) {
 			const rows = await db.query.invoice.findMany({
 				where: and(
 					eq(invoice.doctorId, ctx.doctorId),
-					status ? eq(invoice.status, status) : undefined,
+					statuses ? inArray(invoice.status, statuses) : undefined,
 					patientId ? eq(invoice.patientId, patientId) : undefined,
 				),
 				with: { patient: true },

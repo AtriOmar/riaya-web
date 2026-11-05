@@ -987,14 +987,19 @@
                                     "args": {
                                       "type": "object",
                                       "properties": {
-                                        "status": {
-                                          "type": "string",
-                                          "enum": [
-                                            "unpaid",
-                                            "partially_paid",
-                                            "paid",
-                                            "cancelled"
-                                          ]
+                                        "statuses": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "enum": [
+                                              "unpaid",
+                                              "partially_paid",
+                                              "paid",
+                                              "cancelled"
+                                            ]
+                                          },
+                                          "minItems": 1,
+                                          "description": "Only these statuses; pass several in one call, e.g. both unpaid and partially_paid for pending invoices"
                                         },
                                         "patientId": {
                                           "type": "integer",
