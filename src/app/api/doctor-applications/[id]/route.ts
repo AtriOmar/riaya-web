@@ -149,12 +149,12 @@ export async function PUT(
 				});
 			}
 
-			// Update user with name from application
+			// Update user with name from application (username is unique, so it is
+			// not derived from a name that two doctors can share)
 			await db
 				.update(userTable)
 				.set({
 					name: `${application.firstName} ${application.lastName}`,
-					username: `${application.firstName} ${application.lastName}`,
 				})
 				.where(eq(userTable.id, application.userId));
 
