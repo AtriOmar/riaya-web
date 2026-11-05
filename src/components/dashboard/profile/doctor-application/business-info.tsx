@@ -11,6 +11,7 @@ import { getApiPlacesReverse } from "@/services/generated/places/places";
 import AddressSearchBar, { type GeoLocation } from "./address-search-bar";
 import CabinetLocationMap from "./cabinet-location-map.lazy";
 import CitySelect from "./city-select";
+import { nearestCity } from "./nearest-city";
 import type { FormValues } from "./schema";
 
 const DEFAULT_CENTER = { lat: 33.8869, lng: 9.5375 }; // Tunisia center
@@ -44,6 +45,16 @@ export default function BusinessInfo({ cities }: Props) {
 	// Only the answer for the latest pin may fill the address.
 	const reverseRequest = useRef(0);
 
+	const fillCityFromPoint = useCallback(
+		(lat: number, lng: number) => {
+			const city = nearestCity(cities, lat, lng);
+			if (city) {
+				setValue("cabinetCityId", String(city.id), { shouldValidate: true });
+			}
+		},
+		[cities, setValue],
+	);
+
 	const fillAddressFromPin = useCallback(
 		async (lat: number, lng: number) => {
 			const request = ++reverseRequest.current;
@@ -76,8 +87,9 @@ export default function BusinessInfo({ cities }: Props) {
 			setValue("cabinetAddress", location.address, { shouldValidate: true });
 			setValue("cabinetLatitude", location.lat, { shouldValidate: true });
 			setValue("cabinetLongitude", location.lon, { shouldValidate: true });
+			fillCityFromPoint(location.lat, location.lon);
 		},
-		[setValue],
+		[setValue, fillCityFromPoint],
 	);
 
 	useEffect(() => {
@@ -118,24 +130,6 @@ export default function BusinessInfo({ cities }: Props) {
 				<Input id="tin" placeholder="1234567X" {...register("tin")} />
 				{errors.tin && (
 					<p className="mt-1 text-destructive text-sm">{errors.tin.message}</p>
-				)}
-			</div>
-
-			<div className="space-y-2 mt-4">
-				<Label>
-					Cabinet city <span className="text-destructive">*</span>
-				</Label>
-				<CitySelect
-					cities={cities}
-					value={cabinetCityId}
-					onChange={(v) =>
-						setValue("cabinetCityId", v, { shouldValidate: true })
-					}
-				/>
-				{errors.cabinetCityId && (
-					<p className="mt-1 text-destructive text-sm">
-						{errors.cabinetCityId.message}
-					</p>
 				)}
 			</div>
 
@@ -209,6 +203,7 @@ export default function BusinessInfo({ cities }: Props) {
 							onMapClick={(lat, lng) => {
 								setValue("cabinetLatitude", lat, { shouldValidate: true });
 								setValue("cabinetLongitude", lng, { shouldValidate: true });
+								fillCityFromPoint(lat, lng);
 								void fillAddressFromPin(lat, lng);
 							}}
 						/>
@@ -220,6 +215,28 @@ export default function BusinessInfo({ cities }: Props) {
 						</p>
 					)}
 				</div>
+			</div>
+
+			<div className="space-y-2 mt-4">
+				<Label>
+					Cabinet city <span className="text-destructive">*</span>
+				</Label>
+				<CitySelect
+					cities={cities}
+					value={cabinetCityId}
+					onChange={(v) =>
+						setValue("cabinetCityId", v, { shouldValidate: true })
+					}
+				/>
+				<p className="text-muted-foreground text-xs">
+					Picking a place on the map selects the nearest city; you can change
+					it.
+				</p>
+				{errors.cabinetCityId && (
+					<p className="mt-1 text-destructive text-sm">
+						{errors.cabinetCityId.message}
+					</p>
+				)}
 			</div>
 
 			<div className="space-y-2 mt-4">
