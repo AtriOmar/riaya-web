@@ -9,7 +9,7 @@ import type {
 	GetApiUsersMe200DoctorProfile,
 } from "@/services/generated/api.schemas";
 import CabinetAddressField from "./cabinet-address-field";
-import CabinetLocationMap from "./doctor-application/cabinet-location-map";
+import CabinetLocationMap from "./doctor-application/cabinet-location-map.lazy";
 
 type Props = {
 	/** Prefer doctor profile when it exists; otherwise application data (e.g. pending before profile row). */

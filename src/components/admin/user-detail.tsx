@@ -16,7 +16,7 @@ import ExcludeDoctorDialog from "@/components/admin/ratings/exclude-doctor-dialo
 import { revalidateRatingsData } from "@/components/admin/ratings/rating-labels";
 import { useAuth } from "@/components/contexts/auth-provider";
 import CabinetAddressField from "@/components/dashboard/profile/cabinet-address-field";
-import CabinetLocationMap from "@/components/dashboard/profile/doctor-application/cabinet-location-map";
+import CabinetLocationMap from "@/components/dashboard/profile/doctor-application/cabinet-location-map.lazy";
 import DocumentPreview from "@/components/document-preview";
 import { CubeLoader } from "@/components/loaders";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

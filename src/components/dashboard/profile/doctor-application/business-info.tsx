@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import type { GetApiCities200Item } from "@/services/generated/api.schemas";
 import { getApiPlacesReverse } from "@/services/generated/places/places";
 import AddressSearchBar, { type GeoLocation } from "./address-search-bar";
-import CabinetLocationMap from "./cabinet-location-map";
+import CabinetLocationMap from "./cabinet-location-map.lazy";
 import CitySelect from "./city-select";
 import type { FormValues } from "./schema";
 
