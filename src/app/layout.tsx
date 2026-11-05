@@ -29,6 +29,13 @@ export const metadata: Metadata = {
 		description: "Riaya, the AI powered doctor appointments platform",
 		url: getAppUrl(),
 		siteName: "رعاية",
+		type: "website",
+		locale: "en_US",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "رعاية",
+		description: "Riaya, the AI powered doctor appointments platform",
 	},
 };
 
