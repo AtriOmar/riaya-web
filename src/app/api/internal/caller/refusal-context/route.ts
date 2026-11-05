@@ -31,6 +31,10 @@ const responseSchema = z.object({
 	/** How many doctors the request went to; null when unknown. */
 	doctorsAsked: z.number().int().nullable(),
 	suggestions: z.array(suggestionSchema),
+	/** Every doctor already asked on this phone: left out of any new search. */
+	refusedDoctorIds: z.array(z.number().int()),
+	/** Where a new search starts: the requested time, or now when it has passed. */
+	desiredTime: z.string().nullable(),
 	/** Who the refused request was for: someone on the calling phone. */
 	patient: z
 		.object({
@@ -41,6 +45,8 @@ const responseSchema = z.object({
 		.nullable(),
 	/** The reason for the visit given in the refused request. */
 	illness: z.string().nullable(),
+	/** The speciality of the refused request. */
+	speciality: z.object({ slug: z.string(), name: z.string() }).nullable(),
 });
 
 // ─── POST /api/internal/caller/refusal-context ────────────────────────────────
@@ -61,8 +67,11 @@ export async function POST(req: NextRequest) {
 				refusedDoctorName: null,
 				doctorsAsked: null,
 				suggestions: [],
+				refusedDoctorIds: [],
+				desiredTime: null,
 				patient: null,
 				illness: null,
+				speciality: null,
 			});
 		}
 		return json({
@@ -71,8 +80,11 @@ export async function POST(req: NextRequest) {
 			refusedDoctorName: context.refusedDoctorName || null,
 			doctorsAsked: context.doctorsAsked,
 			suggestions: context.suggestions,
+			refusedDoctorIds: context.refusedDoctorIds,
+			desiredTime: context.desiredTime,
 			patient: context.patient,
 			illness: context.illness,
+			speciality: context.speciality,
 		});
 	} catch (e) {
 		if (e instanceof Response) return e;

@@ -1,6 +1,11 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { type appointment, doctorProfile, person } from "@/db/schema";
+import {
+	type appointment,
+	doctorProfile,
+	person,
+	speciality,
+} from "@/db/schema";
 import { findBestFitDoctors } from "@/lib/best-fit";
 import { DEFAULT_PHONE_COUNTRY, normalizePhoneForStorage } from "@/lib/phone";
 import { connection } from "@/lib/queue";
@@ -65,6 +70,10 @@ export type RefusalContext = {
 	/** How many doctors the request went to; null on contexts stored before this was kept. */
 	doctorsAsked: number | null;
 	suggestions: RefusalSuggestion[];
+	/** Every doctor already asked on this phone (refused or unanswered): never to be offered again. */
+	refusedDoctorIds: number[];
+	/** The time the patient asked for, or now when that time has passed; where a new search starts. */
+	desiredTime: string;
 	/** Who the refused request was for (someone on the calling phone). */
 	patient: {
 		personId: number;
@@ -73,6 +82,8 @@ export type RefusalContext = {
 	} | null;
 	/** The reason for the visit given in the refused request. */
 	illness: string | null;
+	/** The speciality of the refused request, kept when the patient wants another doctor. */
+	speciality: { slug: string; name: string } | null;
 };
 
 function keyForPhone(phone: string): string | null {
@@ -168,11 +179,12 @@ export async function getRefusalContext(
 
 		const now = new Date();
 		const stillFuture = new Date(stored.desiredTime) > now;
+		const desiredTime = stillFuture ? new Date(stored.desiredTime) : now;
 		const ranked = await findBestFitDoctors({
 			specialityId: stored.specialityId,
 			lat: stored.lat,
 			long: stored.long,
-			desiredTime: stillFuture ? new Date(stored.desiredTime) : now,
+			desiredTime,
 			currentTime: now,
 		});
 
@@ -197,11 +209,18 @@ export async function getRefusalContext(
 					})) ?? null)
 				: null;
 
+		const requested = await db.query.speciality.findFirst({
+			where: eq(speciality.id, stored.specialityId),
+			columns: { slug: true, enName: true },
+		});
+
 		return {
 			reason: stored.reason ?? "refused",
 			refusedDoctorName: stored.lastRefusedDoctorName,
 			doctorsAsked: stored.doctorsAsked ?? null,
 			suggestions,
+			refusedDoctorIds: stored.refusedDoctorIds,
+			desiredTime: desiredTime.toISOString(),
 			patient: patient
 				? {
 						personId: patient.id,
@@ -210,6 +229,10 @@ export async function getRefusalContext(
 					}
 				: null,
 			illness: stored.illness ?? null,
+			speciality:
+				requested?.slug && requested.enName
+					? { slug: requested.slug, name: requested.enName }
+					: null,
 		};
 	} catch (err) {
 		console.error("[refusal-suggestions] read failed", err);
